@@ -13,19 +13,27 @@ Authors:
 
 import sys
 import subprocess
-import RPi.GPIO as GPIO
 
 from backend import backend
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(25, GPIO.OUT)
+if len(sys.argv) > 1:
+	userID = sys.argv[1]
+else:
+	email = raw_input("Email      : ")
+	user = backend.getUserByEmail(email)
+	if user != None:
+		confirmUser = raw_input("Found user %d %s %s. Use this person [y|n]:" % (user['userID'], user['firstName'], user['lastName']))
+		if not confirmUser.lower() == 'y':
+			exit()
 
-if len(sys.argv) < 2:
-	print "You must specify the userID"
-	exit();
-
-userID = sys.argv[1]
+		userID = user['userID']
+	else:
+		print "User not found. Creating new user..."
+		firstName = raw_input("First Name : ")
+		lastName = raw_input("Last  Name : ")
+		
+		userID = backend.addUser(email, firstName, lastName)
+	
 if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
 else:
@@ -39,4 +47,4 @@ autoSteal = len(sys.argv) >= 4 and sys.argv[3] == 'steal':
 if userID != "" and nfcID != "":
 	# @TODO: catch duplicate key error, exit with error status
 	backend.enroll(nfcID, userID, autoSteal)
-		
+
