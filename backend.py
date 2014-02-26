@@ -13,6 +13,9 @@ Authors:
 import MySQLdb, MySQLdb.cursors
 
 class MySQLBackend(object, host, db, user, password):
+	'''
+	@TODO: Document this method
+	'''
 	def __init__(self, host, db, user, passsword):
 		self.db = MySQLdb.connect(
 			host=host ,db=db,
@@ -21,6 +24,22 @@ class MySQLBackend(object, host, db, user, password):
 		)
 		self.cursor = self.db.cursor()
 
+	'''
+	@TODO: Document this method
+	@TODO: Unit tests
+	'''
+	def log(self, logType, rfid=None, userID=None, message=None, timestamp=None):
+		query = '''
+			INSERT INTO logs
+				(timestamp, logType, rfid, userID, message)
+			VALUES
+				(%s, %s, %s, %s, %s)'''
+
+		self.cursor.execute(query, timestamp, logType, rfid, userID, message)
+
+	'''
+	@TODO: Document this method
+	'''
 	def getUserFromKey(self, key):
 		query = '''
 			SELECT * FROM persons
@@ -28,7 +47,7 @@ class MySQLBackend(object, host, db, user, password):
 			WHERE rfids.id = %s'''
 		self.cursor.execute(query, key)
 
-		return self.cursor.fetchone() 
+		return self.cursor.fetchone()
 
 backend = new MySQLBackend(
 	host="localhost" ,db="MakeICTMemberKeys",
