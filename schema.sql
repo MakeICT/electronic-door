@@ -2,7 +2,7 @@
 -- Dominic Canare <dom@greenlightgo.org>
 -- Rye Kennedy <ryekennedy@gmail.com>
 
-DROP DATABASE MakeICTMemberKeys;
+DROP DATABASE IF EXISTS MakeICTMemberKeys;
 CREATE DATABASE IF NOT EXISTS MakeICTMemberKeys;
 USE MakeICTMemberKeys;
 
