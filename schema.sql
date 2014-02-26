@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 	lastName VARCHAR(64) NOT NULL,
 	email VARCHAR(256) NULL,
 	passwordHash VARCHAR(128) NULL,
+	status ENUM ('active', 'probation', 'inactive'),
 	UNIQUE(email)
 ) ENGINE=INNODB;
 
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS rfids (
 CREATE TABLE IF NOT EXISTS logs (
 	logID INT PRIMARY KEY AUTO_INCREMENT,
 	timestamp INT NOT NULL,
-	logType ENUM ('enroll', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error'),
+	logType ENUM ('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error'),
 	rfid VARCHAR(256),
 	userID INT NULL,
 	message VARCHAR(1024) NULL,

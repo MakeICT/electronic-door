@@ -29,7 +29,6 @@ while True:
 		user = backend.getUserFromKey(nfcID)	
 		if user != None:
 			print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
-			backend.log('unlock', nfcID, user['userID'])
 
 			# @TODO: pull pin HIGH to un-latch door
 			# @TODO: set LED states
@@ -38,7 +37,6 @@ while True:
 			GPIO.output(25, False);
 		else:
 			print "DENIED"
-			backend.log('deny', nfcID)
 
 			# @TODO: set LED states
 			GPIO.output(25, True);
