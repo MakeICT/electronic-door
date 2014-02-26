@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# MakeICT/Bluebird Arthouse Electronic Door Ebtrt
+# nfc-read: Reads an NFC chip and outputs JUST the ID
+#
+# MakeICT/Bluebird Arthouse Electronic Door Entry
+#
 # Dominic Canare <dom@greenlightgo.org>
 # Rye Kennedy <ryekennedy@gmail.com>
 
