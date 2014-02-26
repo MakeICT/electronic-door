@@ -30,25 +30,25 @@ class MySQLBackend(object, host, db, user, password):
 	@param logType ('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error')
 	'''
 	def log(self, logType, rfid=None, userID=None, message=None, timestamp=None):
-		query = '''
+		sql = '''
 			INSERT INTO logs
 				(timestamp, logType, rfid, userID, message)
 			VALUES
 				(%s, %s, %s, %s, %s)'''
 
-		self.cursor.execute(query, timestamp, logType, rfid, userID, message)
+		self.cursor.execute(sql, timestamp, logType, rfid, userID, message)
 
 	'''
 	@TODO: Document this method
 	@returns False if fail, dict of user if success
 	'''
 	def attemptUnlock(self, key):
-		query = '''
+		sql = '''
 			SELECT * FROM users
 				JOIN rfids ON users.userID = rfids.userID
 			WHERE rfids.id = %s
 				AND users.status = 'active''''
-		self.cursor.execute(query, key)
+		self.cursor.execute(sql, key)
 
 		data = self.cursor.fetchone()
 		if data != None:
@@ -57,6 +57,35 @@ class MySQLBackend(object, host, db, user, password):
 			self.log('deny', key, data['userID'])
 
 		return data
+
+	'''
+	@TODO: implement this. duh.
+	'''
+	def saltAndHash(self, data):
+		return data
+
+	'''
+	@TODO: Document this method
+	'''
+	def getUserByEmail(self, email):
+		self.cursor.execute('SELECT * FROM users WHERE email = %s', email)
+
+	'''
+	@TODO: Document this method
+	'''
+	def addUser(self, email, firstName=None, lastName=None, password=None):
+		sql = '''
+			INSERT INTO users
+				(email, firstName, lastName, passwordHash)
+			VALUES
+				(%s, %s, %s, %s)'''
+
+		if password == '' or password == None:
+			password = None
+		else:
+			password = self.saltAndHash(password)
+			
+		self.cursor.execute(sql, email, firstName, lastName, password)
 
 	'''
 	@TODO: Document this method

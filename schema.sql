@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 	lastName VARCHAR(64) NOT NULL,
 	email VARCHAR(256) NULL,
 	passwordHash VARCHAR(128) NULL,
-	status ENUM ('active', 'probation', 'inactive'),
+	status ENUM ('active', 'probation', 'inactive') NOT NULL DEFAULT 'inactive',
 	UNIQUE(email)
 ) ENGINE=INNODB;
 

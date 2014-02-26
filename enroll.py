@@ -31,8 +31,9 @@ else:
 		print "User not found. Creating new user..."
 		firstName = raw_input("First Name : ")
 		lastName = raw_input("Last  Name : ")
+		password = raw_input("Password   : ")
 		
-		userID = backend.addUser(email, firstName, lastName)
+		userID = backend.addUser(email, firstName, lastName, password)
 	
 if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
