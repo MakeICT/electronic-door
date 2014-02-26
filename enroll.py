@@ -9,13 +9,15 @@ Usage: enroll.py userID [rfid]
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+
+@TODO: use POSIX command line arguments for non-interactive mode
 '''
 
 import sys
 import subprocess
 
 from backend import backend
-#from rpi import interfaceControl
+from rpi import interfaceControl
 
 if len(sys.argv) > 1:
 	userID = int(sys.argv[1])
@@ -44,11 +46,11 @@ else:
 if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
 else:
-#	interfaceControl.setPowerStatus(True)
+	interfaceControl.setPowerStatus(True)
 	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 	(nfcID, err) = proc.communicate()
 	nfcID = nfcID.strip()
-#	interfaceControl.setPowerStatus(False)
+	interfaceControl.setPowerStatus(False)
 	
 autoSteal = (len(sys.argv) >= 4 and sys.argv[3] == 'steal')
 if userID != "" and nfcID != "":

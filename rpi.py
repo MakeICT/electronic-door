@@ -36,12 +36,21 @@ class InterfaceControl(object):
 		
 		GPIO.setwarnings(True)
 
+	'''
+	@TODO: Document this method
+	'''
 	def output(componentID, status):
 		GPIO.output(self.GPIOS[componentID], status)
 
+	'''
+	@TODO: Document this method
+	'''
 	def setPowerStatus(self, powerIsOn):
 		self.output('power_LED', powerIsOn)
 
+	'''
+	@TODO: Document this method
+	'''
 	def setBuzzerOn(self, buzzerOn):
 		if buzzerOn:
 			# @TODO: PWM the buzzer
@@ -50,6 +59,9 @@ class InterfaceControl(object):
 			# @TODO: Turn off the buzzer
 			pass
 
+	'''
+	@TODO: Document this method
+	'''
 	def unlockDoor(self, timeout=2):
 		self.output('latch', True)
 		self.output('unlock_LED', True)
@@ -59,6 +71,9 @@ class InterfaceControl(object):
 		self.output('unlock_LED', False)
 		self.setBuzzerOn(False)
 
+	'''
+	@TODO: Document this method
+	'''
 	def showBadCardRead(self, blinkCount=3, blinkPeriod=0.25):
 		for i in range(blinkCount):
 			self.output('power_LED', True)
@@ -66,6 +81,9 @@ class InterfaceControl(object):
 			self.output('power_LED', False)
 			time.sleep(blinkPeriod)
 
+	'''
+	@TODO: Document this method
+	'''
 	def cleanup(self):
 		GPIO.cleanup()
 

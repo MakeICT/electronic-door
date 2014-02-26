@@ -8,6 +8,9 @@ backend.py - contains code for accessing/modifying the database
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+
+@TODO: Make proper use of transactions
+	Note: transaction is started when the cursor is created, ended by db.commit|rollback
 '''
 
 import MySQLdb, MySQLdb.cursors
