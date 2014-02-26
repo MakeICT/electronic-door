@@ -12,14 +12,14 @@ Authors:
 
 import MySQLdb, MySQLdb.cursors
 
-class MySQLBackend(object, host, db, user, password):
+class MySQLBackend(object):
 	'''
 	@TODO: Document this method
 	'''
-	def __init__(self, host, db, user, passsword):
+	def __init__(self, host, db, user, passwd):
 		self.db = MySQLdb.connect(
-			host=host ,db=db,
-			user=db, passwd=password,
+			host=host, db=db,
+			user=user, passwd=passwd,
 			cursorclass=MySQLdb.cursors.DictCursor
 		)
 		self.cursor = self.db.cursor()
@@ -29,14 +29,16 @@ class MySQLBackend(object, host, db, user, password):
 	@TODO: Unit tests
 	@param logType ('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error')
 	'''
-	def log(self, logType, rfid=None, userID=None, message=None, timestamp=None):
+	def log(self, logType, rfid=None, userID=None, message=None, commit=True):
 		sql = '''
 			INSERT INTO logs
 				(timestamp, logType, rfid, userID, message)
 			VALUES
-				(%s, %s, %s, %s, %s)'''
+				(UNIX_TIMESTAMP(), %s, %s, %s, %s)'''
 
-		self.cursor.execute(sql, timestamp, logType, rfid, userID, message)
+		self.cursor.execute(sql, (logType, rfid, userID, message))
+		if commit:
+			self.db.commit()
 
 	'''
 	@TODO: Document this method
@@ -47,7 +49,7 @@ class MySQLBackend(object, host, db, user, password):
 			SELECT * FROM users
 				JOIN rfids ON users.userID = rfids.userID
 			WHERE rfids.id = %s
-				AND users.status = 'active''''
+				AND users.status = \'active\''''
 		self.cursor.execute(sql, key)
 
 		data = self.cursor.fetchone()
@@ -69,9 +71,11 @@ class MySQLBackend(object, host, db, user, password):
 	'''
 	def getUserByEmail(self, email):
 		self.cursor.execute('SELECT * FROM users WHERE email = %s', email)
+		return self.cursor.fetchone()
 
 	'''
 	@TODO: Document this method
+	@returns userID
 	'''
 	def addUser(self, email, firstName=None, lastName=None, password=None):
 		sql = '''
@@ -84,8 +88,13 @@ class MySQLBackend(object, host, db, user, password):
 			password = None
 		else:
 			password = self.saltAndHash(password)
-			
-		self.cursor.execute(sql, email, firstName, lastName, password)
+
+		self.cursor.execute(sql, (email, firstName, lastName, password))
+
+		self.db.commit()
+		user = self.getUserByEmail(email)
+		if user != None:
+			return user['userID']
 
 	'''
 	@TODO: Document this method
@@ -95,14 +104,15 @@ class MySQLBackend(object, host, db, user, password):
 		sql = '''
 			INSERT INTO rfids
 				(id, userID)
-			VALUES (%(key)s, %(userID)s'''
+			VALUES (%(key)s, %(userID)s)'''
 		if autoSteal:
 			sql = sql + ' ON DUPLICATE KEY UPDATE userID=%(userID)s'
 
 		self.cursor.execute(sql, {'key': key, 'userID': userID })
-		self.log('assign', key, userID)
+		self.log('assign', key, userID, commit=False)
+		self.db.commit()
 
-backend = new MySQLBackend(
+backend = MySQLBackend(
 	host="localhost" ,db="MakeICTMemberKeys",
 	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4"
 )

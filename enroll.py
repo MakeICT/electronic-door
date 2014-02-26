@@ -15,40 +15,47 @@ import sys
 import subprocess
 
 from backend import backend
-from rpi import interfaceControl
+#from rpi import interfaceControl
 
 if len(sys.argv) > 1:
-	userID = sys.argv[1]
+	userID = int(sys.argv[1])
 else:
 	email = raw_input("Email      : ")
 	user = backend.getUserByEmail(email)
 	if user != None:
-		confirmUser = raw_input("Found user %d %s %s. Use this person [y|n]:" % (user['userID'], user['firstName'], user['lastName']))
+		confirmUser = raw_input("Found user [%d] %s %s. Use this person [y|n]: " % (user['userID'], user['firstName'], user['lastName']))
 		if not confirmUser.lower() == 'y':
 			exit()
 
 		userID = user['userID']
 	else:
-		print "User not found. Creating new user..."
+		print "\nUser not found. Creating new user..."
 		firstName = raw_input("First Name : ")
 		lastName = raw_input("Last  Name : ")
 		password = raw_input("Password   : ")
 		
 		userID = backend.addUser(email, firstName, lastName, password)
+		if userID != None:
+			print "\nUser [%d] added to the database" % userID
+		else:
+			print "\nFailed to add user"
+			exit(1)
 	
 if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
 else:
-	interfaceControl.setPowerStatus(True)
+#	interfaceControl.setPowerStatus(True)
 	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 	(nfcID, err) = proc.communicate()
 	nfcID = nfcID.strip()
-	interfaceControl.setPowerStatus(False)
+#	interfaceControl.setPowerStatus(False)
 	
-autoSteal = len(sys.argv) >= 4 and sys.argv[3] == 'steal':
+autoSteal = (len(sys.argv) >= 4 and sys.argv[3] == 'steal')
 if userID != "" and nfcID != "":
 	# @TODO: catch duplicate key error, exit with error status
 	backend.enroll(nfcID, userID, autoSteal)
 
+	print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
 
-interfaceControl.cleanup()
+
+#interfaceControl.cleanup()
