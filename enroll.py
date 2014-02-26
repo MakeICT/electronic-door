@@ -11,6 +11,7 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 
 @TODO: use POSIX command line arguments for non-interactive mode
+@TODO: define error status codes here (duplicate key error)
 '''
 
 import sys
@@ -59,5 +60,4 @@ if userID != "" and nfcID != "":
 
 	print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
 
-
-#interfaceControl.cleanup()
+interfaceControl.cleanup()
