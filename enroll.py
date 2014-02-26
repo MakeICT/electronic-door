@@ -15,6 +15,7 @@ import sys
 import subprocess
 
 from backend import backend
+from rpi import interfaceControl
 
 if len(sys.argv) > 1:
 	userID = sys.argv[1]
@@ -38,14 +39,16 @@ else:
 if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
 else:
-	# @TODO: set LED states
+	interfaceControl.setPowerStatus(True)
 	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 	(nfcID, err) = proc.communicate()
 	nfcID = nfcID.strip()
-	# @TODO: set LED states
+	interfaceControl.setPowerStatus(False)
 	
 autoSteal = len(sys.argv) >= 4 and sys.argv[3] == 'steal':
 if userID != "" and nfcID != "":
 	# @TODO: catch duplicate key error, exit with error status
 	backend.enroll(nfcID, userID, autoSteal)
 
+
+interfaceControl.cleanup()

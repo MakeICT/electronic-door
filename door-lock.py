@@ -11,43 +11,28 @@ Authors:
 '''
 
 import subprocess, time
-import RPi.GPIO as GPIO
 
 from backend import backend
+from rpi import interfaceControl
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(25, GPIO.OUT)
-
+# @TODO: add graceful exit from signal
 while True:
+	interfaceControl.setPowerStatus(True)
 	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 	(nfcID, err) = proc.communicate()
 	nfcID = nfcID.strip()
+	interfaceControl.setPowerStatus(False)
 
 	if nfcID != "":
 		print "ID:", nfcID, "=",
 		user = backend.getUserFromKey(nfcID)	
 		if user != None:
 			print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
-
-			# @TODO: pull pin HIGH to un-latch door
-			# @TODO: set LED states
-			GPIO.output(25, True);
-			time.sleep(2)
-			GPIO.output(25, False);
+			interfaceControl.unlockDoor()
 		else:
 			print "DENIED"
-
-			# @TODO: set LED states
-			GPIO.output(25, True);
-			time.sleep(.25)
-			GPIO.output(25, False);
-			time.sleep(.25)
-			GPIO.output(25, True);
-			time.sleep(.25)
-			GPIO.output(25, False);
+			interfaceControl.showBadCardRead()
 
 	time.sleep(1)
 
-GPIO.cleanup()
-
+interfaceControl.cleanup()
