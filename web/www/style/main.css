@@ -1,0 +1,16 @@
+table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+input[type=text], 
+input[type=submit] {
+	width: 100%;
+}
+
+td, th {
+	padding-left: 0.25em;
+	padding-right: 0.25em;
+
+	border: 1px solid #000;
+}

@@ -4,7 +4,7 @@
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
 enroll.py: Enrolls a user
-Usage: enroll.py userID [rfid]
+Usage: enroll.py [userID [rfid]]
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
@@ -12,6 +12,7 @@ Authors:
 
 @TODO: use POSIX command line arguments for non-interactive mode
 @TODO: define error status codes here (duplicate key error)
+@TODO: kill unlocker if running and restart it when done
 '''
 
 import sys
