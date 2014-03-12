@@ -19,11 +19,6 @@ CREATE TABLE IF NOT EXISTS users (
 	UNIQUE(email)
 ) ENGINE=INNODB;
 
-CREATE TABLE IF NOT EXISTS admins (
-	userID INT PRIMARY KEY,
-	FOREIGN KEY(userID) REFERENCES users(userID)
-) ENGINE=INNODB;
-
 CREATE TABLE IF NOT EXISTS rfids (
 	rfidID INT PRIMARY KEY AUTO_INCREMENT,
 	id VARCHAR(256) UNIQUE,
@@ -41,9 +36,40 @@ CREATE TABLE IF NOT EXISTS logs (
 	FOREIGN KEY(userID) REFERENCES users(userID)
 ) ENGINE=INNODB;
 
+CREATE TABLE IF NOT EXISTS tags (
+	tagID INT PRIMARY KEY AUTO_INCREMENT,
+	tag VARCHAR(32)
+) ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS userTags (
+	tagID INT NOT NULL,
+	userID INT NOT NULL,
+	PRIMARY KEY (tagID, userID),
+	FOREIGN KEY(tagID) REFERENCES tags(tagID),
+	FOREIGN KEY(userID) REFERENCES users(userID)
+) ENGINE=INNODB;
+
+
 GRANT USAGE ON *.* TO 'MakeICTDBUser'@'localhost'; DROP USER 'MakeICTDBUser'@'localhost';
 CREATE USER 'MakeICTDBUser'@'localhost' IDENTIFIED BY '2879fd3b0793d7972cbf7647bc1e62a4';
 GRANT ALL PRIVILEGES ON MakeICTMemberKeys.* TO MakeICTDBUser;
 
-INSERT INTO users (firstName, lastName, email, passwordHash) VALUES ('admin', 'admin', 'admin', 'admin');
-INSERT INTO admins (userID) VALUES ((SELECT userID FROM users WHERE email='admin'));
+INSERT INTO tags (tag) VALUES
+	('admin'),
+	('makeict'),
+	('bluebird');
+	
+INSERT INTO users (firstName, lastName, email, passwordHash, status) VALUES ('admin', 'admin', 'admin', 'admin', 'active');
+INSERT INTO userTags (userID, tagID) VALUES
+	(
+		(SELECT userID FROM users WHERE email = 'admin'),
+		(SELECT tagID FROM tags WHERE tag = 'admin')
+	),
+	(
+		(SELECT userID FROM users WHERE email = 'admin'),
+		(SELECT tagID FROM tags WHERE tag = 'bluebird')
+	),
+	(
+		(SELECT userID FROM users WHERE email = 'admin'),
+		(SELECT tagID FROM tags WHERE tag = 'makeict')
+	);

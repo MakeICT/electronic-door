@@ -11,24 +11,28 @@
 	 
 	require_once('../include/config.php');
 	require_once('../include/Backend.php');
-	require_once('../include/BasicTemplate.php');
+	$backend = Backend::instance();
 
 	function enrollmentIsRunning(){
-		$output = shell_exec('ps -aux | grep enroll.py | grep -v grep');
+		$output = shell_exec('ps aux | grep enroll.py | grep -v grep');
 		return !empty($output);
 	}
-	
-	$template = new BasicTemplate(file_get_contents('template.html'));
-	$template->bufferStart();
 
-	$backend = Backend::instance();
-	$waitingForSwipe = enrollmentIsRunning();
-
-	if(!empty($_POST)){
-		if($_POST['action'] == 'Add User'){
+	if(!empty($_REQUEST)){
+		if($_REQUEST['action'] == 'dropUserTag'){
 			try{
-				$backend->addUser($_POST['email'], $_POST['firstName'], $_POST['lastName']);
-				$_SESSION['messages'][] = "Added $_POST[firstName] $_POST[lastName]";
+				$backend->dropUserTag($_REQUEST['email'], $_REQUEST['tag']);
+				echo '0';
+			}catch(Exception $exc){
+				trigger_error($exc);
+				echo $exc->getMessage();
+			}
+			
+			exit();
+		}elseif($_REQUEST['action'] == 'Add User'){
+			try{
+				$backend->addUser($_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName']);
+				$_SESSION['messages'][] = "Added $_REQUEST[firstName] $_REQUEST[lastName]";
 				
 				header("Location: $_SERVER[PHP_SELF]");
 				exit();
@@ -36,9 +40,9 @@
 				trigger_error($exc);
 				$_SESSION['errors'][] = $exc->getMessage();
 			}
-		}elseif($_POST['action'] == 'Enroll'){
+		}elseif($_REQUEST['action'] == 'Enroll'){
 			try{
-				$user = $backend->getUserFromEmail($_POST['email']);
+				$user = $backend->getUserFromEmail($_REQUEST['email']);
 				if(empty($user)){
 					throw new Exception("Could not locate user with email '$email'");
 				}
@@ -53,7 +57,7 @@
 				trigger_error($exc);
 				$_SESSION['errors'][] = $exc->getMessage();
 			}
-		}elseif($_POST['action'] == 'Cancel Enrollment'){
+		}elseif($_REQUEST['action'] == 'Cancel Enrollment'){
 			if($waitingForSwipe){
 				shell_exec("killall -9 nfc-read");
 				
@@ -66,6 +70,16 @@
 		}
 	}
 
+	require_once('../include/BasicTemplate.php');
+	$template = new BasicTemplate(
+		file_get_contents('template.html'),
+		'User Administration',
+		'style/users.css',
+		'script/users.js'
+	);
+	$template->bufferStart();
+
+	$waitingForSwipe = enrollmentIsRunning();
 	if($waitingForSwipe){
 		$swipeUser = shell_exec("head -n 1 /tmp/enrollmentStatus");
 		echo "
@@ -111,15 +125,24 @@
 				<table>
 					<thead>
 						<tr>
+							<th>Tags</th>
 							<th>Last Name</th>
 							<th>First Name</th>
 							<th>Email</th>
 							<th>Status</th>
-							<th colspan='3'>&nbsp;</th>
+							<th colspan='3'>Actions</th>
 						</tr>
 					</thead>
 					<tbody>";
 	foreach($users as $user){
+		$tags = $backend->getUserTags($user['email']);
+		$tagHTML = "<div class='userTags' title='$user[email]'>";
+		foreach($tags as $tag){
+			$tag = $tag['tag'];
+			$tagHTML .= "<div title='$tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
+		}
+		$tagHTML .= "</div>";
+		
 		if($waitingForSwipe){
 			$enrollDisabled = "disabled='true' title='Enrollment in progress'";
 		}else{
@@ -127,6 +150,7 @@
 		}
 		echo "
 						<tr>
+							<td>$tagHTML</td>
 							<td>$user[lastName]</td>
 							<td>$user[firstName]</td>
 							<td>$user[email]</td>

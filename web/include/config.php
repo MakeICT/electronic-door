@@ -1,4 +1,13 @@
 <?php
+	/**
+	 * MakeICT/Bluebird Arthouse Electronic Door Entry
+	 *
+	 * config.php - configuration settings and convenience functions
+	 *
+	 * Authors:
+	 * 	Dominic Canare <dom@greenlightgo.org>
+	 * 	Rye Kennedy <ryekennedy@gmail.com>
+	 **/
 
 require_once("DatabaseClient.php");
 
@@ -15,6 +24,14 @@ function getFormattedErrors(){
 	return getFormattedMessages('errors', 'error');
 }
 
+
+function indexBy($arr, $field){
+	$output = [];
+	for($i=0; $i<count($arr); $i++){
+		$output[$arr[$i][$field]] = $arr[$i];
+	}
+	return $output;
+}
 
 
 session_start();

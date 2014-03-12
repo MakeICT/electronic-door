@@ -1,0 +1,14 @@
+.userTags div {
+	position: relative;
+	width: 20px;
+	display: inline;
+	float: left;
+	cursor: pointer;
+}
+
+.tagRemoveIcon {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	display: none;
+}

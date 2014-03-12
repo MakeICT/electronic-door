@@ -1,4 +1,13 @@
 <?php
+	/**
+	 * MakeICT/Bluebird Arthouse Electronic Door Entry
+	 *
+	 * Backend.php - Data storage functions
+	 *
+	 * Authors:
+	 * 	Dominic Canare <dom@greenlightgo.org>
+	 * 	Rye Kennedy <ryekennedy@gmail.com>
+	 **/
 
 require_once('config.php');
 
@@ -22,6 +31,42 @@ class Backend {
 	public function getUsers(){
 		$sql = 'SELECT * FROM users ORDER BY lastName, firstName';
 		return $this->db->query($sql)->fetchAll();
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
+	public function getUserTags($email){
+		$sql = '
+			SELECT * FROM tags
+				JOIN userTags ON tags.tagID = userTags.tagID
+				JOIN users ON userTags.userID = users.userID
+			WHERE users.email = ?';
+		return $this->db->query($sql, $email)->fetchAll();
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
+	public function dropUserTag($email, $tag){
+		$sql = '
+			DELETE FROM userTags
+			WHERE userID = (SELECT userID FROM users WHERE email = ?)
+				AND tagID = (SELECT tagID FROM tags WHERE tag = ?)';
+		$this->db->query($sql, $email, $tag);
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
+	public function addUserTag($email, $tag){
+		$sql = '
+			INSERT INTO userTags (userID, tagID)
+			VALUES (
+				(SELECT userID FROM users WHERE email = ?)
+				(SELECT tagID FROM tags WHERE tag = ?)
+			)';
+		$this->db->query($sql, $email, $tag);
 	}
 
 	/**
