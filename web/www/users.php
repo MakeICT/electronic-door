@@ -8,6 +8,8 @@
 	 * 	Dominic Canare <dom@greenlightgo.org>
 	 * 	Rye Kennedy <ryekennedy@gmail.com>
 	 **/
+
+	// @TODO: Require (admin) login
 	 
 	require_once('../include/config.php');
 	require_once('../include/Backend.php');

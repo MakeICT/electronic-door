@@ -56,11 +56,13 @@ class Backend {
 	 * @TODO: document this
 	 **/
 	public function dropUserTag($email, $tag){
+		// @TODO: don't allow user to remove admin tag from self (could create a no admin condition)
 		$sql = '
 			DELETE FROM userTags
 			WHERE userID = (SELECT userID FROM users WHERE email = ?)
 				AND tagID = (SELECT tagID FROM tags WHERE tag = ?)';
 		$this->db->query($sql, $email, $tag);
+		// @TODO: log this action
 	}
 
 	/**
@@ -74,6 +76,7 @@ class Backend {
 				(SELECT tagID FROM tags WHERE tag = ?)
 			)';
 		$this->db->query($sql, $email, $tag);
+		// @TODO: log this action
 	}
 
 	/**
