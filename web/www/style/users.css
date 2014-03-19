@@ -1,8 +1,7 @@
-.userTags div {
+.tagContainer div {
 	position: relative;
 	width: 20px;
 	display: inline;
-	float: left;
 	cursor: pointer;
 }
 
@@ -11,4 +10,15 @@
 	top: 0px;
 	right: 0px;
 	display: none;
+}
+
+.tagAdder {
+	float: right !important;
+	margin-left: 0.2em;
+	margin-right: 0.2em;
+}
+
+.unusedTagsBox {
+	clear: left;
+	border: 1px solid #f00;
 }

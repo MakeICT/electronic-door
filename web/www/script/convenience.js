@@ -164,3 +164,15 @@ function Ajax(request, okCallback, asynch, errorCallback, updateCallback){
 	this.httpRequest.open('GET', request, asynch);
 	this.httpRequest.send(null);
 }
+
+function simpleAjax(request){
+	var response;
+	var ajax = new Ajax(
+		request,
+		function(request){
+			response = request.responseText;
+		},
+		false
+	);
+	return response;
+}

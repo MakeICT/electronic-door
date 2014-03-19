@@ -29,6 +29,20 @@
 			}
 			
 			exit();
+		}elseif($_REQUEST['action'] == 'getTags'){
+			$tags = $backend->getAllTags();
+			echo json_encode($tags);
+			exit();
+		}elseif($_REQUEST['action'] == 'addUserTag'){
+			try{
+				$backend->addUserTag($_REQUEST['email'], $_REQUEST['tag']);
+				echo '0';
+			}catch(Exception $exc){
+				trigger_error($exc);
+				echo $exc->getMessage();
+			}
+			
+			exit();
 		}elseif($_REQUEST['action'] == 'Add User'){
 			try{
 				$backend->addUser($_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName']);
@@ -135,11 +149,20 @@
 					</thead>
 					<tbody>";
 	foreach($users as $user){
-		$tags = $backend->getUserTags($user['email']);
-		$tagHTML = "<div class='userTags' title='$user[email]'>";
-		foreach($tags as $tag){
+		$tags = indexBy($backend->getUserTags($user['email']), 'tagID');
+		$allTags = indexBy($backend->getAllTags(), 'tagID');
+		$tagHTML = "<div class='tagContainer userTags' title='$user[email]'>";
+		foreach($tags as $tagID=>$tag){
 			$tag = $tag['tag'];
 			$tagHTML .= "<div title='$tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
+			unset($allTags[$tagID]);
+		}
+		$tagHTML .= "</div>";
+		$tagHTML .= "<div class='tagContainer unusedTagsBox' title='$user[email]'>";
+		foreach($allTags as $tagID=>$tag){
+			$tag = $tag['tag'];
+			$tagHTML .= "<div title='$tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
+			unset($allTags[$tagID]);
 		}
 		$tagHTML .= "</div>";
 		

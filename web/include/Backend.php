@@ -48,6 +48,13 @@ class Backend {
 	/**
 	 * @TODO: document this
 	 **/
+	public function getAllTags(){
+		return $this->db->query('SELECT * FROM tags ORDER BY tag')->fetchAll();
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
 	public function dropUserTag($email, $tag){
 		$sql = '
 			DELETE FROM userTags
@@ -63,7 +70,7 @@ class Backend {
 		$sql = '
 			INSERT INTO userTags (userID, tagID)
 			VALUES (
-				(SELECT userID FROM users WHERE email = ?)
+				(SELECT userID FROM users WHERE email = ?),
 				(SELECT tagID FROM tags WHERE tag = ?)
 			)';
 		$this->db->query($sql, $email, $tag);
