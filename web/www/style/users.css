@@ -1,14 +1,26 @@
-.tagContainer div {
+td {
+	vertical-align: top;
+}
+
+.tagCell {
+	padding: 0;
+}
+
+.tagContainer {
+	padding: 0.25em;
+}
+
+.tag {
 	position: relative;
 	width: 20px;
 	display: inline;
 	cursor: pointer;
 }
 
-.tagRemoveIcon {
+.tagHoverIcon {
 	position: absolute;
-	top: 0px;
-	right: 0px;
+	top: -7px;
+	right: -2px;
 	display: none;
 }
 
@@ -18,7 +30,23 @@
 	margin-right: 0.2em;
 }
 
+.toggleButton {
+	float: right;
+	height: 27px;
+	padding: 3px;
+	cursor: pointer;
+}
+
 .unusedTagsBox {
-	clear: left;
-	border: 1px solid #f00;
+	clear: both;
+	border-top: 2px solid #777;
+	background-color: #ddd;
+	padding: 2px;
+	margin: 0;
+	font-style: italic;
+}
+.unusedTagsBox .text {
+	text-align: center;
+	height: 18px;
+	padding: 3px;
 }

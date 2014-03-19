@@ -154,14 +154,14 @@
 		$tagHTML = "<div class='tagContainer userTags' title='$user[email]'>";
 		foreach($tags as $tagID=>$tag){
 			$tag = $tag['tag'];
-			$tagHTML .= "<div title='$tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
+			$tagHTML .= "<div title='$tag' class='tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
 			unset($allTags[$tagID]);
 		}
 		$tagHTML .= "</div>";
 		$tagHTML .= "<div class='tagContainer unusedTagsBox' title='$user[email]'>";
 		foreach($allTags as $tagID=>$tag){
 			$tag = $tag['tag'];
-			$tagHTML .= "<div title='$tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
+			$tagHTML .= "<div title='$tag' class='tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
 			unset($allTags[$tagID]);
 		}
 		$tagHTML .= "</div>";
@@ -173,7 +173,7 @@
 		}
 		echo "
 						<tr>
-							<td>$tagHTML</td>
+							<td class='tagCell'>$tagHTML</td>
 							<td>$user[lastName]</td>
 							<td>$user[firstName]</td>
 							<td>$user[email]</td>
