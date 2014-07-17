@@ -13,6 +13,13 @@
 	 
 	require_once('../include/config.php');
 	require_once('../include/Backend.php');
+
+	if(empty($_SESSION["userID"])){
+		$_SESSION['redirectLocation'] = 'users.php';
+		header("Location: login.php");
+		exit();
+	}
+	
 	$backend = Backend::instance();
 
 	function enrollmentIsRunning(){

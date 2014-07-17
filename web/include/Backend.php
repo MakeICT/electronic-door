@@ -38,11 +38,16 @@ class Backend {
 	 **/
 	public function getUserTags($email){
 		$sql = '
-			SELECT * FROM tags
+			SELECT tags.* FROM tags
 				JOIN userTags ON tags.tagID = userTags.tagID
 				JOIN users ON userTags.userID = users.userID
 			WHERE users.email = ?';
-		return $this->db->query($sql, $email)->fetchAll();
+		$tagRecords = $this->db->query($sql, $email)->fetchAll();
+		$tags = [];
+		foreach($tagRecords as $tagRecord){
+			$tags[] = $tagRecord['tag'];
+		}
+		return $tags;
 	}
 
 	/**
@@ -119,6 +124,33 @@ class Backend {
 		}catch(Exception $exc){
 			$this->rollback();
 		}
+	}
+
+	/**
+	 * @TODO: Document this
+	 * @returns false if fail, userID if pass
+	 **/
+	public function authenticate($login, $password){
+		$users = $this->getUsers();
+		$users = indexBy($users, 'email');
+		
+		if(!empty($users[$login])){
+			//trigger_error(print_r($users, true));
+			// @TODO: hash the password before comparison (when hashes are stored) 
+			if($users[$login]['passwordHash'] == $password){
+				$tags = $this->getUserTags($login);
+				print_r($tags);
+				if(in_array('admin', $tags)){
+					return $users[$login]['userID'];
+				}
+			}else{
+				trigger_error("Bad password $password " . $users[$login]['passwordHash']);
+			}
+		}else{
+			trigger_error("User not found");
+		}
+
+		return false;
 	}
 
 	public function log($logType, $rfid=null, $userID=null, $message=null){
