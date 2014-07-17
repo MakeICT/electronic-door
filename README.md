@@ -9,3 +9,12 @@
 This is a work in progress. For more information, please visit the [MakeICT Wiki](http://makeict.org/wiki/index.php/Electronic_Door_Entry).
 
 * * *
+
+## TODO
+* Documentation
+* (form) Authenticate administrative users
+* (form) Edit user
+* Password salt+hash
+* Log viewer
+* Test
+
