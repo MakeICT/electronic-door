@@ -23,6 +23,7 @@
 			$_SESSION['userID'] = $userID;
 			trigger_error("Login good, redirecting to $_SESSION[redirectLocation]");
 			header("Location: /$_SESSION[redirectLocation]");
+			unset($_SESSION['redirectLocation']);
 			exit();
 		}{
 			trigger_error("Bad Login");

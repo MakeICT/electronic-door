@@ -43,7 +43,7 @@ class Backend {
 				JOIN users ON userTags.userID = users.userID
 			WHERE users.email = ?';
 		$tagRecords = $this->db->query($sql, $email)->fetchAll();
-		$tags = [];
+		$tags = array();
 		foreach($tagRecords as $tagRecord){
 			$tags[] = $tagRecord['tag'];
 		}
@@ -94,7 +94,8 @@ class Backend {
 			$sql = 'INSERT INTO users (firstName, lastName, email) VALUES (?, ?, ?)';
 			$this->db->query($sql, $firstName, $lastName, $email);
 
-			$userID = $this->getUserFromEmail($email)['userID'];
+			$userID = $this->getUserFromEmail($email);
+			  $userID = $userID['userID'];
 
 			$this->log('message', null, $userID, 'User created');
 			$this->db->commit();
@@ -110,7 +111,8 @@ class Backend {
 	public function enrollUser($email, $nfcID){
 		$this->db->beginTransaction();
 		try{
-			$userID = $this->getUserFromEmail($email)['userID'];
+		  $userID = $this->getUserFromEmail($email);
+		  $userID = $userID['userID'];
 			
 			$sql = '
 				INSERT INTO rfids (id, userID) VALUES (:nfcID, :userID)
