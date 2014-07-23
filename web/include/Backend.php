@@ -34,7 +34,9 @@ class Backend {
 	}
 
 	/**
-	 * @TODO: document this
+	 * Get's tags for a user
+	 * @param	$email	the user's email address
+	 * @return	an array of tags associated with this user
 	 **/
 	public function getUserTags($email){
 		$sql = '
