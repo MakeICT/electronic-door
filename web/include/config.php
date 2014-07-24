@@ -14,10 +14,14 @@ require_once("DatabaseClient.php");
 class UserException extends Exception{}
 
 function getFormattedMessages($type='messages', $class='message'){
+	if(empty($_SESSION[$type])) return '';
+	
 	$before = "<div class='$class'>";
 	$after = '</div>';
 	$output = $before . implode("$after$before", $_SESSION[$type]) . $after;
 	$_SESSION[$type] = array();
+
+	return $output;
 }
 
 function getFormattedErrors(){

@@ -1,11 +1,21 @@
 table {
 	border-collapse: collapse;
-	width: 100%;
 }
 
-input[type=text], 
-input[type=submit] {
-	width: 100%;
+.message, .error {
+	font-weight: bold;
+	padding: 0.25em;
+	margin-bottom: 1em;
+}
+
+.message {
+	border: 3px solid #aa0;
+	background-color: #ff7;
+}
+
+.error {
+	border: 3px solid #f00;
+	background-color: #f77;
 }
 
 td, th {
@@ -13,4 +23,12 @@ td, th {
 	padding-right: 0.25em;
 
 	border: 1px solid #000;
+}
+
+th {
+	background-color: #ccc;
+}
+
+tr.evenRow {
+	background-color: #eee;
 }

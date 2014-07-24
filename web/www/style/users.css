@@ -50,3 +50,7 @@ td {
 	height: 18px;
 	padding: 3px;
 }
+
+.tagCell {
+	width: 10em;
+}

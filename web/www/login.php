@@ -21,37 +21,44 @@
 		$userID = $backend->authenticate($_POST['login'], $_POST['password']);
 		if($userID){
 			$_SESSION['userID'] = $userID;
-			trigger_error("Login good, redirecting to $_SESSION[redirectLocation]");
-			header("Location: /$_SESSION[redirectLocation]");
-			unset($_SESSION['redirectLocation']);
-			exit();
-		}{
-			trigger_error("Bad Login");
-			$error = "Bad login";
+			if(!empty($_SESSION['redirectLocation'])){
+				header("refresh: 2; $_SESSION[redirectLocation]");
+				$_SESSION['messages'][] = "Login OK, you are now being redirected to the <a href='$_SESSION[redirectLocation]'>requested resource</a>...";
+				unset($_SESSION['redirectLocation']);
+			}else{
+				header("refresh: 2; /");
+				$_SESSION['messages'][] = "Login OK, you are now being redirected to the <a href='/'>home page</a>...";
+				unset($_SESSION['redirectLocation']);
+			}
+		}else{
+			$_SESSION['errors'][] = "Bad login";
 		}
+	}
+	if(!empty($_SESSION['redirectLocation'])){
+		$_SESSION['messages'][] = "You must login to access <a title='$_SESSION[redirectLocation]'>that resource</a>.";
 	}
 
 	require_once('../include/BasicTemplate.php');
-	$template = new BasicTemplate(
-		file_get_contents('template.html'),
-		'Login Page'
-	);
-	
+	$template = new BasicTemplate(file_get_contents('template.html'), 'Login Page');
 	$template->bufferStart();
 
-	if(!empty($_POST)){
-		echo $_POST['login'] . "<br/>" . $_POST['password'];
-	}
-
-	if(!empty($error)){
-		echo $error;
-	}
+	echo getFormattedErrors();
+	echo getFormattedMessages();
 ?>
 
-<form method="post">
-	<input name="login" type="text"/>
-	<input name="password" type="password" />
-	<input type="submit" value="Login" />
-</form>
-
-<?php $template->bufferStop('PAGE_CONTENT'); ?>
+				<form method="post">
+					<table style="width: auto; margin: auto;">
+						<tr>
+							<th>Email</th>
+							<td><input name="login" type="text"/></td>
+						</tr><tr>
+							<th>Password</th>
+							<td><input name="password" type="password" /></td>
+						</tr>
+						<tr>
+							<th colspan="2"><input type="submit" value="Login" /></th>
+						</tr>
+					</table>
+				</form>
+				
+<?php $template->bufferStop('PAGE_CONTENT');

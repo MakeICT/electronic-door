@@ -134,7 +134,7 @@
 								<td><input type="text" name="email" /></td>
 							</tr>
 							<tr>
-								<td colspan="3"><input name='action' type="submit" value="Add User" /></td>
+								<th colspan="3"><input name='action' type="submit" value="Add User" /></th>
 						</tbody>
 					</table>
 				</form>
@@ -157,7 +157,10 @@
 						</tr>
 					</thead>
 					<tbody>";
+
+	$count = 0;
 	foreach($users as $user){
+		$count++;
 		$tags = $backend->getUserTags($user['email']);
 		$allTags = $backend->getAllTags();
 		
@@ -178,8 +181,10 @@
 		}else{
 			$enrollDisabled = '';
 		}
+
+		$rowClass = ($count % 2 == 0) ? 'evenRow' : 'oddRow';
 		echo "
-						<tr>
+						<tr class='$rowClass'>
 							<td class='tagCell'>$tagHTML</td>
 							<td>$user[lastName]</td>
 							<td>$user[firstName]</td>
