@@ -158,20 +158,18 @@
 					</thead>
 					<tbody>";
 	foreach($users as $user){
-		$tags = indexBy($backend->getUserTags($user['email']), 'tagID');
-		$allTags = indexBy($backend->getAllTags(), 'tagID');
+		$tags = $backend->getUserTags($user['email']);
+		$allTags = $backend->getAllTags();
+		
 		$tagHTML = "<div class='tagContainer userTags' title='$user[email]'>";
-		foreach($tags as $tagID=>$tag){
-			$tag = $tag['tag'];
+		foreach($tags as $tag){
 			$tagHTML .= "<div title='$tag' class='tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
-			unset($allTags[$tagID]);
+			unset($allTags[array_search($tag, $allTags)]);
 		}
 		$tagHTML .= "</div>";
 		$tagHTML .= "<div class='tagContainer unusedTagsBox' title='$user[email]'>";
-		foreach($allTags as $tagID=>$tag){
-			$tag = $tag['tag'];
+		foreach($allTags as $tag){
 			$tagHTML .= "<div title='$tag' class='tag'><img src='images/tags/$tag.png' alt='$tag' width='20' height='20' /></div>";
-			unset($allTags[$tagID]);
 		}
 		$tagHTML .= "</div>";
 		

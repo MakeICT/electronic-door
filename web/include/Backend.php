@@ -36,7 +36,7 @@ class Backend {
 	/**
 	 * Get's tags for a user
 	 * @param	$email	the user's email address
-	 * @return	an array of tags associated with this user
+	 * @return	an associative array of tags associated with this user, indexed by tagID
 	 **/
 	public function getUserTags($email){
 		$sql = '
@@ -45,10 +45,12 @@ class Backend {
 				JOIN users ON userTags.userID = users.userID
 			WHERE users.email = ?';
 		$tagRecords = $this->db->query($sql, $email)->fetchAll();
+
 		$tags = array();
 		foreach($tagRecords as $tagRecord){
 			$tags[] = $tagRecord['tag'];
 		}
+
 		return $tags;
 	}
 
@@ -56,7 +58,13 @@ class Backend {
 	 * @TODO: document this
 	 **/
 	public function getAllTags(){
-		return $this->db->query('SELECT * FROM tags ORDER BY tag')->fetchAll();
+		$recordSet = $this->db->query('SELECT * FROM tags ORDER BY tag')->fetchAll();
+
+		$tags = array();
+		foreach($recordSet as $tagRecord){
+			$tags[] = $tagRecord['tag'];
+		}
+		return $tags;
 	}
 
 	/**
@@ -90,14 +98,14 @@ class Backend {
 	 * @TODO: document this
 	 * @return boolean - true on success, false on error
 	 **/
-	public function addUser($email, $firstName, $lastName){
+	public function addUser($email, $firstName, $lastName, $password=null){
 		$this->db->beginTransaction();
 		try{
-			$sql = 'INSERT INTO users (firstName, lastName, email) VALUES (?, ?, ?)';
-			$this->db->query($sql, $firstName, $lastName, $email);
+			$sql = 'INSERT INTO users (firstName, lastName, email, passwordHash) VALUES (?, ?, ?, ?)';
+			$this->db->query($sql, $firstName, $lastName, $email, crypt($password));
 
-			$userID = $this->getUserFromEmail($email);
-			  $userID = $userID['userID'];
+			$user = $this->getUserFromEmail($email);
+			$userID = $user['userID'];
 
 			$this->log('message', null, $userID, 'User created');
 			$this->db->commit();
@@ -105,6 +113,30 @@ class Backend {
 			trigger_error($exc);
 			$this->db->rollback();
 		}
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
+	public function updateUser($userID, $email, $firstName, $lastName, $password=null){
+		$this->db->beginTransaction();
+		try{
+			$sql = '
+				UPDATE users SET
+					email=?, firstName=?, lastName=?, password=?
+				WHERE userID = ?';
+			$this->db->query($sql, $email, $firstName, $lastName, crypt($password), $userID);
+
+			$this->log('message', null, $userID, 'User updated');
+			$this->db->commit();
+			
+			return true;
+		}catch(Exception $exc){
+			trigger_error($exc);
+			$this->db->rollback();
+		}
+
+		return false;
 	}
 
 	/**
@@ -134,21 +166,19 @@ class Backend {
 	 * @TODO: Document this
 	 * @returns false if fail, userID if pass
 	 **/
-	public function authenticate($login, $password){
+	public function authenticate($login, $attemptedPassword){
 		$users = $this->getUsers();
 		$users = indexBy($users, 'email');
 		
 		if(!empty($users[$login])){
-			//trigger_error(print_r($users, true));
-			// @TODO: hash the password before comparison (when hashes are stored) 
-			if($users[$login]['passwordHash'] == $password){
+			$realPassword = $users[$login]['passwordHash'];
+			if($realPassword == crypt($attemptedPassword, $realPassword)){
 				$tags = $this->getUserTags($login);
-				print_r($tags);
 				if(in_array('admin', $tags)){
 					return $users[$login]['userID'];
 				}
 			}else{
-				trigger_error("Bad password $password " . $users[$login]['passwordHash']);
+				trigger_error("Bad password $attemptedPassword");
 			}
 		}else{
 			trigger_error("User not found");

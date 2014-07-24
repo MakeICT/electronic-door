@@ -59,7 +59,7 @@ INSERT INTO tags (tag) VALUES
 	('makeict'),
 	('bluebird');
 	
-INSERT INTO users (firstName, lastName, email, passwordHash, status) VALUES ('admin', 'admin', 'admin', 'admin', 'active');
+INSERT INTO users (firstName, lastName, email, status, passwordHash) VALUES ('admin', 'admin', 'admin', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
 INSERT INTO userTags (userID, tagID) VALUES
 	(
 		(SELECT userID FROM users WHERE email = 'admin'),
