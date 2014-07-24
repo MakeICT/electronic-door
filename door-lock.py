@@ -15,6 +15,8 @@ import subprocess, time
 from backend import backend
 from rpi import interfaceControl
 
+lastDoorStatus = 0
+
 # @TODO: add graceful exit from signal
 while True:
 	interfaceControl.setPowerStatus(True)
@@ -22,6 +24,16 @@ while True:
 	(nfcID, err) = proc.communicate()
 	nfcID = nfcID.strip()
 	interfaceControl.setPowerStatus(False)
+	currentDoorStatus = interfaceControl.checkDoors()
+	if currentDoorStatus & 1 > lastDoorStatus & 1:
+		print "DOOR 1 OPEN"
+	elif currentDoorStatus & 1 < lastDoorStatus & 1:
+		print "DOOR 1 CLOSED"
+        if currentDoorStatus & 2 > lastDoorStatus & 2:
+                print "DOOR 2 OPEN"
+        elif currentDoorStatus & 2 < lastDoorStatus & 2:
+                print "DOOR 2 CLOSED"
+	lastDoorStatus = currentDoorStatus
 
 	if nfcID != "":
 		print "ID:", nfcID, "=",

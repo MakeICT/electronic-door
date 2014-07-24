@@ -31,8 +31,8 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
 		
-		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN)
-		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN)
+		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP
+		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		
 		GPIO.setwarnings(True)
 
@@ -42,6 +42,16 @@ class InterfaceControl(object):
 	def output(componentID, status):
 		GPIO.output(self.GPIOS[componentID], status)
 
+        def input(componentID):
+	'''
+	Read a GPIO pin set as an input
+
+	Returns:
+	True if pin is high
+	False if pin is low
+	'''
+                return GPIO.input(self.GPIOS[componentID])
+		
 	'''
 	@TODO: Document this method
 	'''
@@ -70,6 +80,24 @@ class InterfaceControl(object):
 		self.output('latch', False)
 		self.output('unlock_LED', False)
 		self.setBuzzerOn(False)
+
+        def checkDoors(self):
+	'''
+	Check the open/closed status of both doors. 
+
+	Returns:
+	0 if both closed
+	1 if door 1 is open
+	2 if door 2 is open
+	3 if both are open
+	'''
+
+#               Use this line for pull-up resistors
+                return self.input('doorStatus1') | self.input('doorStaus2')<<1
+#		Use this line for pull-down resistors
+#                return self.input('doorStatus1')^1 | (self.input('doorStaus2')^1)<<1
+
+
 
 	'''
 	@TODO: Document this method
