@@ -12,7 +12,8 @@ Authors:
 
 import subprocess, time
 
-from backend import backend
+#commented for testing: uncomment before pull request
+#from backend import backend
 from rpi import interfaceControl
 
 lastDoorStatus = 0
