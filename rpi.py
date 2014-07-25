@@ -37,7 +37,7 @@ class InterfaceControl(object):
 		#Set up Hardware PWM - Only works on GPIO 18
 		wiringpi2.wiringPiSetupGpio()  
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
-		wiringpi2.pwmSetClock(500)   			# set HW PWM clock division (frequency)
+		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
 		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -97,7 +97,7 @@ class InterfaceControl(object):
 			#self.buzzer.start(50)
 
 			#hardware PWM
-			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 50)    # 50% duty cycle
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
 		else:
 			#software PWM
 			#self.buzzer.stop()

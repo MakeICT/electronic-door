@@ -35,10 +35,10 @@ while True:
 			print "DOOR 1 CLOSED"
 			#test code: remove befor pull request
 			interfaceControl.setBuzzerOn(False)
-        	if currentDoorStatus & 2 > lastDoorStatus & 2:
-               	 	print "DOOR 2 OPEN"
-        	elif currentDoorStatus & 2 < lastDoorStatus & 2:
-                	print "DOOR 2 CLOSED"
+			if currentDoorStatus & 2 > lastDoorStatus & 2:
+				print "DOOR 2 OPEN"
+			elif currentDoorStatus & 2 < lastDoorStatus & 2:
+				print "DOOR 2 CLOSED"
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
