@@ -11,7 +11,6 @@ Authors:
 '''
 
 import RPi.GPIO as GPIO
-import wiringpi2
 import time
 
 class InterfaceControl(object):
@@ -20,7 +19,7 @@ class InterfaceControl(object):
 			'latch': 11,
 			'unlock_LED': 22,
 			'power_LED': 15,  #revert to 27 before pull request
-			'buzzer': 18,	  #revert to 10 before pull request
+			'buzzer': 10,	  
 			'doorStatus1': 4,
 			'doorStatus2': 17,
 		}
@@ -32,16 +31,12 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
 		
 		#Set up Software PWM
-		#GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
-
-		#Set up Hardware PWM - Only works on GPIO 18
-		wiringpi2.wiringPiSetupGpio()  
-		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
-		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
+		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
+		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 360)
 
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		
 		#For testing: remove before pull request
 		GPIO.setup(27, GPIO.OUT)
 		GPIO.output(27,False)
@@ -50,16 +45,6 @@ class InterfaceControl(object):
                 #end test code
 
 		GPIO.setwarnings(True)
-
-#		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 360)
-
-		#For testing: remove before pull request
-		GPIO.setup(27, GPIO.OUT)
-		GPIO.output(27,False)
-		GPIO.setup(23, GPIO.OUT)
-		GPIO.output(23,False)
-		#end test code
-
 
 
 	def output(self, componentID, status):
@@ -93,18 +78,9 @@ class InterfaceControl(object):
 		'''
 
 		if buzzerOn:
-			#software PWM
-			#self.buzzer.start(50)
-
-			#hardware PWM
-			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
+			self.buzzer.start(50)
 		else:
-			#software PWM
-			#self.buzzer.stop()
-
-			#hardware PWM
-			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
-
+			self.buzzer.stop()
 
 	def unlockDoor(self, timeout=2):
 		'''
@@ -155,7 +131,6 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)	#make sure PWM is off
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
