@@ -155,7 +155,7 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)	#make sure PWM is off
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()

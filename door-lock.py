@@ -10,7 +10,7 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import subprocess, time
+import subprocess, time, sys
 
 #commented for testing: uncomment before pull request
 #from backend import backend
@@ -20,36 +20,39 @@ lastDoorStatus = 0
 
 # @TODO: add graceful exit from signal
 while True:
-	interfaceControl.setPowerStatus(True)
-	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
-	(nfcID, err) = proc.communicate()
-	nfcID = nfcID.strip()
-	interfaceControl.setPowerStatus(False)
-	currentDoorStatus = interfaceControl.checkDoors()
-	if currentDoorStatus & 1 > lastDoorStatus & 1:
-		print "DOOR 1 OPEN"
-		#test code: remove before pull request
-		interfaceControl.setBuzzerOn(True)
-	elif currentDoorStatus & 1 < lastDoorStatus & 1:
-		print "DOOR 1 CLOSED"
-		#test code: remove befor pull request
-		interfaceControl.setBuzzerOn(False)
-        if currentDoorStatus & 2 > lastDoorStatus & 2:
-                print "DOOR 2 OPEN"
-        elif currentDoorStatus & 2 < lastDoorStatus & 2:
-                print "DOOR 2 CLOSED"
-	lastDoorStatus = currentDoorStatus
+	try:
+		interfaceControl.setPowerStatus(True)
+		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
+		(nfcID, err) = proc.communicate()
+		nfcID = nfcID.strip()
+		interfaceControl.setPowerStatus(False)
+		currentDoorStatus = interfaceControl.checkDoors()
+		if currentDoorStatus & 1 > lastDoorStatus & 1:
+			print "DOOR 1 OPEN"
+			#test code: remove before pull request
+			interfaceControl.setBuzzerOn(True)
+		elif currentDoorStatus & 1 < lastDoorStatus & 1:
+			print "DOOR 1 CLOSED"
+			#test code: remove befor pull request
+			interfaceControl.setBuzzerOn(False)
+        	if currentDoorStatus & 2 > lastDoorStatus & 2:
+               	 	print "DOOR 2 OPEN"
+        	elif currentDoorStatus & 2 < lastDoorStatus & 2:
+                	print "DOOR 2 CLOSED"
+		lastDoorStatus = currentDoorStatus
 
-	if nfcID != "":
-		print "ID:", nfcID, "=",
-		user = backend.getUserFromKey(nfcID)	
-		if user != None:
-			print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
-			interfaceControl.unlockDoor()
-		else:
-			print "DENIED"
-			interfaceControl.showBadCardRead()
+		if nfcID != "":
+			print "ID:", nfcID, "=",
+			user = backend.getUserFromKey(nfcID)	
+			if user != None:
+				print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+				interfaceControl.unlockDoor()
+			else:
+				print "DENIED"
+				interfaceControl.showBadCardRead()
 
-	time.sleep(1)
+		time.sleep(1)
 
-interfaceControl.cleanup()
+	except:
+		interfaceControl.cleanup()
+		sys.exit()
