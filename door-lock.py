@@ -27,6 +27,8 @@ while True:
 		nfcID = nfcID.strip()
 		interfaceControl.setPowerStatus(False)
 		currentDoorStatus = interfaceControl.checkDoors()
+		if currentDoorStatus != lastDoorStatus:	
+			print "Current door status: " , currentDoorStatus
 		if currentDoorStatus & 1 > lastDoorStatus & 1:
 			print "DOOR 1 OPEN"
 			#test code: remove before pull request
@@ -36,9 +38,9 @@ while True:
 			#test code: remove befor pull request
 			interfaceControl.setBuzzerOn(False)
 		if currentDoorStatus & 2 > lastDoorStatus & 2:
-				print "DOOR 2 OPEN"
+			print "DOOR 2 OPEN"
 		elif currentDoorStatus & 2 < lastDoorStatus & 2:
-				print "DOOR 2 CLOSED"
+			print "DOOR 2 CLOSED"
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
@@ -53,6 +55,6 @@ while True:
 
 		time.sleep(1)
 
-	except:
+	except KeyboardInterrupt:
 		interfaceControl.cleanup()
 		sys.exit()

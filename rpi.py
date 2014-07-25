@@ -36,8 +36,8 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 		#For testing: remove before pull request
-		GPIO.setup(27, GPIO.OUT)
-		GPIO.output(27,False)
+		GPIO.setup(18, GPIO.OUT)
+		GPIO.output(18,False)
 		GPIO.setup(23, GPIO.OUT)
 		GPIO.output(23,False)
                 #end test code
@@ -131,7 +131,6 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)	#make sure PWM is off
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
