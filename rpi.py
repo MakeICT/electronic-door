@@ -29,12 +29,16 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
-
+		
+		#Set up Hardware PWM - Only works on GPIO 18
+		wiringpi2.wiringPiSetupGpio()  
+		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
+		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
+		
 		#For testing: remove before pull request
 		GPIO.setup(18, GPIO.OUT)
 		GPIO.output(18,False)
@@ -43,6 +47,15 @@ class InterfaceControl(object):
                 #end test code
 
 		GPIO.setwarnings(True)
+
+		#For testing: remove before pull request
+		GPIO.setup(27, GPIO.OUT)
+		GPIO.output(27,False)
+		GPIO.setup(23, GPIO.OUT)
+		GPIO.output(23,False)
+		#end test code
+
+
 
 	def output(self, componentID, status):
 		GPIO.output(self.GPIOS[componentID], status)
@@ -75,11 +88,9 @@ class InterfaceControl(object):
 		'''
 
 		if buzzerOn:
-			# @TODO: PWM the buzzer
-			pass
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
 		else:
-			# @TODO: Turn off the buzzer
-			pass
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 
 
 	def unlockDoor(self, timeout=2):
