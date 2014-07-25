@@ -34,7 +34,7 @@ class InterfaceControl(object):
 		#Set up Software PWM
 		#GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
 
-		#Set up Hardware PWM - Only work on GPIO 18
+		#Set up Hardware PWM - Only works on GPIO 18
 		wiringpi2.wiringPiSetupGpio()  
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
 		wiringpi2.pwmSetClock(500)   			# set HW PWM clock division (frequency)
@@ -49,7 +49,6 @@ class InterfaceControl(object):
 		GPIO.output(23,False)
                 #end test code
 
-		
 		GPIO.setwarnings(True)
 
 #		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 360)
@@ -63,9 +62,6 @@ class InterfaceControl(object):
 
 
 
-	'''
-	@TODO: Document this metho
-	'''
 	def output(self, componentID, status):
 		GPIO.output(self.GPIOS[componentID], status)
 
@@ -78,23 +74,30 @@ class InterfaceControl(object):
 		False if pin is low
 		'''
 		return GPIO.input(self.GPIOS[componentID])
-		
-	'''
-	@TODO: Document this method
-	'''
+	
 	def setPowerStatus(self, powerIsOn):
+		'''
+		Set power LED state
+
+		Args:
+		powerIsOn -- True to turn on LED, False to turn off
+		'''
 		self.output('power_LED', powerIsOn)
 
-	'''
-	@TODO: Document this method
-	'''
 	def setBuzzerOn(self, buzzerOn):
+		'''
+		Set buzzer state
+
+		Args:
+		buzzerOn -- True to turn on buzzer, False to turn off
+		'''
+
 		if buzzerOn:
 			#software PWM
 			#self.buzzer.start(50)
 
 			#hardware PWM
-			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 50)    # duty cycle between 0 and 1024. 0 = off, 1024 = fully on
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 50)    # 50% duty cycle
 		else:
 			#software PWM
 			#self.buzzer.stop()
@@ -102,10 +105,14 @@ class InterfaceControl(object):
 			#hardware PWM
 			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 
-	'''
-	@TODO: Document this method
-	'''
+
 	def unlockDoor(self, timeout=2):
+		'''
+		Unlock door, activate unlock_LED and buzzer, and relock door after timeout
+
+		Args:
+		timeout -- length of time to keep the door unlocked (default 2)
+		'''
 		self.output('latch', True)
 		self.output('unlock_LED', True)
 		self.setBuzzerOn(True)
@@ -130,22 +137,25 @@ class InterfaceControl(object):
 #		Use this line for pull-down resistors
 #		return self.input('doorStatus1')^1 | (self.input('doorStaus2')^1)<<1
 
-
-
-	'''
-	@TODO: Document this method
-	'''
 	def showBadCardRead(self, blinkCount=3, blinkPeriod=0.25):
+		'''
+		Blink power_LED to indicate invalid card read
+
+		Args:
+		blinkCount -- number of time to blink (default 3)
+		blinkPeriod -- on/off duration in seconds (default 0.25)
+		'''
 		for i in range(blinkCount):
 			self.output('power_LED', True)
 			time.sleep(blinkPeriod)
 			self.output('power_LED', False)
 			time.sleep(blinkPeriod)
 
-	'''
-	@TODO: Document this method
-	'''
 	def cleanup(self):
+		'''
+		Reset status of GPIO pins before terminating
+		'''
+
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
