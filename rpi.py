@@ -11,6 +11,7 @@ Authors:
 '''
 
 import RPi.GPIO as GPIO
+import wiringpi2
 import time
 
 class InterfaceControl(object):
@@ -18,8 +19,8 @@ class InterfaceControl(object):
 		self.GPIOS = {
 			'latch': 11,
 			'unlock_LED': 22,
-			'power_LED': 27,
-			'buzzer': 10,
+			'power_LED': 15,  #revert to 27 before pull request
+			'buzzer': 18,	  #revert to 10 before pull request
 			'doorStatus1': 4,
 			'doorStatus2': 17,
 		}
@@ -29,16 +30,33 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
+		
+		#Set up Software PWM
+		#GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
+
+		#Set up Hardware PWM - Only work on GPIO 18
+		wiringpi2.wiringPiSetupGpio()  
+		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
+		wiringpi2.pwmSetClock(500)   			# set HW PWM clock division (frequency)
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		#For testing: remove before pull request
+		GPIO.setup(27, GPIO.OUT)
+		GPIO.output(27,False)
+		GPIO.setup(23, GPIO.OUT)
+		GPIO.output(23,False)
+                #end test code
+
 		
 		GPIO.setwarnings(True)
 
+#		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 360)
+
 		#For testing: remove before pull request
-		GPIO.setup(18, GPIO.OUT)
-		GPIO.output(18,False)
+		GPIO.setup(27, GPIO.OUT)
+		GPIO.output(27,False)
 		GPIO.setup(23, GPIO.OUT)
 		GPIO.output(23,False)
 		#end test code
@@ -72,11 +90,17 @@ class InterfaceControl(object):
 	'''
 	def setBuzzerOn(self, buzzerOn):
 		if buzzerOn:
-			# @TODO: PWM the buzzer
-			pass
+			#software PWM
+			#self.buzzer.start(50)
+
+			#hardware PWM
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 50)    # duty cycle between 0 and 1024. 0 = off, 1024 = fully on
 		else:
-			# @TODO: Turn off the buzzer
-			pass
+			#software PWM
+			#self.buzzer.stop()
+
+			#hardware PWM
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 
 	'''
 	@TODO: Document this method
