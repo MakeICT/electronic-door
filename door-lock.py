@@ -20,6 +20,9 @@ lastDoorStatus = 0
 
 # @TODO: add graceful exit from signal
 while True:
+
+	interfaceControl.setBuzzerOn(True)
+
 	try:
 		interfaceControl.setPowerStatus(True)
 		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
