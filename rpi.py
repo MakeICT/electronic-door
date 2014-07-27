@@ -102,16 +102,12 @@ class InterfaceControl(object):
 		Check the open/closed status of both doors. 
 
 		Returns:
-		0 if both closed
-		1 if door 1 is open
-		2 if door 2 is open
-		3 if both are open
+		A list of Boolean values representing each door state: True if open, False if closed
 		'''
 
-#		Use this line for pull-up resistors
-		return self.input('doorStatus1') | self.input('doorStatus2')<<1
-#		Use this line for pull-down resistors
-#		return self.input('doorStatus1')^1 | (self.input('doorStaus2')^1)<<1
+		#invert values if using pull-down resistors on switch inputs
+		return [self.input('doorStatus1'), self.input('doorStatus2')]
+
 
 	def showBadCardRead(self, blinkCount=3, blinkPeriod=0.25):
 		'''
