@@ -33,6 +33,7 @@ class InterfaceControl(object):
 		
 		#Set up Hardware PWM - Only works on GPIO 18
 		wiringpi2.wiringPiSetupGpio()  
+	#	wiringpi2.pwmSetMode(0)				# set PWM to markspace mode
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
 		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
 		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
@@ -48,15 +49,6 @@ class InterfaceControl(object):
                 #end test code
 
 		GPIO.setwarnings(True)
-
-		#For testing: remove before pull request
-		GPIO.setup(27, GPIO.OUT)
-		GPIO.output(27,False)
-		GPIO.setup(23, GPIO.OUT)
-		GPIO.output(23,False)
-		#end test code
-
-
 
 	def output(self, componentID, status):
 		GPIO.output(self.GPIOS[componentID], status)
