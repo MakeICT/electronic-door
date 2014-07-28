@@ -29,7 +29,6 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
-<<<<<<< HEAD
 		
 		#Set up Software PWM
 		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
@@ -38,13 +37,6 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		
-		#For testing: remove before pull request
-		GPIO.setup(18, GPIO.OUT)
-		GPIO.output(18,False)
-		GPIO.setup(23, GPIO.OUT)
-		GPIO.output(23,False)
-                #end test code
-
 		GPIO.setwarnings(True)
 
 	def output(self, componentID, status):

@@ -12,17 +12,13 @@ Authors:
 
 import subprocess, time, sys
 
-#commented for testing: uncomment before pull request
-#from backend import backend
+from backend import backend
 from rpi import interfaceControl
 
 lastDoorStatus = [0,0]
 
 # @TODO: add graceful exit from signal
 while True:
-
-	interfaceControl.setBuzzerOn(True)
-
 	try:
 		interfaceControl.setPowerStatus(True)
 		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
