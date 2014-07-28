@@ -10,20 +10,26 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import subprocess, time, sys
+import subprocess, time, sys, logging
 
-#commented for testing: uncomment before pull request
-#from backend import backend
+from backend import backend
 from rpi import interfaceControl
 
 lastDoorStatus = [0,0]
 
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s]::%(levelname)s::%(message)s')
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('entry-door.log')
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('[%(asctime)s]::%(levelname)s::%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+logger.info("==========[Door-lock.py started]==========")
+
 # @TODO: add graceful exit from signal
 while True:
 	try:
-
-		interfaceControl.setBuzzerOn(True)	#@TEST
-
 		interfaceControl.setPowerStatus(True)
 		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 		(nfcID, err) = proc.communicate()
@@ -32,24 +38,26 @@ while True:
 		currentDoorStatus = interfaceControl.checkDoors()
 
 		if currentDoorStatus[0] > lastDoorStatus[0]:
-			print "DOOR 1 OPEN"
+			logger.info("DOOR 1 OPEN")
 		elif currentDoorStatus[0] < lastDoorStatus[0]:
-			print "DOOR 1 CLOSED"
+			logger.info("DOOR 1 CLOSED")
 		if currentDoorStatus[1] > lastDoorStatus[1]:
-			print "DOOR 2 OPEN"
+			logger.info("DOOR 2 OPEN")
 		elif currentDoorStatus[1] < lastDoorStatus[1]:
-			print "DOOR 2 CLOSED"
+			logger.info("DOOR 2 CLOSED")
 
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
-			print "ID:", nfcID, "=",
+			logger.info("Scanned card ID:", nfcID)
 			user = backend.getUserFromKey(nfcID)	
 			if user != None:
-				print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+				logger.info("ACCEPTED card ID:", nfcID)
+				logger.info("Access granted to '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email']))
+				logger.info("Unlocking door")
 				interfaceControl.unlockDoor()
 			else:
-				print "DENIED"
+				logger.warning("DENIED card  ID:", nfcID)
 				interfaceControl.showBadCardRead()
 
 		time.sleep(1)
