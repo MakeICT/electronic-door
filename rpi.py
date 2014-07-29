@@ -19,8 +19,8 @@ class InterfaceControl(object):
 		self.GPIOS = {
 			'latch': 11,
 			'unlock_LED': 22,
-			'power_LED': 15,  #revert to 27 before pull request
-			'buzzer': 18,	  #revert to 10 before pull request
+			'power_LED': 27,
+			'buzzer': 18, 
 			'doorStatus1': 4,
 			'doorStatus2': 17,
 		}
@@ -42,8 +42,8 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		
 		#For testing: remove before pull request
-		GPIO.setup(27, GPIO.OUT)
-		GPIO.output(27,False)
+		GPIO.setup(18, GPIO.OUT)
+		GPIO.output(18,False)
 		GPIO.setup(23, GPIO.OUT)
 		GPIO.output(23,False)
                 #end test code
@@ -85,7 +85,6 @@ class InterfaceControl(object):
 		else:
 			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 
-
 	def unlockDoor(self, timeout=2):
 		'''
 		Unlock door, activate unlock_LED and buzzer, and relock door after timeout
@@ -106,16 +105,12 @@ class InterfaceControl(object):
 		Check the open/closed status of both doors. 
 
 		Returns:
-		0 if both closed
-		1 if door 1 is open
-		2 if door 2 is open
-		3 if both are open
+		A list of Boolean values representing each door state: True if open, False if closed
 		'''
 
-#		Use this line for pull-up resistors
-		return self.input('doorStatus1') | self.input('doorStatus2')<<1
-#		Use this line for pull-down resistors
-#		return self.input('doorStatus1')^1 | (self.input('doorStaus2')^1)<<1
+		#invert values if using pull-down resistors on switch inputs
+		return [self.input('doorStatus1'), self.input('doorStatus2')]
+
 
 	def showBadCardRead(self, blinkCount=3, blinkPeriod=0.25):
 		'''
@@ -135,7 +130,6 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)	#make sure PWM is off
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
