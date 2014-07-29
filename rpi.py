@@ -41,13 +41,6 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		
-		#For testing: remove before pull request
-		GPIO.setup(18, GPIO.OUT)
-		GPIO.output(18,False)
-		GPIO.setup(23, GPIO.OUT)
-		GPIO.output(23,False)
-                #end test code
-
 		GPIO.setwarnings(True)
 
 	def output(self, componentID, status):
@@ -130,6 +123,7 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
