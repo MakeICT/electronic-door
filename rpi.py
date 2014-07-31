@@ -11,7 +11,6 @@ Authors:
 '''
 
 import RPi.GPIO as GPIO
-#import wiringpi2
 import time
 
 class InterfaceControl(object):
@@ -33,7 +32,7 @@ class InterfaceControl(object):
 		
 		#Set up Software PWM
 		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
-		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 360)
+		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 750)
 
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -71,7 +70,8 @@ class InterfaceControl(object):
 		'''
 
 		if buzzerOn:
-			self.buzzer.start(50)
+			self.buzzer.ChangeFrequency(500)
+			self.buzzer.start(30)
 		else:
 			self.buzzer.stop()
 
@@ -120,7 +120,6 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		#wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
