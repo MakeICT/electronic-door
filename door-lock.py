@@ -48,12 +48,12 @@ while True:
 			if user != None:
 				if user['status'] == 'active':
 					logger.info("ACCEPTED card ID: %s" % nfcID)
-					logger.info("Access granted to '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email']))
+					logger.info("Access granted to '%s %s'" % (user['firstName'], user['lastName']))
 					logger.info("Unlocking door")
 					interfaceControl.unlockDoor()
 				else:
 					logger.warning("DENIED card  ID: %s" % nfcID)
-					logger.warning("Reason: '%s %s' is not active" % user['firstName'], user['lastName'])
+					logger.warning("Reason: '%s %s' is not active" % (user['firstName'], user['lastName']))
 					interfaceControl.showBadCardRead()
 			else:
 				logger.warning("DENIED card  ID: %s" % nfcID)

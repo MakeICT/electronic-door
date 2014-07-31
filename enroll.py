@@ -21,7 +21,7 @@ import logging, logging.config
 from backend import backend
 from rpi import interfaceControl
 
-logging.config.fileConfig('logging.conf')
+logging.config.fileConfig('/home/pi/code/makeictelectronicdoor/logging.conf')
 log = logging.getLogger('enroll')
 
 log.info('==========[enroll.py started]==========')
