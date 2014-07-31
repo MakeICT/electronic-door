@@ -113,6 +113,11 @@ class MySQLBackend(object):
 
 		self.cursor.execute(sql, {'key': key, 'userID': userID })
 		self.log('assign', key, userID, commit=False)
+
+		sql = 'UPDATE users SET status=\'active\' WHERE userID=%(userID)s';
+		self.cursor.execute(sql, { 'userID': userID })
+		self.log('activate', userID=userID, commit=False)
+		
 		self.db.commit()
 
 backend = MySQLBackend(
