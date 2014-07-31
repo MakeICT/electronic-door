@@ -30,6 +30,9 @@ logger.info("==========[Door-lock.py started]==========")
 # @TODO: add graceful exit from signal
 while True:
 	try:
+
+		interfaceControl.setBuzzerOn(True)	#@TEST
+
 		interfaceControl.setPowerStatus(True)
 		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 		(nfcID, err) = proc.communicate()
