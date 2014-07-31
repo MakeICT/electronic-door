@@ -10,29 +10,50 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import subprocess, time
+import subprocess, time, sys
 
-from backend import backend
+#commented for testing: uncomment before pull request
+#from backend import backend
 from rpi import interfaceControl
+
+lastDoorStatus = [0,0]
 
 # @TODO: add graceful exit from signal
 while True:
-	interfaceControl.setPowerStatus(True)
-	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
-	(nfcID, err) = proc.communicate()
-	nfcID = nfcID.strip()
-	interfaceControl.setPowerStatus(False)
+	try:
 
-	if nfcID != "":
-		print "ID:", nfcID, "=",
-		user = backend.getUserFromKey(nfcID)	
-		if user != None:
-			print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
-			interfaceControl.unlockDoor()
-		else:
-			print "DENIED"
-			interfaceControl.showBadCardRead()
+		interfaceControl.setBuzzerOn(True)	#@TEST
 
-	time.sleep(1)
+		interfaceControl.setPowerStatus(True)
+		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
+		(nfcID, err) = proc.communicate()
+		nfcID = nfcID.strip()
+		interfaceControl.setPowerStatus(False)
+		currentDoorStatus = interfaceControl.checkDoors()
 
-interfaceControl.cleanup()
+		if currentDoorStatus[0] > lastDoorStatus[0]:
+			print "DOOR 1 OPEN"
+		elif currentDoorStatus[0] < lastDoorStatus[0]:
+			print "DOOR 1 CLOSED"
+		if currentDoorStatus[1] > lastDoorStatus[1]:
+			print "DOOR 2 OPEN"
+		elif currentDoorStatus[1] < lastDoorStatus[1]:
+			print "DOOR 2 CLOSED"
+
+		lastDoorStatus = currentDoorStatus
+
+		if nfcID != "":
+			print "ID:", nfcID, "=",
+			user = backend.getUserFromKey(nfcID)	
+			if user != None:
+				print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+				interfaceControl.unlockDoor()
+			else:
+				print "DENIED"
+				interfaceControl.showBadCardRead()
+
+		time.sleep(1)
+
+	except KeyboardInterrupt:
+		interfaceControl.cleanup()
+		sys.exit()
