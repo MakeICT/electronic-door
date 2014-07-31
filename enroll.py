@@ -17,9 +17,14 @@ Authors:
 
 import sys
 import subprocess
-
+import logging, logging.config
 from backend import backend
 from rpi import interfaceControl
+
+logging.config.fileConfig('logging.conf')
+log = logging.getLogger('enroll')
+
+log.info('==========[enroll.py started]==========')
 
 if len(sys.argv) > 1:
 	userID = int(sys.argv[1])
@@ -49,7 +54,7 @@ if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
 else:
 	interfaceControl.setPowerStatus(True)
-	proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
+	proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
 	(nfcID, err) = proc.communicate()
 	nfcID = nfcID.strip()
 	interfaceControl.setPowerStatus(False)
