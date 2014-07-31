@@ -11,6 +11,7 @@ Authors:
 '''
 
 import RPi.GPIO as GPIO
+#import wiringpi2
 import time
 
 class InterfaceControl(object):
@@ -19,7 +20,7 @@ class InterfaceControl(object):
 			'latch': 11,
 			'unlock_LED': 22,
 			'power_LED': 27,
-			'buzzer': 10, 
+			'buzzer': 18, 
 			'doorStatus1': 4,
 			'doorStatus2': 17,
 		}
@@ -29,19 +30,17 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
-
+		
+		#Set up Hardware PWM - Only works on GPIO 18
+#		wiringpi2.wiringPiSetupGpio()  
+	#	wiringpi2.pwmSetMode(0)				# set PWM to markspace mode
+#		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
+#		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
+#		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 
 		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-		#For testing: remove before pull request
-		GPIO.setup(18, GPIO.OUT)
-		GPIO.output(18,False)
-		GPIO.setup(23, GPIO.OUT)
-		GPIO.output(23,False)
-                #end test code
-
+		
 		GPIO.setwarnings(True)
 
 	def output(self, componentID, status):
@@ -75,12 +74,11 @@ class InterfaceControl(object):
 		'''
 
 		if buzzerOn:
-			# @TODO: PWM the buzzer
+			#wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
 			pass
 		else:
-			# @TODO: Turn off the buzzer
+			#wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 			pass
-
 
 	def unlockDoor(self, timeout=2):
 		'''
@@ -127,6 +125,7 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
+		#wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()

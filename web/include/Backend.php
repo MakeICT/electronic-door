@@ -29,7 +29,12 @@ class Backend {
 	 * @TODO: document this
 	 **/
 	public function getUsers(){
-		$sql = 'SELECT * FROM users ORDER BY lastName, firstName';
+		$sql = '
+			SELECT
+				users.*,
+				(SELECT COUNT(0) FROM rfids WHERE rfids.userID = users.userID) > 0 AS isEnrolled
+			FROM users
+			ORDER BY lastName, firstName';
 		return $this->db->query($sql)->fetchAll();
 	}
 
@@ -145,8 +150,8 @@ class Backend {
 	public function enrollUser($email, $nfcID){
 		$this->db->beginTransaction();
 		try{
-		  $userID = $this->getUserFromEmail($email);
-		  $userID = $userID['userID'];
+			$user = $this->getUserFromEmail($email);
+			$userID = $user['userID'];
 			
 			$sql = '
 				INSERT INTO rfids (id, userID) VALUES (:nfcID, :userID)
@@ -155,6 +160,50 @@ class Backend {
 			
 			$this->db->query($sql, $args);
 			$this->log('assign', $nfcID, $userID);
+
+			$this->db->commit();
+		}catch(Exception $exc){
+			$this->rollback();
+		}
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
+	public function unenrollUser($email){
+		$this->db->beginTransaction();
+		try{
+			$user = $this->getUserFromEmail($email);
+			$userID = $user['userID'];
+			
+			$sql = 'DELETE FROM rfids WHERE userID = ?';
+			$this->db->query($sql, $userID);
+			$this->log('unenroll', null, $userID);
+
+			$this->db->commit();
+		}catch(Exception $exc){
+			$this->rollback();
+		}
+	}
+
+	/**
+	 * @TODO: document this
+	 **/
+	public function setUserActivationStatus($email, $active){
+		$this->db->beginTransaction();
+		if($active){
+			$status = 'active';
+		}else{
+			$status = 'inactive';
+		}
+		try{
+			$user = $this->getUserFromEmail($email);
+			$userID = $user['userID'];
+			
+			$sql = 'UPDATE users SET status=? WHERE userID = ?';
+			
+			$this->db->query($sql, $status, $userID);
+			$this->log("set activation: $status", null, $userID);
 
 			$this->db->commit();
 		}catch(Exception $exc){
