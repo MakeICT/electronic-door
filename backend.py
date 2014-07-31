@@ -52,7 +52,8 @@ class MySQLBackend(object):
 			SELECT * FROM users
 				JOIN rfids ON users.userID = rfids.userID
 			WHERE rfids.id = %s
-				AND users.status = \'active\''''
+				AND users.status = \'active\'
+			'''
 		self.cursor.execute(sql, key)
 
 		data = self.cursor.fetchone()
@@ -76,6 +77,18 @@ class MySQLBackend(object):
 		self.cursor.execute('SELECT * FROM users WHERE email = %s', email)
 		return self.cursor.fetchone()
 
+	'''
+	@TODO: Document this method
+	'''
+	def getUserFromKey(self, key):
+		self.cursor.execute('SELECT userID FROM rfids WHERE id = %s', key)
+		idCard = self.cursor.fetchone()
+		if idCard == None:
+			return None
+		self.cursor.execute('SELECT * FROM users WHERE userID = %s', idCard['userID'])
+			
+		return self.cursor.fetchone()
+	
 	'''
 	@TODO: Document this method
 	@returns userID

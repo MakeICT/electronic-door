@@ -12,8 +12,7 @@ Authors:
 
 import subprocess, time, sys
 
-#commented for testing: uncomment before pull request
-#from backend import backend
+from backend import backend
 from rpi import interfaceControl
 
 lastDoorStatus = [0,0]
@@ -43,8 +42,10 @@ while True:
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
-			print "ID:", nfcID, "=",
+#			print "ID:", nfcID, "=",
 			user = backend.getUserFromKey(nfcID)	
+			if user != None:
+				print user
 			if user != None:
 				print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
 				interfaceControl.unlockDoor()
