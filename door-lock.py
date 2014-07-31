@@ -42,13 +42,15 @@ while True:
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
-#			print "ID:", nfcID, "=",
-			user = backend.getUserFromKey(nfcID)	
+			print "ID:", nfcID, "=",
+			user = backend.getUserFromKey(nfcID)
 			if user != None:
-				print user
-			if user != None:
-				print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
-				interfaceControl.unlockDoor()
+				if user['status'] == 'active':
+					print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+					interfaceControl.unlockDoor()
+				else:
+					print "'%s' is not active" % (user['firstName'])
+					interfaceControl.showBadCardRead()
 			else:
 				print "DENIED"
 				interfaceControl.showBadCardRead()
