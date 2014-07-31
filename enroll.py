@@ -17,9 +17,14 @@ Authors:
 
 import sys
 import subprocess
-
+import logging, logging.config
 from backend import backend
 from rpi import interfaceControl
+
+logging.config.fileConfig('logging.conf')
+log = logging.getLogger('enroll')
+
+log.info('==========[enroll.py started]==========')
 
 if len(sys.argv) > 1:
 	userID = int(sys.argv[1])
