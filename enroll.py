@@ -15,11 +15,18 @@ Authors:
 @TODO: kill unlocker if running and restart it when done
 '''
 
-import sys
+import sys, os, signal
 import subprocess
 
 from backend import backend
 from rpi import interfaceControl
+
+process = subprocess.Popen(['pidof', 'door-lock.py'], stdout=subprocess.PIPE)
+out, err = process.communicate()
+if out != '':
+	os.kill(int(out), signal.SIGTERM)
+
+#subprocess.call('./door-lock.py')
 
 if len(sys.argv) > 1:
 	userID = int(sys.argv[1])
@@ -62,3 +69,6 @@ if userID != "" and nfcID != "":
 	print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
 
 interfaceControl.cleanup()
+FNULL = open(os.devnull, 'w')
+#FNULL = open('/home/pi/code/makeictelectronicdoor/piped-door-lock.log', 'w')
+subprocess.Popen(['/home/pi/code/makeictelectronicdoor/door-lock.py'], stdout=FNULL, stderr=subprocess.STDOUT)
