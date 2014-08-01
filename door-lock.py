@@ -10,20 +10,14 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import subprocess, time, sys, logging
-
+import subprocess, time, sys, logging, logging.config
 from backend import backend
 from rpi import interfaceControl
 
 lastDoorStatus = [0,0]
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s]::%(levelname)s::%(message)s')
-logger = logging.getLogger(__name__)
-handler = logging.FileHandler('entry-door.log')
-handler.setLevel(logging.INFO)
-formatter = logging.Formatter('[%(asctime)s]::%(levelname)s::%(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logging.config.fileConfig("logging.conf")
+logger=logging.getLogger('door-lock')
 
 logger.info("==========[Door-lock.py started]==========")
 
@@ -38,13 +32,13 @@ while True:
 		currentDoorStatus = interfaceControl.checkDoors()
 
 		if currentDoorStatus[0] > lastDoorStatus[0]:
-			logger.info("DOOR 1 OPEN")
+			logger.info("Door 1: OPEN")
 		elif currentDoorStatus[0] < lastDoorStatus[0]:
-			logger.info("DOOR 1 CLOSED")
+			logger.info("Door 1: CLOSED")
 		if currentDoorStatus[1] > lastDoorStatus[1]:
-			logger.info("DOOR 2 OPEN")
+			logger.info("Door 2: OPEN")
 		elif currentDoorStatus[1] < lastDoorStatus[1]:
-			logger.info("DOOR 2 CLOSED")
+			logger.info("Door 2: CLOSED")
 
 		lastDoorStatus = currentDoorStatus
 
