@@ -20,6 +20,9 @@ lastDoorStatus = [0,0]
 # @TODO: add graceful exit from signal
 while True:
 	try:
+
+		interfaceControl.setBuzzerOn(True)	#@TEST
+
 		interfaceControl.setPowerStatus(True)
 		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 		(nfcID, err) = proc.communicate()
@@ -40,10 +43,14 @@ while True:
 
 		if nfcID != "":
 			print "ID:", nfcID, "=",
-			user = backend.getUserFromKey(nfcID)	
+			user = backend.getUserFromKey(nfcID)
 			if user != None:
-				print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
-				interfaceControl.unlockDoor()
+				if user['status'] == 'active':
+					print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+					interfaceControl.unlockDoor()
+				else:
+					print "'%s' is not active" % (user['firstName'])
+					interfaceControl.showBadCardRead()
 			else:
 				print "DENIED"
 				interfaceControl.showBadCardRead()

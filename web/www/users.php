@@ -72,7 +72,7 @@
 
 				$userID = $user['userID'];
 				shell_exec("echo $user[firstName] $user[lastName] > /tmp/enrollmentStatus");
-				shell_exec("enroll.py $userID >> /tmp/enrollmentStatus &");
+				shell_exec("/home/pi/code/makeictelectronicdoor/enroll.py $userID >> /tmp/enrollmentStatus &");
 
 				header("Location: $_SERVER[PHP_SELF]");
 				exit();
@@ -90,6 +90,35 @@
 			}
 			header("Location: $_SERVER[PHP_SELF]");
 			exit();
+		}elseif($_REQUEST['action'] == 'Unenroll'){
+			try{
+				$backend->unenrollUser($_REQUEST['email']);
+				header("Location: $_SERVER[PHP_SELF]");
+				exit();
+			}catch(Exception $exc){
+				trigger_error($exc);
+				$_SESSION['errors'][] = $exc->getMessage();
+			}
+		}elseif($_REQUEST['action'] == 'Inactivate'){
+			try{
+				$backend->setUserActivationStatus($_REQUEST['email'], false);
+				header("Location: $_SERVER[PHP_SELF]");
+				exit();
+			}catch(Exception $exc){
+				trigger_error($exc);
+				$_SESSION['errors'][] = $exc->getMessage();
+			}
+		}elseif($_REQUEST['action'] == 'Activate'){
+			try{
+				$backend->setUserActivationStatus($_REQUEST['email'], true);
+				header("Location: $_SERVER[PHP_SELF]");
+				exit();
+			}catch(Exception $exc){
+				trigger_error($exc);
+				$_SESSION['errors'][] = $exc->getMessage();
+			}
+		}else{
+			$_SESSION['errors'][] = "Unrecognized command: '$_REQUEST[action]'";
 		}
 	}
 
@@ -101,6 +130,9 @@
 		'script/users.js'
 	);
 	$template->bufferStart();
+
+	echo getFormattedErrors();
+	echo getFormattedMessages();
 
 	$waitingForSwipe = enrollmentIsRunning();
 	if($waitingForSwipe){
@@ -183,6 +215,10 @@
 		}
 
 		$rowClass = ($count % 2 == 0) ? 'evenRow' : 'oddRow';
+
+		$activateAction = ($user['status'] == 'active') ? 'Inactivate' : 'Activate';
+		$enrollAction = ($user['isEnrolled']) ? 'Unenroll' : 'Enroll';
+		
 		echo "
 						<tr class='$rowClass'>
 							<td class='tagCell'>$tagHTML</td>
@@ -193,18 +229,14 @@
 							<td>
 								<form method='post'>
 									<input type='hidden' name='email' value='$user[email]' />
-									<input type='submit' name='action' value='Enroll' $enrollDisabled/>
+									<input type='submit' name='action' value='$enrollAction' $enrollDisabled/>
 								</form>
 							</td>
-							<td>";
-		if($user['status'] == 'active'){
-			echo "
+							<td>
 								<form method='post'>
 									<input type='hidden' name='email' value='$user[email]' />
-									<input type='submit' name='action' value='Revoke' />
-								</form>";
-		}
-		echo "
+									<input type='submit' name='action' value='$activateAction' />
+								</form>
 							</td>
 						</tr>";
 	}

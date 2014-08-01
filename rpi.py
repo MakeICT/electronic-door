@@ -11,6 +11,7 @@ Authors:
 '''
 
 import RPi.GPIO as GPIO
+#import wiringpi2
 import time
 
 class InterfaceControl(object):
@@ -19,7 +20,7 @@ class InterfaceControl(object):
 			'latch': 11,
 			'unlock_LED': 22,
 			'power_LED': 27,
-			'buzzer': 10, 
+			'buzzer': 18, 
 			'doorStatus1': 4,
 			'doorStatus2': 17,
 		}
@@ -119,6 +120,7 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
+		#wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 		GPIO.cleanup()
 
 interfaceControl = InterfaceControl()
