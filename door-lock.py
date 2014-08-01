@@ -10,33 +10,36 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import subprocess, time, sys, logging, logging.config
+import subprocess, time, sys, os, signal, logging, logging.config
 
 from backend import backend
 from rpi import interfaceControl
 
 #@TODO: this may not be necessary?
-import setproctitle, os, subprocess, signal
+import setproctitle
 setproctitle.setproctitle('door-lock.py')
 
 lastDoorStatus = [0,0]
 
-logging.config.fileConfig("logging.conf")
+logging.config.fileConfig("/home/pi/code/makeictelectronicdoor/logging.conf")
 logger=logging.getLogger('door-lock')
 
 logger.info("==========[Door-lock.py started]==========")
 def signal_term_handler(sig, frame):
+	logger.info("Received SIGTERM")
+	cleanup()
+
+def cleanup():
+	logger.info("Cleaning up and exiting")
 	interfaceControl.cleanup()
 	process = subprocess.Popen(['pidof', 'nfc-poll'], stdout=subprocess.PIPE)
 	out, err = process.communicate()
 	if out != '':
 		os.kill(int(out), signal.SIGTERM)
-	print "door-lock.py: got SIGTERM - cleaning up and exiting"
 	sys.exit(0)
  
 signal.signal(signal.SIGTERM, signal_term_handler)
 
-# @TODO: add graceful exit from signal
 while True:
 	try:
 		interfaceControl.setPowerStatus(True)
@@ -78,5 +81,5 @@ while True:
 		time.sleep(1)
 
 	except KeyboardInterrupt:
-		interfaceControl.cleanup()
-		sys.exit()
+		logger.info("Received KeyboardInterrupt")
+		cleanup()
