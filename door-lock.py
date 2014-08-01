@@ -10,53 +10,77 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import subprocess, time, sys
+import subprocess, time, sys, os, signal, logging, logging.config
 
 from backend import backend
 from rpi import interfaceControl
 
+#@TODO: this may not be necessary?
+import setproctitle
+setproctitle.setproctitle('door-lock.py')
+
 lastDoorStatus = [0,0]
 
-# @TODO: add graceful exit from signal
+logging.config.fileConfig("/home/pi/code/makeictelectronicdoor/logging.conf")
+logger=logging.getLogger('door-lock')
+
+logger.info("==========[Door-lock.py started]==========")
+def signal_term_handler(sig, frame):
+	logger.info("Received SIGTERM")
+	cleanup()
+
+def cleanup():
+	logger.info("Cleaning up and exiting")
+	interfaceControl.cleanup()
+	process = subprocess.Popen(['pidof', 'nfc-poll'], stdout=subprocess.PIPE)
+	out, err = process.communicate()
+	if out != '':
+		os.kill(int(out), signal.SIGTERM)
+	sys.exit(0)
+ 
+signal.signal(signal.SIGTERM, signal_term_handler)
+
 while True:
 	try:
-
-		interfaceControl.setBuzzerOn(True)	#@TEST
-
 		interfaceControl.setPowerStatus(True)
-		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
+		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
 		(nfcID, err) = proc.communicate()
 		nfcID = nfcID.strip()
 		interfaceControl.setPowerStatus(False)
 		currentDoorStatus = interfaceControl.checkDoors()
 
 		if currentDoorStatus[0] > lastDoorStatus[0]:
-			print "DOOR 1 OPEN"
+			logger.info("Door 1: OPEN")
 		elif currentDoorStatus[0] < lastDoorStatus[0]:
-			print "DOOR 1 CLOSED"
+			logger.info("Door 1: CLOSED")
 		if currentDoorStatus[1] > lastDoorStatus[1]:
-			print "DOOR 2 OPEN"
+			logger.info("Door 2: OPEN")
 		elif currentDoorStatus[1] < lastDoorStatus[1]:
-			print "DOOR 2 CLOSED"
+			logger.info("Door 2: CLOSED")
 
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
-			print "ID:", nfcID, "=",
-			user = backend.getUserFromKey(nfcID)
+			logger.info("Scanned card ID: %s" % nfcID)
+			user = backend.getUserFromKey(nfcID)	
 			if user != None:
 				if user['status'] == 'active':
-					print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+					logger.info("ACCEPTED card ID: %s" % nfcID)
+					logger.info("Access granted to '%s %s'" % (user['firstName'], user['lastName']))
+					logger.info("Door 1: UNLOCKED")
 					interfaceControl.unlockDoor()
+					logger.info("Door 1: LOCKED")
 				else:
-					print "'%s' is not active" % (user['firstName'])
+					logger.warning("DENIED card  ID: %s" % nfcID)
+					logger.warning("Reason: '%s %s' is not active" % (user['firstName'], user['lastName']))
 					interfaceControl.showBadCardRead()
 			else:
-				print "DENIED"
+				logger.warning("DENIED card  ID: %s" % nfcID)
+				logger.warning("Reason: card not registered")
 				interfaceControl.showBadCardRead()
 
 		time.sleep(1)
 
 	except KeyboardInterrupt:
-		interfaceControl.cleanup()
-		sys.exit()
+		logger.info("Received KeyboardInterrupt")
+		cleanup()

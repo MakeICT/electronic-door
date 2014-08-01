@@ -31,7 +31,7 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
 		
-		Set up Hardware PWM - Only works on GPIO 18
+		#Set up Hardware PWM - Only works on GPIO 18
 		wiringpi2.wiringPiSetupGpio()  
 		wiringpi2.pwmSetMode(0)				# set PWM to markspace mode
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
@@ -117,8 +117,10 @@ class InterfaceControl(object):
 		'''
 		for i in range(blinkCount):
 			self.output('power_LED', True)
+			self.setBuzzerOn(True)
 			time.sleep(blinkPeriod)
 			self.output('power_LED', False)
+			self.setBuzzerOn(False)
 			time.sleep(blinkPeriod)
 
 	def cleanup(self):

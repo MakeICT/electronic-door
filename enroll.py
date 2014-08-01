@@ -12,14 +12,36 @@ Authors:
 
 @TODO: use POSIX command line arguments for non-interactive mode
 @TODO: define error status codes here (duplicate key error)
-@TODO: kill unlocker if running and restart it when done
 '''
 
-import sys
+import sys, os, signal, time
 import subprocess
-
+import logging, logging.config
 from backend import backend
 from rpi import interfaceControl
+
+logging.config.fileConfig('/home/pi/code/makeictelectronicdoor/logging.conf')
+log = logging.getLogger('enroll')
+
+log.info('==========[enroll.py started]==========')
+
+process = subprocess.Popen(['pidof', 'door-lock.py'], stdout=subprocess.PIPE)
+out, err = process.communicate()
+
+if out != '':
+	log.debug('Killing door-lock.py')
+	os.kill(int(out), signal.SIGTERM)
+	time.sleep(1)
+	try:
+		if os.kill(int(out), 0) == None:
+			log.error('Could not kill door-lock.py')
+			log.error('Exiting')
+			exit(1)		#@TODO:define error codes
+		else:
+			log.debug('Successfully killed door-lock.py')
+	except OSError:
+		log.debug('Successfully killed door-lock.py')
+		
 
 if len(sys.argv) > 1:
 	userID = int(sys.argv[1])
@@ -62,3 +84,7 @@ if userID != "" and nfcID != "":
 	print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
 
 interfaceControl.cleanup()
+#FNULL = open(os.devnull, 'w')
+FNULL = open('/home/pi/code/makeictelectronicdoor/piped-door-lock.log', 'w')
+log.debug('Re-starting door-lock.py')
+subprocess.Popen(['/home/pi/code/makeictelectronicdoor/door-lock.py'], stdout=FNULL, stderr=subprocess.STDOUT)
