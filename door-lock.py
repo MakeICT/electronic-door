@@ -30,9 +30,6 @@ logger.info("==========[Door-lock.py started]==========")
 # @TODO: add graceful exit from signal
 while True:
 	try:
-
-		interfaceControl.setBuzzerOn(True)	#@TEST
-
 		interfaceControl.setPowerStatus(True)
 		proc = subprocess.Popen("./nfc-read", stdout=subprocess.PIPE, shell=True)
 		(nfcID, err) = proc.communicate()
@@ -52,13 +49,15 @@ while True:
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
-			logger.info("Scanned card ID:", nfcID)
-			user = backend.getUserFromKey(nfcID)	
+			print "ID:", nfcID, "=",
+			user = backend.getUserFromKey(nfcID)
 			if user != None:
-				logger.info("ACCEPTED card ID:", nfcID)
-				logger.info("Access granted to '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email']))
-				logger.info("Unlocking door")
-				interfaceControl.unlockDoor()
+				if user['status'] == 'active':
+					print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+					interfaceControl.unlockDoor()
+				else:
+					print "'%s' is not active" % (user['firstName'])
+					interfaceControl.showBadCardRead()
 			else:
 				logger.warning("DENIED card  ID:", nfcID)
 				interfaceControl.showBadCardRead()
