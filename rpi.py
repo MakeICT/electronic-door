@@ -112,8 +112,10 @@ class InterfaceControl(object):
 		'''
 		for i in range(blinkCount):
 			self.output('power_LED', True)
+			self.setBuzzerOn(True)
 			time.sleep(blinkPeriod)
 			self.output('power_LED', False)
+			self.setBuzzerOn(False)
 			time.sleep(blinkPeriod)
 
 	def cleanup(self):
