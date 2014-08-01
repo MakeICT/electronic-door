@@ -12,10 +12,9 @@ Authors:
 
 @TODO: use POSIX command line arguments for non-interactive mode
 @TODO: define error status codes here (duplicate key error)
-@TODO: kill unlocker if running and restart it when done
 '''
 
-import sys, os, signal
+import sys, os, signal, time
 import subprocess
 import logging, logging.config
 from backend import backend
@@ -25,8 +24,17 @@ process = subprocess.Popen(['pidof', 'door-lock.py'], stdout=subprocess.PIPE)
 out, err = process.communicate()
 if out != '':
 	os.kill(int(out), signal.SIGTERM)
-
-#subprocess.call('./door-lock.py')
+	time.sleep(1)
+	try:
+		if os.kill(int(out), 0) == None:
+			print 'Could not kill door-lock.py'
+			print 'Exiting'
+			exit(1)		#@TODO:define error codes
+		else:
+			print 'Successfully killed door-lock.py'
+	except OSError:
+		print 'Successfully killed door-lock.py'
+		
 
 if len(sys.argv) > 1:
 	userID = int(sys.argv[1])

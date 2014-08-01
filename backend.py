@@ -88,6 +88,7 @@ class MySQLBackend(object):
 		Dictionary containing user information {'status', 'firstName',' lastName', 'email'}
 		None if card is not registered to a user
 		'''
+		self.db.commit()	#@TEST added this to make sure data is up-to-date. Not sure if it's the best way
 		self.cursor.execute('SELECT userID FROM rfids WHERE id = %s', key)
 		idCard = self.cursor.fetchone()
 		if idCard == None:
