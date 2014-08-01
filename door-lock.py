@@ -49,17 +49,21 @@ while True:
 		lastDoorStatus = currentDoorStatus
 
 		if nfcID != "":
-			print "ID:", nfcID, "=",
-			user = backend.getUserFromKey(nfcID)
+			logger.info("Scanned card ID: %s" % nfcID)
+			user = backend.getUserFromKey(nfcID)	
 			if user != None:
 				if user['status'] == 'active':
-					print "GRANTED TO '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email'])
+					logger.info("ACCEPTED card ID: %s" % nfcID)
+					logger.info("Access granted to '%s' '%s' '%s'" % (user['firstName'], user['lastName'], user['email']))
+					logger.info("Unlocking door")
 					interfaceControl.unlockDoor()
 				else:
-					print "'%s' is not active" % (user['firstName'])
+					logger.warning("DENIED card  ID: %s" % nfcID)
+					logger.warning("Reason: '%s %s' is not active" % user['firstName'], user['lastName'])
 					interfaceControl.showBadCardRead()
 			else:
-				logger.warning("DENIED card  ID:", nfcID)
+				logger.warning("DENIED card  ID: %s" % nfcID)
+				logger.warning("Reason: card not registered")
 				interfaceControl.showBadCardRead()
 
 		time.sleep(1)
