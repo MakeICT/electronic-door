@@ -20,12 +20,29 @@ class MySQLBackend(object):
 	@TODO: Document this method
 	'''
 	def __init__(self, host, db, user, passwd):
+		self.dbInfo = {'host':host, 'db':db, 'user':user, 'passwd':passwd}
 		self.db = MySQLdb.connect(
 			host=host, db=db,
 			user=user, passwd=passwd,
 			cursorclass=MySQLdb.cursors.DictCursor
 		)
 		self.cursor = self.db.cursor()
+
+	def reconnectDB(self):
+		'''
+		Re-connect to database using stored information
+		'''
+		print "========={DB reconnected}========="
+		self.db.close()
+		self.db = MySQLdb.connect(
+			host=self.dbInfo['host'], db=self.dbInfo['db'],
+			user=self.dbInfo['user'], passwd=self.dbInfo['passwd'],
+			cursorclass=MySQLdb.cursors.DictCursor
+		)
+		self.cursor = self.db.cursor()
+				
+		
+
 
 	'''
 	@TODO: Document this method
@@ -88,7 +105,10 @@ class MySQLBackend(object):
 		Dictionary containing user information {'status', 'firstName',' lastName', 'email'}
 		None if card is not registered to a user
 		'''
-		self.db.commit()	#@TEST added this to make sure data is up-to-date. Not sure if it's the best way
+		try:
+			self.db.commit()	#@TEST added this to make sure data is up-to-date. Not sure if it's the best way
+		except MySQLdb.OperationalError:
+			self.reconnectDB()
 		self.cursor.execute('SELECT userID FROM rfids WHERE id = %s', key)
 		idCard = self.cursor.fetchone()
 		if idCard == None:
