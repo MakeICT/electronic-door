@@ -10,6 +10,7 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
+import lib.MFRC522 as NFC
 import RPi.GPIO as GPIO
 import wiringpi2
 import time
@@ -17,16 +18,17 @@ import time
 class InterfaceControl(object):
 	def __init__(self):
 		self.GPIOS = {
-			'latch': 11,
-			'unlock_LED': 22,
-			'power_LED': 27,
-			'buzzer': 18, 
-			'doorStatus1': 4,
-			'doorStatus2': 17,
+			'latch': 7,
+			'unlock_LED': 11,
+			'power_LED': 13,
+			'buzzer': 12, 
+			'doorStatus1': 15,
+			'doorStatus2': 16,
 		}
 		
+		self.nfc = NFC.MFRC522()
 		GPIO.setwarnings(False)
-		GPIO.setmode(GPIO.BCM)
+		GPIO.setmode(GPIO.BOARD)
 		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
 		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
@@ -43,6 +45,17 @@ class InterfaceControl(object):
 		
 		GPIO.setwarnings(True)
 
+	def nfcGetUID(self):
+	# Scan for cards    
+		(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
+		# If a card is found
+		if status == self.nfc.MI_OK:
+			# Get the UID of the card
+			(status,uid) = self.nfc.MFRC522_Anticoll()
+		# If we have the UID, continue
+		if status == self.nfc.MI_OK:
+			# Print UID
+			return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
 	def output(self, componentID, status):
 		GPIO.output(self.GPIOS[componentID], status)
 
@@ -129,5 +142,5 @@ class InterfaceControl(object):
 		'''
 		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
 		GPIO.cleanup()
-
+	
 interfaceControl = InterfaceControl()

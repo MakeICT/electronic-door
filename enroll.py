@@ -73,15 +73,18 @@ try:
 		nfcID = sys.argv[2]
 	else:
 		interfaceControl.setPowerStatus(True)
-		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-		(nfcID, err) = proc.communicate()
-		nfcID = nfcID.strip()
+		while True:		#@TODO: limit number of loops
+			nfcID = interfaceControl.nfcGetUID()
+			if nfcID != None:
+				break
+			time.sleep(1)
 		interfaceControl.setPowerStatus(False)
 		
 	autoSteal = (len(sys.argv) >= 4 and sys.argv[3] == 'steal')
 	if userID != "" and nfcID != "":
 		# @TODO: catch duplicate key error, exit with error status
 		backend.enroll(nfcID, userID, autoSteal)
+
 
 		print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
 finally:

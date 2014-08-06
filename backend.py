@@ -13,7 +13,7 @@ Authors:
 #	Note: transaction is started when the cursor is created, ended by db.commit|rollback
 #@TODO: Add debug logging
 
-import MySQLdb, MySQLdb.cursors
+import MySQLdb, MySQLdb.cursors, hashlib
 
 class MySQLBackend(object):
 	def __init__(self, host, db, user, passwd):
