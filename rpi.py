@@ -71,7 +71,7 @@ class InterfaceControl(object):
 
 		if buzzerOn:
 			self.buzzer.ChangeFrequency(500)
-			self.buzzer.start(30)
+			self.buzzer.start(30)	#@TODO: this line causes memory leak?
 		else:
 			self.buzzer.stop()
 
