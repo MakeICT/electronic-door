@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python/
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -10,12 +10,12 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import RPi.GPIO as GPIO
 import wiringpi2
 import time
 
 class InterfaceControl(object):
 	def __init__(self):
+		Pi_rev = wiringpi2.piBoardRev()	#@TODO: use this?
 		self.GPIOS = {
 			'latch': 11,
 			'unlock_LED': 22,
@@ -25,26 +25,28 @@ class InterfaceControl(object):
 			'doorStatus2': 17,
 		}
 		
-		GPIO.setwarnings(False)
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
 		
-		#Set up Hardware PWM - Only works on GPIO 18
-		wiringpi2.wiringPiSetupGpio()  
+		#set up I/O pins
+		wiringpi2.wiringPiSetupPhys()
+		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 1)
+		wiringpi2.pinMode(self.GPIOS['power_LED'], 1)
+		wiringpi2.pinMode(self.GPIOS['latch'], 1)
+		wiringpi2.pinMode(self.GPIOS['doorStatus1'], 0)
+		wiringpi2.pinMode(self.GPIOS['doorStatus2'], 0)
+		
+		#Set up Hardware PWM - Only works on GPIO 18 (Phys 12)
 		wiringpi2.pwmSetMode(0)				# set PWM to markspace mode
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
 		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
-
-		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 		
-		GPIO.setwarnings(True)
+		#Set input pull-ups
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 2)
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 2)
+
 
 	def output(self, componentID, status):
-		GPIO.output(self.GPIOS[componentID], status)
+		wiringpi2.digitalWrite(self.GPIOS[componentID], status)
 
 	def input(self, componentID):
 		'''
@@ -54,8 +56,8 @@ class InterfaceControl(object):
 		True if pin is high
 		False if pin is low
 		'''
-		return GPIO.input(self.GPIOS[componentID])
-	
+		return wiringpi2.digitalRead(self.GPIOS[componentID])
+
 	def setPowerStatus(self, powerIsOn):
 		'''
 		Set power LED state
@@ -127,7 +129,18 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)    
-		GPIO.cleanup()
+		#Clean up GPIO pins
+		wiringpi2.digitalWrite(self.GPIOS['unlock_LED'], 0)
+		wiringpi2.digitalWrite(self.GPIOS['power_LED'], 0)
+		wiringpi2.digitalWrite(self.GPIOS['latch'], 0)
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
+		
+		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 0)
+		wiringpi2.pinMode(self.GPIOS['power_LED'], 0)
+		wiringpi2.pinMode(self.GPIOS['latch'], 0)
+		wiringpi2.pinMode(self.GPIOS['buzzer'], 0) 
 
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 0)
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 0)
+	
 interfaceControl = InterfaceControl()
