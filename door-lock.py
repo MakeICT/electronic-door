@@ -32,10 +32,6 @@ def signal_term_handler(sig, frame):
 def cleanup():
 	logger.info("Cleaning up and exiting")
 	interfaceControl.cleanup()
-	process = subprocess.Popen(['pidof', 'nfc-poll'], stdout=subprocess.PIPE)
-	out, err = process.communicate()
-	if out != '':
-		os.kill(int(out), signal.SIGTERM)
 	sys.exit(0)
  
 signal.signal(signal.SIGTERM, signal_term_handler)
@@ -43,9 +39,7 @@ signal.signal(signal.SIGTERM, signal_term_handler)
 while True:
 	try:
 		interfaceControl.setPowerStatus(True)
-		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-		(nfcID, err) = proc.communicate()
-		nfcID = nfcID.strip()
+		nfcID = interfaceControl.nfcGetUID()
 		interfaceControl.setPowerStatus(False)
 		currentDoorStatus = interfaceControl.checkDoors()
 
@@ -60,7 +54,7 @@ while True:
 
 		lastDoorStatus = currentDoorStatus
 
-		if nfcID != "":
+		if nfcID != None:
 			logger.info("Scanned card ID: %s" % nfcID)
 			user = backend.getUserFromKey(nfcID)	
 			if user != None:
@@ -84,3 +78,4 @@ while True:
 	except KeyboardInterrupt:
 		logger.info("Received KeyboardInterrupt")
 		cleanup()
+

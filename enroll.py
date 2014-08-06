@@ -59,7 +59,6 @@ else:
 		firstName = raw_input("First Name : ")
 		lastName = raw_input("Last  Name : ")
 		password = raw_input("Password   : ")
-		
 		userID = backend.addUser(email, firstName, lastName, password)
 		if userID != None:
 			print "\nUser [%d] added to the database" % userID
@@ -71,9 +70,11 @@ if len(sys.argv) >= 3:
 	nfcID = sys.argv[2]
 else:
 	interfaceControl.setPowerStatus(True)
-	proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-	(nfcID, err) = proc.communicate()
-	nfcID = nfcID.strip()
+	while True:		#@TODO: limit number of loops
+		nfcID = interfaceControl.nfcGetUID()
+		if nfcID != None:
+			break
+		time.sleep(1)
 	interfaceControl.setPowerStatus(False)
 	
 autoSteal = (len(sys.argv) >= 4 and sys.argv[3] == 'steal')

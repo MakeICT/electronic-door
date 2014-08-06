@@ -13,7 +13,7 @@ Authors:
 	Note: transaction is started when the cursor is created, ended by db.commit|rollback
 '''
 
-import MySQLdb, MySQLdb.cursors
+import MySQLdb, MySQLdb.cursors, hashlib
 
 class MySQLBackend(object):
 	'''
