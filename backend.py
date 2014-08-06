@@ -78,7 +78,7 @@ class MySQLBackend(object):
 		Args:
 		  data (string): a plaintext password
 		Returns:
-		  Salted md5 hash of the password
+		  A string containing the salted hash of the password
 		'''
 		return data
 
@@ -104,8 +104,8 @@ class MySQLBackend(object):
 		Look up user given a card id number
 
 		Returns:
-		Dictionary containing user information {'status', 'firstName',' lastName', 'email'}
-		None if card is not registered to a user
+		  Dictionary containing user information {'status', 'firstName',' lastName', 'email'}
+		  None if card is not registered to a user
 		'''
 		if self.db.stat() == "MySQL server has gone away":
 			self.reconnectDB()
