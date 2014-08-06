@@ -62,7 +62,7 @@ while True:
 
 		if nfcID != None:
 			logger.info("Scanned card ID: %s" % nfcID)
-			user = backend.getUserFromKey(nfcID)	
+			user = backend.getUserByKeyID(nfcID)	
 			if user != None:
 				if user['status'] == 'active':
 					logger.info("ACCEPTED card ID: %s" % nfcID)
