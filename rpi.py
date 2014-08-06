@@ -11,7 +11,7 @@ Authors:
 '''
 
 import RPi.GPIO as GPIO
-import time
+import time, subprocess
 
 class InterfaceControl(object):
 	def __init__(self):
@@ -38,6 +38,22 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		
 		GPIO.setwarnings(True)
+
+	def nfcGetUID(self):
+		'''
+		Read an NFC card if one is in range an return its UID
+
+
+		Returns:
+		  A string containing the UID of the NFC card
+		  None if no card is in range
+		'''
+		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
+		(nfcID, err) = proc.communicate()
+		nfcID = nfcID.strip()
+		if nfcID == '':
+			return None
+		return nfcID
 
 	def output(self, componentID, status):
 		'''

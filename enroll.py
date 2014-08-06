@@ -73,9 +73,9 @@ try:
 		nfcID = sys.argv[2]
 	else:
 		interfaceControl.setPowerStatus(True)
-		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-		(nfcID, err) = proc.communicate()
-		nfcID = nfcID.strip()
+		log.debug("Starting NFC read")
+		nfcID = interfaceControl.nfcGetUID()
+		log.debug("Finished NFC read")
 		interfaceControl.setPowerStatus(False)
 		
 	autoSteal = (len(sys.argv) >= 4 and sys.argv[3] == 'steal')

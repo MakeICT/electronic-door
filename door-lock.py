@@ -43,9 +43,9 @@ signal.signal(signal.SIGTERM, signal_term_handler)
 while True:
 	try:
 		interfaceControl.setPowerStatus(True)
-		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-		(nfcID, err) = proc.communicate()
-		nfcID = nfcID.strip()
+		logger.debug("Starting NFC read")
+		nfcID = interfaceControl.nfcGetUID()
+		logger.debug("Finished NFC read")
 		interfaceControl.setPowerStatus(False)
 		currentDoorStatus = interfaceControl.checkDoors()
 
@@ -60,7 +60,7 @@ while True:
 
 		lastDoorStatus = currentDoorStatus
 
-		if nfcID != "":
+		if nfcID != None:
 			logger.info("Scanned card ID: %s" % nfcID)
 			user = backend.getUserFromKey(nfcID)	
 			if user != None:
