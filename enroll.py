@@ -26,7 +26,7 @@ log = logging.getLogger('enroll')
 log.info('==========[enroll.py started]==========')
 restartDoorLock = False
 
-process = subprocess.Popen(['pidof', 'door-lock.py'], stdout=subprocess.PIPE)
+process = subprocess.Popen(['pgrep', 'door-lock.py'], stdout=subprocess.PIPE)
 out, err = process.communicate()
 
 if out != '':

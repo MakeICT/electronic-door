@@ -16,8 +16,8 @@ from backend import backend
 from rpi import interfaceControl
 
 #@TODO: this may not be necessary?
-import setproctitle
-setproctitle.setproctitle('door-lock.py')
+#import setproctitle
+#setproctitle.setproctitle('door-lock.py')
 
 lastDoorStatus = [0,0]
 

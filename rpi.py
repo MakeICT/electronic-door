@@ -59,15 +59,25 @@ class InterfaceControl(object):
 			# Print UID
 			return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
 	def output(self, componentID, status):
+		'''
+		Write to a GPIO pin set as an output
+
+		Args:
+		  componentID (int): pin number of output pin
+		  status (bool): True to turn on, False to turn off
+		'''
 		wiringpi2.digitalWrite(self.GPIOS[componentID], status)
 
 	def input(self, componentID):
 		'''
 		Read a GPIO pin set as an input
+		
+		Args:
+		  componentID (int): pin number of input pin
 
 		Returns:
-		True if pin is high
-		False if pin is low
+		  True if pin is high
+		  False if pin is low
 		'''
 		return wiringpi2.digitalRead(self.GPIOS[componentID])
 
@@ -76,7 +86,7 @@ class InterfaceControl(object):
 		Set power LED state
 
 		Args:
-		powerIsOn -- True to turn on LED, False to turn off
+		  powerIsOn (bool): True to turn on LED, False to turn off
 		'''
 		self.output('power_LED', powerIsOn)
 
@@ -85,7 +95,7 @@ class InterfaceControl(object):
 		Set buzzer state
 
 		Args:
-		buzzerOn -- True to turn on buzzer, False to turn off
+		  buzzerOn (bool): True to turn on buzzer, False to turn off
 		'''
 
 		if buzzerOn:
@@ -100,7 +110,7 @@ class InterfaceControl(object):
 		Unlock door, activate unlock_LED and buzzer, and relock door after timeout
 
 		Args:
-		timeout -- length of time to keep the door unlocked (default 2)
+		  timeout (int): length of time to keep the door unlocked (default 2)
 		'''
 		self.output('latch', True)
 		self.output('unlock_LED', True)
@@ -115,7 +125,7 @@ class InterfaceControl(object):
 		Check the open/closed status of both doors. 
 
 		Returns:
-		A list of Boolean values representing each door state: True if open, False if closed
+		  A list of Boolean values representing each door state: True if open, False if closed
 		'''
 
 		#invert values if using pull-down resistors on switch inputs
@@ -127,8 +137,8 @@ class InterfaceControl(object):
 		Blink power_LED to indicate invalid card read
 
 		Args:
-		blinkCount -- number of time to blink (default 3)
-		blinkPeriod -- on/off duration in seconds (default 0.25)
+		  blinkCount (int): number of time to blink (default 3)
+		  blinkPeriod (float): on/off duration in seconds (default 0.25)
 		'''
 		for i in range(blinkCount):
 			self.output('power_LED', True)
