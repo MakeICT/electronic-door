@@ -14,6 +14,7 @@ Authors:
 #@TODO: Add debug logging
 
 import MySQLdb, MySQLdb.cursors
+from passlib.hash import sha512_crypt
 
 class MySQLBackend(object):
 	def __init__(self, host, db, user, passwd):
@@ -73,14 +74,14 @@ class MySQLBackend(object):
 	#@TODO: implement this. duh.
 	def saltAndHash(self, data):
 		'''
-		Salt and hash a plaintext password
+		Salt and hash a plaintext password using SHA512 algorithm
 
 		Args:
 		  data (string): a plaintext password
 		Returns:
 		  A string containing the salted hash of the password
 		'''
-		return data
+		return sha512_crypt.encrypt(data)
 
 	def getUserByEmail(self, email):
 		'''
