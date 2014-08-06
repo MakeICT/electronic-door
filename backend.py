@@ -96,7 +96,7 @@ class MySQLBackend(object):
 		cursor.execute('SELECT * FROM users WHERE email = %s', email)
 		data = cursor.fetchone()
 		cursor.close()
-		db.commit()
+		self.db.commit()
 		return data
 
 	def getUserFromKey(self, key):
