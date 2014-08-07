@@ -17,12 +17,12 @@ class InterfaceControl(object):
 	def __init__(self):
 		Pi_rev = wiringpi2.piBoardRev()	#@TODO: use this?
 		self.GPIOS = {
-			'latch': 11,
-			'unlock_LED': 22,
-			'power_LED': 27,
-			'buzzer': 18, 
-			'doorStatus1': 4,
-			'doorStatus2': 17,
+			'latch': 7,
+			'unlock_LED': 11,
+			'power_LED': 13,
+			'buzzer': 12, 
+			'doorStatus1': 15,
+			'doorStatus2': 16,
 		}
 		
 		
