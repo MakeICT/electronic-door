@@ -9,10 +9,11 @@ Usage: enroll.py [userID [rfid]]
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
-
-@TODO: use POSIX command line arguments for non-interactive mode
-@TODO: define error status codes here (duplicate key error)
+	Christian Kindel <iceman81292@gmail.com>
 '''
+#@TODO: use POSIX command line arguments for non-interactive mode
+#@TODO: define error status codes here (duplicate key error)
+
 
 import sys, os, signal, time, subprocess, argparse, logging, logging.config
 from backend import backend

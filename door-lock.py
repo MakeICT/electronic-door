@@ -8,6 +8,7 @@ door-lock.py: unlocks the door on a succesful NFC read
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+	Christian Kindel <iceman81292@gmail.com
 '''
 
 import subprocess, time, sys, os, signal, logging, logging.config
