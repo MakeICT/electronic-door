@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python/
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -10,11 +10,12 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
 
-import RPi.GPIO as GPIO
 import time, subprocess
+import wiringpi2
 
 class InterfaceControl(object):
 	def __init__(self):
+		Pi_rev = wiringpi2.piBoardRev()	#@TODO: use this?
 		self.GPIOS = {
 			'latch': 11,
 			'unlock_LED': 22,
@@ -24,20 +25,25 @@ class InterfaceControl(object):
 			'doorStatus2': 17,
 		}
 		
-		GPIO.setwarnings(False)
-		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['unlock_LED'], GPIO.OUT)
-		GPIO.setup(self.GPIOS['power_LED'], GPIO.OUT)
 		
-		#Set up Software PWM
-		GPIO.setup(self.GPIOS['buzzer'], GPIO.OUT)
-		self.buzzer = GPIO.PWM(self.GPIOS['buzzer'], 750)
+		#set up I/O pins
+		wiringpi2.wiringPiSetupPhys()
+		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 1)
+		wiringpi2.pinMode(self.GPIOS['power_LED'], 1)
+		wiringpi2.pinMode(self.GPIOS['latch'], 1)
+		wiringpi2.pinMode(self.GPIOS['doorStatus1'], 0)
+		wiringpi2.pinMode(self.GPIOS['doorStatus2'], 0)
+		
+		#Set up Hardware PWM - Only works on GPIO 18 (Phys 12)
+		wiringpi2.pwmSetMode(0)				# set PWM to markspace mode
+		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
+		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
+		
+		#Set input pull-ups
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 2)
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 2)
 
-		GPIO.setup(self.GPIOS['doorStatus1'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		GPIO.setup(self.GPIOS['doorStatus2'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-		
-		GPIO.setwarnings(True)
 
 	def nfcGetUID(self):
 		'''
@@ -63,7 +69,7 @@ class InterfaceControl(object):
 		  componentID (int): pin number of output pin
 		  status (bool): True to turn on, False to turn off
 		'''
-		GPIO.output(self.GPIOS[componentID], status)
+		wiringpi2.digitalWrite(self.GPIOS[componentID], status)
 
 	def input(self, componentID):
 		'''
@@ -76,8 +82,8 @@ class InterfaceControl(object):
 		  True if pin is high
 		  False if pin is low
 		'''
-		return GPIO.input(self.GPIOS[componentID])
-	
+		return wiringpi2.digitalRead(self.GPIOS[componentID])
+
 	def setPowerStatus(self, powerIsOn):
 		'''
 		Set power LED state
@@ -96,10 +102,11 @@ class InterfaceControl(object):
 		'''
 
 		if buzzerOn:
-			self.buzzer.ChangeFrequency(500)
-			self.buzzer.start(30)	#@TODO: this line causes memory leak?
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
+			pass
 		else:
-			self.buzzer.stop()
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
+			pass
 
 	def unlockDoor(self, timeout=2):
 		'''
@@ -148,6 +155,18 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		GPIO.cleanup()
+		#Clean up GPIO pins
+		wiringpi2.digitalWrite(self.GPIOS['unlock_LED'], 0)
+		wiringpi2.digitalWrite(self.GPIOS['power_LED'], 0)
+		wiringpi2.digitalWrite(self.GPIOS['latch'], 0)
+		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
+		
+		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 0)
+		wiringpi2.pinMode(self.GPIOS['power_LED'], 0)
+		wiringpi2.pinMode(self.GPIOS['latch'], 0)
+		wiringpi2.pinMode(self.GPIOS['buzzer'], 0) 
 
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 0)
+		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 0)
+	
 interfaceControl = InterfaceControl()
