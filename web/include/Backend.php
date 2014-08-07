@@ -128,7 +128,7 @@ class Backend {
 		try{
 			$sql = '
 				UPDATE users SET
-					email=?, firstName=?, lastName=?, password=?
+					email=?, firstName=?, lastName=?, passwordHash=?
 				WHERE userID = ?';
 			$this->db->query($sql, $email, $firstName, $lastName, crypt($password), $userID);
 
@@ -137,8 +137,8 @@ class Backend {
 			
 			return true;
 		}catch(Exception $exc){
-			trigger_error($exc);
 			$this->db->rollback();
+			throw $exc;
 		}
 
 		return false;
