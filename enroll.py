@@ -73,11 +73,13 @@ try:
 		nfcID = sys.argv[2]
 	else:
 		interfaceControl.setPowerStatus(True)
+		log.debug("Starting NFC read")
 		while True:		#@TODO: limit number of loops
 			nfcID = interfaceControl.nfcGetUID()
 			if nfcID != None:
 				break
 			time.sleep(1)
+		log.debug("Finished NFC read")
 		interfaceControl.setPowerStatus(False)
 		
 	autoSteal = (len(sys.argv) >= 4 and sys.argv[3] == 'steal')

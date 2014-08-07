@@ -58,6 +58,7 @@ class InterfaceControl(object):
 		if status == self.nfc.MI_OK:
 			# Print UID
 			return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
+	
 	def output(self, componentID, status):
 		'''
 		Write to a GPIO pin set as an output

@@ -39,7 +39,9 @@ signal.signal(signal.SIGTERM, signal_term_handler)
 while True:
 	try:
 		interfaceControl.setPowerStatus(True)
+		logger.debug("Starting NFC read")
 		nfcID = interfaceControl.nfcGetUID()
+		logger.debug("Finished NFC read")
 		interfaceControl.setPowerStatus(False)
 		currentDoorStatus = interfaceControl.checkDoors()
 

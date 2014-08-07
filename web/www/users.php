@@ -14,7 +14,7 @@
 	require_once('../include/config.php');
 	require_once('../include/Backend.php');
 
-	if(empty($_SESSION["userID"])){
+	if(empty($_SESSION['userID'])){
 		$_SESSION['redirectLocation'] = 'users.php';
 		header("Location: login.php");
 		exit();
@@ -26,9 +26,14 @@
 		$output = shell_exec('ps aux | grep enroll.py | grep -v grep');
 		return !empty($output);
 	}
+	$waitingForSwipe = enrollmentIsRunning();
 
-	if(!empty($_REQUEST)){
-		if($_REQUEST['action'] == 'dropUserTag'){
+	if(!empty($_POST)){
+		if($_REQUEST['action'] == 'Cancel'){
+			$_SESSION['messages'][] = 'Canceled.';
+			header("Location: $_SERVER[PHP_SELF]");
+			exit();
+		}elseif($_REQUEST['action'] == 'dropUserTag'){
 			try{
 				$backend->dropUserTag($_REQUEST['email'], $_REQUEST['tag']);
 				echo '0';
@@ -52,16 +57,23 @@
 			}
 			
 			exit();
-		}elseif($_REQUEST['action'] == 'Add User'){
+		}elseif($_REQUEST['action'] == 'Add/Edit User'){
 			try{
-				$backend->addUser($_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName']);
-				$_SESSION['messages'][] = "Added $_REQUEST[firstName] $_REQUEST[lastName]";
-				
-				header("Location: $_SERVER[PHP_SELF]");
-				exit();
+				if(!empty($_REQUEST['editingUserID'])){
+					// editing a user
+					$backend->updateUser($_REQUEST['editingUserID'], $_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName'], '');
+					$_SESSION['messages'][] = "User $_REQUEST[email] was successfully edited.";
+				}else{
+					// adding a user
+					$backend->addUser($_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName']);
+					$_SESSION['messages'][] = "Added $_REQUEST[firstName] $_REQUEST[lastName]";
+					
+					header("Location: $_SERVER[PHP_SELF]");
+					exit();
+				}
 			}catch(Exception $exc){
 				trigger_error($exc);
-				$_SESSION['errors'][] = $exc->getMessage();
+				$_SESSION['errors'][] = 'Failed to update user.';
 			}
 		}elseif($_REQUEST['action'] == 'Enroll'){
 			try{
@@ -117,6 +129,8 @@
 				trigger_error($exc);
 				$_SESSION['errors'][] = $exc->getMessage();
 			}
+		}elseif($_REQUEST['action'] == 'Edit'){
+			$userToEdit = $backend->getUserFromEmail($_REQUEST['email']);
 		}else{
 			$_SESSION['errors'][] = "Unrecognized command: '$_REQUEST[action]'";
 		}
@@ -134,7 +148,6 @@
 	echo getFormattedErrors();
 	echo getFormattedMessages();
 
-	$waitingForSwipe = enrollmentIsRunning();
 	if($waitingForSwipe){
 		$swipeUser = shell_exec("head -n 1 /tmp/enrollmentStatus");
 		echo "
@@ -146,10 +159,17 @@
 					</form>
 				</div>";
 	}
+
+	if(!empty($userToEdit)){
+		echo "
+				<h1>User Edit</h1>";
+	}else{
+		echo "
+				<h1>Add a user</h1>";
+	}
 	
 	?>
 	
-				<h1>Add a user</h1>
 				<form method="post">
 					<table>
 						<thead>
@@ -161,21 +181,51 @@
 						</thead>
 						<tbody>
 							<tr>
-								<td><input type="text" name="firstName" /></td>
-								<td><input type="text" name="lastName" /></td>
-								<td><input type="text" name="email" /></td>
+								<td><input type="text" name="firstName" value="<?php if(!empty($userToEdit)) echo $userToEdit['firstName']; ?>" /></td>
+								<td><input type="text" name="lastName" value="<?php if(!empty($userToEdit)) echo $userToEdit['lastName']; ?>"/></td>
+								<td><input type="text" name="email" value="<?php if(!empty($userToEdit)) echo $userToEdit['email']; ?>"/></td>
 							</tr>
 							<tr>
-								<th colspan="3"><input name='action' type="submit" value="Add User" /></th>
+								<th colspan="3">
+									<input type="hidden" name="editingUserID" value="<?php if(!empty($userToEdit)) echo $userToEdit['userID']; ?>"/>
+									<input name='action' type="submit" value="Add/Edit User" />
+									<input name='action' type="submit" value="Cancel" />
+								</th>
 						</tbody>
 					</table>
 				</form>
 				<hr/>
 				<h1>Existing users</h1>
+<?php
+	$statuses = array(
+		'active' => 'Active',
+		'inactive' => 'Inactive',
+		'probation' => 'Probation',
+		'' => 'All',
+	);
+	if(array_key_exists('statusFilter', $_REQUEST)){
+		$users = $backend->getUsers($_REQUEST['statusFilter']);
+		$setStatus = $_REQUEST['statusFilter'];
+	}else{
+		$users = $backend->getUsers();
+	}
+	
+	$options = '';
+	foreach($statuses as $status=>$label){
+		$active = (isset($setStatus) && $status == $setStatus) ? " selected='selected'" : '';
+		$options .= "
+						<option value='$status'$active>$label</option>";
+	}
+?>
+				<form method='get'>
+					<select name='statusFilter'>
+						<?php echo $options; ?>
+					</select>
+					<input type='submit' value='Apply Filters' />
+				</form>
 
 <?php
 
-	$users = $backend->getUsers();
 	echo "
 				<table>
 					<thead>
@@ -236,6 +286,12 @@
 								<form method='post'>
 									<input type='hidden' name='email' value='$user[email]' />
 									<input type='submit' name='action' value='$activateAction' />
+								</form>
+							</td>
+							<td>
+								<form method='post'>
+									<input type='hidden' name='email' value='$user[email]' />
+									<input type='submit' name='action' value='Edit' />
 								</form>
 							</td>
 						</tr>";
