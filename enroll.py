@@ -15,7 +15,7 @@ Authors:
 #@TODO: define error status codes here (duplicate key error)
 
 
-import sys, os, signal, time, subprocess, argparse, logging, logging.config
+import os, signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
 from rpi import interfaceControl
 
@@ -132,8 +132,6 @@ try:
 				nfcID = interfaceControl.nfcGetUID()
 				log.debug("Finished NFC read")
 				interfaceControl.setPowerStatus(False)
-				if restartDoorLock:
-					startDoorLock()
 			if nfcID != '':
 				# @TODO: catch duplicate key error, exit with error status
 				backend.enroll(nfcID, userID, args.steal)

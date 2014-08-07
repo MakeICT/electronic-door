@@ -240,6 +240,4 @@ class MySQLBackend(object):
 
 backend = MySQLBackend(
 	host="localhost" ,db="MakeICTMemberKeys",
-	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4"
-)
-			key = key
+	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4")

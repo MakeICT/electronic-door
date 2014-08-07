@@ -11,7 +11,7 @@ Authors:
 	Christian Kindel <iceman81292@gmail.com
 '''
 
-import subprocess, time, sys, os, signal, logging, logging.config
+import time, sys, signal, logging, logging.config
 
 from backend import backend
 from rpi import interfaceControl
