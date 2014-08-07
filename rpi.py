@@ -47,7 +47,6 @@ class InterfaceControl(object):
 		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 2)
 		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 2)
 
-
 	def nfcGetUID(self):
 	# Scan for cards    
 		(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
