@@ -28,7 +28,7 @@
 	}
 	$waitingForSwipe = enrollmentIsRunning();
 
-	if(!empty($_REQUEST)){
+	if(!empty($_POST)){
 		if($_REQUEST['action'] == 'Cancel'){
 			$_SESSION['messages'][] = 'Canceled.';
 			header("Location: $_SERVER[PHP_SELF]");
@@ -196,10 +196,36 @@
 				</form>
 				<hr/>
 				<h1>Existing users</h1>
+<?php
+	$statuses = array(
+		'active' => 'Active',
+		'inactive' => 'Inactive',
+		'probation' => 'Probation',
+		'' => 'All',
+	);
+	if(array_key_exists('statusFilter', $_REQUEST)){
+		$users = $backend->getUsers($_REQUEST['statusFilter']);
+		$setStatus = $_REQUEST['statusFilter'];
+	}else{
+		$users = $backend->getUsers();
+	}
+	
+	$options = '';
+	foreach($statuses as $status=>$label){
+		$active = (isset($setStatus) && $status == $setStatus) ? " selected='selected'" : '';
+		$options .= "
+						<option value='$status'$active>$label</option>";
+	}
+?>
+				<form method='get'>
+					<select name='statusFilter'>
+						<?php echo $options; ?>
+					</select>
+					<input type='submit' value='Apply Filters' />
+				</form>
 
 <?php
 
-	$users = $backend->getUsers();
 	echo "
 				<table>
 					<thead>
