@@ -28,14 +28,26 @@ class Backend {
 	/**
 	 * @TODO: document this
 	 **/
-	public function getUsers(){
+	public function getUsers($status='active'){
+		$params = [];
 		$sql = '
-			SELECT
-				users.*,
-				(SELECT COUNT(0) FROM rfids WHERE rfids.userID = users.userID) > 0 AS isEnrolled
-			FROM users
-			ORDER BY lastName, firstName';
-		return $this->db->query($sql)->fetchAll();
+				SELECT
+					users.*,
+					(SELECT COUNT(0) FROM rfids WHERE rfids.userID = users.userID) > 0 AS isEnrolled
+				FROM users';
+
+		if(!empty($status)){
+			trigger_error("Filtering for status: $status");
+			$sql .= '
+				WHERE status = :status';
+			$params['status'] = $status;
+		}
+
+		$sql .= '
+				ORDER BY lastName, firstName';
+
+		
+		return $this->db->query($sql, $params)->fetchAll();
 	}
 
 	/**
@@ -128,7 +140,7 @@ class Backend {
 		try{
 			$sql = '
 				UPDATE users SET
-					email=?, firstName=?, lastName=?, password=?
+					email=?, firstName=?, lastName=?, passwordHash=?
 				WHERE userID = ?';
 			$this->db->query($sql, $email, $firstName, $lastName, crypt($password), $userID);
 
@@ -137,8 +149,8 @@ class Backend {
 			
 			return true;
 		}catch(Exception $exc){
-			trigger_error($exc);
 			$this->db->rollback();
+			throw $exc;
 		}
 
 		return false;

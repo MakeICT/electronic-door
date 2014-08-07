@@ -1,8 +1,12 @@
-# MakeICT/Bluebird Arthouse Electronic Door Entry Project
+![MakeICT-Logo-web.png](https://bitbucket.org/repo/BMjob4/images/2744186893-MakeICT-Logo-web.png)
+## MakeICT/Bluebird Arthouse Electronic Door Entry Project
 
 ## Authors:
-* Dominic Canare
+* Dominic Canare <dom@greenlightgo.org>
 * Rye Kennedy
+* John Harrison
+* Christian Kindel
+* Tom McGuire
 
 * * *
 
@@ -12,9 +16,6 @@ This is a work in progress. For more information, please visit the [MakeICT Wiki
 
 ## TODO
 * Documentation
-* (form) Authenticate administrative users
 * (form) Edit user
-* Password salt+hash
 * Log viewer
-* Test
-
+* Testing
