@@ -5,7 +5,7 @@
 * Dominic Canare <dom@greenlightgo.org>
 * Rye Kennedy
 * John Harrison
-* Christian Kendel
+* Christian Kindel
 * Tom McGuire
 
 * * *
