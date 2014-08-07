@@ -23,7 +23,8 @@
 	$backend = Backend::instance();
 
 	function enrollmentIsRunning(){
-		$output = shell_exec('ps aux | grep enroll.py | grep -v grep');
+#		$output = shell_exec('ps aux | grep enroll.py | grep -v grep');
+		$output = shell_exec('pgrep enroll.py');
 		return !empty($output);
 	}
 	$waitingForSwipe = enrollmentIsRunning();
