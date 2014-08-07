@@ -8,6 +8,7 @@ rpi.py: Hardware control
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+	Christian Kindel <iceman81292@gmail.com>
 '''
 
 import lib.MFRC522 as NFC

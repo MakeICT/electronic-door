@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/pytho
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -8,6 +8,7 @@ backend.py - contains code for accessing/modifying the database
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+	Christian Kindel <iceman81292@gmail.com>
 '''
 #@TODO: Make proper use of transactions
 #	Note: transaction is started when the cursor is created, ended by db.commit|rollback
@@ -45,7 +46,13 @@ class MySQLBackend(object):
 			user=self.dbInfo['user'], passwd=self.dbInfo['passwd'],
 			cursorclass=MySQLdb.cursors.DictCursor
 		)
-				
+	
+	#@TEST added this to make sure data is up-to-date. Not sure if it's the best way
+	#only useful if long running scripts like door-lock.py
+	def ensureConnection(self):
+		if self.db.stat() == "MySQL server has gone away":
+			self.reconnectDB()
+		self.db.commit()				
 
 	#@TODO: Unit tests
 	def log(self, logType, rfid=None, userID=None, message=None, commit=True):
@@ -82,6 +89,35 @@ class MySQLBackend(object):
 		  A string containing the salted hash of the password
 		'''
 		return sha512_crypt.encrypt(data)
+	
+	def getUser(self, key, value):
+		'''
+		Retrieve information about a user whose attribute %key is %value
+		
+		Args:
+		  key (string): 'email' or 'userID' or 'id'
+		  value (string): the user's e-mail address, userID, or NFC key UID
+		Returns:
+		  Dict of user data if the user exists
+		  None if the user does not exist
+		'''
+		self.ensureConnection()	
+		sql = 	'''SELECT * FROM users '''
+		cursor = self.db.cursor()
+		if key == 'id':
+			sql += '''JOIN rfids ON users.userID = rfids.userID '''
+			key = 'rfids.' + key
+		elif key == 'email' or key == 'userID':
+			pass
+		else:
+			#@TODO: not a valid key, raise an exception?
+			return None
+		sql += '''WHERE ''' + key + ''' = %s'''
+		cursor.execute(sql, value)
+		data = cursor.fetchone()
+		cursor.close()
+		self.db.commit()
+		return data
 
 	def getUserByEmail(self, email):
 		'''
@@ -93,36 +129,31 @@ class MySQLBackend(object):
 		  Dict of user data if the user exists
 		  None if the user does not exist
 		'''
-		cursor = self.db.cursor()
-		cursor.execute('SELECT * FROM users WHERE email = %s', email)
-		data = cursor.fetchone()
-		cursor.close()
-		self.db.commit()
-		return data
+		return self.getUser('email', email)
 
-	def getUserFromKey(self, key):
+	def getUserByUserID(self, userID):
+		'''
+		Retrieve information for user with a given userID
+		
+		Args:
+		  userID (string): the userID of the user
+		Returns:
+		  Dict of user data if the user exists
+		  None if the user does not exist
+		'''
+		return self.getUser('userID', userID)
+
+	def getUserByKeyID(self, key):
 		'''
 		Look up user given a card id number
-
+		
+		Args:
+		  key (string): the UID of an NFC key
 		Returns:
-		  Dictionary containing user information {'status', 'firstName',' lastName', 'email'}
+		  Dict of user data if the user exists
 		  None if card is not registered to a user
 		'''
-		if self.db.stat() == "MySQL server has gone away":
-			self.reconnectDB()
-		self.db.commit()	#@TEST added this to make sure data is up-to-date. Not sure if it's the best way
-		cursor = self.db.cursor()
-		sql = '''
-			SELECT * FROM users
-				JOIN rfids ON users.userID = rfids.userID
-			WHERE rfids.id = %s
-			'''
-
-		cursor.execute(sql, key)
-		data = cursor.fetchone()
-		cursor.close()
-		self.db.commit()
-		return data
+		return self.getUser('id', key)
 	
 	def addUser(self, email, firstName=None, lastName=None, password=None):
 		'''
@@ -154,7 +185,31 @@ class MySQLBackend(object):
 		user = self.getUserByEmail(email)
 		if user != None:
 			return user['userID']
+	
+	#@TODO: should be able to delete user without deleting logs	
+	def rmUser(self, userID):
+		'''
+		Delete a user with a given userID.
 
+		Args:
+		  userID (string): Unique ID of user to delete
+		'''
+		sql = 	'''
+			DELETE FROM logs
+				WHERE userID=%s;
+			DELETE FROM rfids
+				WHERE userID=%s;
+			DELETE FROM userTags
+				WHERE userID=%s;
+			DELETE FROM users
+				WHERE userID=%s;
+			'''
+		cursor = self.db.cursor()
+		cursor.execute(sql, (userID, userID, userID, userID))
+		cursor.close()
+
+		self.db.commit()
+	
 	#@TODO: Unit tests
 	def enroll(self, key, userID, autoSteal=False):
 		'''
@@ -187,3 +242,4 @@ backend = MySQLBackend(
 	host="localhost" ,db="MakeICTMemberKeys",
 	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4"
 )
+			key = key

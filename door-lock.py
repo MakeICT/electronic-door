@@ -8,6 +8,7 @@ door-lock.py: unlocks the door on a succesful NFC read
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+	Christian Kindel <iceman81292@gmail.com
 '''
 
 import subprocess, time, sys, os, signal, logging, logging.config
@@ -58,7 +59,7 @@ while True:
 
 		if nfcID != None:
 			logger.info("Scanned card ID: %s" % nfcID)
-			user = backend.getUserFromKey(nfcID)	
+			user = backend.getUserByKeyID(nfcID)	
 			if user != None:
 				if user['status'] == 'active':
 					logger.info("ACCEPTED card ID: %s" % nfcID)
