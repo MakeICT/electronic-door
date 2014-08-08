@@ -166,6 +166,34 @@ class MySQLBackend(object):
 		'''
 		return self.getUser('id', key)
 	
+	def updateUser(self, userID, email=None, firstName=None, lastName=None, tags=None, password=None):
+		'''
+		Update an existing user
+
+		Args:
+		  userID (string): the userID of the user to be edited
+		  email (string, optional): updated e-mail address
+		  firstName (string, optional): updated first name
+		  lastName (string, optional): updated last name
+		  tags (list of strings, optional): updated list of tags
+		  password (string, optional): updated password
+		'''
+		sql = '''UPDATE users SET '''
+		if email != None:
+			sql += '''email='%s' '''%email
+		if firstName != None:
+			sql += ''', firstName='%s' '''%firstName
+		if lastName != None:
+			sql += ''', lastName='%s' '''%lastName
+		if password != None:
+			sql += ''', passwordHash='%s' '''%self.saltAndHash(password)
+		sql += '''WHERE userID = %s'''
+		
+		cursor = self.db.cursor()
+		cursor.execute(sql, userID)
+		cursor.close()
+		self.db.commit()
+
 	def addUser(self, email, firstName=None, lastName=None, password=None, tags=None):
 		'''
 		Add a user to the database

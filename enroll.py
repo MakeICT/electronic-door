@@ -148,6 +148,7 @@ if args.mode == "edituser":
 				print 'Invalid tag :', tag
 				user_info['tags'] = None
 	user_info['password'] = raw_input("Password   %30s: "%'')
+	backend.updateUser(user['userID'], email=user_info['email'], firstName=user_info['firstName'], lastName=user_info['lastName'], tags=user_info['tags'], password=user_info['password'])
 		
 
 if args.mode == "enroll" or args.mode == "adduser":
