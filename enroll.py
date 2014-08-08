@@ -72,16 +72,37 @@ def startDoorLock():
 		
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
-if args.mode == "rmuser":
-	if user_info['userID'] == None:
-		parser.print_help()
-	backend.rmUser(user_info['userID'])
 
-if args.mode == "adduser":
+if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll":
+	if user_info['userID'] == None and user_info['email'] == None:
+		choice = raw_input("Lookup user by e-mail [e] or userID [u] ?:").lower()
+		if choice == 'e':
+			email = raw_input("Enter user's e-mail:").lower()
+			user = backend.getUserByEmail(email)
+		elif choice == 'u':
+			userID = raw_input("Enter userID:").lower()
+			user = backend.getUserByUserID(userID)
+	elif user_info['userID'] != None:
+		user = backend.getUserByUserID(user_info['userID'])
+	else:
+		user = backend.getUserByEmail(user_info['email'])
+	if user == None:
+		print "User not found. Confirm info and try again."
+		exit()
+
+if args.mode == "rmuser":
+	print "User %s: '%s %s' will be permanently deleted, along with all associated logs!"%(user['userID'], user['firstName'], user['lastName'])
+	if raw_input("Delete this user? [type 'yes' to continue, anything else to exit]:").lower() == 'yes':
+		if raw_input("Really? [type 'yes' to delete user, anything else to exit]:").lower() == 'yes':
+			backend.rmUser(user['userID'])
+			print "User %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName'])
+			
+
+if args.mode == "adduser" or args.mode == "edituser":
 	if user_info['email'] == None:
 		user_info['email'] = raw_input("Email      : ")
 	user = backend.getUserByEmail(user_info['email'])
-	if user != None:
+	if user != None and args.mode == "adduser":
 		print("User [%d] %s %s already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
 		exit()
 	else:
@@ -111,29 +132,13 @@ if args.mode == "adduser":
 		
 
 if args.mode == "enroll" or args.mode == "adduser":
-	if user_info['userID'] == None and user_info['email'] == None:
-		choice = raw_input("Lookup user by e-mail [e] or userID [u] ?:").lower()
-		if choice == 'e':
-			email = raw_input("Enter user's e-mail:").lower()
-			user = backend.getUserByEmail(email)
-		elif choice == 'u':
-			userID = raw_input("Enter userID:").lower()
-			user = backend.getUserByUserID(userID)
-	elif user_info['userID'] != None:
-		user = backend.getUserByUserID(user_info['userID'])
-	else:
-		user = backend.getUserByEmail(user_info['email'])
-	if user != None:
-		if args.mode != "adduser" and not args.noninteractive:
-			confirmUser = raw_input("Found user [%d] %s %s. Use this person [y|n]: " % (user['userID'], user['firstName'], user['lastName']))
-			if not confirmUser.lower() == 'y':
-				print "Exiting"
-				exit()
-		userID = user['userID']
-	else:
-		print "User not found. Confirm info and try again or add a new user."
-		exit()
-	
+	if args.mode != "adduser" and not args.noninteractive:
+		confirmUser = raw_input("Found user [%d] %s %s. Use this person [y|n]: " % (user['userID'], user['firstName'], user['lastName']))
+		if not confirmUser.lower() == 'y':
+			print "Exiting"
+			exit()
+	userID = user['userID']
+
 	if args.mode != 'enroll':	
 		enroll = raw_input("Register NFC key? [y|n]:").lower()
 	# @TODO need better input checking on both
