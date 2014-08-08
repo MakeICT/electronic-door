@@ -15,12 +15,18 @@ Authors:
 #@TODO: define error status codes here (duplicate key error)
 
 
-import os, signal, time, subprocess, argparse, logging, logging.config
+import os
+if os.environ['USER'] != 'root':
+	print "Root is required to run this script"
+	exit()
+
+import signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
-from rpi import interfaceControl
+
+availableTags = ['admin', 'makeict', 'bluebird']
 
 parser = argparse.ArgumentParser(description='Enroll a user in the MakeICT database.')
-parser.add_argument("mode", choices=['enroll', 'adduser', 'rmuser'])
+parser.add_argument("mode", choices=['enroll', 'adduser', 'rmuser', 'edituser'])
 parser.add_argument("-u", "--userid", help="The user's unique userID.", type=int)
 parser.add_argument("-e", "--email", help="The user's email. This functions as the user's unique username.")
 parser.add_argument("-f", "--firstname", help="The user's first name.")
@@ -28,6 +34,7 @@ parser.add_argument("-l", "--lastname", help="The user's last name.")
 parser.add_argument("-p", "--password", help="The user's password.")
 parser.add_argument("-n", "--nfcid", help="UID of the user's NFC card.")
 parser.add_argument("-s", "--steal", help="Re-assign the card if it is already registered to another user.", action="store_true")
+parser.add_argument("-t", "--tags", choices=availableTags, nargs='+')
 parser.add_argument("-N", "--noninteractive", help="Don't prompt for keyboard input", action="store_true")
 args = parser.parse_args()
 
@@ -38,7 +45,6 @@ log.info('==========[enroll.py started]==========')
 restartDoorLock = False
 
 
-# @TODO: this really only needs to happen if NFC reader access is required
 def killDoorLock():
 	process = subprocess.Popen(['pgrep', 'door-lock.py'], stdout=subprocess.PIPE)
 	out, err = process.communicate()
@@ -64,84 +70,101 @@ def startDoorLock():
 	subprocess.Popen(['/home/pi/code/makeictelectronicdoor/door-lock.py'], stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False
 		
-try:
-	user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password}
-	if args.mode == "rmuser":
-		if user_info['userID'] == None:
-			parser.print_help()
-		backend.rmUser(user_info['userID'])
-	
-	if args.mode == "adduser":
-		if user_info['email'] == None:
-			user_info['email'] = raw_input("Email      : ")
+
+user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
+if args.mode == "rmuser":
+	if user_info['userID'] == None:
+		parser.print_help()
+	backend.rmUser(user_info['userID'])
+
+if args.mode == "adduser":
+	if user_info['email'] == None:
+		user_info['email'] = raw_input("Email      : ")
+	user = backend.getUserByEmail(user_info['email'])
+	if user != None:
+		print("User [%d] %s %s already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
+		exit()
+	else:
+		if user_info['firstName'] == None:
+			user_info['firstName'] = raw_input("First Name : ")
+		if user_info['lastName'] == None:
+			user_info['lastName'] = raw_input("Last  Name : ")
+		if user_info['password'] == None:
+			user_info['password'] = raw_input("Password   : ")
+		while user_info['tags'] == None:
+			userInput = raw_input("Tags       : ").strip()
+			if userInput == '':
+				break
+			user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
+			for tag in user_info['tags']:
+				if tag not in availableTags:
+					print 'Invalid tag :', tag
+					user_info['tags'] = None
+				
+		
+		user_info['userID'] = backend.addUser(user_info['email'], user_info['firstName'], user_info['lastName'], user_info['password'], user_info['tags'])
+		if user_info['userID'] != None:
+			print "\nUser [%d] added to the database" % user_info['userID']
+		else:
+			print "\nFailed to add user"
+			exit(1)
+		
+
+if args.mode == "enroll" or args.mode == "adduser":
+	if user_info['userID'] == None and user_info['email'] == None:
+		choice = raw_input("Lookup user by e-mail [e] or userID [u] ?:").lower()
+		if choice == 'e':
+			email = raw_input("Enter user's e-mail:").lower()
+			user = backend.getUserByEmail(email)
+		elif choice == 'u':
+			userID = raw_input("Enter userID:").lower()
+			user = backend.getUserByUserID(userID)
+	elif user_info['userID'] != None:
+		user = backend.getUserByUserID(user_info['userID'])
+	else:
 		user = backend.getUserByEmail(user_info['email'])
-		if user != None:
-			print("User [%d] %s %s already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
-			exit()
-		else:
-			if user_info['firstName'] == None:
-				user_info['firstName'] = raw_input("First Name : ")
-			if user_info['lastName'] == None:
-				user_info['lastName'] = raw_input("Last  Name : ")
-			if user_info['password'] == None:
-				user_info['password'] = raw_input("Password   : ")
-			
-			user_info['userID'] = backend.addUser(user_info['email'], user_info['firstName'], user_info['lastName'], user_info['password'])
-			if user_info['userID'] != None:
-				print "\nUser [%d] added to the database" % user_info['userID']
-			else:
-				print "\nFailed to add user"
-				exit(1)
-			
-
-	if args.mode == "enroll" or args.mode == "adduser":
-		if user_info['userID'] == None and user_info['email'] == None:
-			choice = raw_input("Lookup user by e-mail [e] or userID [u] ?:").lower()
-			if choice == 'e':
-				email = raw_input("Enter user's e-mail:").lower()
-				user = backend.getUserByEmail(email)
-			elif choice == 'u':
-				userID = raw_input("Enter userID:").lower()
-				user = backend.getUserByUserID(userID)
-		elif user_info['userID'] != None:
-			user = backend.getUserByUserID(user_info['userID'])
-		else:
-			user = backend.getUserByEmail(user_info['email'])
-		if user != None:
-			if args.mode != "adduser" and not args.noninteractive:
-				confirmUser = raw_input("Found user [%d] %s %s. Use this person [y|n]: " % (user['userID'], user['firstName'], user['lastName']))
-				if not confirmUser.lower() == 'y':
-					print "Exiting"
-					exit()
-			userID = user['userID']
-		else:
-			print "User not found. Confirm info and try again or add a new user."
-			exit()
-
+	if user != None:
+		if args.mode != "adduser" and not args.noninteractive:
+			confirmUser = raw_input("Found user [%d] %s %s. Use this person [y|n]: " % (user['userID'], user['firstName'], user['lastName']))
+			if not confirmUser.lower() == 'y':
+				print "Exiting"
+				exit()
+		userID = user['userID']
+	else:
+		print "User not found. Confirm info and try again or add a new user."
+		exit()
+	
+	if args.mode != 'enroll':	
 		enroll = raw_input("Register NFC key? [y|n]:").lower()
-		# @TODO need better input checking on both
-		if enroll == 'y':
-			choice = raw_input("Enter key UID manually [m] or read key from NFC reader [r] ?:").lower()
-			if choice == 'm':
-				nfcID = raw_input("Enter key UID:")
-			elif choice == 'r':
+	# @TODO need better input checking on both
+	if args.mode == 'enroll' or enroll == 'y':
+		choice = raw_input("Enter key UID manually [m] or read key from NFC reader [r] ?:").lower()
+		if choice == 'm':
+			nfcID = raw_input("Enter key UID:")
+		elif choice == 'r':
+			try:
+				from rpi import interfaceControl
 				killDoorLock()
-				interfaceControl.setPowerStatus(True)
-				log.debug("Starting NFC read")
-				print "Swipe card now"
-				nfcID = interfaceControl.nfcGetUID()
-				log.debug("Finished NFC read")
-				interfaceControl.setPowerStatus(False)
-			if nfcID != '':
-				# @TODO: catch duplicate key error, exit with error status
-				backend.enroll(nfcID, userID, args.steal)
+				while True:
+					interfaceControl.setPowerStatus(True)
+					log.debug("Starting NFC read")
+					print "Swipe card now"
+					nfcID = interfaceControl.nfcGetUID()
+					log.debug("Finished NFC read")
+					interfaceControl.setPowerStatus(False)
+					if nfcID != None or raw_input("Couldn't read card. Retry? [y|n]:").lower() != 'y':
+						break
+			finally:
+				interfaceControl.cleanup()
+				if restartDoorLock:
+					startDoorLock()
+		if nfcID != None:
+			# @TODO: catch duplicate key error, exit with error status
+			backend.enroll(nfcID, userID, args.steal)
 
-				print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
-					
-		elif enroll == 'n': 
-			exit()	
-			
-finally:
-	interfaceControl.cleanup()
-	if restartDoorLock:
-		startDoorLock()
+			print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
+		else:
+			print "Did not enroll user"
+				
+	elif enroll == 'n': 
+		exit()	

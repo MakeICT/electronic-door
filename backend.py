@@ -155,7 +155,7 @@ class MySQLBackend(object):
 		'''
 		return self.getUser('id', key)
 	
-	def addUser(self, email, firstName=None, lastName=None, password=None):
+	def addUser(self, email, firstName=None, lastName=None, password=None, tags=None):
 		'''
 		Add a user to the database
 
@@ -167,11 +167,16 @@ class MySQLBackend(object):
 		Returns:
 		  A string containing the newly created user's ID number
 		'''
-		sql = '''
+		sql = 	'''
 			INSERT INTO users
 				(email, firstName, lastName, passwordHash)
 			VALUES
-				(%s, %s, %s, %s)'''
+				(%s, %s, %s, %s)
+			'''
+		sql2 = 	'''
+			INSERT INTO userTags (userID, tagID)
+			VALUES (%s,(SELECT tagID FROM tags WHERE tag = %s))
+			'''
 
 		if password == '' or password == None:
 			password = None
@@ -179,10 +184,14 @@ class MySQLBackend(object):
 			password = self.saltAndHash(password)
 		cursor = self.db.cursor()
 		cursor.execute(sql, (email, firstName, lastName, password))
-		cursor.close()
-
-		self.db.commit()
 		user = self.getUserByEmail(email)
+		print tags
+		if tags != None:
+			for tag in tags:
+				cursor.execute(sql2, (user['userID'], tag))
+		
+		cursor.close()
+		self.db.commit()
 		if user != None:
 			return user['userID']
 	
