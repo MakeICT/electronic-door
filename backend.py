@@ -305,6 +305,22 @@ class MySQLBackend(object):
 		
 		self.db.commit()
 
+	def unenroll(self, userID, keyUID):
+		'''
+		Remove NFC key from user
+
+		Args:
+		  userID (string): unique ID of the user
+		  keyUID (string): UID of the card
+		'''
+		sql = 	'''
+			DELETE FROM rfids WHERE id = %s AND userID = %s
+			'''
+		cursor = self.db.cursor()
+		cursor.execute(sql,(keyUID, userID))
+		cursor.close()
+		self.db.commit()
+
 backend = MySQLBackend(
 	host="localhost" ,db="MakeICTMemberKeys",
 	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4")

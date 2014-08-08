@@ -202,6 +202,11 @@ if args.mode == "edituser":
 if args.mode == "unenroll":
 	if not user['rfids']:
 		putMessage("User [{:d}] '{:s} {:s}' is not enrolled".format(user['userID'], user['firstName'], user['lastName']), True)
+	for rfid in user['rfids']:
+		if getInput("Remove NFC key with UID = {:s}?".format(rfid), options=['y','n']) == 'y':
+			backend.unenroll(user['userID'], rfid)
+			putMessage("Key un-enrolled")
+	putMessage("Exiting")
 
 if args.mode == "enroll" or args.mode == "adduser":
 	userID = user['userID']
