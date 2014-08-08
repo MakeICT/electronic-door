@@ -26,7 +26,7 @@ from backend import backend
 availableTags = ['admin', 'makeict', 'bluebird']
 
 parser = argparse.ArgumentParser(description='Enroll a user in the MakeICT database.')
-parser.add_argument("mode", choices=['enroll', 'adduser', 'rmuser', 'edituser'])
+parser.add_argument("mode", choices=['enroll', 'unenroll', 'adduser','edituser', 'rmuser'])
 parser.add_argument("-u", "--userid", help="The user's unique userID.", type=int)
 parser.add_argument("-e", "--email", help="The user's email. This functions as the user's unique username.")
 parser.add_argument("-f", "--firstname", help="The user's first name.")
@@ -69,18 +69,26 @@ def startDoorLock():
 	log.debug('Restarting door-lock.py')
 	subprocess.Popen(['/home/pi/code/makeictelectronicdoor/door-lock.py'], stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False
+
+def getInput(prompt, default=''):
+	length = 41
+	if default:
+		default = '[%s]'%default
+		length -= len(default)
+	formatString = '''%-''' + str(length) + '''s%s:'''
+	return raw_input(formatString%(prompt, default)).lower().strip()
 		
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
 
-if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll":
+if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll" or args.mode == "unenroll":
 	if user_info['userID'] == None and user_info['email'] == None:
-		choice = raw_input("Lookup user by e-mail [e] or userID [u] ?:").lower()
+		choice = getInput("Lookup user by e-mail [e] or userID [u] ?")
 		if choice == 'e':
-			email = raw_input("Enter user's e-mail:").lower()
+			email = getInput("Enter user's e-mail")
 			user = backend.getUserByEmail(email)
 		elif choice == 'u':
-			userID = raw_input("Enter userID:").lower()
+			userID = getInput("Enter userID")
 			user = backend.getUserByUserID(userID)
 	elif user_info['userID'] != None:
 		user = backend.getUserByUserID(user_info['userID'])
@@ -90,35 +98,40 @@ if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll":
 		print "User not found. Confirm info and try again."
 		exit()
 	else:
-		print("Found user [%s] '%s %s'")%(user['userID'], user['firstName'], user['lastName'])
+		print("\nFound user [%s] '%s %s'\n")%(user['userID'], user['firstName'], user['lastName'])
+		confirmUser = getInput("Use this person? [y|n]" )
+		if not confirmUser == 'y':
+			print "\nExiting"
+			exit()
 
 if args.mode == "rmuser":
-	print "User %s: '%s %s' will be permanently deleted, along with all associated logs!"%(user['userID'], user['firstName'], user['lastName'])
-	if raw_input("Delete this user? [type 'yes' to continue, anything else to exit]:").lower() == 'yes':
-		if raw_input("Really? [type 'yes' to delete user, anything else to exit]:").lower() == 'yes':
+	print "User [%s] '%s %s' will be permanently deleted, along with all associated logs!"%(user['userID'], user['firstName'], user['lastName'])
+	if getInput("Delete this user? [type 'yes' to continue, anything else to exit]")  == 'yes':
+		if getInput("Really? [type 'yes' to delete user, anything else to exit]") == 'yes':
 			backend.rmUser(user['userID'])
-			print "User %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName'])
+			print "\nUser %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName'])
 			
 
 if args.mode == "adduser":
 	if user_info['email'] == None:
-		user_info['email'] = raw_input("Email      : ")
+		user_info['email'] = getInput("E-mail")
 	user = backend.getUserByEmail(user_info['email'])
 	if user != None and args.mode == "adduser":
-		print("User [%d] %s %s already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
+		print("User [%d] '%s %s' already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
 		exit()
 	else:
-		user_info['firstName'] = raw_input("First Name : ")
-		user_info['lastName'] = raw_input("Last  Name : ")
-		user_info['password'] = raw_input("Password   : ")
+		user_info['firstName'] = getInput("First Name")
+		user_info['lastName'] = getInput("Last  Name")
+		user_info['password'] = getInput("Password")
 		while user_info['tags'] == None:
-			userInput = raw_input("Tags       : ").strip()
+			userInput = getInput("Tags").strip()
 			if userInput == '':
 				break
 			user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
+			print user_info['tags']
 			for tag in user_info['tags']:
 				if tag not in availableTags:
-					print 'Invalid tag :', tag
+					print 'Invalid tag {%s}'%tag
 					user_info['tags'] = None
 				
 		
@@ -131,15 +144,12 @@ if args.mode == "adduser":
 			exit(1)
 
 if args.mode == "edituser":
-	defaultString = "[%s]"%(user['email']) if args.mode == 'edituser' else ' ' 
-	user_info['email'] = raw_input("E-mail     %30s: "%defaultString)
-	defaultString = '[' + user['firstName'] + ']' if args.mode == 'edituser' else ' ' 
-	user_info['firstName'] = raw_input("First Name %30s: "%defaultString)
-	defaultString = '[' + user['lastName'] + ']' if args.mode == 'edituser' else ' ' 
-	user_info['lastName'] = raw_input("Last Name  %30s: "%defaultString)
-	defaultString = "[%s]"%(", ".join(user['tags']))
+	user_info['email'] = getInput("E-mail", user['email'])
+	user_info['firstName'] = getInput("First Name",user['firstName'])
+	user_info['lastName'] = getInput("Last Name", user['lastName'])
+	defaultString = ", ".join(user['tags'])
 	while user_info['tags'] == None:
-		userInput = raw_input("Tags       %30s: "%defaultString).strip()
+		userInput = getInput("Tags",defaultString)
 		if userInput == '':
 			break
 		user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
@@ -147,25 +157,24 @@ if args.mode == "edituser":
 			if tag not in availableTags:
 				print 'Invalid tag :', tag
 				user_info['tags'] = None
-	user_info['password'] = raw_input("Password   %30s: "%'')
+	user_info['password'] = getInput("Password")
 	backend.updateUser(user['userID'], email=user_info['email'], firstName=user_info['firstName'], lastName=user_info['lastName'], tags=user_info['tags'], password=user_info['password'])
-	print "Information for user [%s] has been updated"%user['userID']		
+	print "\nInformation for user [%s] has been updated"%user['userID']		
+
+if args.mode == "unenroll":
+	pass
 
 if args.mode == "enroll" or args.mode == "adduser":
-	if args.mode != "adduser" and not args.noninteractive:
-		confirmUser = raw_input("Found user [%d] %s %s. Use this person [y|n]: " % (user['userID'], user['firstName'], user['lastName']))
-		if not confirmUser.lower() == 'y':
-			print "Exiting"
-			exit()
 	userID = user['userID']
 
 	if args.mode != 'enroll':	
-		enroll = raw_input("Register NFC key? [y|n]:").lower()
+		enroll = getInput("Register NFC key? [y|n]")
 	# @TODO need better input checking on both
 	if args.mode == 'enroll' or enroll == 'y':
-		choice = raw_input("Enter key UID manually [m] or read key from NFC reader [r] ?:").lower()
+		print             "Enter key UID manually      [m]"
+		choice = getInput("or read key from NFC reader [r]")
 		if choice == 'm':
-			nfcID = raw_input("Enter key UID:")
+			nfcID = getInput("Enter key UID")
 		elif choice == 'r':
 			try:
 				from rpi import interfaceControl
@@ -173,11 +182,11 @@ if args.mode == "enroll" or args.mode == "adduser":
 				while True:
 					interfaceControl.setPowerStatus(True)
 					log.debug("Starting NFC read")
-					print "Swipe card now"
+					print "\nSwipe card now"
 					nfcID = interfaceControl.nfcGetUID()
 					log.debug("Finished NFC read")
 					interfaceControl.setPowerStatus(False)
-					if nfcID != None or raw_input("Couldn't read card. Retry? [y|n]:").lower() != 'y':
+					if nfcID != None or getInput("\nCouldn't read card. Retry? [y|n]") != 'y':
 						break
 			finally:
 				interfaceControl.cleanup()
@@ -189,7 +198,7 @@ if args.mode == "enroll" or args.mode == "adduser":
 
 			print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
 		else:
-			print "Did not enroll user"
+			print "\nDid not enroll user"
 				
 	elif enroll == 'n': 
 		exit()	
