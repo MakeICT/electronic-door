@@ -85,15 +85,15 @@ def getInput(prompt, default=None, options=None):
 		userInput = raw_input(formatString%(prompt, suggestion)).lower().strip()
 	return userInput
 
-def putMessage(message, error=False):
+def putMessage(message, error=False, extra=''):
 	width = 45
 	ending = "!" if error else "|"
-	formatString = '''%-''' + str(width) + '''s%s'''
-	print formatString%(message,ending)
+	formatString = '''%-''' + str(width) + '''s%s%s'''
+	print formatString%(message,ending,extra)
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
 
-if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll" or args.mode == "unenroll":
+if args.mode != "adduser":
 	if user_info['userID'] == None and user_info['email'] == None:
 		choice = getInput("Lookup user by e-mail or userID?", options = ['e', 'u'])
 		if choice == 'e':
@@ -117,6 +117,24 @@ if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll" or 
 			exit()
 
 if args.mode == "showuser":
+	maxLength = maxFieldLength = 0
+	fieldOrder = ['userID', 'status', 'email', 'firstName', 'lastName', 'tags', 'rfids']
+	for field in fieldOrder:
+		length = len(str(user[field]))
+		maxLength = length if length > maxLength else maxLength
+		fieldLength = len(field)
+		maxFieldLength = fieldLength if fieldLength > maxFieldLength else maxFieldLength
+
+	width = maxFieldLength + maxLength
+	n=2
+	def printRow(field):
+		print ("{:-<" +str(width+n+1) + "s}").format('')
+		formatString = "|{:<" +str(width+1) + "s}|"
+		valueString = ("{:<" + str(maxFieldLength) + "s}|{:s}").format(field, str(user[field]))
+		print(formatString.format(valueString))
+	for field in fieldOrder:
+		printRow(field)
+	print ("{:-<" +str(width+n+1) + "s}").format('')
 	pass
 
 if args.mode == "rmuser":
@@ -182,7 +200,8 @@ if args.mode == "edituser":
 	putMessage("Information for user [%s] has been updated"%user['userID'])
 
 if args.mode == "unenroll":
-	pass
+	if not user['rfids']:
+		putMessage("User [{:d}] '{:s} {:s}' is not enrolled".format(user['userID'], user['firstName'], user['lastName']), True)
 
 if args.mode == "enroll" or args.mode == "adduser":
 	userID = user['userID']

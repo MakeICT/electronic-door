@@ -108,6 +108,9 @@ class MySQLBackend(object):
 				JOIN users ON userTags.userID = users.userID
 			WHERE users.email = %s
 			'''
+		sql3 = 	'''
+			SELECT * from rfids WHERE userID = %s
+			'''
 		sql2 = 	'''SELECT * FROM users '''
 		cursor = self.db.cursor()
 		if key == 'id':
@@ -126,6 +129,9 @@ class MySQLBackend(object):
 			data = cursor.fetchmany(numTags)
 			tags = [tag['tag'] for tag in data]
 			user['tags'] = tags
+			rfids = cursor.fetchmany(cursor.execute(sql3, user['userID']))
+			rfidList = [x['id'] for x in rfids]
+			user['rfids'] = rfidList
 		cursor.close()
 		self.db.commit()
 		return user
