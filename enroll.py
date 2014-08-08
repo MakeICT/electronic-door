@@ -89,6 +89,8 @@ if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll":
 	if user == None:
 		print "User not found. Confirm info and try again."
 		exit()
+	else:
+		print("Found user [%s] '%s %s'")%(user['userID'], user['firstName'], user['lastName'])
 
 if args.mode == "rmuser":
 	print "User %s: '%s %s' will be permanently deleted, along with all associated logs!"%(user['userID'], user['firstName'], user['lastName'])
@@ -98,7 +100,7 @@ if args.mode == "rmuser":
 			print "User %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName'])
 			
 
-if args.mode == "adduser" or args.mode == "edituser":
+if args.mode == "adduser":
 	if user_info['email'] == None:
 		user_info['email'] = raw_input("Email      : ")
 	user = backend.getUserByEmail(user_info['email'])
@@ -106,12 +108,9 @@ if args.mode == "adduser" or args.mode == "edituser":
 		print("User [%d] %s %s already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
 		exit()
 	else:
-		if user_info['firstName'] == None:
-			user_info['firstName'] = raw_input("First Name : ")
-		if user_info['lastName'] == None:
-			user_info['lastName'] = raw_input("Last  Name : ")
-		if user_info['password'] == None:
-			user_info['password'] = raw_input("Password   : ")
+		user_info['firstName'] = raw_input("First Name : ")
+		user_info['lastName'] = raw_input("Last  Name : ")
+		user_info['password'] = raw_input("Password   : ")
 		while user_info['tags'] == None:
 			userInput = raw_input("Tags       : ").strip()
 			if userInput == '':
@@ -124,11 +123,31 @@ if args.mode == "adduser" or args.mode == "edituser":
 				
 		
 		user_info['userID'] = backend.addUser(user_info['email'], user_info['firstName'], user_info['lastName'], user_info['password'], user_info['tags'])
+		user = backend.getUserByUserID(user_info['userID'])
 		if user_info['userID'] != None:
 			print "\nUser [%d] added to the database" % user_info['userID']
 		else:
 			print "\nFailed to add user"
 			exit(1)
+
+if args.mode == "edituser":
+	defaultString = "[%s]"%(user['email']) if args.mode == 'edituser' else ' ' 
+	user_info['email'] = raw_input("E-mail     %30s: "%defaultString)
+	defaultString = '[' + user['firstName'] + ']' if args.mode == 'edituser' else ' ' 
+	user_info['firstName'] = raw_input("First Name %30s: "%defaultString)
+	defaultString = '[' + user['lastName'] + ']' if args.mode == 'edituser' else ' ' 
+	user_info['lastName'] = raw_input("Last Name  %30s: "%defaultString)
+	defaultString = "[%s]"%(", ".join(user['tags']))
+	while user_info['tags'] == None:
+		userInput = raw_input("Tags       %30s: "%defaultString).strip()
+		if userInput == '':
+			break
+		user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
+		for tag in user_info['tags']:
+			if tag not in availableTags:
+				print 'Invalid tag :', tag
+				user_info['tags'] = None
+	user_info['password'] = raw_input("Password   %30s: "%'')
 		
 
 if args.mode == "enroll" or args.mode == "adduser":

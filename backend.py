@@ -102,22 +102,33 @@ class MySQLBackend(object):
 		  None if the user does not exist
 		'''
 		self.ensureConnection()	
-		sql = 	'''SELECT * FROM users '''
+		sql1 = 	'''
+			SELECT tags.* FROM tags
+				JOIN userTags ON tags.tagID = userTags.tagID
+				JOIN users ON userTags.userID = users.userID
+			WHERE users.email = %s
+			'''
+		sql2 = 	'''SELECT * FROM users '''
 		cursor = self.db.cursor()
 		if key == 'id':
-			sql += '''JOIN rfids ON users.userID = rfids.userID '''
+			sql2 += '''JOIN rfids ON users.userID = rfids.userID '''
 			key = 'rfids.' + key
 		elif key == 'email' or key == 'userID':
 			pass
 		else:
 			#@TODO: not a valid key, raise an exception?
 			return None
-		sql += '''WHERE ''' + key + ''' = %s'''
-		cursor.execute(sql, value)
-		data = cursor.fetchone()
+		sql2 += '''WHERE ''' + key + ''' = %s'''
+		cursor.execute(sql2, value)
+		user = cursor.fetchone()
+		if user != None:
+			numTags = cursor.execute(sql1,user['email'])
+			data = cursor.fetchmany(numTags)
+			tags = [tag['tag'] for tag in data]
+			user['tags'] = tags
 		cursor.close()
 		self.db.commit()
-		return data
+		return user
 
 	def getUserByEmail(self, email):
 		'''
@@ -185,7 +196,6 @@ class MySQLBackend(object):
 		cursor = self.db.cursor()
 		cursor.execute(sql, (email, firstName, lastName, password))
 		user = self.getUserByEmail(email)
-		print tags
 		if tags != None:
 			for tag in tags:
 				cursor.execute(sql2, (user['userID'], tag))
