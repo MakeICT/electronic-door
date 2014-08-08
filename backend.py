@@ -179,18 +179,29 @@ class MySQLBackend(object):
 		  password (string, optional): updated password
 		'''
 		sql = '''UPDATE users SET '''
-		if email != None:
+		if email != None and email != '':
 			sql += '''email='%s' '''%email
-		if firstName != None:
+		if firstName != None and firstName != '':
 			sql += ''', firstName='%s' '''%firstName
-		if lastName != None:
+		if lastName != None and lastName != '':
 			sql += ''', lastName='%s' '''%lastName
-		if password != None:
+		if password != None and password != '':
 			sql += ''', passwordHash='%s' '''%self.saltAndHash(password)
 		sql += '''WHERE userID = %s'''
 		
 		cursor = self.db.cursor()
-		cursor.execute(sql, userID)
+		if email or firstName or lastName or password:
+			cursor.execute(sql, userID)
+		
+		if tags != None:
+			cursor.execute('''DELETE FROM userTags WHERE userID = %s''', userID)
+			for tag in tags:
+				cursor.execute('''INSERT INTO userTags (userID, tagID)
+						  VALUES(
+						  (SELECT userID FROM users WHERE userID = %s),
+						  (SELECT tagID FROM tags WHERE tag = %s))''', 
+						  (userID, tag))
+	
 		cursor.close()
 		self.db.commit()
 

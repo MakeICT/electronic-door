@@ -149,7 +149,7 @@ if args.mode == "edituser":
 				user_info['tags'] = None
 	user_info['password'] = raw_input("Password   %30s: "%'')
 	backend.updateUser(user['userID'], email=user_info['email'], firstName=user_info['firstName'], lastName=user_info['lastName'], tags=user_info['tags'], password=user_info['password'])
-		
+	print "Information for user [%s] has been updated"%user['userID']		
 
 if args.mode == "enroll" or args.mode == "adduser":
 	if args.mode != "adduser" and not args.noninteractive:
