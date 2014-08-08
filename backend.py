@@ -193,7 +193,7 @@ class MySQLBackend(object):
 			
 		cursor = self.db.cursor()
 		if email or firstName or lastName or password:
-			print sql
+#			print sql
 			cursor.execute(sql, userID)
 		
 		if tags != None:

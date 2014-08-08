@@ -26,7 +26,7 @@ from backend import backend
 availableTags = ['admin', 'makeict', 'bluebird']
 
 parser = argparse.ArgumentParser(description='Enroll a user in the MakeICT database.')
-parser.add_argument("mode", choices=['enroll', 'unenroll', 'adduser','edituser', 'rmuser'])
+parser.add_argument("mode", choices=['enroll', 'unenroll', 'adduser','edituser', 'showuser', 'rmuser'])
 parser.add_argument("-u", "--userid", help="The user's unique userID.", type=int)
 parser.add_argument("-e", "--email", help="The user's email. This functions as the user's unique username.")
 parser.add_argument("-f", "--firstname", help="The user's first name.")
@@ -35,7 +35,6 @@ parser.add_argument("-p", "--password", help="The user's password.")
 parser.add_argument("-n", "--nfcid", help="UID of the user's NFC card.")
 parser.add_argument("-s", "--steal", help="Re-assign the card if it is already registered to another user.", action="store_true")
 parser.add_argument("-t", "--tags", choices=availableTags, nargs='+')
-parser.add_argument("-N", "--noninteractive", help="Don't prompt for keyboard input", action="store_true")
 args = parser.parse_args()
 
 logging.config.fileConfig('/home/pi/code/makeictelectronicdoor/logging.conf')
@@ -79,12 +78,18 @@ def getInput(prompt, default=None, options=None):
 	elif options:
 		suggestion = '{' + '|'.join(options) + '}'
 		width-= len(suggestion)
-	formatString = '''%-''' + str(width) + '''s%s:'''
+	formatString = '''%-''' + str(width) + '''s%s: '''
 	userInput = raw_input(formatString%(prompt, suggestion)).lower().strip()
 	while (options) and (userInput not in options):
-		print "Invalid option!"
+		putMessage("Invalid option!", error=True)
 		userInput = raw_input(formatString%(prompt, suggestion)).lower().strip()
-	return userInput	
+	return userInput
+
+def putMessage(message, error=False):
+	width = 45
+	ending = "!" if error else "|"
+	formatString = '''%-''' + str(width) + '''s%s'''
+	print formatString%(message,ending)
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
 
@@ -102,23 +107,28 @@ if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll" or 
 	else:
 		user = backend.getUserByEmail(user_info['email'])
 	if user == None:
-		print "User not found. Confirm info and try again."
+		putMessage("User not found. Confirm info and try again.")
 		exit()
 	else:
-		print("\nFound user [%s] '%s %s'\n")%(user['userID'], user['firstName'], user['lastName'])
+		putMessage("Found user [%s] '%s %s'"%(user['userID'], user['firstName'], user['lastName']))
 		confirmUser = getInput("Use this person?", options=['y','n'] )
 		if not confirmUser == 'y':
-			print "\nExiting"
+			putMessage=("Exiting")
 			exit()
 
+if args.mode == "showuser":
+	pass
+
 if args.mode == "rmuser":
-	print "User [%s] '%s %s' will be permanently deleted, along with all associated logs!"%(user['userID'], user['firstName'], user['lastName'])
-	print "Delete this User?"
-	if getInput("{type 'yes' to continue, anything else to exit}")  == 'yes':
-		print "Really Delete?"
-		if getInput("{type 'yes' to delete user, anything else to exit}") == 'yes':
+	putMessage("User [%s] '%s %s'" %(user['userID'], user['firstName'], user['lastName']), True)
+	putMessage("will be permanently deleted,", True)
+	putMessage("along with all associated logs!", True)
+	putMessage("Delete this User?", True)
+	if getInput("{'yes' to continue, anything else to exit}")  == 'yes':
+		putMessage("Really Delete?", True)
+		if getInput("{'yes' to delete user, anything else to exit}") == 'yes':
 			backend.rmUser(user['userID'])
-			print "\nUser %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName'])
+			putMessage("User %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName']), True)
 			
 
 if args.mode == "adduser":
@@ -126,31 +136,31 @@ if args.mode == "adduser":
 		user_info['email'] = getInput("E-mail")
 	user = backend.getUserByEmail(user_info['email'])
 	if user != None and args.mode == "adduser":
-		print("User [%d] '%s %s' already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']))
+		putMessage("User [%d] '%s %s' already exists. Exiting. " % (user['userID'], user['firstName'], user['lastName']), True)
 		exit()
 	else:
 		user_info['firstName'] = getInput("First Name")
 		user_info['lastName'] = getInput("Last  Name")
 		user_info['password'] = getInput("Password")
 		while user_info['tags'] == None:
-			userInput = getInput("Tags").strip()
+			userInput = getInput("Tags")
 			if userInput == '':
 				break
 			user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
 			for tag in user_info['tags']:
 				if tag not in availableTags:
-					print 'Invalid tag {%s}'%tag
+					putMessage('Invalid tag {%s}'%tag, True)
 					user_info['tags'] = None
 				
 		
 		user_info['userID'] = backend.addUser(user_info['email'], user_info['firstName'], user_info['lastName'], user_info['password'], user_info['tags'])
 		user = backend.getUserByUserID(user_info['userID'])
 		if user_info['userID'] != None:
-			print "\nUser [%d] added to the database" % user_info['userID']
+			putMessage("User [%d] added to the database"%user_info['userID'], True)
 			if getInput("Register NFC key?", options=['y','n']) == 'n':
 				exit()
 		else:
-			print "\nFailed to add user"
+			putMessage("Failed to add user", True)
 			exit(1)
 
 if args.mode == "edituser":
@@ -165,11 +175,11 @@ if args.mode == "edituser":
 		user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
 		for tag in user_info['tags']:
 			if tag not in availableTags:
-				print 'Invalid tag :', tag
+				putMessage('Invalid tag {%s}'%tag, True)
 				user_info['tags'] = None
 	user_info['password'] = getInput("Password")
 	backend.updateUser(user['userID'], email=user_info['email'], firstName=user_info['firstName'], lastName=user_info['lastName'], tags=user_info['tags'], password=user_info['password'])
-	print "\nInformation for user [%s] has been updated"%user['userID']		
+	putMessage("Information for user [%s] has been updated"%user['userID'])
 
 if args.mode == "unenroll":
 	pass
@@ -177,7 +187,7 @@ if args.mode == "unenroll":
 if args.mode == "enroll" or args.mode == "adduser":
 	userID = user['userID']
 
-	print             "Enter key UID manually,"
+	putMessage(       "Enter key UID manually,")
 	choice = getInput("or read key from NFC reader?", options=['m', 'r'])
 	if choice == 'm':
 		nfcID = getInput("Enter key UID")
@@ -188,11 +198,11 @@ if args.mode == "enroll" or args.mode == "adduser":
 			while True:
 				interfaceControl.setPowerStatus(True)
 				log.debug("Starting NFC read")
-				print "\nSwipe card now"
+				putMessage("Swipe card now")
 				nfcID = interfaceControl.nfcGetUID()
 				log.debug("Finished NFC read")
 				interfaceControl.setPowerStatus(False)
-				if nfcID != None or getInput("\nCouldn't read card. Retry?", options=['y', 'n']) != 'y':
+				if nfcID != None or getInput("Couldn't read card. Retry?", options=['y', 'n']) != 'y':
 					break
 		finally:
 			interfaceControl.cleanup()
@@ -202,7 +212,7 @@ if args.mode == "enroll" or args.mode == "adduser":
 		# @TODO: catch duplicate key error, exit with error status
 		backend.enroll(nfcID, userID, args.steal)
 
-		print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
+		putMessage("User [%d] enrolled with ID: %s" % (userID, nfcID))
 	else:
-		print "\nDid not enroll user"
+		putMessage("Did not enroll user", True)
 				
