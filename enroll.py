@@ -70,20 +70,27 @@ def startDoorLock():
 	subprocess.Popen(['/home/pi/code/makeictelectronicdoor/door-lock.py'], stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False
 
-def getInput(prompt, default=''):
-	length = 41
+def getInput(prompt, default=None, options=None):
+	width = 45
+	suggestion = ''
 	if default:
-		default = '[%s]'%default
-		length -= len(default)
-	formatString = '''%-''' + str(length) + '''s%s:'''
-	return raw_input(formatString%(prompt, default)).lower().strip()
-		
+		suggestion = '[%s]'%default
+		width-= len(suggestion)
+	elif options:
+		suggestion = '{' + '|'.join(options) + '}'
+		width-= len(suggestion)
+	formatString = '''%-''' + str(width) + '''s%s:'''
+	userInput = raw_input(formatString%(prompt, suggestion)).lower().strip()
+	while (options) and (userInput not in options):
+		print "Invalid option!"
+		userInput = raw_input(formatString%(prompt, suggestion)).lower().strip()
+	return userInput	
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
 
 if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll" or args.mode == "unenroll":
 	if user_info['userID'] == None and user_info['email'] == None:
-		choice = getInput("Lookup user by e-mail [e] or userID [u] ?")
+		choice = getInput("Lookup user by e-mail or userID?", options = ['e', 'u'])
 		if choice == 'e':
 			email = getInput("Enter user's e-mail")
 			user = backend.getUserByEmail(email)
@@ -99,15 +106,17 @@ if args.mode == 'rmuser' or args.mode == "edituser" or args.mode == "enroll" or 
 		exit()
 	else:
 		print("\nFound user [%s] '%s %s'\n")%(user['userID'], user['firstName'], user['lastName'])
-		confirmUser = getInput("Use this person? [y|n]" )
+		confirmUser = getInput("Use this person?", options=['y','n'] )
 		if not confirmUser == 'y':
 			print "\nExiting"
 			exit()
 
 if args.mode == "rmuser":
 	print "User [%s] '%s %s' will be permanently deleted, along with all associated logs!"%(user['userID'], user['firstName'], user['lastName'])
-	if getInput("Delete this user? [type 'yes' to continue, anything else to exit]")  == 'yes':
-		if getInput("Really? [type 'yes' to delete user, anything else to exit]") == 'yes':
+	print "Delete this User?"
+	if getInput("{type 'yes' to continue, anything else to exit}")  == 'yes':
+		print "Really Delete?"
+		if getInput("{type 'yes' to delete user, anything else to exit}") == 'yes':
 			backend.rmUser(user['userID'])
 			print "\nUser %s: '%s %s' has been deleted."%(user['userID'], user['firstName'], user['lastName'])
 			
@@ -128,7 +137,6 @@ if args.mode == "adduser":
 			if userInput == '':
 				break
 			user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
-			print user_info['tags']
 			for tag in user_info['tags']:
 				if tag not in availableTags:
 					print 'Invalid tag {%s}'%tag
@@ -139,6 +147,8 @@ if args.mode == "adduser":
 		user = backend.getUserByUserID(user_info['userID'])
 		if user_info['userID'] != None:
 			print "\nUser [%d] added to the database" % user_info['userID']
+			if getInput("Register NFC key?", options=['y','n']) == 'n':
+				exit()
 		else:
 			print "\nFailed to add user"
 			exit(1)
@@ -167,38 +177,32 @@ if args.mode == "unenroll":
 if args.mode == "enroll" or args.mode == "adduser":
 	userID = user['userID']
 
-	if args.mode != 'enroll':	
-		enroll = getInput("Register NFC key? [y|n]")
-	# @TODO need better input checking on both
-	if args.mode == 'enroll' or enroll == 'y':
-		print             "Enter key UID manually      [m]"
-		choice = getInput("or read key from NFC reader [r]")
-		if choice == 'm':
-			nfcID = getInput("Enter key UID")
-		elif choice == 'r':
-			try:
-				from rpi import interfaceControl
-				killDoorLock()
-				while True:
-					interfaceControl.setPowerStatus(True)
-					log.debug("Starting NFC read")
-					print "\nSwipe card now"
-					nfcID = interfaceControl.nfcGetUID()
-					log.debug("Finished NFC read")
-					interfaceControl.setPowerStatus(False)
-					if nfcID != None or getInput("\nCouldn't read card. Retry? [y|n]") != 'y':
-						break
-			finally:
-				interfaceControl.cleanup()
-				if restartDoorLock:
-					startDoorLock()
-		if nfcID != None:
-			# @TODO: catch duplicate key error, exit with error status
-			backend.enroll(nfcID, userID, args.steal)
+	print             "Enter key UID manually,"
+	choice = getInput("or read key from NFC reader?", options=['m', 'r'])
+	if choice == 'm':
+		nfcID = getInput("Enter key UID")
+	else:
+		try:
+			from rpi import interfaceControl
+			killDoorLock()
+			while True:
+				interfaceControl.setPowerStatus(True)
+				log.debug("Starting NFC read")
+				print "\nSwipe card now"
+				nfcID = interfaceControl.nfcGetUID()
+				log.debug("Finished NFC read")
+				interfaceControl.setPowerStatus(False)
+				if nfcID != None or getInput("\nCouldn't read card. Retry?", options=['y', 'n']) != 'y':
+					break
+		finally:
+			interfaceControl.cleanup()
+			if restartDoorLock:
+				startDoorLock()
+	if nfcID != None:
+		# @TODO: catch duplicate key error, exit with error status
+		backend.enroll(nfcID, userID, args.steal)
 
-			print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
-		else:
-			print "\nDid not enroll user"
+		print "\nUser [%d] enrolled with ID: %s" % (userID, nfcID)
+	else:
+		print "\nDid not enroll user"
 				
-	elif enroll == 'n': 
-		exit()	
