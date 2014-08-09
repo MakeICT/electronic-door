@@ -22,11 +22,12 @@ if os.environ['USER'] != 'root':
 
 import signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
+from prettytable import PrettyTable
 
 availableTags = ['admin', 'makeict', 'bluebird']
 
 parser = argparse.ArgumentParser(description='Enroll a user in the MakeICT database.')
-parser.add_argument("mode", choices=['enroll', 'unenroll', 'adduser','edituser', 'showuser', 'rmuser'])
+parser.add_argument("mode", choices=['enroll', 'unenroll', 'adduser','edituser', 'showuser', 'rmuser', 'showlogs'])
 parser.add_argument("-u", "--userid", help="The user's unique userID.", type=int)
 parser.add_argument("-e", "--email", help="The user's email. This functions as the user's unique username.")
 parser.add_argument("-f", "--firstname", help="The user's first name.")
@@ -93,7 +94,7 @@ def putMessage(message, error=False, extra=''):
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
 
-if args.mode != "adduser":
+if args.mode != "adduser" and args.mode != "showlogs":
 	if user_info['userID'] == None and user_info['email'] == None:
 		choice = getInput("Lookup user by e-mail or userID?", options = ['e', 'u'])
 		if choice == 'e':
@@ -117,25 +118,11 @@ if args.mode != "adduser":
 			exit()
 
 if args.mode == "showuser":
-	maxLength = maxFieldLength = 0
 	fieldOrder = ['userID', 'status', 'email', 'firstName', 'lastName', 'tags', 'rfids']
-	for field in fieldOrder:
-		length = len(str(user[field]))
-		maxLength = length if length > maxLength else maxLength
-		fieldLength = len(field)
-		maxFieldLength = fieldLength if fieldLength > maxFieldLength else maxFieldLength
+	userTable = PrettyTable(fieldOrder)
+	userTable.add_row([user[field] for field in fieldOrder])
+	print userTable
 
-	width = maxFieldLength + maxLength
-	n=2
-	def printRow(field):
-		print ("{:-<" +str(width+n+1) + "s}").format('')
-		formatString = "|{:<" +str(width+1) + "s}|"
-		valueString = ("{:<" + str(maxFieldLength) + "s}|{:s}").format(field, str(user[field]))
-		print(formatString.format(valueString))
-	for field in fieldOrder:
-		printRow(field)
-	print ("{:-<" +str(width+n+1) + "s}").format('')
-	pass
 
 if args.mode == "rmuser":
 	putMessage("User [%s] '%s %s'" %(user['userID'], user['firstName'], user['lastName']), True)
@@ -201,12 +188,16 @@ if args.mode == "edituser":
 
 if args.mode == "unenroll":
 	if not user['rfids']:
-		putMessage("User [{:d}] '{:s} {:s}' is not enrolled".format(user['userID'], user['firstName'], user['lastName']), True)
+		putMessage("User is not enrolled", True)
+	else:
+		putMessage("Found {:d} NFC card{:s}.".format(
+			    len(user['rfids']), 's' if len(user['rfids']) > 1 else ''))
 	for rfid in user['rfids']:
 		if getInput("Remove NFC key with UID = {:s}?".format(rfid), options=['y','n']) == 'y':
 			backend.unenroll(user['userID'], rfid)
 			putMessage("Key un-enrolled")
 	putMessage("Exiting")
+	exit()
 
 if args.mode == "enroll" or args.mode == "adduser":
 	userID = user['userID']
@@ -239,4 +230,13 @@ if args.mode == "enroll" or args.mode == "adduser":
 		putMessage("User [%d] enrolled with ID: %s" % (userID, nfcID))
 	else:
 		putMessage("Did not enroll user", True)
+
+if args.mode == "showlogs":
+	logs = backend.getLogs()
+	fieldOrder = ['logID', 'timestamp', 'logType', 'userID', 'rfid', 'message']
+	logTable = PrettyTable(fieldOrder)
+	
+	for log in logs:
+		logTable.add_row([log[field] for field in fieldOrder])
 				
+	print logTable

@@ -78,6 +78,18 @@ class MySQLBackend(object):
 		if commit:
 			self.db.commit()
 
+	def getLogs(self):
+		'''
+		'''
+		sql = 	'''
+			SELECT * FROM logs
+			'''
+		cursor = self.db.cursor()
+		data = cursor.fetchmany(cursor.execute(sql))
+		cursor.close()
+
+		return data		
+
 	#@TODO: implement this. duh.
 	def saltAndHash(self, data):
 		'''
