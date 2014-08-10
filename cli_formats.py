@@ -16,6 +16,7 @@ Authors:
 import signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
 from prettytable import PrettyTable
+from getpass import getpass
 
 class colors:
     HEADER = '\033[95m'
@@ -32,7 +33,7 @@ def putMessage(message, error=False, extra=''):
 	color = colors.WARNING if error else ''
 	print  formatString.format(color,message,ending,extra,colors.ENDC)
 
-def getInput(prompt, default=None, options=None):
+def getInput(prompt, default=None, options=None, password=False):
 	width = 45
 	suggestion = ''
 	if default:
@@ -42,10 +43,13 @@ def getInput(prompt, default=None, options=None):
 		suggestion = '{' + '|'.join(options) + '}'
 		width-= len(suggestion)
 	formatString = '''{:<''' + str(width) + '''s}{:s}: '''
-	userInput = raw_input(formatString.format(prompt, suggestion)).lower().strip()
+	fullPrompt = formatString.format(prompt, suggestion)
+	userInput = (raw_input(fullPrompt).lower().strip() if not password
+		     else getpass(fullPrompt))
 	while (options) and (userInput not in options):
 		putMessage("Invalid option!", error=True)
-		userInput = raw_input(formatString.format(prompt, suggestion)).lower().strip()
+		userInput = (raw_input(fullPrompt).lower().strip() if not password
+			     else getpass(fullPrompt))
 	return userInput
 
 if __name__ == "__main__":

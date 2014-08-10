@@ -37,7 +37,7 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, tags=None, 
 			user['firstName'] if user else '')
 	lastName = lastName if lastName else getInput("Last  Name",
 			user['lastName'] if user else '')
-	password = password if password else getInput("Password")
+	
 	while tags == None:
 		userInput = getInput("Tags", ", ".join(user['tags']) if user else '')
 		if userInput == '':
@@ -47,6 +47,15 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, tags=None, 
 			if tag not in availableTags:
 				putMessage("Invalid tag '{:s}'".format(tag), True)
 				tags = None
+	
+	password = password if password else getInput("Password", password = True)
+	if password:
+		confirmPassword = getInput("Confirm password", password = True)
+		while password != confirmPassword:
+			putMessage("Passwords do not match", True)
+			password = getInput("Password", password =True)
+			confirmPassword = getInput("Confirm password", password = True)
+			
 	
 	if mode == 'add':		
 		userID = backend.addUser(email, firstName, lastName, password,tags)
