@@ -228,7 +228,7 @@ class MySQLBackend(object):
 		self.db.commit()
 		return userList
 	
-	def updateUser(self, userID, email=None, firstName=None, lastName=None, tags=None, password=None):
+	def updateUser(self, userID, email=None, firstName=None, lastName=None, tags=None, status=None, password=None):
 		'''
 		Update an existing user
 
@@ -248,13 +248,15 @@ class MySQLBackend(object):
 			strings.append('''firstName='%s' '''%firstName)
 		if lastName != None and lastName != '':
 			strings.append('''lastName='%s' '''%lastName)
+		if status != None and status != '':
+			strings.append('''status='%s' '''%status)
 		if password != None and password != '':
 			strings.append('''passwordHash='%s' '''%self.saltAndHash(password))
 		sql += ','.join(strings)
 		sql += '''WHERE userID = %s'''
 			
 		cursor = self.db.cursor()
-		if email or firstName or lastName or password:
+		if email or firstName or lastName or password or status:
 #			print sql
 			cursor.execute(sql, userID)
 		

@@ -19,7 +19,7 @@ from enroll2 import enroll
 from cli_formats import *
 
 availableTags = [tag['tag'] for tag in backend.getAvailableTags()]
-def editUser(userID=None, email=None, firstName=None, lastName=None, tags=None, password=None):
+def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
 	if userID or email:
 		user = getUser(userID) if userID else getUser(email=email)
 	else:
@@ -37,6 +37,8 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, tags=None, 
 			user['firstName'] if user else '')
 	lastName = lastName if lastName else getInput("Last  Name",
 			user['lastName'] if user else '')
+	status = status if status else getInput("Status",
+			user['status'] if user else '')
 	
 	while tags == None:
 		userInput = getInput("Tags", ", ".join(user['tags']) if user else '')
@@ -68,7 +70,7 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, tags=None, 
 			return 1
 	else:
 		backend.updateUser(user['userID'], email=email, firstName=firstName, 
-				   lastName=lastName, tags=tags, password=password)
+				   lastName=lastName, status=status, tags=tags, password=password)
 		putMessage("Information for user [{:d}] has been updated".format(user['userID']))
 
 if __name__ == "__main__":
