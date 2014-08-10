@@ -13,7 +13,7 @@ Authors:
 '''
 
 from cmd import Cmd
-from enroll2 import enroll
+from enroll import enroll
 from unenroll import unenroll
 from show_users import showUser
 from get_user import getUser

@@ -15,11 +15,11 @@ Authors:
 import signal, time, argparse, logging, logging.config
 from backend import backend
 from get_user import getUser
-from enroll2 import enroll
+from enroll import enroll
 from cli_formats import *
 
-availableTags = backend.getAvailableTags()
-availableStatuses = backend.getAvailableStatuses()
+validTags = backend.getValidTags()
+validStatuses = backend.getValidStatuses()
 def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
 	if userID or email:
 		user = getUser(userID) if userID else getUser(email=email)
@@ -42,7 +42,7 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		status = getInput("Status", user['status'] if user else '')
 		if status == '':
 			break
-		if status not in availableStatuses:
+		if status not in validStatuses:
 			putMessage("Invalid status '{:s}'".format(status), True)
 			status = None
 	
@@ -52,7 +52,7 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 			break
 		tags = [x.strip() for x in userInput.split(',') if not x == '']
 		for tag in tags:
-			if tag not in availableTags:
+			if tag not in validTags:
 				putMessage("Invalid tag '{:s}'".format(tag), True)
 				tags = None
 	
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--firstname", help="The user's first name.")
 	parser.add_argument("-l", "--lastname", help="The user's last name.")
 	parser.add_argument("-p", "--password", help="The user's password.")
-	parser.add_argument("-t", "--tags", choices=availableTags, nargs='+')
+	parser.add_argument("-t", "--tags", choices=validTags, nargs='+')
 	args = parser.parse_args()
 
 	editUser(args.userid, args.email, args.firstname, args.lastname, args.tags, args.password)

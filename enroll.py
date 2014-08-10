@@ -20,21 +20,21 @@ from cli_formats import *
 from MySQLdb import IntegrityError
 
 
-def enroll(userID=None, nfcID=None, steal=False, silent=False):
+def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 	if os.environ['USER'] != 'root':
 		print "Root is required to run this script"
 		return
 	restartDoorLock = False
 
-	user = getUser(args.userid, confirm=False if userID else True)
+	user = getUser(userID, confirm=False if userID else True)
 	if user == None:
 		return
 	userID = user['userID']
 	
-	if not args.reader:
+	if not reader:
 		putMessage(       "Enter key UID manually,")
 		choice = getInput("or read key from NFC reader?", options=['m', 'r'])
-	if not args.reader and choice == 'm':
+	if not reader and choice == 'm':
 		nfcID = getInput("Enter key UID")
 	else:
 		try:
@@ -43,12 +43,12 @@ def enroll(userID=None, nfcID=None, steal=False, silent=False):
 			while True:
 				interfaceControl.setPowerStatus(True)
 #				log.debug("Starting NFC read")
-				if not args.quiet:
+				if not quiet:
 					putMessage("Swipe card now")
 				nfcID = interfaceControl.nfcGetUID()
 #				log.debug("Finished NFC read")
 				interfaceControl.setPowerStatus(False)
-				if not args.quiet:
+				if not quiet:
 					retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
 					if nfcID != None or retry != 'y':
 						break
@@ -107,4 +107,4 @@ if __name__ == "__main__":
 	method.add_argument("-r", "--reader", help="Read a card UID from the card reader", action="store_true")
 	args = parser.parse_args()
 
-	enroll(args.userid, args.nfcid, args.steal, args.quiet)
+	enroll(args.userid, args.nfcid, args.steal, args.quiet, args.reader)

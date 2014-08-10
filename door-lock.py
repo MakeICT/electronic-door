@@ -71,7 +71,7 @@ while True:
 				else:
 					logger.warning("DENIED card  ID: %s" % nfcID)
 					logger.warning("Reason: '%s %s' is not active" % (user['firstName'], user['lastName']))
-					backend.log('deny:', nfcID, user['userID'])
+					backend.log('deny', nfcID, user['userID'])
 					interfaceControl.showBadCardRead()
 			else:
 				logger.warning("DENIED card  ID: %s" % nfcID)

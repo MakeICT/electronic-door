@@ -71,7 +71,8 @@ class MySQLBackend(object):
 				(timestamp, logType, rfid, userID, message)
 			VALUES
 				(UNIX_TIMESTAMP(), %s, %s, %s, %s)'''
-
+		if logType not in self.getValidLogTypes():
+			raise(ValueError('Not a valid logType'))
 		cursor = self.db.cursor()
 		cursor.execute(sql, (logType, rfid, userID, message))
 		cursor.close()
@@ -90,7 +91,7 @@ class MySQLBackend(object):
 
 		return data		
 
-	def getAvailableTags(self):
+	def getValidTags(self):
 		'''
 		'''
 		sql = 	'''
@@ -104,19 +105,30 @@ class MySQLBackend(object):
 		self.db.commit()
 		return data
 
-	def getAvailableStatuses(self):
+	def getValidStatuses(self):
+		'''
+		'''
+		return self.getEnumValues('users', 'status')
+
+	def getValidLogTypes(self):
+		'''
+		'''
+		return self.getEnumValues('logs', 'logType')	
+
+	def getEnumValues(self, table, field):
 		'''
 		'''
 		sql = 	'''
-			SHOW COLUMNS FROM users WHERE Field = 'status'
-			'''
+			SHOW COLUMNS FROM {:s} WHERE Field = %s
+			'''.format(table)
 
 		cursor = self.db.cursor()
-		cursor.execute(sql)
+		cursor.execute(sql, field)
 		data = [datum[1:-1] for datum in cursor.fetchone()['Type'][5:-1].split(',')]
 		cursor.close()
 		self.db.commit()
 		return data
+		
 
 	def saltAndHash(self, data):
 		'''
