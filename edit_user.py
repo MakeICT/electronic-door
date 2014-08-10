@@ -18,7 +18,8 @@ from get_user import getUser
 from enroll2 import enroll
 from cli_formats import *
 
-availableTags = [tag['tag'] for tag in backend.getAvailableTags()]
+availableTags = backend.getAvailableTags()
+availableStatuses = backend.getAvailableStatuses()
 def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
 	if userID or email:
 		user = getUser(userID) if userID else getUser(email=email)
@@ -37,8 +38,13 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 			user['firstName'] if user else '')
 	lastName = lastName if lastName else getInput("Last  Name",
 			user['lastName'] if user else '')
-	status = status if status else getInput("Status",
-			user['status'] if user else '')
+	while status == None:
+		status = getInput("Status", user['status'] if user else '')
+		if status == '':
+			break
+		if status not in availableStatuses:
+			putMessage("Invalid status '{:s}'".format(status), True)
+			status = None
 	
 	while tags == None:
 		userInput = getInput("Tags", ", ".join(user['tags']) if user else '')

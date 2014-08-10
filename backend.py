@@ -99,6 +99,21 @@ class MySQLBackend(object):
 
 		cursor = self.db.cursor()
 		data = cursor.fetchmany(cursor.execute(sql))
+		data = [tag['tag'] for tag in data]
+		cursor.close()
+		self.db.commit()
+		return data
+
+	def getAvailableStatuses(self):
+		'''
+		'''
+		sql = 	'''
+			SHOW COLUMNS FROM users WHERE Field = 'status'
+			'''
+
+		cursor = self.db.cursor()
+		cursor.execute(sql)
+		data = [datum[1:-1] for datum in cursor.fetchone()['Type'][5:-1].split(',')]
 		cursor.close()
 		self.db.commit()
 		return data
