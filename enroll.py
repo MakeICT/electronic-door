@@ -24,6 +24,14 @@ import signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
 from prettytable import PrettyTable
 
+class colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
 availableTags = ['admin', 'makeict', 'bluebird']
 
 parser = argparse.ArgumentParser(description='Enroll a user in the MakeICT database.')
@@ -89,8 +97,9 @@ def getInput(prompt, default=None, options=None):
 def putMessage(message, error=False, extra=''):
 	width = 45
 	ending = "!" if error else "|"
-	formatString = '''%-''' + str(width) + '''s%s%s'''
-	print formatString%(message,ending,extra)
+	formatString = "{:s}{:<" + str(width) + "s}{:s}{:s}{:s}"
+	color = colors.WARNING if error else ''
+	print  formatString.format(color,message,ending,extra,colors.ENDC)
 
 user_info = {'userID':args.userid, 'email':args.email, 'firstName':args.firstname, 'lastName':args.lastname, 'password':args.password, 'tags':args.tags}
 
@@ -154,7 +163,7 @@ if args.mode == "adduser":
 			user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
 			for tag in user_info['tags']:
 				if tag not in availableTags:
-					putMessage('Invalid tag {%s}'%tag, True)
+					putMessage("Invalid tag '{:s}'".format(tag), True)
 					user_info['tags'] = None
 				
 		
@@ -180,7 +189,7 @@ if args.mode == "edituser":
 		user_info['tags'] = [x.strip() for x in userInput.split(',') if not x == '']
 		for tag in user_info['tags']:
 			if tag not in availableTags:
-				putMessage('Invalid tag {%s}'%tag, True)
+				putMessage("Invalid tag '{:s}'".format(tag), True)
 				user_info['tags'] = None
 	user_info['password'] = getInput("Password")
 	backend.updateUser(user['userID'], email=user_info['email'], firstName=user_info['firstName'], lastName=user_info['lastName'], tags=user_info['tags'], password=user_info['password'])
@@ -234,9 +243,11 @@ if args.mode == "enroll" or args.mode == "adduser":
 if args.mode == "showlogs":
 	logs = backend.getLogs()
 	fieldOrder = ['logID', 'timestamp', 'logType', 'userID', 'rfid', 'message']
-	logTable = PrettyTable(fieldOrder)
+	fieldColored = [colors.HEADER + field + colors.ENDC for field in fieldOrder]
+	logTable = PrettyTable(fieldColored)
 	
 	for log in logs:
 		logTable.add_row([log[field] for field in fieldOrder])
-				
-	print logTable
+
+#	print logTable				
+	subprocess.call(['echo "' + logTable.get_string() + '" | less -r'], shell=True)

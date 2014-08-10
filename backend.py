@@ -90,7 +90,19 @@ class MySQLBackend(object):
 
 		return data		
 
-	#@TODO: implement this. duh.
+	def getAvailableTags(self):
+		'''
+		'''
+		sql = 	'''
+			SELECT tag FROM tags
+			'''
+
+		cursor = self.db.cursor()
+		data = cursor.fetchmany(cursor.execute(sql))
+		cursor.close()
+		self.db.commit()
+		return data
+
 	def saltAndHash(self, data):
 		'''
 		Salt and hash a plaintext password using SHA512 algorithm
@@ -183,6 +195,38 @@ class MySQLBackend(object):
 		  None if card is not registered to a user
 		'''
 		return self.getUser('id', key)
+
+	def getAllUsers(self):
+		'''
+'		Get all users in the database.
+
+		Returns:
+		  List of dicts containing user information
+		'''
+		sql1 = 	'''
+			SELECT tags.* FROM tags
+				JOIN userTags ON tags.tagID = userTags.tagID
+				JOIN users ON userTags.userID = users.userID
+			WHERE users.email = %s
+			'''
+		sql3 = 	'''
+			SELECT * from rfids WHERE userID = %s
+			'''
+		cursor = self.db.cursor()
+		userList =  cursor.fetchmany(cursor.execute(
+			'''SELECT * FROM users'''))
+		for user in userList:
+			if user != None:
+				numTags = cursor.execute(sql1,user['email'])
+				data = cursor.fetchmany(numTags)
+				tags = [tag['tag'] for tag in data]
+				user['tags'] = tags
+				rfids = cursor.fetchmany(cursor.execute(sql3, user['userID']))
+				rfidList = [x['id'] for x in rfids]
+				user['rfids'] = rfidList
+		cursor.close()
+		self.db.commit()
+		return userList
 	
 	def updateUser(self, userID, email=None, firstName=None, lastName=None, tags=None, password=None):
 		'''
