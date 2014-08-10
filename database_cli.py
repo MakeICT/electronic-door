@@ -16,7 +16,7 @@ from cmd import Cmd
 from enroll2 import enroll
 from unenroll import unenroll
 from show_users import showUser
-from add_user import addUser
+from get_user import getUser
 from show_logs import showAllLogs
 from edit_user import editUser
 from rm_user import rmUser
@@ -46,10 +46,10 @@ class DatabaseCLI(Cmd):
 				showUser(getAll=True)
 	
 	def do_adduser(self, args):
-		addUser()
+		editUser()
 
 	def do_edituser(self, args):
-		editUser()
+		editUser(getUser()['userID'])
 
 	def do_rmuser(self, args):
 		rmUser()

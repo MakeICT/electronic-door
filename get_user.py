@@ -29,7 +29,6 @@ def getUser(userID=None, email=None, confirm=True):
 		user = backend.getUserByUserID(userID)
 	else:
 		user = backend.getUserByEmail(email)
-		return None
 	if user == None:
 		putMessage("User not found. Confirm info and try again.")
 	else:
