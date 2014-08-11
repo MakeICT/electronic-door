@@ -15,7 +15,7 @@ import signal, time, argparse, logging, logging.config
 from backend import backend
 from get_user import getUser
 from enroll import enroll
-from cli_formats import *
+from cli_helper import *
 
 validTags = backend.getValidTags()
 validStatuses = backend.getValidStatuses()
@@ -34,10 +34,16 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 	else:	
 		putMessage("User does not exist. Adding new user.")
 		mode = 'add'
-
-	email = email if email else getInput("E-mail",
-			user['email'] if user else '')
-	email = '' if email == '-' else email
+	while email == None:
+		email = getInput("E-mail", user['email'] if user else '')
+		if email == None:
+			break
+		if email == '-':
+			putMessage("Cannot delete e-mail; edit instead.", True)
+			email = None
+		elif not validateEmail(email):
+			putMessage("Not a valid e-mail address", True)
+			email = None
 	firstName = firstName if firstName else getInput("First Name",
 			user['firstName'] if user else '')
 	firstName = '' if firstName == '-' else firstName
@@ -46,13 +52,14 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 	lastName = '' if lastName == '-' else lastName
 	while status == None:
 		status = getInput("Status", user['status'] if user else '')
-		if status == None or status == '-':
+		if status == None:
 			break
-		if status not in validStatuses:
+		if status == '-':
+			putMessage("Cannot delete status; edit instead.", True)
+			status = None
+		elif status not in validStatuses:
 			putMessage("Invalid status '{:s}'".format(status), True)
 			status = None
-	status = '' if status == '-' else status	
-
 	while tags == None:
 		userInput = getInput("Tags", ", ".join(user['tags']) if user else '')
 		if userInput == None or userInput == '-':

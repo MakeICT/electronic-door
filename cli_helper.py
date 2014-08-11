@@ -28,14 +28,19 @@ class colors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+#@TODO: document
 def putMessage(message, error=False, extra=''):
+	'''
+	'''
 	width = 45
 	ending = "!" if error else "|"
 	formatString = "{:s}{:<" + str(width) + "s}{:s}{:s}{:s}"
 	color = colors.WARNING if error else ''
 	print  formatString.format(color,message,ending,extra,colors.ENDC)
-
+#@TODO: document
 def getInput(prompt, default=None, options=None, password=False):
+	'''
+	'''
 	readline.write_history_file(historyFile)
 	readline.clear_history()
 	try:
@@ -64,6 +69,11 @@ def getInput(prompt, default=None, options=None, password=False):
 	except KeyboardInterrupt:
 		readline.read_history_file(historyFile)
 		raise
-
-if __name__ == "__main__":
-	putMessage("this worked")
+#@TODO: document
+def validateEmail(email):
+	'''
+	'''
+	if '@' in email and '.' in email:
+		return True
+	else:
+		return False

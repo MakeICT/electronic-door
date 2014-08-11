@@ -13,7 +13,7 @@ Authors:
 
 import signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
-from cli_formats import *
+from cli_helper import *
 
 def getUser(search=None, confirm=True):
 	while True:
@@ -22,7 +22,7 @@ def getUser(search=None, confirm=True):
 		elif search.isdigit():
 			user = backend.getUserByUserID(search)
 			break
-		elif '@' in search and '.' in search:
+		elif validateEmail(search):
 			user = backend.getUserByEmail(search)
 			break
 		else:
