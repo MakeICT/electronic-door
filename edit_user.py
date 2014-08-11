@@ -36,7 +36,7 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		putMessage("User does not exist. Adding new user.")
 		mode = 'add'
 	while email == None:
-		email = getInput("E-mail", user['email'] if user else '')
+		email = getInput("e-mail", user['email'] if user else '')
 		if email == None:
 			break
 		if email == '-':
@@ -45,6 +45,10 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		elif not validateEmail(email):
 			putMessage("Not a valid e-mail address", level=severity.ERROR)
 			email = None
+		else:
+			if backend.getUserByEmail(email):
+				putMessage("e-mail address is already in use!", level=severity.ERROR)
+				email =None
 	firstName = firstName if firstName else getInput("First Name",
 			user['firstName'] if user else '')
 	firstName = '' if firstName == '-' else firstName
