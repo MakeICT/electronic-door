@@ -3,7 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
+show_logs.py: Prints logs from MakeICT database in a table.
 Usage: enroll.py [userID [rfid]]
 
 Authors:

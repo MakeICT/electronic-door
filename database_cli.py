@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 i
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+database_cli.py: The ClI interface for managing the database and door
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
@@ -49,7 +48,7 @@ class DatabaseCLI(Cmd):
 		editUser()
 
 	def do_edituser(self, args):
-		user = getUser()
+		user = getUser(args) if args else getUser()
 		if user:
 			editUser(user['userID'])
 
@@ -61,10 +60,9 @@ class DatabaseCLI(Cmd):
 
 	def do_unenroll(self,args):
 		unenroll()
-
-	#@test
-	def do_test(self,args):
-		print args.split()
+	
+	def do_exit(self, args):
+		exit(0)
 
 	def onecmd(self, s):
 		try:	

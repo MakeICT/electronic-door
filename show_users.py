@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+show_user.py: Prints user info for one or more users in a table
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>

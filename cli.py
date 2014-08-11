@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+cli.py: Launches interactive cli for database and entry door management
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>

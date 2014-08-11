@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+edit_user.py: Add/Edit user info in MakeICT database
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
@@ -28,6 +27,9 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		user = None
 	if user:
 		putMessage("Editing user [{:d}] '{:s} {:s}'".format(user['userID'], user['firstName'], user['lastName']), True)
+		putMessage("Enter new information to change.")
+		putMessage("Enter '-' to delete stored info.")
+		putMessage("Leave blank to leave stored info unchanged.")
 		mode = 'edit'
 	else:	
 		putMessage("User does not exist. Adding new user.")
@@ -35,28 +37,35 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 
 	email = email if email else getInput("E-mail",
 			user['email'] if user else '')
+	email = '' if email == '-' else email
 	firstName = firstName if firstName else getInput("First Name",
 			user['firstName'] if user else '')
+	firstName = '' if firstName == '-' else firstName
 	lastName = lastName if lastName else getInput("Last  Name",
 			user['lastName'] if user else '')
+	lastName = '' if lastName == '-' else lastName
 	while status == None:
 		status = getInput("Status", user['status'] if user else '')
-		if status == '':
+		if status == None or status == '-':
 			break
 		if status not in validStatuses:
 			putMessage("Invalid status '{:s}'".format(status), True)
 			status = None
-	
+	status = '' if status == '-' else status	
+
 	while tags == None:
 		userInput = getInput("Tags", ", ".join(user['tags']) if user else '')
-		if userInput == '':
+		if userInput == None or userInput == '-':
 			break
 		tags = [x.strip() for x in userInput.split(',') if not x == '']
+		if not tags:
+			tags = None
+			continue
 		for tag in tags:
 			if tag not in validTags:
 				putMessage("Invalid tag '{:s}'".format(tag), True)
 				tags = None
-	
+	tags = '' if userInput == '-' else tags
 	password = password if password else getInput("Password", password = True)
 	if password:
 		confirmPassword = getInput("Confirm password", password = True)
@@ -64,7 +73,9 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 			putMessage("Passwords do not match", True)
 			password = getInput("Password", password =True)
 			confirmPassword = getInput("Confirm password", password = True)
-			
+	password = '' if password == '-' else password
+	if password == '':
+		putMessage("Password will be removed!", True)
 	
 	if mode == 'add':		
 		userID = backend.addUser(email, firstName, lastName, password,tags)

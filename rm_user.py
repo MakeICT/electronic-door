@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+rm_user.py: Deletes a user from the database. Unnecessary and shouldn't be used.
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>

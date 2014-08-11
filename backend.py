@@ -269,32 +269,36 @@ class MySQLBackend(object):
 		'''
 		sql = '''UPDATE users SET '''
 		strings = []
-		if email != None and email != '':
+		if email != None:
 			strings.append('''email='%s' '''%email)
-		if firstName != None and firstName != '':
+		if firstName != None:
 			strings.append('''firstName='%s' '''%firstName)
-		if lastName != None and lastName != '':
+		if lastName != None:
 			strings.append('''lastName='%s' '''%lastName)
-		if status != None and status != '':
+		if status != None:
 			strings.append('''status='%s' '''%status)
-		if password != None and password != '':
+		if password != None:
 			strings.append('''passwordHash='%s' '''%self.saltAndHash(password))
 		sql += ','.join(strings)
 		sql += '''WHERE userID = %s'''
-			
+
 		cursor = self.db.cursor()
-		if email or firstName or lastName or password or status:
+		if (email != None or firstName != None or 
+		    lastName != None or password != None or status != None):
 #			print sql
 			cursor.execute(sql, userID)
 		
 		if tags != None:
 			cursor.execute('''DELETE FROM userTags WHERE userID = %s''', userID)
-			for tag in tags:
-				cursor.execute('''INSERT INTO userTags (userID, tagID)
-						  VALUES(
-						  (SELECT userID FROM users WHERE userID = %s),
-						  (SELECT tagID FROM tags WHERE tag = %s))''', 
-						  (userID, tag))
+			print "deleted tags"
+			if tags != '':
+				print "updating tags"
+				for tag in tags:
+					cursor.execute('''INSERT INTO userTags (userID, tagID)
+							  VALUES(
+							  (SELECT userID FROM users WHERE userID = %s),
+						 	 (SELECT tagID FROM tags WHERE tag = %s))''', 
+						 	 (userID, tag))
 	
 		cursor.close()
 		self.db.commit()

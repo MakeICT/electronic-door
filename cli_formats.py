@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+cli_helper.py: Contains helper functions and classes for cli I/O
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
@@ -59,7 +58,8 @@ def getInput(prompt, default=None, options=None, password=False):
 				     else getpass(fullPrompt))
 			
 			readline.clear_history()
-		readline.read_history_file()
+		readline.read_history_file(historyFile)
+		userInput = userInput if userInput else None
 		return userInput
 	except KeyboardInterrupt:
 		readline.read_history_file(historyFile)

@@ -22,7 +22,6 @@ from rpi import interfaceControl
 
 Dir = os.path.realpath(os.path.dirname(__file__))
 loggingConf = os.path.join(Dir, 'logging.conf')
-print loggingConf
 
 lastDoorStatus = [0,0]
 

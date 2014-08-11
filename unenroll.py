@@ -3,8 +3,7 @@
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
 
-enroll.py: Enrolls a user
-Usage: enroll.py [userID [rfid]]
+unenroll.py: Unenrolls a user
 
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
