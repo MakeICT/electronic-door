@@ -19,12 +19,10 @@ from get_user import getUser
 from cli_formats import *
 from MySQLdb import IntegrityError
 
-
 def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 	if os.environ['USER'] != 'root':
 		print "Root is required to run this script"
 		return
-	restartDoorLock = False
 
 	user = getUser(userID, confirm=False if userID else True)
 	if user == None:
@@ -39,7 +37,7 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 	else:
 		try:
 			from rpi import interfaceControl
-			killDoorLock()
+			restartDoorLock = True if killDoorLock() == 0 else False
 			while True:
 				interfaceControl.setPowerStatus(True)
 #				log.debug("Starting NFC read")
@@ -55,8 +53,10 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 				else:
 					break
 		finally:
+			print "read finished!!!"
 			interfaceControl.cleanup()
 			if restartDoorLock:
+				print "restarting door-lock.py"
 				startDoorLock()
 	if nfcID != None:
 		# @TODO: catch duplicate key error, exit with error status
@@ -73,7 +73,6 @@ def killDoorLock():
 	process = subprocess.Popen(['pgrep', 'door-lock.py'], stdout=subprocess.PIPE)
 	out, err = process.communicate()
 	if out != '':
-		restartDoorLock = True
 #		log.debug('Killing door-lock.py')
 		os.kill(int(out), signal.SIGTERM)
 		time.sleep(1)
@@ -81,13 +80,15 @@ def killDoorLock():
 			if os.kill(int(out), 0) == None:
 #				log.error('Could not kill door-lock.py')
 #				log.error('Exiting')
-				exit(1)		#@TODO:define error codes
+				return -1	#@TODO:define error codes
 			else:
-				pass
+				return 0
 #				log.debug('Successfully killed door-lock.py')
 		except OSError:
-			pass
+			return 0
 #			log.debug('Successfully killed door-lock.py')
+	else:
+		return 1
 
 def startDoorLock():	
 	#FNULL = open(os.devnull, 'w')
