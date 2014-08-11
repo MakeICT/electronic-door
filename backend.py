@@ -157,7 +157,7 @@ class MySQLBackend(object):
 			SELECT tags.* FROM tags
 				JOIN userTags ON tags.tagID = userTags.tagID
 				JOIN users ON userTags.userID = users.userID
-			WHERE users.email = %s
+			WHERE users.userID = %s
 			'''
 		sql3 = 	'''
 			SELECT * from rfids WHERE userID = %s
@@ -176,7 +176,7 @@ class MySQLBackend(object):
 		cursor.execute(sql2, value)
 		user = cursor.fetchone()
 		if user != None:
-			numTags = cursor.execute(sql1,user['email'])
+			numTags = cursor.execute(sql1,user['userID'])
 			data = cursor.fetchmany(numTags)
 			tags = [tag['tag'] for tag in data]
 			user['tags'] = tags
@@ -234,7 +234,7 @@ class MySQLBackend(object):
 			SELECT tags.* FROM tags
 				JOIN userTags ON tags.tagID = userTags.tagID
 				JOIN users ON userTags.userID = users.userID
-			WHERE users.email = %s
+			WHERE users.userID = %s
 			'''
 		sql3 = 	'''
 			SELECT * from rfids WHERE userID = %s
@@ -244,7 +244,7 @@ class MySQLBackend(object):
 			'''SELECT * FROM users'''))
 		for user in userList:
 			if user != None:
-				numTags = cursor.execute(sql1,user['email'])
+				numTags = cursor.execute(sql1,user['userID'])
 				data = cursor.fetchmany(numTags)
 				tags = [tag['tag'] for tag in data]
 				user['tags'] = tags
@@ -332,11 +332,10 @@ class MySQLBackend(object):
 			password = self.saltAndHash(password)
 		cursor = self.db.cursor()
 		cursor.execute(sql, (email, firstName, lastName, password))
-		user = self.getUserByEmail(email)
+		user = self.getUserByUserID(cursor.lastrowid)
 		if tags != None:
 			for tag in tags:
 				cursor.execute(sql2, (user['userID'], tag))
-		
 		cursor.close()
 		self.db.commit()
 		if user != None:

@@ -19,6 +19,9 @@ from get_user import getUser
 from show_logs import showAllLogs
 from edit_user import editUser
 from rm_user import rmUser
+from cli_helper import *
+
+import subprocess
 
 class DatabaseCLI(Cmd):
 	def __init__(self,completekey='tab', stdin=None, stdout=None):
@@ -37,10 +40,16 @@ class DatabaseCLI(Cmd):
 			showUser()
 		elif args[0] == 'all':
 			if len(args) > 1:
-				if args[1] == 'filter':
+				if args[1] == 'filter' and len(args) == 4:
 					filters = {args[2]: args[3]}
 					if showUser(filters=filters) == 1:
-						print "invalid filter"
+						putMessage(
+						"Invalid filter: '{:s}'".format(args[2]),
+						level=severity.ERROR)
+
+				elif args[1] == 'filter' and len(args) !=4:
+					putMessage("Wrong number of args",
+						   level=severity.ERROR)
 			else:
 				showUser(getAll=True)
 	
@@ -56,7 +65,8 @@ class DatabaseCLI(Cmd):
 		rmUser()
 
 	def do_enroll(self, args):
-		enroll()
+#		enroll()
+		subprocess.call(["sudo ./enroll.py"], shell=True)
 
 	def do_unenroll(self,args):
 		unenroll()

@@ -24,7 +24,7 @@ doorLockScript = os.path.join(Dir, 'door-lock.py')
 doorLockPipedLog = os.path.join(Dir, 'logs/piped-door-lock.log')
 
 def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
-	if os.environ['USER'] != 'root':
+	if os.geteuid() != 0:
 		print "Root is required to run this script"
 		return
 
@@ -57,7 +57,6 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 				else:
 					break
 		finally:
-			print "read finished!!!"
 			interfaceControl.cleanup()
 			if restartDoorLock:
 				print "restarting door-lock.py"
