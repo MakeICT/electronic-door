@@ -22,15 +22,15 @@ def rmUser(userID=None, email=None):
 	if not user:
 		return
 
-	putMessage("User [{:d}] '{:s} {:s}'" .format(user['userID'], user['firstName'], user['lastName']), True)
-	putMessage("will be permanently deleted,", True)
-	putMessage("along with all associated logs!", True)
-	putMessage("Delete this User?", True)
+	putMessage("User [{:d}] '{:s} {:s}'" .format(user['userID'], user['firstName'], user['lastName']), level=severity.WARNING)
+	putMessage("will be permanently deleted,", level=severity.WARNING)
+	putMessage("along with all associated logs!", level=severity.WARNING)
+	putMessage("Delete this User?", level=severity.WARNING)
 	if getInput("{'yes' to continue, anything else to exit}")  == 'yes':
-		putMessage("Really Delete?", True)
+		putMessage("Really Delete?", level=severity.WARNING)
 		if getInput("{'yes' to delete user, anything else to exit}") == 'yes':
 			backend.rmUser(user['userID'])
-			putMessage("User {:d}: '{:s} {:s}' has been deleted.".format(user['userID'], user['firstName'], user['lastName']), True)
+			putMessage("User {:d}: '{:s} {:s}' has been deleted.".format(user['userID'], user['firstName'], user['lastName']), level=severity.WARNING)
 
 if __name__ == "__main__":
 	rmUser()

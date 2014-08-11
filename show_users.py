@@ -37,7 +37,7 @@ def showUser(userID=None, email=None, filters=None, getAll=False):
 		for user in allUsers:
 			addUserRow(user)
 	else:
-		user = getUser(userID=None, email=None)
+		user = getUser()
 		if user:
 			addUserRow(user)
 #	userTable.sortby = 'tags'

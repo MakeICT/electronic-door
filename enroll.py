@@ -66,12 +66,12 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 		# @TODO: catch duplicate key error, exit with error status
 		try:
 			backend.enroll(nfcID, userID, steal)
-			putMessage("User [{:d}] enrolled with ID: {:s}".format(userID, nfcID))
+			putMessage("User [{:d}] enrolled with ID: {:s}".format(userID, nfcID),level=severity.OK)
 		except IntegrityError:
-			putMessage("Key is already assigned!",True)
-			putMessage("User not enrolled",True)
+			putMessage("Key is already assigned!",level=severity.WARNING)
+			putMessage("User not enrolled",level=severity.ERROR)
 	else:
-		putMessage("Did not enroll user", True)
+		putMessage("Did not enroll user", level=severity.WARNING)
 
 def killDoorLock():
 	process = subprocess.Popen(['pgrep', 'door-lock.py'], stdout=subprocess.PIPE)

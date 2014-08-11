@@ -26,10 +26,10 @@ def getUser(search=None, confirm=True):
 			user = backend.getUserByEmail(search)
 			break
 		else:
-			putMessage("Invalid search criteria.", True)
+			putMessage("Invalid search criteria.", level=severity.ERROR)
 			search = None
 	if user == None:
-		putMessage("User not found. Confirm info and try again.", True)
+		putMessage("User not found. Confirm info and try again.", level=severity.WARNING)
 	else:
 		putMessage("Found user [{:d}] '{:s} {:s}'".format(user['userID'], user['firstName'], user['lastName']))
 		if confirm:

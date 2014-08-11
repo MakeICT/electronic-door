@@ -21,21 +21,37 @@ Dir = os.path.realpath(os.path.dirname(__file__))
 historyFile = os.path.join(Dir, '.cli-history') 
 
 class colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
+	NONE = ''
+	HEADER = '\033[95m'
+	OKBLUE = '\033[94m'
+	OK = '\033[92m'
+	WARNING = '\033[93m'
+	ERROR = '\033[91m'
+	ENDC = '\033[0m'
+
+class severity:
+	MESSAGE = 0
+	OK = 1
+	WARNING = 2
+	ERROR = 3
 
 #@TODO: document
-def putMessage(message, error=False, extra=''):
+def putMessage(message, extra='', level=severity.MESSAGE):
 	'''
 	'''
+	def getColor(level):
+		if level == severity.ERROR:
+			return colors.ERROR
+		elif level == severity.WARNING:
+			return colors.WARNING
+		elif level == severity.OK:
+			return colors.OK
+		else:
+			return colors.NONE
 	width = 45
-	ending = "!" if error else "|"
+	ending = "!" if level == severity.ERROR else "|"
 	formatString = "{:s}{:<" + str(width) + "s}{:s}{:s}{:s}"
-	color = colors.WARNING if error else ''
+	color = getColor(level)
 	print  formatString.format(color,message,ending,extra,colors.ENDC)
 #@TODO: document
 def getInput(prompt, default=None, options=None, password=False):
@@ -58,7 +74,7 @@ def getInput(prompt, default=None, options=None, password=False):
 			     else getpass(fullPrompt))
 		readline.clear_history()
 		while (options) and (userInput not in options):
-			putMessage("Invalid option!", error=True)
+			putMessage("Invalid option!",level = severity.ERROR)
 			userInput = (raw_input(fullPrompt).lower().strip() if not password
 				     else getpass(fullPrompt))
 			
