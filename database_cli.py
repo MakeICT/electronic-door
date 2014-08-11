@@ -23,7 +23,7 @@ from rm_user import rmUser
 class DatabaseCLI(Cmd):
 	def __init__(self,completekey='tab', stdin=None, stdout=None):
 		Cmd.__init__(self,completekey, stdin, stdout)
-		self.prompt = "\033[1m\033[34mDB_CMD>\033[0m "
+		self.prompt = "\001\033[1m\033[34m\002DB_CMD>\001\033[0m\002 "
 
 	def emptyline(self):
 		pass 	
@@ -75,3 +75,4 @@ class DatabaseCLI(Cmd):
 			Cmd.cmdloop(self, intro)
 		except KeyboardInterrupt:
 			print "\nCaught Ctrl+C, exiting"
+
