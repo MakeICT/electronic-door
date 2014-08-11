@@ -48,7 +48,7 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 				nfcID = interfaceControl.nfcGetUID()
 #				log.debug("Finished NFC read")
 				interfaceControl.setPowerStatus(False)
-				if not quiet:
+				if not nfcID and not quiet:
 					retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
 					if nfcID != None or retry != 'y':
 						break

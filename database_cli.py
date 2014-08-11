@@ -49,7 +49,9 @@ class DatabaseCLI(Cmd):
 		editUser()
 
 	def do_edituser(self, args):
-		editUser(getUser()['userID'])
+		user = getUser()
+		if user:
+			editUser(user['userID'])
 
 	def do_rmuser(self, args):
 		rmUser()

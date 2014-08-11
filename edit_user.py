@@ -22,11 +22,12 @@ validTags = backend.getValidTags()
 validStatuses = backend.getValidStatuses()
 def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
 	if userID or email:
-		user = getUser(userID) if userID else getUser(email=email)
+		user = (backend.getUserByUserID(userID) if userID 
+			else backend.getUserByEmail(email))
 	else:
 		user = None
 	if user:
-		putMessage("Found user [{:d}] '{:s} {:s}'".format(user['userID'], user['firstName'], user['lastName']), True)
+		putMessage("Editing user [{:d}] '{:s} {:s}'".format(user['userID'], user['firstName'], user['lastName']), True)
 		mode = 'edit'
 	else:	
 		putMessage("User does not exist. Adding new user.")
