@@ -19,6 +19,10 @@ from get_user import getUser
 from cli_formats import *
 from MySQLdb import IntegrityError
 
+Dir = os.path.realpath(os.path.dirname(__file__))
+doorLockScript = os.path.join(Dir, 'door-lock.py')
+doorLockPipedLog = os.path.join(Dir, 'logs/piped-door-lock.log')
+
 def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 	if os.environ['USER'] != 'root':
 		print "Root is required to run this script"
@@ -92,9 +96,9 @@ def killDoorLock():
 
 def startDoorLock():	
 	#FNULL = open(os.devnull, 'w')
-	FNULL = open('/home/pi/code/makeictelectronicdoor/piped-door-lock.log', 'w')
+	FNULL = open(pipedDoorLockLog, 'a')
 #	log.debug('Restarting door-lock.py')
-	subprocess.Popen(['/home/pi/code/makeictelectronicdoor/door-lock.py'],
+	subprocess.Popen([doorLockScript],
 			 stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False
 

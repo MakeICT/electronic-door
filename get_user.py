@@ -18,19 +18,22 @@ from cli_formats import *
 
 def getUser(userID=None, email=None, confirm=True):
 	if userID == None and email == None:
-		choice = getInput("Lookup user by e-mail or userID?", options = ['e', 'u'])
-		if choice == 'e':
-			email = getInput("Enter user's e-mail")
-			user = backend.getUserByEmail(email)
-		elif choice == 'u':
-			userID = getInput("Enter userID")
-			user = backend.getUserByUserID(userID)
+		while True:
+			choice = getInput("Enter E-mail or userID")
+			if choice.isdigit():
+				user = backend.getUserByUserID(choice)
+				break
+			elif '@' in choice and '.' in choice:
+				user = backend.getUserByEmail(choice)
+				break
+			else:
+				putMessage("Invalid search criteria.", True)
 	elif userID != None:
 		user = backend.getUserByUserID(userID)
 	else:
 		user = backend.getUserByEmail(email)
 	if user == None:
-		putMessage("User not found. Confirm info and try again.")
+		putMessage("User not found. Confirm info and try again.", True)
 	else:
 		putMessage("Found user [{:d}] '{:s} {:s}'".format(user['userID'], user['firstName'], user['lastName']))
 		if confirm:
@@ -38,5 +41,6 @@ def getUser(userID=None, email=None, confirm=True):
 			if not confirmUser == 'y':
 				return None
 	return user
+
 if __name__ == "__main__":
 	getUser()

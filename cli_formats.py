@@ -13,10 +13,13 @@ Authors:
 '''
 
 
-import signal, time, subprocess, argparse, logging, logging.config
+import os, signal, time, subprocess, argparse, readline, logging, logging.config
 from backend import backend
 from prettytable import PrettyTable
 from getpass import getpass
+
+Dir = os.path.realpath(os.path.dirname(__file__))
+historyFile = os.path.join(Dir, '.cli-history') 
 
 class colors:
     HEADER = '\033[95m'
@@ -34,23 +37,33 @@ def putMessage(message, error=False, extra=''):
 	print  formatString.format(color,message,ending,extra,colors.ENDC)
 
 def getInput(prompt, default=None, options=None, password=False):
-	width = 45
-	suggestion = ''
-	if default:
-		suggestion = '[{:s}]'.format(default)
-		width-= len(suggestion)
-	elif options:
-		suggestion = '{' + '|'.join(options) + '}'
-		width-= len(suggestion)
-	formatString = '''{:<''' + str(width) + '''s}{:s}: '''
-	fullPrompt = formatString.format(prompt, suggestion)
-	userInput = (raw_input(fullPrompt).lower().strip() if not password
-		     else getpass(fullPrompt))
-	while (options) and (userInput not in options):
-		putMessage("Invalid option!", error=True)
+	readline.write_history_file(historyFile)
+	readline.clear_history()
+	try:
+		width = 45
+		suggestion = ''
+		if default:
+			suggestion = '[{:s}]'.format(default)
+			width-= len(suggestion)
+		elif options:
+			suggestion = '{' + '|'.join(options) + '}'
+			width-= len(suggestion)
+		formatString = '''{:<''' + str(width) + '''s}{:s}: '''
+		fullPrompt = formatString.format(prompt, suggestion)
 		userInput = (raw_input(fullPrompt).lower().strip() if not password
 			     else getpass(fullPrompt))
-	return userInput
+		readline.clear_history()
+		while (options) and (userInput not in options):
+			putMessage("Invalid option!", error=True)
+			userInput = (raw_input(fullPrompt).lower().strip() if not password
+				     else getpass(fullPrompt))
+			
+			readline.clear_history()
+		readline.read_history_file()
+		return userInput
+	except KeyboardInterrupt:
+		readline.read_history_file(historyFile)
+		raise
 
 if __name__ == "__main__":
 	putMessage("this worked")

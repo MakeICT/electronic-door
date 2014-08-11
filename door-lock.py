@@ -11,7 +11,7 @@ Authors:
 	Christian Kindel <iceman81292@gmail.com
 '''
 
-import time, sys, signal, logging, logging.config
+import os, time, sys, signal, logging, logging.config
 
 from backend import backend
 from rpi import interfaceControl
@@ -20,9 +20,13 @@ from rpi import interfaceControl
 #import setproctitle
 #setproctitle.setproctitle('door-lock.py')
 
+Dir = os.path.realpath(os.path.dirname(__file__))
+loggingConf = os.path.join(Dir, 'logging.conf')
+print loggingConf
+
 lastDoorStatus = [0,0]
 
-logging.config.fileConfig("/home/pi/code/makeictelectronicdoor/logging.conf")
+logging.config.fileConfig(loggingConf)
 logger=logging.getLogger('door-lock')
 
 logger.info("==========[Door-lock.py started]==========")

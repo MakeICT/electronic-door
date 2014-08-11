@@ -71,3 +71,9 @@ class DatabaseCLI(Cmd):
 			return Cmd.onecmd(self, s)
 		except KeyboardInterrupt:
 			print '\n'
+
+	def cmdloop(self, intro=None):
+		try:
+			Cmd.cmdloop(self, intro)
+		except KeyboardInterrupt:
+			print "\nCaught Ctrl+C, exiting"
