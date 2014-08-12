@@ -12,6 +12,10 @@ Authors:
 '''
 
 from database_cli import DatabaseCLI
+import sys
+
+if '-c' in sys.argv:
+	sys.exit("Denied!")
 
 cli = DatabaseCLI()
 

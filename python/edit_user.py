@@ -37,10 +37,12 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		mode = 'add'
 	while email == None:
 		email = getInput("e-mail", user['email'] if user else '')
-		if email == None:
+		if email == None and mode == "edit":
 			break
 		if email == '-':
-			putMessage("Cannot delete e-mail; edit instead.", level=severity.ERROR)
+			message = ("Not a valid e-mail address" if mode == "add"
+				   else "Cannot delete e-mail; edit instead.")
+			putMessage(message, level=severity.ERROR)
 			email = None
 		elif not validateEmail(email):
 			putMessage("Not a valid e-mail address", level=severity.ERROR)
@@ -48,13 +50,21 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		else:
 			if backend.getUserByEmail(email):
 				putMessage("e-mail address is already in use!", level=severity.ERROR)
-				email =None
-	firstName = firstName if firstName else getInput("First Name",
-			user['firstName'] if user else '')
-	firstName = '' if firstName == '-' else firstName
-	lastName = lastName if lastName else getInput("Last  Name",
-			user['lastName'] if user else '')
-	lastName = '' if lastName == '-' else lastName
+				email = None
+	while firstName == None:
+		firstName = firstName if firstName else getInput("First Name",
+				user['firstName'] if user else '')
+		if firstName == None and mode == 'edit':
+			break
+		else:
+			putMessage("This field is required", level=severity.ERROR)
+	while lastName == None: 
+		lastName = lastName if lastName else getInput("Last  Name",
+				user['lastName'] if user else '')
+		if firstName == None and mode == 'edit':
+			break
+		else:
+			putMessage("This field is required", level=severity.ERROR)
 	while status == None:
 		status = getInput("Status", user['status'] if user else '')
 		if status == None:

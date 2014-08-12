@@ -10,8 +10,7 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 	Christian Kindel <iceman81292@gmail.com>
 '''
-
-import lib.MFRC522 as NFC
+import MFRC522 as NFC
 import wiringpi2
 import time
 

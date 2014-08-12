@@ -10,8 +10,6 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 	Christian Kindel <iceman81292@gmail.com>
 '''
-
-
 import os, signal, time, subprocess, argparse, readline, logging, logging.config
 from backend import backend
 from prettytable import PrettyTable
@@ -89,6 +87,8 @@ def getInput(prompt, default=None, options=None, password=False):
 def validateEmail(email):
 	'''
 	'''
+	if not email:
+		return False
 	if '@' in email and '.' in email:
 		return True
 	else:

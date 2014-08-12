@@ -28,7 +28,7 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 		print "Root is required to run this script"
 		return
 
-	user = getUser(userID, confirm=False if userID else True)
+	user = getUser(userID, confirm=(False if userID else True))
 	if user == None:
 		return
 	userID = user['userID']
@@ -43,6 +43,7 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 			from rpi import interfaceControl
 			restartDoorLock = True if killDoorLock() == 0 else False
 			while True:
+				print 'loop'
 				interfaceControl.setPowerStatus(True)
 #				log.debug("Starting NFC read")
 				if not quiet:
@@ -56,6 +57,9 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 						break
 				else:
 					break
+		except:
+			raise
+
 		finally:
 			interfaceControl.cleanup()
 			if restartDoorLock:
