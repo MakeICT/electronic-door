@@ -1,4 +1,4 @@
-#!/usr/bin/pytho
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -83,4 +83,8 @@ if __name__ == "__main__":
 			if oneFilter[0] == 'tags':
 				oneFilter[1] = [tag.strip() for tag in oneFilter[1].split(',')]
 			filterDict[oneFilter[0].strip()] = oneFilter[1]
-	showUser(args.userid, args.email, filterDict, args.all)
+	
+	try:
+		showUser(args.userid, args.email, filterDict, args.all)
+	except KeyboardInterrupt:
+		pass

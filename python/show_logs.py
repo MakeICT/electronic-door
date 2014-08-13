@@ -16,9 +16,15 @@ Authors:
 import subprocess, argparse, logging, logging.config
 from backend import backend
 from prettytable import PrettyTable
+from cli_helper import *
 
-def showAllLogs():
-	logs = backend.getLogs()
+def showAllLogs(filters=None):
+	logs = backend.getLogs(filters)
+	if logs[0] == 1:
+		putMessage('Invalid filter string', level=severity.ERROR)
+		return
+	else:
+	 	logs = logs[1]
 	fieldOrder = ['logID', 'timestamp', 'logType', 'userID', 'rfid', 'message']
 #	fieldColored = [colors.HEADER + field + colors.ENDC for field in fieldOrder]
 	fieldColored = fieldOrder
@@ -29,4 +35,15 @@ def showAllLogs():
 		logTable.add_row([log[field] for field in fieldOrder])
 
 	print logTable				
-#	subprocess.call(['echo "' + logTable.get_string() + '" | less -r'], shell=True)
+#	subprocess.call(['echo', "'{:}'".format(logTable.get_string(), '|', 'less', '-r'])
+
+if __name__ == 	"__main__":
+	parser = argparse.ArgumentParser(description='Show a user from the MakeICT database.')
+	#@TODO: incorporate filter syntax into help usage
+	parser.add_argument("-f", "--filters", nargs='+', help="Filter results. Syntax - attribute:value1,value2,..")
+	args = parser.parse_args()
+
+	try:
+		showAllLogs(parseFilters(args.filters) if args.filters else None)
+	except KeyboardInterrupt:
+		pass

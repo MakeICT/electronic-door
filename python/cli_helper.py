@@ -93,3 +93,21 @@ def validateEmail(email):
 		return True
 	else:
 		return False
+
+def parseFilters(filterString):
+	filterDict = {}
+	for f in filterString:
+		if ':' not in f:
+			putMessage("error: Invalid filter syntax : '{:}'".format(f),
+					   level=severity.ERROR)
+			return
+		oneFilter = [arg.strip() for arg in f.split(':')]
+		if len(oneFilter) != 2:
+			putMessage("error: Invalid filter syntax : '{:}'".format(f),
+					   level=severity.ERROR)
+			return
+		if oneFilter[0] == 'tags':
+			oneFilter[1] = [tag.strip() for tag in oneFilter[1].split(',')]
+		filterDict[oneFilter[0].strip()] = oneFilter[1]
+
+	return filterDict

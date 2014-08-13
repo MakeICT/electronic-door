@@ -17,8 +17,8 @@ from backend import backend
 from get_user import getUser
 from cli_helper import *
 
-def rmUser(userID=None, email=None):
-	user = getUser(userID, email)
+def rmUser(user=None):
+	user = getUser(user)
 	if not user:
 		return
 
@@ -33,4 +33,11 @@ def rmUser(userID=None, email=None):
 			putMessage("User {:d}: '{:s} {:s}' has been deleted.".format(user['userID'], user['firstName'], user['lastName']), level=severity.WARNING)
 
 if __name__ == "__main__":
-	rmUser()
+	parser = argparse.ArgumentParser(description='Add a user to the MakeICT database.')
+	parser.add_argument("-u", "--user", help="The user's userID or e-mail address.")
+	args = parser.parse_args()
+
+	try:
+		rmUser(args.user)
+	except KeyboardInterrupt:
+		pass

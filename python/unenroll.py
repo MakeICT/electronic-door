@@ -43,10 +43,14 @@ def unenroll(user=None, nfcID=None, quiet=False, reader=False):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Remove an NFC ID from a user in the MakeICT database.')
 	parser.add_argument("-u", "--user", help="The user's userID or e-mail.", type=int)
-	parser.add_argument("-q", "--quiet", help="Suppress prompts and output", action="store_true")
+#	parser.add_argument("-q", "--quiet", help="Suppress prompts and output", action="store_true")
 	method = parser.add_mutually_exclusive_group()
 	method.add_argument("-n", "--nfcid", help="UID of the user's NFC card.")
-	method.add_argument("-r", "--reader", help="Read a card UID from the card reader", action="store_true")
+#	method.add_argument("-r", "--reader", help="Read a card UID from the card reader", action="store_true")
 	args = parser.parse_args()
 
-	unenroll(args.user, args.nfcid, args.quiet, args.reader)
+	try:
+#		unenroll(args.user, args.nfcid, args.quiet, args.reader)
+		unenroll(args.user, args.nfcid)
+	except KeyboardInterrupt:
+		pass

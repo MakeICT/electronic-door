@@ -13,7 +13,7 @@ Authors:
 '''
 #@TODO: define error status codes here (duplicate key error)
 
-import os, signal, time, subprocess, argparse, logging, logging.config
+import os, sys, signal, time, subprocess, argparse, logging, logging.config
 from backend import backend
 from get_user import getUser
 from cli_helper import *
@@ -56,6 +56,10 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 						break
 				else:
 					break
+		
+		except KeyboardInterrupt:
+			pass
+
 		except:
 			putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
 				   level=severity.ERROR)
@@ -115,5 +119,7 @@ if __name__ == "__main__":
 	method.add_argument("-n", "--nfcid", help="UID of the user's NFC card.")
 	method.add_argument("-r", "--reader", help="Read a card UID from the card reader", action="store_true")
 	args = parser.parse_args()
-
-	enroll(args.userid, args.nfcid, args.steal, args.quiet, args.reader)
+	try:
+		enroll(args.userid, args.nfcid, args.steal, args.quiet, args.reader)
+	except KeyboardInterrupt:
+		pass

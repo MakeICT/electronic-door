@@ -79,17 +79,35 @@ class MySQLBackend(object):
 		if commit:
 			self.db.commit()
 
-	def getLogs(self):
+	def getLogs(self, filters=None):
 		'''
 		'''
-		sql = 	'''
-			SELECT * FROM logs
-			'''
+		sql = "SELECT * FROM logs"
+		columns = self.getColumnNames('logs')
+		if filters:
+			sql += " WHERE"
+			lastFilter = len(filters) - 1
+			for i, filter in enumerate(filters):
+				if filter not in columns:
+					return[1, None]
+				if ',' in filters[filter]:
+					filters[filter] = filters[filter].split(',')
+				if isinstance(filters[filter], list):
+					values = ["'{:}'".format(val) for val in filters[filter]]
+					values = ','.join(values)
+				else:
+					values = "'{:}'".format(filters[filter])
+				sql += " {:} IN ({:})".format(filter, values)
+				if i != lastFilter:
+					sql += " AND"
 		cursor = self.db.cursor()
-		data = cursor.fetchmany(cursor.execute(sql))
+		try:
+			data = cursor.fetchmany(cursor.execute(sql))
+		except MySQLdb.OperationalError:
+			return None
 		cursor.close()
 
-		return data		
+		return [0, data]
 
 	def getValidTags(self):
 		'''
@@ -104,6 +122,24 @@ class MySQLBackend(object):
 		cursor.close()
 		self.db.commit()
 		return data
+
+	def getColumnNames(self, table):
+		'''
+		'''
+		sql = "SHOW columns FROM {:}".format(table)
+		sql = 	'''
+			SELECT column_name
+			FROM information_schema.columns
+			WHERE table_schema='MakeICTMemberKeys'
+			AND table_name=%s
+			'''
+		cursor = self.db.cursor()
+		data = cursor.fetchmany(cursor.execute(sql, table))
+		data = [column['column_name'] for column in data]
+		cursor.close()
+		self.db.commit()
+		return data
+		
 
 	def getValidStatuses(self):
 		'''

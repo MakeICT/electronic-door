@@ -19,10 +19,10 @@ from cli_helper import *
 
 validTags = backend.getValidTags()
 validStatuses = backend.getValidStatuses()
-def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
-	if userID or email:
-		search = userID if userID else (email if email else None)
-		user = getUser(search)
+def editUser(userSearch=None, firstName=None, lastName=None, status=None, tags=None, password=None):
+	email=userID=None
+	if userSearch:
+		user = getUser(userSearch)
 	else:
 		user = None
 	if user:
@@ -32,7 +32,7 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		putMessage("Enter '-' to delete stored info.")
 		putMessage("Leave blank to leave stored info unchanged.")
 		mode = 'edit'
-	elif not userID and not email:
+	elif not userSearch:
 		mode = 'add'
 	else:
 		return
@@ -57,14 +57,14 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 				user['firstName'] if user else '')
 		if firstName == None and mode == 'edit':
 			break
-		else:
+		elif firstName == None and mode == 'add':
 			putMessage("This field is required", level=severity.ERROR)
 	while lastName == None: 
 		lastName = lastName if lastName else getInput("Last  Name",
 				user['lastName'] if user else '')
-		if firstName == None and mode == 'edit':
+		if lastName == None and mode == 'edit':
 			break
-		else:
+		elif lastName == None and mode == 'add':
 			putMessage("This field is required", level=severity.ERROR)
 	while status == None:
 		status = getInput("Status", user['status'] if user else '')
@@ -117,12 +117,14 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Add a user to the MakeICT database.')
-	parser.add_argument("-u", "--userid", help="The user's unique userID.")
-	parser.add_argument("-e", "--email", help="The user's email. This functions as the user's unique username.")
+	parser.add_argument("-u", "--user", help="The user's userID or e-mail address.")
 	parser.add_argument("-f", "--firstname", help="The user's first name.")
 	parser.add_argument("-l", "--lastname", help="The user's last name.")
 	parser.add_argument("-p", "--password", help="The user's password.")
 	parser.add_argument("-t", "--tags", choices=validTags, nargs='+')
 	args = parser.parse_args()
 
-	editUser(args.userid, args.email, args.firstname, args.lastname, args.tags, args.password)
+	try:
+		editUser(args.user, args.firstname, args.lastname, args.tags, args.password)
+	except KeyboardInterrupt:
+		pass

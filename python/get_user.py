@@ -40,4 +40,12 @@ def getUser(search=None, confirm=True):
 	return user
 
 if __name__ == "__main__":
-	getUser()
+	parser = argparse.ArgumentParser(description='Add a user to the MakeICT database.')
+	parser.add_argument("-u", "--user", help="The user's userID or e-mail address.")
+	parser.add_argument("-n", "--noconfirm", action='store_true', help="Do not prompt for confirmation")
+	args = parser.parse_args()
+
+	try:
+		getUser(args.user, args.noconfirm)
+	except KeyboardInterrupt:
+		pass
