@@ -34,42 +34,43 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 	userID = user['userID']
 	
 	if not reader:
-		putMessage(       "Enter key UID manually,")
-		choice = getInput("or read key from NFC reader?", options=['m', 'r'])
-	if not reader and choice == 'm':
-		nfcID = getInput("Enter key UID")
-	else:
-		try:
-			from rpi import interfaceControl
-			restartDoorLock = True if killDoorLock() == 0 else False
-			while True:
-				interfaceControl.setPowerStatus(True)
-#				log.debug("Starting NFC read")
-				if not quiet:
-					putMessage("Swipe card now")
-				nfcID = interfaceControl.nfcGetUID()
-#				log.debug("Finished NFC read")
-				interfaceControl.setPowerStatus(False)
-				if not nfcID and not quiet:
-					retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
-					if nfcID != None or retry != 'y':
-						break
-				else:
-					break
-		
-		except KeyboardInterrupt:
-			pass
+		if not nfcID:
+			putMessage(       "Enter key UID manually,")
+			choice = getInput("or read key from NFC reader?", options=['m', 'r'])
+			if choice == 'm':
+				nfcID = getInput("Enter key UID")
+			else:
+				try:
+					from rpi import interfaceControl
+					restartDoorLock = True if killDoorLock() == 0 else False
+					while True:
+						interfaceControl.setPowerStatus(True)
+		#				log.debug("Starting NFC read")
+						if not quiet:
+							putMessage("Swipe card now")
+						nfcID = interfaceControl.nfcGetUID()
+		#				log.debug("Finished NFC read")
+						interfaceControl.setPowerStatus(False)
+						if not nfcID and not quiet:
+							retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
+							if nfcID != None or retry != 'y':
+								break
+						else:
+							break
+				
+				except KeyboardInterrupt:
+					pass
 
-		except:
-			putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
-				   level=severity.ERROR)
-			raise
+				except:
+					putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
+						   level=severity.ERROR)
+					raise
 
-		finally:
-			interfaceControl.cleanup()
-			if restartDoorLock:
-				print "restarting door-lock.py"
-				startDoorLock()
+				finally:
+					interfaceControl.cleanup()
+					if restartDoorLock:
+						print "restarting door-lock.py"
+						startDoorLock()
 	if nfcID != None:
 		# @TODO: catch duplicate key error, exit with error status
 		try:

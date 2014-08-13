@@ -19,20 +19,19 @@ from cli_helper import *
 
 validTags = backend.getValidTags()
 validStatuses = backend.getValidStatuses()
-def editUser(userSearch=None, firstName=None, lastName=None, status=None, tags=None, password=None):
-	email=userID=None
-	if userSearch:
-		user = getUser(userSearch)
+def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
+	if userID or email:
+		userSearch = userID if userID else email
+		user = getUser(userSearch, confirm=False)
 	else:
 		user = None
 	if user:
 		putMessage("Editing user [{:d}] '{:s} {:s}'".format(
 			user['userID'], user['firstName'], user['lastName']), level=severity.WARNING)
 		putMessage("Enter new information to change.")
-		putMessage("Enter '-' to delete stored info.")
 		putMessage("Leave blank to leave stored info unchanged.")
 		mode = 'edit'
-	elif not userSearch:
+	elif email:
 		mode = 'add'
 	else:
 		return
@@ -77,8 +76,12 @@ def editUser(userSearch=None, firstName=None, lastName=None, status=None, tags=N
 			putMessage("Invalid status '{:s}'".format(status), level=severity.ERROR)
 			status = None
 	while tags == None:
+		putMessage("Enter '-' to delete stored tags.")
 		userInput = getInput("Tags", ", ".join(user['tags']) if user else '')
-		if userInput == None or userInput == '-':
+		if userInput == None:
+			break
+		if userInput == '-':
+			tags = ''
 			break
 		tags = [x.strip() for x in userInput.split(',') if not x == '']
 		if not tags:
@@ -88,14 +91,15 @@ def editUser(userSearch=None, firstName=None, lastName=None, status=None, tags=N
 			if tag not in validTags:
 				putMessage("Invalid tag '{:s}'".format(tag), level=severity.ERROR)
 				tags = None
-	tags = '' if userInput == '-' else tags
-	password = password if password else getInput("Password", password = True)
-	if password:
-		confirmPassword = getInput("Confirm password", password = True)
-		while password != confirmPassword:
-			putMessage("Passwords do not match", level=severity.ERROR)
-			password = getInput("Password", password =True)
+	if not password:
+		putMessage("Enter '-' to delete stored password.")
+		password = getInput("Password", password=True)
+		if password:
 			confirmPassword = getInput("Confirm password", password = True)
+			while password != confirmPassword:
+				putMessage("Passwords do not match", level=severity.ERROR)
+				password = getInput("Password", password =True)
+				confirmPassword = getInput("Confirm password", password = True)
 	password = '' if password == '-' else password
 	if password == '':
 		putMessage("Password will be removed!", level=severity.WARNING)
@@ -117,14 +121,16 @@ def editUser(userSearch=None, firstName=None, lastName=None, status=None, tags=N
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Add a user to the MakeICT database.')
-	parser.add_argument("-u", "--user", help="The user's userID or e-mail address.")
+	parser.add_argument("-u", "--userid", help="The user's userID.")
+	parser.add_argument("-e", "--email", help="The user's e-mail address.")
 	parser.add_argument("-f", "--firstname", help="The user's first name.")
 	parser.add_argument("-l", "--lastname", help="The user's last name.")
 	parser.add_argument("-p", "--password", help="The user's password.")
+	parser.add_argument("-s", "--status", help="The user's status.", choices=validStatuses, default='inactive')
 	parser.add_argument("-t", "--tags", choices=validTags, nargs='+')
 	args = parser.parse_args()
 
 	try:
-		editUser(args.user, args.firstname, args.lastname, args.tags, args.password)
+		editUser(args.userid, args.email, args.firstname, args.lastname, args.status, args.tags, args.password)
 	except KeyboardInterrupt:
 		pass

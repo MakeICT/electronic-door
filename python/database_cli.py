@@ -21,12 +21,16 @@ from edit_user import editUser
 from rm_user import rmUser
 from cli_helper import *
 
-import os, subprocess
+import os, subprocess, readline
+
+Dir = os.path.realpath(os.path.dirname(__file__))
+historyFile = os.path.join(Dir, '.cli-history')
 
 class DatabaseCLI(Cmd):
 	def __init__(self,completekey='tab', stdin=None, stdout=None):
 		Cmd.__init__(self,completekey, stdin, stdout)
 		self.prompt = "\001\033[1m\033[34m\002DB_CMD>\001\033[0m\002 "
+		readline.read_history_file(historyFile)
 
 	def emptyline(self):
 		pass 	
@@ -38,7 +42,7 @@ class DatabaseCLI(Cmd):
 		
 
 	def do_showlogs(self, args):
-		self.callScript(["./show_logs.py", args])
+		self.callScript("./show_logs.py " + args)
 
 	def help_showlogs(self):
 		subprocess.call(["./show_logs.py", "-h"])
@@ -97,6 +101,7 @@ class DatabaseCLI(Cmd):
 		subprocess.call(["./unenroll.py", "-h"])
 	
 	def do_exit(self, args):
+		readline.write_history_file(historyFile)
 		exit(0)
 
 	def help_exit(self):
@@ -116,4 +121,5 @@ class DatabaseCLI(Cmd):
 			Cmd.cmdloop(self, intro)
 		except KeyboardInterrupt:
 			print "\nCaught Ctrl+C, exiting"
+			self.do_exit('')
 

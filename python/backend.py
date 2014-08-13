@@ -326,9 +326,7 @@ class MySQLBackend(object):
 		
 		if tags != None:
 			cursor.execute('''DELETE FROM userTags WHERE userID = %s''', userID)
-			print "deleted tags"
 			if tags != '':
-				print "updating tags"
 				for tag in tags:
 					cursor.execute('''INSERT INTO userTags (userID, tagID)
 							  VALUES(

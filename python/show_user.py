@@ -50,7 +50,7 @@ def showUser(userID=None, email=None, filters=None, getAll=False):
 			addUserRow(user)
 	else:
 		search = userID if userID else (email if email else None)
-		user = getUser(search)
+		user = getUser(search, confirm = False if search else True)
 		if user:
 			addUserRow(user)
 #	userTable.sortby = 'tags'
