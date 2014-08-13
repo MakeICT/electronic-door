@@ -21,8 +21,8 @@ validTags = backend.getValidTags()
 validStatuses = backend.getValidStatuses()
 def editUser(userID=None, email=None, firstName=None, lastName=None, status=None, tags=None, password=None):
 	if userID or email:
-		user = (backend.getUserByUserID(userID) if userID 
-			else backend.getUserByEmail(email))
+		search = userID if userID else (email if email else None)
+		user = getUser(search)
 	else:
 		user = None
 	if user:
@@ -32,9 +32,10 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		putMessage("Enter '-' to delete stored info.")
 		putMessage("Leave blank to leave stored info unchanged.")
 		mode = 'edit'
-	else:	
-		putMessage("User does not exist. Adding new user.")
+	elif not userID and not email:
 		mode = 'add'
+	else:
+		return
 	while email == None:
 		email = getInput("e-mail", user['email'] if user else '')
 		if email == None and mode == "edit":

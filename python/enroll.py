@@ -58,6 +58,7 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 				else:
 					break
 		except:
+			print "Unexpected error:", sys.exc_info()[0]
 			raise
 
 		finally:

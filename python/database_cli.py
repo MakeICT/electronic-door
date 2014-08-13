@@ -14,7 +14,7 @@ Authors:
 from cmd import Cmd
 from enroll import enroll
 from unenroll import unenroll
-from show_users import showUser
+from show_user import showUser
 from get_user import getUser
 from show_logs import showAllLogs
 from edit_user import editUser
@@ -57,9 +57,7 @@ class DatabaseCLI(Cmd):
 		editUser()
 
 	def do_edituser(self, args):
-		user = getUser(args) if args else getUser()
-		if user:
-			editUser(user['userID'])
+		editUser(args if args else None)
 
 	def do_rmuser(self, args):
 		rmUser()

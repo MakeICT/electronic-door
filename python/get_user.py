@@ -16,7 +16,7 @@ from backend import backend
 from cli_helper import *
 
 def getUser(search=None, confirm=True):
-	search = str(search)
+	search = str(search) if search else None
 	while True:
 		if search == None:
 			search = getInput("Enter E-mail or userID")
