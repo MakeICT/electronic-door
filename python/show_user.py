@@ -23,7 +23,7 @@ def showUser(userID=None, email=None, filters=None, getAll=False):
 		userTable.add_row([user[field] for field in fieldOrder])
 
 	userTable = PrettyTable(fieldOrder)
-	if getAll and filters:
+	if getAll or filters:
 		allUsers = list(backend.getAllUsers())
 		filteredUsers = []
 		if filters:

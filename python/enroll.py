@@ -23,7 +23,7 @@ Dir = os.path.realpath(os.path.dirname(__file__))
 doorLockScript = os.path.join(Dir, 'door-lock.py')
 doorLockPipedLog = os.path.join(Dir, 'logs/piped-door-lock.log')
 
-def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
+def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 	if os.geteuid() != 0:
 		print "Root is required to run this script"
 		return
@@ -43,7 +43,6 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 			from rpi import interfaceControl
 			restartDoorLock = True if killDoorLock() == 0 else False
 			while True:
-				print 'loop'
 				interfaceControl.setPowerStatus(True)
 #				log.debug("Starting NFC read")
 				if not quiet:
@@ -58,7 +57,8 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=None):
 				else:
 					break
 		except:
-			print "Unexpected error:", sys.exc_info()[0]
+			putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
+				   level=severity.ERROR)
 			raise
 
 		finally:
@@ -107,7 +107,7 @@ def startDoorLock():
 	restartDoorLock = False
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Enroll a user in the MakeICT database.')
+	parser = argparse.ArgumentParser(description='Add an NFC ID to a user in the MakeICT database.')
 	parser.add_argument("-u", "--userid", help="The user's unique userID.", type=int)
 	parser.add_argument("-s", "--steal", help="Re-assign the card if it is already registered to another user.", action="store_true")
 	parser.add_argument("-q", "--quiet", help="Suppress prompts and output", action="store_true")
