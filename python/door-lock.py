@@ -36,6 +36,11 @@ def signal_term_handler(sig, frame):
 def cleanup():
 	logger.info("Cleaning up and exiting")
 	interfaceControl.cleanup()
+	if interfaceControl.PN532:
+		process = subprocess.Popen(['pidof', 'nfc-poll'], stdout=subprocess.PIPE)
+		out, err = process.communicate()
+		if out != '':
+			os.kill(int(out), signal.SIGTERM)
 	sys.exit(0)
  
 signal.signal(signal.SIGTERM, signal_term_handler)
