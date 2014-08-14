@@ -85,7 +85,7 @@
 
 				$userID = $user['userID'];
 				shell_exec("echo $user[firstName] $user[lastName] > /tmp/enrollmentStatus");
-				shell_exec("sudo /home/pi/code/makeictelectronicdoor/enroll.py -qru$userID >> /tmp/enrollmentStatus &");
+				shell_exec("sudo /home/pi/code/makeictelectronicdoor/python/enroll.py -qru$userID >> /tmp/enrollmentStatus &");
 
 				header("Location: $_SERVER[PHP_SELF]");
 				exit();
