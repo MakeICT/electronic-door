@@ -9,7 +9,7 @@ Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
 '''
-
+import lib.MFRC522 as NFC
 import time, subprocess
 import wiringpi2
 
@@ -43,7 +43,13 @@ class InterfaceControl(object):
 		#Set input pull-ups
 		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 2)
 		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 2)
-
+	
+		proc = subprocess.Popen(['nfc-list'], stderr=subprocess.PIPE)
+		result = proc.stderr.read()
+		self.PN532 = False if 'Timeout' in result else True
+		if not self.PN532:
+			self.nfc = NFC.MFRC522()
+			
 
 	def nfcGetUID(self):
 		'''
@@ -54,12 +60,29 @@ class InterfaceControl(object):
 		  A string containing the UID of the NFC card
 		  None if no card is in range
 		'''
-		proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-		(nfcID, err) = proc.communicate()
-		nfcID = nfcID.strip()
-		if nfcID == '':
+		if self.PN532:
+			proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
+			(nfcID, err) = proc.communicate()
+			nfcID = nfcID.strip()
+			if nfcID == '':
+				return None
+			return nfcID
+		else:
+			loops = 0
+			while loops < 20:
+				# Scan for cards    
+				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
+				# If a card is found
+				if status == self.nfc.MI_OK:
+					# Get the UID of the card
+					(status,uid) = self.nfc.MFRC522_Anticoll()
+				# If we have the UID, continue
+				if status == self.nfc.MI_OK:
+					# Print UID
+					return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
+				loops += 1
+				time.sleep(0.5)
 			return None
-		return nfcID
 
 	def output(self, componentID, status):
 		'''
