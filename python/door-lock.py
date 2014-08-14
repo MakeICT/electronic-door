@@ -11,7 +11,7 @@ Authors:
 	Christian Kindel <iceman81292@gmail.com
 '''
 
-import subprocess, time, sys, os, signal, logging, logging.config
+import os, time, sys, signal, logging, logging.config
 
 from backend import backend
 from rpi import interfaceControl
@@ -20,9 +20,12 @@ from rpi import interfaceControl
 #import setproctitle
 #setproctitle.setproctitle('door-lock.py')
 
+Dir = os.path.realpath(os.path.dirname(__file__))
+loggingConf = os.path.join(Dir, 'logging.conf')
+
 lastDoorStatus = [0,0]
 
-logging.config.fileConfig("/home/pi/code/makeictelectronicdoor/logging.conf")
+logging.config.fileConfig(loggingConf)
 logger=logging.getLogger('door-lock')
 
 logger.info("==========[Door-lock.py started]==========")
@@ -33,10 +36,11 @@ def signal_term_handler(sig, frame):
 def cleanup():
 	logger.info("Cleaning up and exiting")
 	interfaceControl.cleanup()
-	process = subprocess.Popen(['pidof', 'nfc-poll'], stdout=subprocess.PIPE)
-	out, err = process.communicate()
-	if out != '':
-		os.kill(int(out), signal.SIGTERM)
+	if interfaceControl.PN532:
+		process = subprocess.Popen(['pidof', 'nfc-poll'], stdout=subprocess.PIPE)
+		out, err = process.communicate()
+		if out != '':
+			os.kill(int(out), signal.SIGTERM)
 	sys.exit(0)
  
 signal.signal(signal.SIGTERM, signal_term_handler)
@@ -75,7 +79,7 @@ while True:
 				else:
 					logger.warning("DENIED card  ID: %s" % nfcID)
 					logger.warning("Reason: '%s %s' is not active" % (user['firstName'], user['lastName']))
-					backend.log('deny:', nfcID, user['userID'])
+					backend.log('deny', nfcID, user['userID'])
 					interfaceControl.showBadCardRead()
 			else:
 				logger.warning("DENIED card  ID: %s" % nfcID)
@@ -88,3 +92,4 @@ while True:
 	except KeyboardInterrupt:
 		logger.info("Received KeyboardInterrupt")
 		cleanup()
+

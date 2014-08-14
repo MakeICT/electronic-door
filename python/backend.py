@@ -71,14 +71,101 @@ class MySQLBackend(object):
 				(timestamp, logType, rfid, userID, message)
 			VALUES
 				(UNIX_TIMESTAMP(), %s, %s, %s, %s)'''
-
+		if logType not in self.getValidLogTypes():
+			raise(ValueError('Not a valid logType'))
 		cursor = self.db.cursor()
 		cursor.execute(sql, (logType, rfid, userID, message))
 		cursor.close()
 		if commit:
 			self.db.commit()
 
-	#@TODO: implement this. duh.
+	def getLogs(self, filters=None):
+		'''
+		'''
+		sql = "SELECT * FROM logs"
+		columns = self.getColumnNames('logs')
+		if filters:
+			sql += " WHERE"
+			lastFilter = len(filters) - 1
+			for i, filter in enumerate(filters):
+				if filter not in columns:
+					return[1, None]
+				if ',' in filters[filter]:
+					filters[filter] = filters[filter].split(',')
+				if isinstance(filters[filter], list):
+					values = ["'{:}'".format(val) for val in filters[filter]]
+					values = ','.join(values)
+				else:
+					values = "'{:}'".format(filters[filter])
+				sql += " {:} IN ({:})".format(filter, values)
+				if i != lastFilter:
+					sql += " AND"
+		cursor = self.db.cursor()
+		try:
+			data = cursor.fetchmany(cursor.execute(sql))
+		except MySQLdb.OperationalError:
+			return None
+		cursor.close()
+
+		return [0, data]
+
+	def getValidTags(self):
+		'''
+		'''
+		sql = 	'''
+			SELECT tag FROM tags
+			'''
+
+		cursor = self.db.cursor()
+		data = cursor.fetchmany(cursor.execute(sql))
+		data = [tag['tag'] for tag in data]
+		cursor.close()
+		self.db.commit()
+		return data
+
+	def getColumnNames(self, table):
+		'''
+		'''
+		sql = "SHOW columns FROM {:}".format(table)
+		sql = 	'''
+			SELECT column_name
+			FROM information_schema.columns
+			WHERE table_schema='MakeICTMemberKeys'
+			AND table_name=%s
+			'''
+		cursor = self.db.cursor()
+		data = cursor.fetchmany(cursor.execute(sql, table))
+		data = [column['column_name'] for column in data]
+		cursor.close()
+		self.db.commit()
+		return data
+		
+
+	def getValidStatuses(self):
+		'''
+		'''
+		return self.getEnumValues('users', 'status')
+
+	def getValidLogTypes(self):
+		'''
+		'''
+		return self.getEnumValues('logs', 'logType')	
+
+	def getEnumValues(self, table, field):
+		'''
+		'''
+		sql = 	'''
+			SHOW COLUMNS FROM {:s} WHERE Field = %s
+			'''.format(table)
+
+		cursor = self.db.cursor()
+		cursor.execute(sql, field)
+		data = [datum[1:-1] for datum in cursor.fetchone()['Type'][5:-1].split(',')]
+		cursor.close()
+		self.db.commit()
+		return data
+		
+
 	def saltAndHash(self, data):
 		'''
 		Salt and hash a plaintext password using SHA512 algorithm
@@ -102,22 +189,39 @@ class MySQLBackend(object):
 		  None if the user does not exist
 		'''
 		self.ensureConnection()	
-		sql = 	'''SELECT * FROM users '''
+		sql1 = 	'''
+			SELECT tags.* FROM tags
+				JOIN userTags ON tags.tagID = userTags.tagID
+				JOIN users ON userTags.userID = users.userID
+			WHERE users.userID = %s
+			'''
+		sql3 = 	'''
+			SELECT * from rfids WHERE userID = %s
+			'''
+		sql2 = 	'''SELECT * FROM users '''
 		cursor = self.db.cursor()
 		if key == 'id':
-			sql += '''JOIN rfids ON users.userID = rfids.userID '''
+			sql2 += '''JOIN rfids ON users.userID = rfids.userID '''
 			key = 'rfids.' + key
 		elif key == 'email' or key == 'userID':
 			pass
 		else:
 			#@TODO: not a valid key, raise an exception?
 			return None
-		sql += '''WHERE ''' + key + ''' = %s'''
-		cursor.execute(sql, value)
-		data = cursor.fetchone()
+		sql2 += '''WHERE ''' + key + ''' = %s'''
+		cursor.execute(sql2, value)
+		user = cursor.fetchone()
+		if user != None:
+			numTags = cursor.execute(sql1,user['userID'])
+			data = cursor.fetchmany(numTags)
+			tags = [tag['tag'] for tag in data]
+			user['tags'] = tags
+			rfids = cursor.fetchmany(cursor.execute(sql3, user['userID']))
+			rfidList = [x['id'] for x in rfids]
+			user['rfids'] = rfidList
 		cursor.close()
 		self.db.commit()
-		return data
+		return user
 
 	def getUserByEmail(self, email):
 		'''
@@ -154,8 +258,86 @@ class MySQLBackend(object):
 		  None if card is not registered to a user
 		'''
 		return self.getUser('id', key)
+
+	def getAllUsers(self):
+		'''
+'		Get all users in the database.
+
+		Returns:
+		  List of dicts containing user information
+		'''
+		sql1 = 	'''
+			SELECT tags.* FROM tags
+				JOIN userTags ON tags.tagID = userTags.tagID
+				JOIN users ON userTags.userID = users.userID
+			WHERE users.userID = %s
+			'''
+		sql3 = 	'''
+			SELECT * from rfids WHERE userID = %s
+			'''
+		cursor = self.db.cursor()
+		userList =  cursor.fetchmany(cursor.execute(
+			'''SELECT * FROM users'''))
+		for user in userList:
+			if user != None:
+				numTags = cursor.execute(sql1,user['userID'])
+				data = cursor.fetchmany(numTags)
+				tags = [tag['tag'] for tag in data]
+				user['tags'] = tags
+				rfids = cursor.fetchmany(cursor.execute(sql3, user['userID']))
+				rfidList = [x['id'] for x in rfids]
+				user['rfids'] = rfidList
+		cursor.close()
+		self.db.commit()
+		return userList
 	
-	def addUser(self, email, firstName=None, lastName=None, password=None):
+	def updateUser(self, userID, email=None, firstName=None, lastName=None, tags=None, status=None, password=None):
+		'''
+		Update an existing user
+
+		Args:
+		  userID (string): the userID of the user to be edited
+		  email (string, optional): updated e-mail address
+		  firstName (string, optional): updated first name
+		  lastName (string, optional): updated last name
+		  tags (list of strings, optional): updated list of tags
+		  password (string, optional): updated password
+		'''
+		sql = '''UPDATE users SET '''
+		strings = []
+		if email != None:
+			strings.append('''email='%s' '''%email)
+		if firstName != None:
+			strings.append('''firstName='%s' '''%firstName)
+		if lastName != None:
+			strings.append('''lastName='%s' '''%lastName)
+		if status != None:
+			strings.append('''status='%s' '''%status)
+		if password != None:
+			strings.append('''passwordHash='%s' '''%self.saltAndHash(password))
+		sql += ','.join(strings)
+		sql += '''WHERE userID = %s'''
+
+		cursor = self.db.cursor()
+		if (email != None or firstName != None or 
+		    lastName != None or password != None or status != None):
+#			print sql
+			cursor.execute(sql, userID)
+		
+		if tags != None:
+			cursor.execute('''DELETE FROM userTags WHERE userID = %s''', userID)
+			if tags != '':
+				for tag in tags:
+					cursor.execute('''INSERT INTO userTags (userID, tagID)
+							  VALUES(
+							  (SELECT userID FROM users WHERE userID = %s),
+						 	 (SELECT tagID FROM tags WHERE tag = %s))''', 
+						 	 (userID, tag))
+	
+		cursor.close()
+		self.db.commit()
+
+	def addUser(self, email, firstName=None, lastName=None, password=None, tags=None):
 		'''
 		Add a user to the database
 
@@ -167,11 +349,16 @@ class MySQLBackend(object):
 		Returns:
 		  A string containing the newly created user's ID number
 		'''
-		sql = '''
+		sql = 	'''
 			INSERT INTO users
 				(email, firstName, lastName, passwordHash)
 			VALUES
-				(%s, %s, %s, %s)'''
+				(%s, %s, %s, %s)
+			'''
+		sql2 = 	'''
+			INSERT INTO userTags (userID, tagID)
+			VALUES (%s,(SELECT tagID FROM tags WHERE tag = %s))
+			'''
 
 		if password == '' or password == None:
 			password = None
@@ -179,10 +366,12 @@ class MySQLBackend(object):
 			password = self.saltAndHash(password)
 		cursor = self.db.cursor()
 		cursor.execute(sql, (email, firstName, lastName, password))
+		user = self.getUserByUserID(cursor.lastrowid)
+		if tags != None:
+			for tag in tags:
+				cursor.execute(sql2, (user['userID'], tag))
 		cursor.close()
-
 		self.db.commit()
-		user = self.getUserByEmail(email)
 		if user != None:
 			return user['userID']
 	
@@ -238,8 +427,22 @@ class MySQLBackend(object):
 		
 		self.db.commit()
 
+	def unenroll(self, userID, keyUID):
+		'''
+		Remove NFC key from user
+
+		Args:
+		  userID (string): unique ID of the user
+		  keyUID (string): UID of the card
+		'''
+		sql = 	'''
+			DELETE FROM rfids WHERE id = %s AND userID = %s
+			'''
+		cursor = self.db.cursor()
+		cursor.execute(sql,(keyUID, userID))
+		cursor.close()
+		self.db.commit()
+
 backend = MySQLBackend(
 	host="localhost" ,db="MakeICTMemberKeys",
-	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4"
-)
-			key = key
+	user="MakeICTDBUser", passwd="2879fd3b0793d7972cbf7647bc1e62a4")

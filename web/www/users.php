@@ -23,7 +23,8 @@
 	$backend = Backend::instance();
 
 	function enrollmentIsRunning(){
-		$output = shell_exec('ps aux | grep enroll.py | grep -v grep');
+#		$output = shell_exec('ps aux | grep enroll.py | grep -v grep');
+		$output = shell_exec('pgrep enroll.py');
 		return !empty($output);
 	}
 	$waitingForSwipe = enrollmentIsRunning();
@@ -84,7 +85,7 @@
 
 				$userID = $user['userID'];
 				shell_exec("echo $user[firstName] $user[lastName] > /tmp/enrollmentStatus");
-				shell_exec("sudo /home/pi/code/makeictelectronicdoor/enroll.py $userID >> /tmp/enrollmentStatus &");
+				shell_exec("sudo /home/pi/code/makeictelectronicdoor/python/enroll.py -qru$userID >> /tmp/enrollmentStatus &");
 
 				header("Location: $_SERVER[PHP_SELF]");
 				exit();
