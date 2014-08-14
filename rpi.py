@@ -1,4 +1,4 @@
-#!/usr/bin/python/
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -126,10 +126,8 @@ class InterfaceControl(object):
 
 		if buzzerOn:
 			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
-			pass
 		else:
 			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
-			pass
 
 	def unlockDoor(self, timeout=2):
 		'''
