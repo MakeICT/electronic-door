@@ -31,7 +31,8 @@ def editUser(userID=None, email=None, firstName=None, lastName=None, status=None
 		putMessage("Enter new information to change.")
 		putMessage("Leave blank to leave stored info unchanged.")
 		mode = 'edit'
-	elif email:
+	elif email or (not email and not userID):
+		putMessage("Adding new user")
 		mode = 'add'
 	else:
 		return
