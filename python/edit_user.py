@@ -127,7 +127,7 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--firstname", help="The user's first name.")
 	parser.add_argument("-l", "--lastname", help="The user's last name.")
 	parser.add_argument("-p", "--password", help="The user's password.")
-	parser.add_argument("-s", "--status", help="The user's status.", choices=validStatuses, default='inactive')
+	parser.add_argument("-s", "--status", help="The user's status.", choices=validStatuses)
 	parser.add_argument("-t", "--tags", choices=validTags, nargs='+')
 	args = parser.parse_args()
 

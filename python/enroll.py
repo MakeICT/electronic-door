@@ -21,7 +21,7 @@ from MySQLdb import IntegrityError
 
 Dir = os.path.realpath(os.path.dirname(__file__))
 doorLockScript = os.path.join(Dir, 'door-lock.py')
-doorLockPipedLog = os.path.join(Dir, 'logs/piped-door-lock.log')
+doorLockPipedLog = os.path.join(Dir, '../logs/piped-door-lock.log')
 
 def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 	if os.geteuid() != 0:
@@ -39,38 +39,38 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 			choice = getInput("or read key from NFC reader?", options=['m', 'r'])
 			if choice == 'm':
 				nfcID = getInput("Enter key UID")
-			else:
-				try:
-					from rpi import interfaceControl
-					restartDoorLock = True if killDoorLock() == 0 else False
-					while True:
-						interfaceControl.setPowerStatus(True)
-		#				log.debug("Starting NFC read")
-						if not quiet:
-							putMessage("Swipe card now")
-						nfcID = interfaceControl.nfcGetUID()
-		#				log.debug("Finished NFC read")
-						interfaceControl.setPowerStatus(False)
-						if not nfcID and not quiet:
-							retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
-							if nfcID != None or retry != 'y':
-								break
-						else:
-							break
-				
-				except KeyboardInterrupt:
-					pass
+	if not nfcID:
+		try:
+			from rpi import interfaceControl
+			restartDoorLock = True if killDoorLock() == 0 else False
+			while True:
+				interfaceControl.setPowerStatus(True)
+#				log.debug("Starting NFC read")
+				if not quiet:
+					putMessage("Swipe card now")
+				nfcID = interfaceControl.nfcGetUID()
+#				log.debug("Finished NFC read")
+				interfaceControl.setPowerStatus(False)
+				if not nfcID and not quiet:
+					retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
+					if nfcID != None or retry != 'y':
+						break
+				else:
+					break
+		
+		except KeyboardInterrupt:
+			pass
 
-				except:
-					putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
-						   level=severity.ERROR)
-					raise
+		except:
+			putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
+				   level=severity.ERROR)
+			raise
 
-				finally:
-					interfaceControl.cleanup()
-					if restartDoorLock:
-						print "restarting door-lock.py"
-						startDoorLock()
+		finally:
+			interfaceControl.cleanup()
+			if restartDoorLock:
+				print "restarting door-lock.py"
+				startDoorLock()
 	if nfcID != None:
 		# @TODO: catch duplicate key error, exit with error status
 		try:
@@ -105,7 +105,7 @@ def killDoorLock():
 
 def startDoorLock():	
 	#FNULL = open(os.devnull, 'w')
-	FNULL = open(pipedDoorLockLog, 'a')
+	FNULL = open(doorLockPipedLog, 'a')
 #	log.debug('Restarting door-lock.py')
 	subprocess.Popen([doorLockScript],
 			 stdout=FNULL, stderr=subprocess.STDOUT)
