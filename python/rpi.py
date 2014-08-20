@@ -71,7 +71,7 @@ class InterfaceControl(object):
 			return nfcID
 		else:
 			loops = 0
-			while loops < 20:
+			while loops < 50:
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
 				# If a card is found
