@@ -1,4 +1,4 @@
-#!/usr/bin/pytho
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -111,6 +111,10 @@ class MySQLBackend(object):
 
 	def getValidTags(self):
 		'''
+		Retrieve a list of tag names configured in the database.
+
+		Returns:
+		  a list of tag names
 		'''
 		sql = 	'''
 			SELECT tag FROM tags
@@ -125,6 +129,13 @@ class MySQLBackend(object):
 
 	def getColumnNames(self, table):
 		'''
+		Retrieve a list of column names from a table in the database.
+
+		Args:
+		  table (string): the name of the table
+
+		Returns:
+		  a list of the names of the columns in the table
 		'''
 		sql = "SHOW columns FROM {:}".format(table)
 		sql = 	'''
@@ -143,16 +154,32 @@ class MySQLBackend(object):
 
 	def getValidStatuses(self):
 		'''
+		Retrieve a list of possible statuses configured in the database.
+
+		Returns:
+		  list of possible statuses
 		'''
 		return self.getEnumValues('users', 'status')
 
 	def getValidLogTypes(self):
 		'''
+		Retrieve list of log types configured in the database.
+
+		Returns:
+		  list of log types
 		'''
 		return self.getEnumValues('logs', 'logType')	
 
 	def getEnumValues(self, table, field):
 		'''
+		Retrieve a list of valid values for an enum in the database.
+
+		Args:
+		  table (string): the name of the table to access
+		  field (string): the name of the field containing the enum
+
+		Returns:
+		  a list of names defined in the enum
 		'''
 		sql = 	'''
 			SHOW COLUMNS FROM {:s} WHERE Field = %s
@@ -375,7 +402,7 @@ class MySQLBackend(object):
 		if user != None:
 			return user['userID']
 	
-	#@TODO: should be able to delete user without deleting logs	
+	#@TEST: added for testing.
 	def rmUser(self, userID):
 		'''
 		Delete a user with a given userID.
