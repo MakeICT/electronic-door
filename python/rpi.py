@@ -8,8 +8,9 @@ rpi.py: Hardware control
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+	Christian Kindel <iceman81292@gmail.com>
 '''
-import lib.MFRC522 as NFC
+import MFRC522 as NFC
 import time, subprocess
 import wiringpi2
 
@@ -25,6 +26,7 @@ class InterfaceControl(object):
 			'doorStatus2': 16,
 		}
 		
+		self.nfc = NFC.MFRC522()
 		
 		#set up I/O pins
 		wiringpi2.wiringPiSetupPhys()
@@ -69,7 +71,7 @@ class InterfaceControl(object):
 			return nfcID
 		else:
 			loops = 0
-			while loops < 20:
+			while loops < 50:
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
 				# If a card is found
