@@ -8,9 +8,10 @@ door-lock.py: unlocks the door on a succesful NFC read
 Authors:
 	Dominic Canare <dom@greenlightgo.org>
 	Rye Kennedy <ryekennedy@gmail.com>
+	Christian Kindel <iceman81292@gmail.com
 '''
 
-import subprocess, time, sys, os, signal, logging, logging.config
+import os, time, sys, signal, subprocess, logging, logging.config
 
 from backend import backend
 from rpi import interfaceControl
@@ -19,9 +20,12 @@ from rpi import interfaceControl
 #import setproctitle
 #setproctitle.setproctitle('door-lock.py')
 
+Dir = os.path.realpath(os.path.dirname(__file__))
+loggingConf = os.path.join(Dir, 'logging.conf')
+
 lastDoorStatus = [0,0]
 
-logging.config.fileConfig("/home/pi/code/makeictelectronicdoor/logging.conf")
+logging.config.fileConfig(loggingConf)
 logger=logging.getLogger('door-lock')
 
 logger.info("==========[Door-lock.py started]==========")
@@ -63,7 +67,7 @@ while True:
 
 		if nfcID != None:
 			logger.info("Scanned card ID: %s" % nfcID)
-			user = backend.getUserFromKey(nfcID)	
+			user = backend.getUserByKeyID(nfcID)	
 			if user != None:
 				if user['status'] == 'active':
 					logger.info("ACCEPTED card ID: %s" % nfcID)
@@ -75,7 +79,7 @@ while True:
 				else:
 					logger.warning("DENIED card  ID: %s" % nfcID)
 					logger.warning("Reason: '%s %s' is not active" % (user['firstName'], user['lastName']))
-					backend.log('deny:', nfcID, user['userID'])
+					backend.log('deny', nfcID, user['userID'])
 					interfaceControl.showBadCardRead()
 			else:
 				logger.warning("DENIED card  ID: %s" % nfcID)
@@ -88,3 +92,4 @@ while True:
 	except KeyboardInterrupt:
 		logger.info("Received KeyboardInterrupt")
 		cleanup()
+
