@@ -9,8 +9,6 @@
 	 * 	Rye Kennedy <ryekennedy@gmail.com>
 	 **/
 
-	// @TODO: Require (admin) login
-	 
 	require_once('../include/config.php');
 	require_once('../include/Backend.php');
 
@@ -29,7 +27,7 @@
 	}
 	$waitingForSwipe = enrollmentIsRunning();
 
-	if(!empty($_POST)){
+	if(!empty($_REQUEST)){
 		if($_REQUEST['action'] == 'Cancel'){
 			$_SESSION['messages'][] = 'Canceled.';
 			header("Location: $_SERVER[PHP_SELF]");
