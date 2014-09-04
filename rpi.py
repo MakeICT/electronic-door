@@ -17,19 +17,20 @@ class InterfaceControl(object):
 	def __init__(self):
 		Pi_rev = wiringpi2.piBoardRev()	#@TODO: use this?
 		self.GPIOS = {
+			'internal_buzzer': 11,
 			'latch': 7,
-			'unlock_LED': 11,
-			'power_LED': 13,
+			'unlock_LED': 15,
+			'deny_LED': 13,
 			'buzzer': 12, 
-			'doorStatus1': 15,
-			'doorStatus2': 16,
+			'doorStatus1': 19,
+			'doorStatus2': 21,
 		}
 		
 		
 		#set up I/O pins
 		wiringpi2.wiringPiSetupPhys()
 		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 1)
-		wiringpi2.pinMode(self.GPIOS['power_LED'], 1)
+		wiringpi2.pinMode(self.GPIOS['deny_LED'], 1)
 		wiringpi2.pinMode(self.GPIOS['latch'], 1)
 		wiringpi2.pinMode(self.GPIOS['doorStatus1'], 0)
 		wiringpi2.pinMode(self.GPIOS['doorStatus2'], 0)
@@ -40,10 +41,6 @@ class InterfaceControl(object):
 		wiringpi2.pwmSetClock(750)   			# set HW PWM clock division (frequency)
 		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 		
-		#Set input pull-ups
-		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 2)
-		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 2)
-	
 		proc = subprocess.Popen(['nfc-list'], stderr=subprocess.PIPE)
 		result = proc.stderr.read()
 		self.PN532 = False if 'Timeout' in result else True
@@ -92,6 +89,8 @@ class InterfaceControl(object):
 		  componentID (int): pin number of output pin
 		  status (bool): True to turn on, False to turn off
 		'''
+		if 'LED' in componentID:
+			status = not status
 		wiringpi2.digitalWrite(self.GPIOS[componentID], status)
 
 	def input(self, componentID):
@@ -114,7 +113,10 @@ class InterfaceControl(object):
 		Args:
 		  powerIsOn (bool): True to turn on LED, False to turn off
 		'''
-		self.output('power_LED', powerIsOn)
+		self.output('deny_LED', powerIsOn)
+		if powerIsOn:
+			self.output('unlock_LED', False)
+			self.output('latch', False)
 
 	def setBuzzerOn(self, buzzerOn):
 		'''
@@ -158,17 +160,17 @@ class InterfaceControl(object):
 
 	def showBadCardRead(self, blinkCount=3, blinkPeriod=0.25):
 		'''
-		Blink power_LED to indicate invalid card read
+		Blink unlock_LED to indicate invalid card read
 
 		Args:
 		  blinkCount (int): number of time to blink (default 3)
 		  blinkPeriod (float): on/off duration in seconds (default 0.25)
 		'''
 		for i in range(blinkCount):
-			self.output('power_LED', True)
+			self.output('deny_LED', True)
 			self.setBuzzerOn(True)
 			time.sleep(blinkPeriod)
-			self.output('power_LED', False)
+			self.output('deny_LED', False)
 			self.setBuzzerOn(False)
 			time.sleep(blinkPeriod)
 
@@ -178,12 +180,12 @@ class InterfaceControl(object):
 		'''
 		#Clean up GPIO pins
 		wiringpi2.digitalWrite(self.GPIOS['unlock_LED'], 0)
-		wiringpi2.digitalWrite(self.GPIOS['power_LED'], 0)
+		wiringpi2.digitalWrite(self.GPIOS['deny_LED'], 0)
 		wiringpi2.digitalWrite(self.GPIOS['latch'], 0)
 		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 		
 		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 0)
-		wiringpi2.pinMode(self.GPIOS['power_LED'], 0)
+		wiringpi2.pinMode(self.GPIOS['deny_LED'], 0)
 		wiringpi2.pinMode(self.GPIOS['latch'], 0)
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 0) 
 
