@@ -60,11 +60,22 @@
 			try{
 				if(!empty($_REQUEST['editingUserID'])){
 					// editing a user
-					$backend->updateUser($_REQUEST['editingUserID'], $_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName'], '');
+					$backend->updateUser(
+						$_REQUEST['editingUserID'],
+						$_REQUEST['email'],
+						$_REQUEST['firstName'],
+						$_REQUEST['lastName'],
+						$_REQUEST['password']
+					);
 					$_SESSION['messages'][] = "User $_REQUEST[email] was successfully edited.";
 				}else{
 					// adding a user
-					$backend->addUser($_REQUEST['email'], $_REQUEST['firstName'], $_REQUEST['lastName']);
+					$backend->addUser(
+						$_REQUEST['email'],
+						$_REQUEST['firstName'],
+						$_REQUEST['lastName'],
+						$_REQUEST['password']
+					);
 					$_SESSION['messages'][] = "Added $_REQUEST[firstName] $_REQUEST[lastName]";
 					
 					header("Location: $_SERVER[PHP_SELF]");
@@ -176,6 +187,7 @@
 								<th>First Name</th>
 								<th>Last Name</th>
 								<th>Email</th>
+								<th>Password</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -183,9 +195,10 @@
 								<td><input type="text" name="firstName" value="<?php if(!empty($userToEdit)) echo $userToEdit['firstName']; ?>" /></td>
 								<td><input type="text" name="lastName" value="<?php if(!empty($userToEdit)) echo $userToEdit['lastName']; ?>"/></td>
 								<td><input type="text" name="email" value="<?php if(!empty($userToEdit)) echo $userToEdit['email']; ?>"/></td>
+								<td><input type="password" name="password" value=""/></td>
 							</tr>
 							<tr>
-								<th colspan="3">
+								<th colspan="4">
 									<input type="hidden" name="editingUserID" value="<?php if(!empty($userToEdit)) echo $userToEdit['userID']; ?>"/>
 									<input name='action' type="submit" value="Add/Edit User" />
 									<input name='action' type="submit" value="Cancel" />

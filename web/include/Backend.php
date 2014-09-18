@@ -37,7 +37,6 @@ class Backend {
 				FROM users';
 
 		if(!empty($status)){
-			trigger_error("Filtering for status: $status");
 			$sql .= '
 				WHERE status = :status';
 			$params['status'] = $status;
@@ -230,7 +229,7 @@ class Backend {
 	public function authenticate($login, $attemptedPassword){
 		$users = $this->getUsers();
 		$users = indexBy($users, 'email');
-		
+
 		if(!empty($users[$login])){
 			$realPassword = $users[$login]['passwordHash'];
 			if($realPassword == crypt($attemptedPassword, $realPassword)){
@@ -238,8 +237,6 @@ class Backend {
 				if(in_array('admin', $tags)){
 					return $users[$login]['userID'];
 				}
-			}else{
-				trigger_error("Bad password $attemptedPassword");
 			}
 		}else{
 			trigger_error("User not found");
