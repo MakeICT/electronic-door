@@ -133,7 +133,7 @@ class InterfaceControl(object):
 		else:
 			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 
-	def unlockDoor(self, timeout=2):
+	def unlockDoor(self, timeout=5):
 		'''
 		Unlock door, activate unlock_LED and buzzer, and relock door after timeout
 
@@ -142,9 +142,11 @@ class InterfaceControl(object):
 		'''
 		self.output('latch', True)
 		self.output('unlock_LED', True)
+		self.output('internal_buzzer', True)
 		self.setBuzzerOn(True)
 		time.sleep(timeout)
 		self.output('latch', False)
+		self.output('internal_buzzer', False)
 		self.output('unlock_LED', False)
 		self.setBuzzerOn(False)
 
