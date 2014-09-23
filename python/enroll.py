@@ -87,10 +87,10 @@ def killDoorLock():
 	out, err = process.communicate()
 	if out != '':
 #		log.debug('Killing door-lock.py')
-		os.kill(int(out), signal.SIGTERM)
+		subprocess.call(['stop','door-lock'])
 		time.sleep(1)
 		try:
-			if os.kill(int(out), 0) == None:
+			if os.kill(int(out), 0) == None:	#TODO: use upstart status?
 #				log.error('Could not kill door-lock.py')
 #				log.error('Exiting')
 				return -1	#@TODO:define error codes
@@ -107,7 +107,7 @@ def startDoorLock():
 	#FNULL = open(os.devnull, 'w')
 	FNULL = open(doorLockPipedLog, 'a')
 #	log.debug('Restarting door-lock.py')
-	subprocess.Popen([doorLockScript],
+	subprocess.Popen(['start','door-lock'],
 			 stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False
 
