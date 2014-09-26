@@ -27,8 +27,6 @@ class InterfaceControl(object):
 			'doorStatus2': 21,
 		}
 		
-		self.nfc = NFC.MFRC522()
-		
 		#set up I/O pins
 		wiringpi2.wiringPiSetupPhys()
 		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 1)
@@ -59,16 +57,17 @@ class InterfaceControl(object):
 		  A string containing the UID of the NFC card
 		  None if no card is in range
 		'''
-		if self.PN532:
-			proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE, shell=True)
-			(nfcID, err) = proc.communicate()
-			nfcID = nfcID.strip()
-			if nfcID == '':
-				return None
-			return nfcID
-		else:
-			loops = 0
-			while loops < 50:
+		loops = 0
+		while loops < 1:
+			if self.PN532:
+				proc = subprocess.Popen("/home/pi/code/makeictelectronicdoor/nfc-read", stdout=subprocess.PIPE)
+				
+				(nfcID, err) = proc.communicate()
+				nfcID = nfcID.strip()
+				if nfcID:
+					print 'TRUE'
+					return nfcID
+			else:
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
 				# If a card is found
@@ -79,9 +78,9 @@ class InterfaceControl(object):
 				if status == self.nfc.MI_OK:
 					# Print UID
 					return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
-				loops += 1
-				time.sleep(0.5)
-			return None
+			loops += 1
+			time.sleep(0)
+		return None
 
 	def output(self, componentID, status):
 		'''
