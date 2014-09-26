@@ -41,8 +41,8 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 				nfcID = getInput("Enter key UID")
 	if not nfcID:
 		try:
-			from rpi import interfaceControl
 			restartDoorLock = True if killDoorLock() == 0 else False
+			from rpi import interfaceControl
 			while True:
 				interfaceControl.setPowerStatus(True)
 #				log.debug("Starting NFC read")
