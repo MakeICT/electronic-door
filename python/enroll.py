@@ -13,15 +13,20 @@ Authors:
 '''
 #@TODO: define error status codes here (duplicate key error)
 
-import os, sys, signal, time, subprocess, argparse, logging, logging.config
+import os, sys, signal, time, subprocess, argparse, logging, logging.config, yaml
 from backend import backend
 from get_user import getUser
 from cli_helper import *
 from MySQLdb import IntegrityError
 
 Dir = os.path.realpath(os.path.dirname(__file__))
-doorLockScript = os.path.join(Dir, 'door-lock.py')
 doorLockPipedLog = os.path.join(Dir, '../logs/piped-door-lock.log')
+config = os.path.join(Dir, 'config.yml')
+global_config = yaml.load(file(config, 'r'))
+logging.config.dictConfig(global_config['logging'])
+log = logging.getLogger('enroll')
+
+log.info("==========[enroll.py started]==========")
 
 def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 	if os.geteuid() != 0:
@@ -44,13 +49,19 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 			restartDoorLock = True if killDoorLock() == 0 else False
 			from rpi import interfaceControl
 			while True:
-				interfaceControl.setPowerStatus(True)
-#				log.debug("Starting NFC read")
+				log.debug("Starting NFC read")
 				if not quiet:
 					putMessage("Swipe card now")
-				nfcID = interfaceControl.nfcGetUID()
-#				log.debug("Finished NFC read")
-				interfaceControl.setPowerStatus(False)
+				retry = 0
+				while retry < 30:
+					interfaceControl.setPowerStatus(True)
+					nfcID = interfaceControl.nfcGetUID()
+					interfaceControl.setPowerStatus(False)
+					if nfcID:
+						break
+					time.sleep(0.75)
+					retry += 1
+				log.debug("Finished NFC read")
 				if not nfcID and not quiet:
 					retry = getInput("Couldn't read card. Retry?", options=['y', 'n'])
 					if nfcID != None or retry != 'y':
@@ -59,17 +70,18 @@ def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 					break
 		
 		except KeyboardInterrupt:
-			pass
+			log.info("Received KeyboardInterrupt")
 
 		except:
 			putMessage("Unexpected error: {:}".format(sys.exc_info()[0]),
 				   level=severity.ERROR)
+			log.error("Unexpected error: {:}".format(sys.exc_info()[0]))
 			raise
 
 		finally:
 			interfaceControl.cleanup()
 			if restartDoorLock:
-				print "restarting door-lock.py"
+				log.info("restarting door-lock.py")
 				startDoorLock()
 	if nfcID != None:
 		# @TODO: catch duplicate key error, exit with error status
@@ -86,27 +98,27 @@ def killDoorLock():
 	process = subprocess.Popen(['pgrep', 'door-lock.py'], stdout=subprocess.PIPE)
 	out, err = process.communicate()
 	if out != '':
-#		log.debug('Killing door-lock.py')
+		log.debug('Killing door-lock.py')
 		subprocess.call(['stop','door-lock'])
 		time.sleep(1)
 		try:
 			if os.kill(int(out), 0) == None:	#TODO: use upstart status?
-#				log.error('Could not kill door-lock.py')
-#				log.error('Exiting')
+				log.error('Could not kill door-lock.py')
+				log.error('Exiting')
 				return -1	#@TODO:define error codes
 			else:
 				return 0
-#				log.debug('Successfully killed door-lock.py')
+				log.debug('Successfully killed door-lock.py')
 		except OSError:
 			return 0
-#			log.debug('Successfully killed door-lock.py')
+			log.debug('Successfully killed door-lock.py')
 	else:
 		return 1
 
 def startDoorLock():	
 	#FNULL = open(os.devnull, 'w')
 	FNULL = open(doorLockPipedLog, 'a')
-#	log.debug('Restarting door-lock.py')
+	log.debug('Restarting door-lock.py')
 	subprocess.Popen(['start','door-lock'],
 			 stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False

@@ -25,7 +25,6 @@ config = os.path.join(Dir, 'config.yml')
 global_config = yaml.load(file(config, 'r'))
 
 lastDoorStatus = [0,0]
-print global_config['logging']
 logging.config.dictConfig(global_config['logging'])
 logger=logging.getLogger('door-lock')
 #logger=logging
