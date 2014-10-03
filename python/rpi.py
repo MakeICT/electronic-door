@@ -65,7 +65,6 @@ class InterfaceControl(object):
 				(nfcID, err) = proc.communicate()
 				nfcID = nfcID.strip()
 				if nfcID:
-					print 'TRUE'
 					return nfcID
 			else:
 				# Scan for cards    
