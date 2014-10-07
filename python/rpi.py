@@ -32,6 +32,7 @@ class InterfaceControl(object):
 		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 1)
 		wiringpi2.pinMode(self.GPIOS['deny_LED'], 1)
 		wiringpi2.pinMode(self.GPIOS['latch'], 1)
+		wiringpi2.pinMode(self.GPIOS['internal_buzzer'], 1)
 		wiringpi2.pinMode(self.GPIOS['doorStatus1'], 0)
 		wiringpi2.pinMode(self.GPIOS['doorStatus2'], 0)
 		
