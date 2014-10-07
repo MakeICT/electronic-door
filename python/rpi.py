@@ -50,7 +50,7 @@ class InterfaceControl(object):
 
 	def nfcGetUID(self):
 		'''
-		Read an NFC card if one is in range an return its UID
+		Read an NFC card if one is in range and return its UID
 
 
 		Returns:
@@ -70,6 +70,7 @@ class InterfaceControl(object):
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
 				# If a card is found
+				print status
 				if status == self.nfc.MI_OK:
 					# Get the UID of the card
 					(status,uid) = self.nfc.MFRC522_Anticoll()
@@ -180,18 +181,7 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		#Clean up GPIO pins
-		wiringpi2.digitalWrite(self.GPIOS['unlock_LED'], 0)
-		wiringpi2.digitalWrite(self.GPIOS['deny_LED'], 0)
-		wiringpi2.digitalWrite(self.GPIOS['latch'], 0)
-		wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
-		
-		wiringpi2.pinMode(self.GPIOS['unlock_LED'], 0)
-		wiringpi2.pinMode(self.GPIOS['deny_LED'], 0)
-		wiringpi2.pinMode(self.GPIOS['latch'], 0)
-		wiringpi2.pinMode(self.GPIOS['buzzer'], 0) 
+		for pin in self.GPIOS:
+			wiringpi2.pinMode(self.GPIOS[pin], 0)
 
-		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus1'], 0)
-		wiringpi2.pullUpDnControl(self.GPIOS['doorStatus2'], 0)
-	
 interfaceControl = InterfaceControl()
