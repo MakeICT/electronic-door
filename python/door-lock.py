@@ -11,7 +11,7 @@ Authors:
 	Christian Kindel <iceman81292@gmail.com
 '''
 
-import os, time, sys, signal, subprocess, logging, logging.config
+import os, time, sys, signal, subprocess, logging, logging.config, yaml, StringIO
 
 from backend import backend
 from rpi import interfaceControl
@@ -21,12 +21,13 @@ from rpi import interfaceControl
 #setproctitle.setproctitle('door-lock.py')
 
 Dir = os.path.realpath(os.path.dirname(__file__))
-loggingConf = os.path.join(Dir, 'logging.conf')
+config = os.path.join(Dir, 'config.yml')
+global_config = yaml.load(file(config, 'r'))
 
 lastDoorStatus = [0,0]
-
-logging.config.fileConfig(loggingConf)
+logging.config.dictConfig(global_config['logging'])
 logger=logging.getLogger('door-lock')
+#logger=logging
 
 logger.info("==========[Door-lock.py started]==========")
 def signal_term_handler(sig, frame):
@@ -44,6 +45,9 @@ def cleanup():
 	sys.exit(0)
  
 signal.signal(signal.SIGTERM, signal_term_handler)
+
+def validate():
+	pass
 
 while True:
 	try:
@@ -68,6 +72,7 @@ while True:
 		if nfcID != None:
 			logger.info("Scanned card ID: %s" % nfcID)
 			user = backend.getUserByKeyID(nfcID)	
+#			logger.debug(user)
 			if user != None:
 				if user['status'] == 'active':
 					logger.info("ACCEPTED card ID: %s" % nfcID)
@@ -87,7 +92,7 @@ while True:
 				backend.log('deny', nfcID)
 				interfaceControl.showBadCardRead()
 
-		time.sleep(1)
+		time.sleep(0)
 
 	except KeyboardInterrupt:
 		logger.info("Received KeyboardInterrupt")

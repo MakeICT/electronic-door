@@ -7,7 +7,7 @@
 # Dominic Canare <dom@greenlightgo.org>
 # Rye Kennedy <ryekennedy@gmail.com>
 
-nfc-poll | grep UID | tr -d " "  | cut -d ":" -f 2
+nfc-list | grep UID | tr -d " "  | cut -d ":" -f 2
 
 exit $?
 
