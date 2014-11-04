@@ -9,7 +9,7 @@ function updateStatuses(){
 	$backend = Backend::instance();
 	echo "Connecting...\n";
 	$waApiClient = WaApiClient::getInstance();
-	$waApiClient->initTokenByApiKey('eh130uhdivhxpkzhxlwz3fyueeow50');
+	$waApiClient->initTokenByApiKey(trim(file_get_contents('WA_API_KEY')));
 	
 	echo "Downloading contacts...\n";
 	$waContacts = $waApiClient->get('contacts?$async=false');
@@ -41,8 +41,15 @@ function updateStatuses(){
 
 	echo "Deactivating users...\n";
 	foreach($existingUsers as $userEmail=>$user){
-		echo "\tDeactivating user $userEmail...\n";
-		$backend->setUserActivationStatus($userEmail, false);
+		if($user['status'] == 'active'){
+			$userTags = $backend->getUserTags($userEmail);
+			if(in_array('bluebird', $userTags)){
+				echo "\tSkipping leasor $userEmail\n";
+			}else{
+				echo "\tDeactivating user $userEmail...\n";
+				$backend->setUserActivationStatus($userEmail, false);
+			}
+		}
 	}
 }
 
