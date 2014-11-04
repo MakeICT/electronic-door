@@ -39,8 +39,9 @@ function indexBy($arr, $field){
 
 
 session_start();
-// @TODO: Move username/password to separate .ini file, add config.php to version control
-$database = new DatabaseClient('mysql', 'MakeICTDBUser', '2879fd3b0793d7972cbf7647bc1e62a4', 'localhost', 'MakeICTMemberKeys');
+
+$dbCredentials = split("\t", trim(file_get_contents('../include/DB_CREDENTIALS'))); // @TODO: fix this relative path...
+$database = new DatabaseClient('mysql', $dbCredentials[0], $dbCredentials[1], 'localhost', 'MakeICTMemberKeys');
 
 if(empty($_SESSION['errors'])) $_SESSION['errors'] = array();
 if(empty($_SESSION['messages'])) $_SESSION['messages'] = array();
