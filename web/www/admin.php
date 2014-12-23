@@ -59,7 +59,7 @@
 	foreach($logMessages as $log){
 		echo "
 			<tr>
-				<td style='white-space:nowrap'>" . date('Y-m-d H:i:s T', $log[timestamp]) . "</td>
+				<td style='white-space:nowrap'>" . date('Y-m-d H:i:s T', $log['timestamp']) . "</td>
 				<td>$log[logType]</td>
 				<td>$log[message]</td>
 				<td>$log[userID]</td>
