@@ -26,8 +26,6 @@ global_config = yaml.load(file(config, 'r'))
 logging.config.dictConfig(global_config['logging'])
 log = logging.getLogger('enroll')
 
-log.info("==========[enroll.py started]==========")
-
 def enroll(userID=None, nfcID=None, steal=False, quiet=False, reader=False):
 	if os.geteuid() != 0:
 		print "Root is required to run this script"
@@ -115,7 +113,7 @@ def killDoorLock():
 	else:
 		return 1
 
-def startDoorLock():	
+def startDoorLock():
 	#FNULL = open(os.devnull, 'w')
 	FNULL = open(doorLockPipedLog, 'a')
 	log.debug('Restarting door-lock.py')
@@ -123,7 +121,11 @@ def startDoorLock():
 			 stdout=FNULL, stderr=subprocess.STDOUT)
 	restartDoorLock = False
 
+
+
 if __name__ == "__main__":
+	log.info("==========[enroll.py started]==========")
+
 	parser = argparse.ArgumentParser(description='Add an NFC ID to a user in the MakeICT database.')
 	parser.add_argument("-u", "--userid", help="The user's unique userID.", type=int)
 	parser.add_argument("-s", "--steal", help="Re-assign the card if it is already registered to another user.", action="store_true")
