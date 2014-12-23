@@ -259,6 +259,20 @@ class Backend {
 		return $this->db->query('SELECT * FROM users WHERE email = ?', $email)->fetch();
 	}
 
+	public function getLog($start=0, $count=100){
+		// @TODO: Fix $start and $count for SQL injection
+		$sql = "
+			SELECT
+				timestamp, logType, rfid, message,
+				users.*
+			FROM logs
+				LEFT JOIN users ON logs.userID = users.userID
+			ORDER BY timestamp DESC
+			LIMIT $start, $count";
+			
+		return $this->db->query($sql)->fetchAll();
+	}
+
 	/**
 	 * @TODO: document this
 	 **/
