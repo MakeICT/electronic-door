@@ -12,6 +12,9 @@
 	include_once("../include/BasicTemplate.php");
 	$template = new BasicTemplate(file_get_contents("template.html"));
 	$template->bufferStart();
+
+	echo getFormattedErrors();
+	echo getFormattedMessages();
 ?>
 
 

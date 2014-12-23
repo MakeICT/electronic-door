@@ -32,9 +32,9 @@
 		}else{
 			$_SESSION['errors'][] = 'Bad login';
 		}
-	}elseif(!empty($_POST['logout'])){
-		$_SESSION = array();
-		$_SESSION['messages'] = 'You have been logged out';
+	}elseif(!empty($_REQUEST['logout'])){
+		session_unset();
+		$_SESSION['messages'] = array('You have been logged out');
 	}
 	if(!empty($_SESSION['redirectLocation'])){
 		$_SESSION['messages'][] = "You must login to access <a title='$_SESSION[redirectLocation]'>that resource</a>.";
