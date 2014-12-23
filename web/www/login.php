@@ -22,17 +22,19 @@
 		if($userID){
 			$_SESSION['userID'] = $userID;
 			if(!empty($_SESSION['redirectLocation'])){
-				header("refresh: 2; $_SESSION[redirectLocation]");
-				$_SESSION['messages'][] = "Login OK, you are now being redirected to the <a href='$_SESSION[redirectLocation]'>requested resource</a>...";
+				header("Location: $_SESSION[redirectLocation]");
 				unset($_SESSION['redirectLocation']);
 			}else{
-				header("refresh: 2; /");
-				$_SESSION['messages'][] = "Login OK, you are now being redirected to the <a href='/'>home page</a>...";
-				unset($_SESSION['redirectLocation']);
+				header("Location: ./");
 			}
+			$_SESSION['messages'][] = 'Login successful!';
+			exit();
 		}else{
-			$_SESSION['errors'][] = "Bad login";
+			$_SESSION['errors'][] = 'Bad login';
 		}
+	}elseif(!empty($_POST['logout'])){
+		$_SESSION = array();
+		$_SESSION['messages'] = 'You have been logged out';
 	}
 	if(!empty($_SESSION['redirectLocation'])){
 		$_SESSION['messages'][] = "You must login to access <a title='$_SESSION[redirectLocation]'>that resource</a>.";
