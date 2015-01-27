@@ -242,8 +242,8 @@
 					<thead>
 						<tr>
 							<th>Tags</th>
-							<th>Last Name</th>
 							<th>First Name</th>
+							<th>Last Name</th>
 							<th>Email</th>
 							<th>Status</th>
 							<th colspan='3'>Actions</th>
@@ -283,8 +283,8 @@
 		echo "
 						<tr class='$rowClass'>
 							<td class='tagCell'>$tagHTML</td>
-							<td>$user[lastName]</td>
 							<td>$user[firstName]</td>
+							<td>$user[lastName]</td>
 							<td>$user[email]</td>
 							<td>$user[status]</td>
 							<td>
