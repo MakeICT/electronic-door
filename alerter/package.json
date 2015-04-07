@@ -1,0 +1,15 @@
+{
+  "name": "alerter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "alerter.js",
+  "dependencies": {
+    "socket.io": "^1.3.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dominic Canare <dom@makeict.org>",
+  "license": "ISC"
+}
