@@ -1,4 +1,4 @@
-#!/usr/bin/python
+:!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -47,7 +47,12 @@ class InterfaceControl(object):
 		self.PN532 = False if 'Timeout' in result else True
 		if not self.PN532:
 			self.nfc = NFC.MFRC522()
-			
+	
+	def arm_security()
+		print "big button pressed!"
+		subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/arm-away.sh'])
+	
+	int wiringpi2.wiringPiISR (GPIOS['doorStatus1'], wiringpi2.INT_EDGE_FALLING, arm_security)
 
 	def nfcGetUID(self):
 		'''
