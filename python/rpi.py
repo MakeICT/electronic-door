@@ -13,6 +13,8 @@ Authors:
 import MFRC522 as NFC
 import time, subprocess
 import wiringpi2
+#import RPi.GPIO as GPIO  
+#GPIO.setmode(GPIO.BCM) 
 
 class InterfaceControl(object):
 	def __init__(self):
@@ -33,9 +35,11 @@ class InterfaceControl(object):
 		wiringpi2.pinMode(self.GPIOS['deny_LED'], 1)
 		wiringpi2.pinMode(self.GPIOS['latch'], 1)
 		wiringpi2.pinMode(self.GPIOS['internal_buzzer'], 1)
-		wiringpi2.pinMode(self.GPIOS['doorStatus1'], 0)
-		wiringpi2.pinMode(self.GPIOS['doorStatus2'], 0)
+		#wiringpi2.pinMode(self.GPIOS['doorStatus1'], 0)
+		#wiringpi2.pinMode(self.GPIOS['doorStatus2'], 0)
 		
+		#GPIO.setup(9, GPIO.IN)  
+		#GPIO.add_event_detect(9, GPIO.FALLING, callback=self.arm_security, bouncetime=300)
 		#Set up Hardware PWM - Only works on GPIO 18 (Phys 12)
 		wiringpi2.pwmSetMode(0)				# set PWM to markspace mode
 		wiringpi2.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
@@ -47,7 +51,15 @@ class InterfaceControl(object):
 		self.PN532 = False if 'Timeout' in result else True
 		if not self.PN532:
 			self.nfc = NFC.MFRC522()
-			
+#		self.setInterrupts()
+				
+#	def arm_security():
+#                print "big button pressed!"
+#		#subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/arm-away.sh'])
+#		return True
+
+#	def setInterrupts(self):					
+#		wiringpi2.wiringPiISR(self.GPIOS['doorStatus1'], 2,self.arm_security)
 
 	def nfcGetUID(self):
 		'''

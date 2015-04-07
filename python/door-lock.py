@@ -48,6 +48,7 @@ def checkDoors():
 		log.info("Door 1: OPEN")
 	elif currentDoorStatus[0] < lastDoorStatus[0]:
 		log.info("Door 1: CLOSED")
+		subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/arm-away.sh'])
 	if currentDoorStatus[1] > lastDoorStatus[1]:
 		log.info("Door 2: OPEN")
 	elif currentDoorStatus[1] < lastDoorStatus[1]:
