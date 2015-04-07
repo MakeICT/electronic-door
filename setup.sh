@@ -4,4 +4,4 @@
 
 sudo sed -i '$ a\0  1    * * *   www-data        php -f /home/pi/code/makeictelectronicdoor/web/include/waUpdater.php' /etc/crontab
 
-sudo cp door-lock.conf /etc/init
+sudo ln -s ~/code/makeictelectronicdoor/door-lock.conf /etc/init/door-lock.conf

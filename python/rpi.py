@@ -1,4 +1,4 @@
-#!/usr/bin/python
+:!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
 MakeICT/Bluebird Arthouse Electronic Door Entry
@@ -60,8 +60,6 @@ class InterfaceControl(object):
 
 #	def setInterrupts(self):					
 #		wiringpi2.wiringPiISR(self.GPIOS['doorStatus1'], 2,self.arm_security)
-
-	def nfcGetUID(self):
 		'''
 		Read an NFC card if one is in range and return its UID
 
