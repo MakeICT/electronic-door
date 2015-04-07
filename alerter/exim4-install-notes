@@ -7,7 +7,7 @@ Run
 		Other destinations: type your hostname again
 		Machines for relay: (leave it blank)
 		Outgoing smarthost: smtp.gmail.com::587
-		Hide local name: Yes
+		Hide local name: No
 		DNS queries minimal: No
 		Delivery method for local: Maildir format in home directory
 		Split config: No
