@@ -20,58 +20,58 @@ udpClient.on('message', function (msg, rinfo) {
 		var msgType = msgContent.substring(msgContent.lastIndexOf('.')	+ 1, msgContent.indexOf('='));
 		var msgValue = msgContent.substring(msgContent.indexOf('=') + 1).replace(/[^0-9a-z ]/i, '');
 		switch(msgType) {
-		case 'display':
-			var displayText = msgValue.replace('\u0000', '');
-			console.log("Display text: " + displayText);
-			break;
-		case 'ArmStatus':
-			// this.ArmStatus = ArmStatus.Disarmed;,	0=Disarmed,1=ArmedStay,2=ArmedAway
-			var armStatus = parseInt(msgValue);
-			console.log("Arm status: " + armStatus);
-			break;
-		case 'Ready': //0=NotReady,1=Ready
-			var isReady = (msgValue == '1');
-			break;
-		case 'AlarmEvent':	//this.AlarmState = (count == 0 ? AlarmState.NoAlarm : AlarmState.Alarm);
-			var alarmStatus = (msgValue == '0' ? 0 : 1);
-			if(alarmStatus){
-				sendEmail("The alarm is going off!");
-			}
-			break;
-		 case 'FireEvent': //this.AlarmState = (count == 0 ? AlarmState.NoAlarm : AlarmState.Fire);
-			var alarmStatus = (msgValue == '0' ? 1 : 2);
-			if(alarmStatus){
-				sendEmail("There's a fire!");
-			}else{
-				console.log("Fire alarm status: " + alarmStatus);
-				console.log("msgValue: " + msgValue);
-			break;
-		default: //ZS.3=0 // 0=NotFaulted,1,2=IsFaulted
-			var zoneNumber = parseInt(msgType);
-			if (!isNaN(zoneNumber)){
-				var isFaulted = (msgValue != '0');
-			 }
-			console.log("Zone status [" + zoneNumber + "]: " + isFaulted);
-			break;
+			case 'display':
+				var displayText = msgValue.replace('\u0000', '');
+				console.log("Display text: " + displayText);
+				break;
+			case 'ArmStatus':
+				// this.ArmStatus = ArmStatus.Disarmed;,	0=Disarmed,1=ArmedStay,2=ArmedAway
+				var armStatus = parseInt(msgValue);
+				console.log("Arm status: " + armStatus);
+				break;
+			case 'Ready': //0=NotReady,1=Ready
+				var isReady = (msgValue == '1');
+				break;
+			case 'AlarmEvent':	//this.AlarmState = (count == 0 ? AlarmState.NoAlarm : AlarmState.Alarm);
+				var alarmStatus = (msgValue == '0' ? 0 : 1);
+				if(alarmStatus){
+					sendEmail("The alarm is going off!");
+				}
+				break;
+			 case 'FireEvent': //this.AlarmState = (count == 0 ? AlarmState.NoAlarm : AlarmState.Fire);
+				var alarmStatus = (msgValue == '0' ? 1 : 2);
+				if(alarmStatus){
+					sendEmail("There's a fire!");
+				}else{
+					console.log("Fire alarm status: " + alarmStatus);
+					console.log("msgValue: " + msgValue);
+				}
+				break;
+			default: //ZS.3=0 // 0=NotFaulted,1,2=IsFaulted
+				var zoneNumber = parseInt(msgType);
+				if (!isNaN(zoneNumber)){
+					var isFaulted = (msgValue != '0');
+				 }
+				console.log("Zone status [" + zoneNumber + "]: " + isFaulted);
+				break;
 		}
 	}else if (msg[0] == 0x04 && msg[1] == 0x01) { //command message
 		var msgContent = msg.toString('ascii');
 		var msgValue = msgContent.substring(msgContent.lastIndexOf(':') + 1).replace(/[^0-9a-z ]/i, '');
 		console.log(msgContent + " : " + msgValue);
-		/*
 		switch(msgValue){
+		/*
 			case 'Alarm': // this.AlarmState = AlarmState.Alarm;
 				if (ICM.alarmStatus != 1){
 					ICM.alarmStatus = 1;
 					ICM.events.emit('alarmStatusChanged', ICM.alarmStatus);
 				}
 				break;
+		*/
 			case 'Fire': //this.AlarmState = AlarmState.Fire;
-				if (ICM.alarmStatus != 2){
-					ICM.alarmStatus = 2;
-					ICM.events.emit('alarmStatusChanged', ICM.alarmStatus);		 
-				}
+				sendEmail("There's a fire!");
 				break;
+		/*
 			case 'Armed Away': //this.ArmStatus = ArmStatus.ArmedAway;
 				if (ICM.armStatus != 2){
 				ICM.armStatus = 2;
@@ -99,8 +99,8 @@ udpClient.on('message', function (msg, rinfo) {
 			case 'Power Returned':
 				ICM.events.emit('statusEvent', 3);
 				break;
-			}
 			*/
+		}
 	}	
 });
 
