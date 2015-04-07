@@ -60,11 +60,10 @@ def checkDoors():
 	lastDoorStatus = currentDoorStatus
 
 def checkCards():
-	interfaceControl.setPowerStatus(True)
 #	log.debug("Starting NFC read")
 	nfcID = interfaceControl.nfcGetUID()
 #	log.debug("Finished NFC read")
-	interfaceControl.setPowerStatus(False)
+	#interfaceControl.setPowerStatus(False)
 
 	if nfcID != None:
 		log.info("Scanned card ID: %s" % nfcID)
@@ -91,6 +90,7 @@ def checkCards():
 			interfaceControl.showBadCardRead()
 
 log.debug("Entering monitor loop")
+interfaceControl.setPowerStatus(True)
 while True:
 	try:
 		checkDoors()
@@ -99,5 +99,6 @@ while True:
 
 	except KeyboardInterrupt:
 		log.info("Received KeyboardInterrupt")
+		interfaceControl.setPowerStatus(False)
 		cleanup()
 
