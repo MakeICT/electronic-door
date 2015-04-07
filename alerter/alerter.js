@@ -6,7 +6,8 @@ var io = require('socket.io');
 var udpListenPort = 3947;
 var udpClient = dgram.createSocket('udp4');
 
-function sendEmail(var message){
+function sendEmail(message){
+	console.log("Sending email: " + message);
 	child_process.exec('echo "' + message + '" | mail -s "Security system" fablab-wichita-exploration@googlegroups.com');
 }
 
@@ -41,7 +42,9 @@ udpClient.on('message', function (msg, rinfo) {
 			var alarmStatus = (msgValue == '0' ? 1 : 2);
 			if(alarmStatus){
 				sendEmail("There's a fire!");
-			}
+			}else{
+				console.log("Fire alarm status: " + alarmStatus);
+				console.log("msgValue: " + msgValue);
 			break;
 		default: //ZS.3=0 // 0=NotFaulted,1,2=IsFaulted
 			var zoneNumber = parseInt(msgType);
