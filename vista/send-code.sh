@@ -13,7 +13,7 @@ code=$(cat /home/pi/code/makeictelectronicdoor/vista/DOOR_CODE)$1
 rm -f $outputFile 2>&1
 
 for (( i=0; i<${#code}; i++ )); do
-	wget -O- http://$IP/cmd?cmd=${code:$i:1} >> $outputFile
-	sleep 1
+	wget --quiet -O- http://$IP/cmd?cmd=${code:$i:1} >> $outputFile &
+	sleep 0.5
 done
 

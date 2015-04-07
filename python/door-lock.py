@@ -42,13 +42,16 @@ def cleanup():
 
 def checkDoors():
 	global lastDoorStatus
+	log.info("CHECKING DOORS")
 	currentDoorStatus = interfaceControl.checkDoors()
 
 	if currentDoorStatus[0] > lastDoorStatus[0]:
 		log.info("Door 1: OPEN")
 	elif currentDoorStatus[0] < lastDoorStatus[0]:
 		log.info("Door 1: CLOSED")
-		subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/arm-away.sh'])
+		proc = subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/arm-away.sh'], stdout=subprocess.PIPE)
+		proc.communicate()
+		log.info("Arm Away sent")
 	if currentDoorStatus[1] > lastDoorStatus[1]:
 		log.info("Door 2: OPEN")
 	elif currentDoorStatus[1] < lastDoorStatus[1]:
@@ -73,7 +76,8 @@ def checkCards():
 				backend.log('unlock', nfcID, user['userID'])
 				log.info("Door 1: UNLOCKED")
 				interfaceControl.unlockDoor()
-				subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/disarm.sh'])
+				proc = subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/disarm.sh'], stdout=subprocess.PIPE)
+				proc.communicate()
 				log.info("Door 1: LOCKED")
 			else:
 				log.warning("DENIED card  ID: %s" % nfcID)

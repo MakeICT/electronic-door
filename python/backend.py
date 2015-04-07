@@ -470,8 +470,7 @@ class MySQLBackend(object):
 		cursor.close()
 		self.db.commit()
 
-#with open('/home/pi/code/makeictelectronicdoor/web/include/DB_CREDENTIALS', 'r') as credentialsFile:
-with open('/home/dom/code/makeictdoor/web/include/DB_CREDENTIALS', 'r') as credentialsFile:
+with open('/home/pi/code/makeictelectronicdoor/web/include/DB_CREDENTIALS', 'r') as credentialsFile:
     credentials = credentialsFile.read().strip().split("\t")
     
 backend = MySQLBackend(
