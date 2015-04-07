@@ -1,0 +1,22 @@
+Run
+	sudo apt-get install exim4
+	sudo dpkg-reconfigure exim4-config
+		Type: mail sent by smarthost; received via SMTP or fetchmail
+		Hostname: whatever hostname you want
+		Allowed IPs: 127.0.0.1 ; ::1
+		Other destinations: type your hostname again
+		Machines for relay: (leave it blank)
+		Outgoing smarthost: smtp.gmail.com::587
+		Hide local name: Yes
+		DNS queries minimal: No
+		Delivery method for local: Maildir format in home directory
+		Split config: No
+		
+Edit file /etc/exim4/passwd.client
+	gmail-smtp.l.google.com:address@makeict.org:Password
+	*.google.com:address@makeict.org:Password
+	smtp.gmail.com:address@makeict.org:Password
+
+Run
+	sudo update-exim4.conf
+	sudo /etc/init.d/exim4 restart
