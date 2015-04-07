@@ -72,6 +72,7 @@ def checkCards():
 				backend.log('unlock', nfcID, user['userID'])
 				log.info("Door 1: UNLOCKED")
 				interfaceControl.unlockDoor()
+				subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/disarm.sh'])
 				log.info("Door 1: LOCKED")
 			else:
 				log.warning("DENIED card  ID: %s" % nfcID)
