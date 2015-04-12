@@ -1,4 +1,8 @@
 web/include/DB_CREDENTIALS
 web/include/WA_API_KEY
+vista/DOOR_CODE
+alerter/node_modules/
+logs/
 
+*.swp
 *.pyc
