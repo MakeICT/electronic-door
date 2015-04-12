@@ -42,7 +42,6 @@ def cleanup():
 
 def checkDoors():
 	global lastDoorStatus
-	log.info("CHECKING DOORS")
 	currentDoorStatus = interfaceControl.checkDoors()
 
 	if currentDoorStatus[0] > lastDoorStatus[0]:
