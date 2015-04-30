@@ -472,7 +472,11 @@ class MySQLBackend(object):
 
 with open('/home/pi/code/makeictelectronicdoor/web/include/DB_CREDENTIALS', 'r') as credentialsFile:
     credentials = credentialsFile.read().strip().split("\t")
-    
-backend = MySQLBackend(
-	host="localhost" ,db="MakeICTMemberKeys",
-	user=credentials[0], passwd=credentials[1])
+
+try:
+	backend = MySQLBackend(
+		host="localhost" ,db="MakeICTMemberKeys",
+		user=credentials[0], passwd=credentials[1])
+except:
+	print("Failed to login with: %s / %s" % (credentials[0], credentials[1]))
+	raise
