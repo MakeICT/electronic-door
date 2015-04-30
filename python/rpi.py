@@ -139,9 +139,8 @@ class InterfaceControl(object):
 		Args:
 		  buzzerOn (bool): True to turn on buzzer, False to turn off
 		'''
-
 		if buzzerOn:
-			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 30)    # 30% duty cycle
+			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 100)
 		else:
 			wiringpi2.pwmWrite(self.GPIOS['buzzer'], 0)
 
