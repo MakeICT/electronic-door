@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Setup SUDO access for apache
+echo -e "\nSetting up SUDO access for apache..."
+echo -e "\n**** Configuration Notes ****"
+echo "	www-data ALL=NOPASSWD:/home/pi/code/makeictelectronicdoor/python/enroll.py, /home/pi/code/makeictelectronicdoor/python/door-lock.py, /home/pi/code/makeictelectronicdoor/python/override.py"
+
+echo -e "\nCopy these notes real quick. You'll need them in a sec."
+read -p "Press [ENTER] when you're ready"
+sudo visudo
+
+# Setup services
 echo -e "\nSetting up CRON jobs..."
 #appends line to /etc/crontab to run waUpdater automatically at 1:00am daily
 sudo sed -i '$ a\0 1 * * *   www-data        php -f /home/pi/code/makeictelectronicdoor/web/include/waUpdater.php' /etc/crontab
