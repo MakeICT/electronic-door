@@ -3,6 +3,7 @@ web/include/WA_API_KEY
 vista/DOOR_CODE
 alerter/node_modules/
 logs/
+lcd/.build
 
 *.swp
 *.pyc
