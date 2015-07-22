@@ -2,9 +2,32 @@ var child_process = require('child_process');
 var dgram = require('dgram');
 var evt = require('events');
 var io = require('socket.io');
+var SerialPort = require("serialport").SerialPort;
 
 var udpListenPort = 3947;
 var udpClient = dgram.createSocket('udp4');
+
+var lcd;
+function connectToLCD(counter){
+	if(!counter || counter > 9) counter = 0;
+	
+	var port = "/dev/ttyUSB" + counter;
+	lcd = new SerialPort(port, {
+		baudrate: 9600
+	}).on('open', function(data){
+		console.log("LCD Connected to " + port + " :)");
+	}).on('error', function(data){
+		setTimeout(function(){
+			connectToLCD(counter+1);
+		}, 500);
+	}).on('close', function(data){
+		console.log("LCD Disconnected :(");
+		setTimeout(function(){
+			connectToLCD(counter+1);
+		}, 500);
+	});
+}
+connectToLCD();
 
 function sendEmail(message){
 	console.log("Sending email: " + message);
@@ -23,6 +46,9 @@ udpClient.on('message', function (msg, rinfo) {
 			case 'display':
 				var displayText = msgValue.replace('\u0000', '');
 				console.log("Display text: " + displayText);
+				if(lcd.isOpen()){
+					lcd.write('\n' + displayText);
+				}
 			break;
 			case 'ArmStatus':
 				// this.ArmStatus = ArmStatus.Disarmed;,	0=Disarmed,1=ArmedStay,2=ArmedAway
