@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IP=192.168.0.155
+IP=192.168.0.10
 
 if [ "$#" == "0" ]; then
 	echo "Usage: $0 string-of-digits-to-send"
