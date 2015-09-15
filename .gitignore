@@ -1,4 +1,6 @@
-web/include/DB_CREDENTIALS
+server/software/DB_CREDENTIALS
+server/software/node_modules/
+
 web/include/WA_API_KEY
 vista/DOOR_CODE
 alerter/node_modules/
@@ -6,4 +8,3 @@ logs/
 lcd/.build
 
 *.swp
-*.pyc

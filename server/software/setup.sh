@@ -1,38 +1,35 @@
 #!/bin/bash
 
-# Setup SUDO access for apache
-echo -e "\nSetting up SUDO access for apache..."
-echo -e "\n**** Configuration Notes ****"
-echo "	www-data ALL=NOPASSWD:/home/pi/code/makeictelectronicdoor/python/enroll.py, /home/pi/code/makeictelectronicdoor/python/door-lock.py, /home/pi/code/makeictelectronicdoor/python/override.py"
+##
+# Run this as the `postgres` user
+##
 
-echo -e "\nCopy these notes real quick. You'll need them in a sec."
-read -p "Press [ENTER] when you're ready"
-sudo visudo
+#########################
+# Database configuration
+#########################
+createuser -S -D -R -e electronic-door-db-user -P
+createdb -O electronic-door-db-user ElectronicDoor
+# psql -U electronic-door-db-user -d ElectronicDoor -a -f schema.sql
+psql -d ElectronicDoor -a -f schema.sql
+exit
 
+#################
 # Setup services
-echo -e "\nSetting up CRON jobs..."
+#################
+#echo -e "\nSetting up CRON jobs..."
 #appends line to /etc/crontab to run waUpdater automatically at 1:00am daily
-sudo sed -i '$ a\0 1 * * *   www-data        php -f /home/pi/code/makeictelectronicdoor/web/include/waUpdater.php' /etc/crontab
-sudo sed -i '$ a\0 2 * * *   www-data        /home/pi/code/makeictelectronicdoor/backup-database.sh' /etc/crontab
-
-echo -e "\nAdding upstart services..."
-sudo ln -s ~/code/makeictelectronicdoor/door-lock.conf /etc/init/door-lock.conf
-sudo ln -s ~/code/makeictelectronicdoor/alerter/alarm-alerter.conf /etc/init/alarm-alerter.conf
-
-
-# Setup Apache SSL
-echo -e "\nSetup Apache SSL..."
-sudo mkdir /etc/apache2/ssl
-sudo openssl req -x509 -nodes -days 1095 -newkey rsa:2048 -out /etc/apache2/ssl/server.crt -keyout /etc/apache2/ssl/server.key
-sudo a2enmod ssl
-sudo ln -s /etc/apache2/sites-available/default-ssl /etc/apache2/sites-enabled/000-default-ssl
-sudo sed -i '/ssl-cert-snakeoil.pem/c\\tSSLCertificateFile    /etc/apache2/ssl/server.crt' /tmp/default-ssl
-sudo sed -i '/ssl-cert-snakeoil.key/c\\tSSLCertificateKeyFile    /etc/apache2/ssl/server.key' /tmp/default-ssl
-
-sudo /etc/init.d/apache2 restart
+# sudo sed -i '$ a\0 1 * * *   www-data        php -f /home/pi/code/makeictelectronicdoor/web/include/waUpdater.php' /etc/crontab
+# sudo sed -i '$ a\0 2 * * *   www-data        /home/pi/code/makeictelectronicdoor/backup-database.sh' /etc/crontab
+# 
+# echo -e "\nAdding upstart services..."
+# sudo ln -s ~/code/makeictelectronicdoor/door-lock.conf /etc/init/door-lock.conf
+# sudo ln -s ~/code/makeictelectronicdoor/alerter/alarm-alerter.conf /etc/init/alarm-alerter.conf
 
 
+
+#############################
 # Setup EXIM4 to send emails
+#############################
 echo -e "\nSetting up email for alerts..."
 echo -e "\n**** Configuration Notes ****"
 echo "		Type: mail sent by smarthost; received via SMTP or fetchmail"
