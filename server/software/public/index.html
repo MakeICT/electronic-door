@@ -7,134 +7,138 @@
 
 		<title>Electronic Door</title>
 		
+		<link rel="icon" href="" />
 		<link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
-		<link rel="stylesheet" href="/css/bootstrap/bootstrap-theme.min.css" />
+		<link rel="stylesheet" href="/css/bootstrap-slate.min.css" />
+		<link rel="stylesheet" href="/css/mcp.css" />
 		
 		<script src="/js/jquery.min.js"></script>
 		<script src="/js/socket.io.js"></script>
 		<script src="/js/angular/angular.js"></script>
 		<script src="/js/bootstrap/bootstrap.min.js"></script>
-		
+		<script src="/js/ui-bootstrap-tpls.min.js"></script>		
+		<!-- current version of ui-bootstrap js file breaks accordian smooth transitions. old version fixes it -->
 		<script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.js"></script>
 		
 		<script>
 			var app = angular.module('electronic-door', ['ui.bootstrap']);
 			angular.module('electronic-door').controller('controller', function($scope, $http){
+				$scope.authenticated = true;
 				
 				$scope.searchForUser = function(){
-					// @TODO: escape search string
+					// @TODO: encode search string
 					$http.get('/users?q=' + $scope.userSearchString).success(function(users){
 						$scope.userSearchResults = users;
 					});
-				};				
+				};
 				$scope.userSearchResults = [];
-
+				
 				$scope.setCurrentUser = function(user){
 					$scope.currentUser = user;
 				};				
 				$scope.currentUser = null;
 			});
 		</script>
-		<style>
-			body{
-				padding: 0.5em;
-			}
-			.tab-pane {
-				text-align: center;
-			}
-			
-			.user-details th, .user-details td  {
-				width: 50%;
-			}
-			
-			.user-details th {
-				text-align: right;
-			}
-			
-			.user-details td {
-				text-align: left;
-			}
-		</style>
-
-		<link rel="icon" href="" />
 	</head>
 	
 	<body>
 		<div ng-controller="controller">
-			<div>
-				Alarm status: <span>Lorem Ipsum</span>
+			<h1 style="text-align:center"><img src="/images/logo-header.svg" alt="MakeICT" /></h1>
+			<div ng-if="!authenticated" class="form">
+				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>
+				<form class="form" id="login-form">
+					<input type="email" class="form-control" placeholder="Email">
+					<input type="password" class="form-control" placeholder="Password">
+					<button type="submit" class="btn btn-default">Sign in</button>
+				</form>
 			</div>
-
-			<h1 style="text-align:center">MakeICT</h1>
 			
-			<tabset>
-				<tab heading="Users" id="users-tab">
-					<div ng-if="currentUser == null">
-						<h2>Users</h2>
-						Search users: <input type="text" ng-model="userSearchString" ng-change="searchForUser('bob')"/>
-						<div style="margin-top: 0.5em;">
-							<button class="btn btn-sm">Admins</button>
-							<button class="btn btn-sm">Active members</button>
-							<button class="btn btn-sm">Active keys</button>
-							<button class="btn btn-sm">30+ day members</button>
-						</div>
-						<hr/>
-						<h3 ng-if="userSearchResults.length == 0">No search results</h3>
-						<div ng-if="userSearchResults.length > 0">
-							<h3>Search results</h3>
-							
-							<accordion close-others="true">
-								<accordion-group ng-repeat="user in userSearchResults">
-									<accordion-heading><h4>{{user.firstName}} {{user.lastName}}</h4></accordion-heading>
-									<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
-									<table class="table table-striped user-details">
-										<tr>
-											<th>Account type</th>
-											<td>
-												<form class="form-inline">
+			<div ng-if="authenticated">
+				<div id="status-header">
+					Alarm status: <span>Lorem Ipsum</span>
+				</div>
+
+				<tabset>
+					<tab heading="Status" id="status-tab">
+						<h2>Status</h2>
+						<p>System status, alarm controls</p>
+					</tab>
+					<tab heading="Users" id="users-tab">
+						<div ng-if="currentUser == null">
+							<h2>Users</h2>
+							Search users: <input type="text" ng-model="userSearchString" ng-change="searchForUser('bob')"/>
+							<div style="margin-top: 0.5em;">
+								<a class="btn btn-default btn-sm">Admin</a>
+								<a class="btn btn-default btn-sm">Active</a>
+								<a class="btn btn-default btn-sm">Keyed</a>
+								<a class="btn btn-default btn-sm">30+ days</a>
+							</div>
+							<hr/>
+							<h3 ng-if="userSearchResults.length == 0">No search results</h3>
+							<div ng-if="userSearchResults.length > 0">
+								<h3>Search results</h3>
+								
+								<accordion close-others="true">
+									<accordion-group ng-repeat="user in userSearchResults">
+										<accordion-heading><h4>{{user.firstName}} {{user.lastName}}</h4></accordion-heading>
+										<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
+										<table class="table table-striped user-details">
+											<tr>
+												<th>Account type</th>
+												<td>
+													<form class="form-inline">
+														<div class="btn-group">
+															<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="false">User</label>
+															<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="true">Admin</label>
+														</div>
+															
+														<span ng-if="user.isAdmin" class="btn-group">
+															&nbsp;
+															<input type="password" placeholder="New password" class="form-control input-sm btn"/>
+															<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
+														</span>
+													</form>
+												</td>
+											<tr>
+												<th>Member status</th>
+												<td>{{user.status}}</td>
+											</tr><tr>
+												<th>Member since</th>
+												<td>{{user.memberSince}}</td>
+											</tr><tr>
+												<th>Member for</th>
+												<td>000 days</td>
+											</tr><tr>
+												<th>Key status</th>
+												<td>
 													<div class="btn-group">
-														<label class="btn btn-sm" ng-class="user.isAdmin ? 'btn-default' : 'btn-primary'"  ng-model="user.isAdmin" btn-radio="false">User</label>
-														<label class="btn btn-sm" ng-class="user.isAdmin ? 'btn-danger' : 'btn-default'" ng-model="user.isAdmin" btn-radio="true">Admin</label>
+														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="false">No key</label>
+														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="true">Enrolled</label>
+														{{user.nfcID}}
 													</div>
-														
-													<span ng-if="user.isAdmin" class="btn-group">
-														&nbsp;
-														<input type="password" placeholder="New password" class="form-control input-sm btn"/>
-														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
-													</span>
-												</form>
-											</td>
-										<tr>
-											<th>Member status</th>
-											<td>{{user.status}}</td>
-										</tr><tr>
-											<th>Member since</th>
-											<td>{{user.memberSince}}</td>
-										</tr><tr>
-											<th>Member for</th>
-											<td>000 days</td>
-										</tr><tr>
-											<th>Key status</th>
-											<td>
-												{{user.keyStatus}}<br/>
-												<button class="btn btn-sm" disabled="disabled">Enroll</button>
-												<button class="btn btn-sm" disabled="disabled">De-activate</button>
-											</td>
-										</tr>
-									</table>
-								</accordion-group>
+												</td>
+											</tr>
+										</table>
+									</accordion-group>
+							</div>
 						</div>
-					</div>
-				</tab>
-				<tab heading="Alarm/Doors" id="alarm-tab">
-					<h2>Alarm and Doors</h2>
-					<p>Yo</p>
-				</tab>
-				<tab heading="Activity Log" id="log-tab">
-					<h2>Activity Log</h2>
-					<p>Search box goes here</p>
-				</tab>
-			</tabset>
+					</tab>
+					<tab heading="Clients" id="clients-tab">
+						<h2>Clients</h2>
+						<p>Options and commands for connected readers, door controls, buzzers, relays, etc</p>
+					</tab>
+					<tab heading="Activity Log" id="log-tab">
+						<h2>Activity Log</h2>
+						<p>Big fat table</p>
+					</tab>
+					<tab heading="Options" id="options-tab">
+						<h2>System Options</h2>
+						<p>Yo</p>
+						<h2>Personal Options</h2>
+						<p>Yo</p>
+					</tab>
+				</tabset>
+			</div>
 		</div>
 	</body>
 </html>

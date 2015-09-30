@@ -1,0 +1,35 @@
+body{
+	padding: 0.5em;
+	text-align: center;
+}
+
+h1 img {
+	max-width: 100%;
+}
+
+.user-details th, .user-details td  {
+	width: 50%;
+}
+
+.user-details th {
+	text-align: right;
+}
+
+.user-details td {
+	text-align: left;
+}
+
+#status-header {
+	position: absolute;
+	top: 0;
+}
+
+#login-form {
+	margin: auto;
+	width: 20em;
+	text-align: center;
+}
+
+#login-form input {
+	max-width: 540px;
+}
