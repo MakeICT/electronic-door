@@ -29,7 +29,7 @@ server.get('/users', function (request, response, next) {
 			"email": "bobjackson@makeict.org",
 			"memberSince": "2015-01-01",
 			"status": "active",
-			"keyStatus": "active",
+			"keyActive": true,
 			"isAdmin": false,
 		},{
 			"firstName": "Dominic",
@@ -37,7 +37,7 @@ server.get('/users', function (request, response, next) {
 			"email": "dom@makeict.org",
 			"memberSince": "2012-01-01",
 			"status": "active",
-			"keyStatus": "active",
+			"keyActive": true,
 			"isAdmin": true,
 		},{
 			"firstName": "Matt",
@@ -45,7 +45,7 @@ server.get('/users', function (request, response, next) {
 			"email": "mpogue@makeict.org",
 			"memberSince": "2014-01-01",
 			"status": "active",
-			"keyStatus": "active",
+			"keyActive": false,
 			"isAdmin": true,
 		},{
 			"firstName": "Mike",
@@ -53,7 +53,7 @@ server.get('/users', function (request, response, next) {
 			"email": "barushok@makeict.org",
 			"memberSince": "2014-04-01",
 			"status": "inactive",
-			"keyStatus": "inactive",
+			"keyActive": false,
 			"isAdmin": false,
 		}
 	]);

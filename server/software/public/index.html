@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
 
-		<title>Electronic Door</title>
+		<title>MakeICT Master Control Program</title>
 		
 		<link rel="icon" href="" />
 		<link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
@@ -80,7 +80,9 @@
 								
 								<accordion close-others="true">
 									<accordion-group ng-repeat="user in userSearchResults">
-										<accordion-heading><h4>{{user.firstName}} {{user.lastName}}</h4></accordion-heading>
+										<accordion-heading>
+											<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">{{user.firstName}} {{user.lastName}}</h4>
+										</accordion-heading>
 										<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
 										<table class="table table-striped user-details">
 											<tr>
@@ -113,8 +115,7 @@
 												<td>
 													<div class="btn-group">
 														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="false">No key</label>
-														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="true">Enrolled</label>
-														{{user.nfcID}}
+														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="true">{{user.keyActive?"Enrolled":"Enroll now"}}</label>
 													</div>
 												</td>
 											</tr>
