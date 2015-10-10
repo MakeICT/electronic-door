@@ -1,6 +1,6 @@
 -- MakeICT Electronic Door System
 -- schema.sql: the database schema (PostgreSQL)
--- Dominic Canare <dom@makeict.org>
+-- @author Dominic Canare <dom@makeict.org>
 
 CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
 CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
