@@ -6,52 +6,60 @@ CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
 CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
 
 CREATE TABLE IF NOT EXISTS users (
-	userID SERIAL PRIMARY KEY,
-	firstName VARCHAR(64) NOT NULL,
-	lastName VARCHAR(64) NOT NULL,
+	user_id SERIAL PRIMARY KEY,
+	first_name VARCHAR(64) NOT NULL,
+	last_name VARCHAR(64) NOT NULL,
 	email VARCHAR(256) NULL,
-	passwordHash VARCHAR(128) NULL,
-	memberSince DATE NULL,
+	password_hash VARCHAR(128) NULL,
+	member_since DATE NULL,
 	status USER_STATUS NOT NULL DEFAULT 'inactive',
 	UNIQUE(email)
 );
 
+CREATE TABLE IF NOT EXISTS proxy_system (
+	system_id SERIAL PRIMARY KEY,
+	name VARCHAR(64) NOT NULL,
+	UNIQUE(name)
+);
+
+CREATE TABLE IF NOT EXISTS proxy_users (
+	system_id INT NOT NULL,
+	user_id INT NOT NULL,
+	proxy_user_id VARCHAR(128) NOT NULL,
+	FOREIGN KEY(system_id) REFERENCES proxy_system(system_id),
+	FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+
 CREATE TABLE IF NOT EXISTS nfcs (
-	nfcID SERIAL PRIMARY KEY,
+	nfc_id SERIAL PRIMARY KEY,
 	id VARCHAR(256) UNIQUE,
-	userID INT DEFAULT NULL,
-	FOREIGN KEY(userID) REFERENCES users(userID)
+	user_id INT DEFAULT NULL,
+	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS logs (
-	logID SERIAL PRIMARY KEY,
+	log_id SERIAL PRIMARY KEY,
 	timestamp INT NOT NULL,
-	logType LOG_TYPE,
+	log_type LOG_TYPE,
 	code VARCHAR(256),
-	userID INT NULL,
+	user_id INT NULL,
 	message VARCHAR(1024) NULL,
-	FOREIGN KEY(userID) REFERENCES users(userID)
+	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS tags (
-	tagID SERIAL PRIMARY KEY,
+	tag_id SERIAL PRIMARY KEY,
 	tag VARCHAR(32)
 );
 
 CREATE TABLE IF NOT EXISTS userTags (
-	tagID INT NOT NULL,
-	userID INT NOT NULL,
-	PRIMARY KEY (tagID, userID),
-	FOREIGN KEY(tagID) REFERENCES tags(tagID),
-	FOREIGN KEY(userID) REFERENCES users(userID)
+	tag_id INT NOT NULL,
+	user_id INT NOT NULL,
+	PRIMARY KEY (tag_id, user_id),
+	FOREIGN KEY(tag_id) REFERENCES tags(tag_id),
+	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 
-INSERT INTO tags (tag) VALUES
-	('admin'),
-	('no-expire');
-	
-INSERT INTO users (firstName, lastName, email, status, passwordHash) VALUES ('admin', 'admin', 'admin', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
-INSERT INTO userTags (userID, tagID) VALUES (
-	(SELECT userID FROM users WHERE email = 'admin'),
-	(SELECT tagID FROM tags WHERE tag = 'admin')
-);
+INSERT INTO users (first_name, last_name, email, status, password_hash) VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
+INSERT INTO proxy_system (name) VALUES ('WildApricot');
+INSERT INTO logs (timestamp, log_type, message) VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
