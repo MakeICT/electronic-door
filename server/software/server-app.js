@@ -1,6 +1,6 @@
 var fs = require('fs');
-
 var restify = require('restify');
+var backend = require('./backend.js');
 var server = restify.createServer({
 //	certificate: fs.readFileSync('cert.pem'),
 //	key: fs.readFileSync('key.pem'),
@@ -21,42 +21,10 @@ server.use(restify.bodyParser());
  * #############
  **/
 server.get('/users', function (request, response, next) {
-	var query = request.params.q;
-	response.send([
-		{
-			"firstName": "Bob",
-			"lastName": "Jackson",
-			"email": "bobjackson@makeict.org",
-			"memberSince": "2015-01-01",
-			"status": "active",
-			"keyActive": true,
-			"isAdmin": false,
-		},{
-			"firstName": "Dominic",
-			"lastName": "Canare",
-			"email": "dom@makeict.org",
-			"memberSince": "2012-01-01",
-			"status": "active",
-			"keyActive": true,
-			"isAdmin": true,
-		},{
-			"firstName": "Matt",
-			"lastName": "Pogue",
-			"email": "mpogue@makeict.org",
-			"memberSince": "2014-01-01",
-			"status": "active",
-			"keyActive": false,
-			"isAdmin": true,
-		},{
-			"firstName": "Mike",
-			"lastName": "Barushok",
-			"email": "barushok@makeict.org",
-			"memberSince": "2014-04-01",
-			"status": "inactive",
-			"keyActive": false,
-			"isAdmin": false,
-		}
-	]);
+	backend.getUsers(request.params.q, request.params.isAdmin, request.params.keyActive, request.params.memberSince, function(users){
+		response.send(users);
+	});
+	
 	return next();
 });
 
