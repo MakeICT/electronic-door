@@ -23,11 +23,34 @@
 		<script>
 			var app = angular.module('electronic-door', ['ui.bootstrap']);
 			angular.module('electronic-door').controller('controller', function($scope, $http){
-				$scope.authenticated = true;
-				
+				$scope.locals = {
+					'authenticated': true,
+				};
+				$scope.search = {
+					'admin': false,
+					'active': true,
+					'keyed': false,
+					'thirtyDays': false,
+				};
+
 				$scope.searchForUser = function(){
 					// @TODO: encode search string
-					$http.get('/users?q=' + $scope.userSearchString).success(function(users){
+					var params = {}
+					if($scope.search.query && $scope.search.query != '') params['q'] = $scope.search.query;
+					if($scope.search.admin) params['isAdmin'] = 1;
+					if($scope.search.active) params['status'] = 'active';
+					if($scope.search.keyed) params['keyActive'] = 1;
+					if($scope.search.thirtyDays){
+						var today = new Date();
+						var thirtyDaysAgo = (new Date()).setDate(today.getDate()-30);
+						params['memberSince'] = Math.floor(thirtyDaysAgo / 1000);
+					}
+					
+					var url = '/users?';
+					for(var p in params){
+						url += p + '=' + params[p] + '&';
+					}
+					$http.get(url).success(function(users){
 						$scope.userSearchResults = users;
 					});
 				};
@@ -38,13 +61,33 @@
 				};				
 				$scope.currentUser = null;
 			});
+			
+			app.directive('toggle', function() {
+				return {
+					require: 'ngModel',
+					restrict: 'A',
+					scope: { ngModel: '=' },
+					link: function postLink(scope, element, attributes) {
+						element.bind('click', function(event){
+							scope.ngModel = !scope.ngModel;
+							if(scope.ngModel){
+								element.addClass('active');
+							}else{
+								element.removeClass('active');
+							}
+							
+							scope.$apply();
+						});
+					},
+				}
+			});
 		</script>
 	</head>
 	
 	<body>
 		<div ng-controller="controller">
 			<h1 style="text-align:center"><img src="/images/logo-header.svg" alt="MakeICT" /></h1>
-			<div ng-if="!authenticated" class="form">
+			<div ng-if="!locals.authenticated" class="form">
 				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>
 				<form class="form" id="login-form">
 					<input type="email" class="form-control" placeholder="Email">
@@ -53,7 +96,7 @@
 				</form>
 			</div>
 			
-			<div ng-if="authenticated">
+			<div ng-if="locals.authenticated">
 				<div id="status-header">
 					Alarm status: <span>Lorem Ipsum</span>
 				</div>
@@ -66,12 +109,14 @@
 					<tab heading="Users" id="users-tab">
 						<div ng-if="currentUser == null">
 							<h2>Users</h2>
-							Search users: <input type="text" ng-model="userSearchString" ng-change="searchForUser('bob')"/>
+							Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()"/>
 							<div style="margin-top: 0.5em;">
-								<a class="btn btn-default btn-sm">Admin</a>
-								<a class="btn btn-default btn-sm">Active</a>
-								<a class="btn btn-default btn-sm">Keyed</a>
-								<a class="btn btn-default btn-sm">30+ days</a>
+								<span class="btn-group">
+									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
+									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.active">Active</span>
+									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.keyed">Keyed</span>
+									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.thirtyDays">30+ days</span>
+								</span>
 							</div>
 							<hr/>
 							<h3 ng-if="userSearchResults.length == 0">No search results</h3>
