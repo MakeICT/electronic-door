@@ -116,6 +116,14 @@
 						}
 					});
 				};
+				
+				$scope.doPluginAction = function(plugin, action){
+					$http.post('/plugins/' + plugin.name + '/actions/' + action).success(function(response){
+						if(response != ''){
+							alert('Failed to save option:\n' + response);
+						}
+					});
+				};
 			});
 			
 			app.directive('toggle', function() {
@@ -283,7 +291,7 @@
 									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="text"></td>
 								</tr>
 							</table><br/>
-							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions">{{action}}</button>
+							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 						</div>
 					</tab>
 				</tabset>

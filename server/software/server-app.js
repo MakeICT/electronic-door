@@ -127,6 +127,12 @@ server.put('/plugins/:plugin/options/:option', function (request, response, next
 	return next();
 });
 
+server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
+	plugins[request.params.plugin].actions[request.params.action]();
+	
+	return next();
+});
+
 
 /**
  * #############
