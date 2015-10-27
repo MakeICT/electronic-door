@@ -1,3 +1,14 @@
+/**
+ *  Description:
+ * Project Name:
+ * 
+ * 
+ **/ 
+
+//~ mastercontrol program.
+//~ what exaclty the whole bloody thing does
+
+
 var fs = require('fs');
 var pg = require('pg');
 
