@@ -3,7 +3,7 @@
 <html ng-app="electronic-door">
 	<head>
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
 
 		<title>MakeICT Master Control Program</title>
 		
@@ -23,6 +23,19 @@
 		<script>
 			var app = angular.module('electronic-door', ['ui.bootstrap']);
 			angular.module('electronic-door').controller('controller', function($scope, $http){
+				$scope.plugins = {};
+				$http.get('/plugins').success(function(plugins){
+					for(var i=0; i<plugins.length; i++){
+						var plugin = plugins[i];
+						$scope.plugins[plugin.name] = plugin;
+						
+						var attachOptions = function(response){
+							$scope.plugins[response.plugin].options = response.options;
+						};
+						$http.get('/plugins/' + plugins[i].name + '/options').success(attachOptions);
+					}
+				});
+				
 				$scope.locals = {
 					'authenticated': true,
 				};
@@ -54,6 +67,9 @@
 						$scope.userSearchResults = users;
 					});
 				};
+				
+				
+				
 				$scope.userSearchResults = [];
 				$scope.currentUser = null;
 				$scope.newUser = {
@@ -83,7 +99,22 @@
 							$scope.resetNewUser();
 						}
 					});
-
+				};
+				
+				$scope.togglePlugin = function(plugin, enabled){
+					$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
+						if(response != ''){
+							alert('Failed to toggle plugin:\n' + response);
+						}
+					});
+				};
+				
+				$scope.savePluginOption = function(plugin, option){
+					$http.put('/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
+						if(response != ''){
+							alert('Failed to save option:\n' + response);
+						}
+					});
 				};
 			});
 			
@@ -218,7 +249,8 @@
 												</td>
 											</tr>
 										</table>
-									</accordion-group>
+									</accordion-group>	
+								</accordion>
 							</div>
 						</div>
 					</tab>
@@ -235,6 +267,24 @@
 						<p>Yo</p>
 						<h2>Personal Options</h2>
 						<p>Yo</p>
+					</tab>
+					<tab heading="Plugins" id="plugins-tab">
+						<h2>Plugins</h2>
+						<div ng-repeat="plugin in plugins" class="well pull-left">
+							<h3>{{plugin.name}}</h3>
+							<div class="btn-group">
+								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
+								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+							</div>
+							<br/><br/>
+							<table>
+								<tr ng-repeat="option in plugin.options">
+									<td>{{option.name}}</td>
+									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="text"></td>
+								</tr>
+							</table><br/>
+							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions">{{action}}</button>
+						</div>
 					</tab>
 				</tabset>
 			</div>
