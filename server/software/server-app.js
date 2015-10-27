@@ -21,13 +21,31 @@ server.use(restify.bodyParser());
  * #############
  **/
 server.get('/users', function (request, response, next) {
-	backend.getUsers(request.params.q, request.params.isAdmin, request.params.keyActive, request.params.memberSince, function(users){
+	backend.getUsers(request.params.q, request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
 		response.send(users);
 	});
 	
 	return next();
 });
 
+/**
+ * Sends empty response on success
+ * Sends a message 
+ **/
+server.post('/users', function (request, response, next) {
+	request.params.joinDate = parseInt(Date.parse(request.params.joinDate) / 1000);
+	backend.addUser(
+		request.params,
+		function(result){
+			response.send();
+		},
+		function(error){
+			response.send(error.detail);
+		}
+	);
+	
+	return next();
+});
 
 
 /**

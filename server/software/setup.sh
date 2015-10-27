@@ -22,6 +22,7 @@ if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	su postgres -c "createdb -O $db_user $db_name"
 	su postgres -c "psql -d $db_name -a -f schema.sql" > /dev/null
 	su postgres -c "psql -d $db_name -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $db_user'" > /dev/null
+	su postgres -c "psql -d $db_name -c 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO $db_user'" > /dev/null
 	
 	echo "$db_user	$db_password" > $credentials_file
 	echo -e "Generated new credentials in $credentials_file\n"

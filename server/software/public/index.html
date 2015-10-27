@@ -43,7 +43,7 @@
 					if($scope.search.thirtyDays){
 						var today = new Date();
 						var thirtyDaysAgo = (new Date()).setDate(today.getDate()-30);
-						params['memberSince'] = Math.floor(thirtyDaysAgo / 1000);
+						params['joinDate'] = Math.floor(thirtyDaysAgo / 1000);
 					}
 					
 					var url = '/users?';
@@ -55,11 +55,36 @@
 					});
 				};
 				$scope.userSearchResults = [];
+				$scope.currentUser = null;
+				$scope.newUser = {
+					'email': '',
+					'firstName': '',
+					'lastName': '',
+					'joinDate': new Date(),
+				};
 				
 				$scope.setCurrentUser = function(user){
 					$scope.currentUser = user;
 				};				
-				$scope.currentUser = null;
+				
+				$scope.resetNewUser = function(){
+					$scope.newUser.email = null;
+					$scope.newUser.firstName = null;
+					$scope.newUser.lastName = null;
+					$scope.newUser.joinDate = new Date();
+				};
+				
+				$scope.saveNewUser = function(){
+					$http.post('/users', $scope.newUser).success(function(response){
+						if(response != ''){
+							alert('Failed to add user:\n' + response);
+						}else{
+							alert('Added!');
+							$scope.resetNewUser();
+						}
+					});
+
+				};
 			});
 			
 			app.directive('toggle', function() {
@@ -119,6 +144,34 @@
 								</span>
 							</div>
 							<hr/>
+							<accordion close-others="true">
+								<accordion-group>
+									<accordion-heading>
+										<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">Add new</h4>
+									</accordion-heading>
+									<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
+									<form>
+										<table class="table table-striped user-details">
+											<tr>
+												<th>Email</th>
+												<td><input type="email" ng-model="newUser.email"></td>
+											</tr><tr>
+												<th>First Name</th>
+												<td><input type="text" ng-model="newUser.firstName"></td>
+											</tr><tr>
+												<th>Last Name</th>
+												<td><input type="text" ng-model="newUser.lastName"></td>
+											</tr><tr>
+												<th>Join Date</th>
+												<td><input type="date" ng-model="newUser.joinDate"></td>
+											</tr>
+										</table>
+										<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
+										<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
+									</form>
+								</accordion-group>
+							</accordian>
+							<hr/>
 							<h3 ng-if="userSearchResults.length == 0">No search results</h3>
 							<div ng-if="userSearchResults.length > 0">
 								<h3>Search results</h3>
@@ -146,12 +199,12 @@
 														</span>
 													</form>
 												</td>
-											<tr>
+											</tr><tr>
 												<th>Member status</th>
 												<td>{{user.status}}</td>
 											</tr><tr>
 												<th>Member since</th>
-												<td>{{user.memberSince}}</td>
+												<td>{{user.joinDate}}</td>
 											</tr><tr>
 												<th>Member for</th>
 												<td>000 days</td>
