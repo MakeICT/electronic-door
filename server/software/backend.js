@@ -21,7 +21,7 @@ var connectionParameters = {
 	'database': 'master_control_program',
 };
 
-function query(sql, params, cb, keepOpen){
+function query(sql, params, onSuccess, onError, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
 			return console.error('Failed to connect', err);
@@ -31,20 +31,26 @@ function query(sql, params, cb, keepOpen){
 				done();
 			}
 			
-			if(err) {
-				return console.error('Error executing query', err);
+			if(err){
+				if(onError){
+					onError(err);
+				}else{
+					console.error('Error executing query', err);
+				}
 			}else{
-				cb(result.rows, done);
+				if(onSuccess){
+					onSuccess(result.rows, done);
+				}
 			}
 		});
 	});
 }
 
 module.exports = {
-	getUsers: function(q, isAdmin, keyActive, memberSince, cb) {
+	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
 		var sql =
 			'SELECT ' +
-			'	"isAdmin", "firstName", "lastName", "email", "memberSince", "status", ' +
+			'	"isAdmin", "firstName", "lastName", "email", "joinDate", "status", ' +
 			'	"nfcID" IS NOT NULL AS "keyActive" ' +
 			'FROM users ' +
 			'WHERE 1=1 ';
@@ -57,9 +63,9 @@ module.exports = {
 		if(keyActive !== undefined){
 			sql += '	AND "nfcID" IS ' + (keyActive ? 'NOT ': '') + 'NULL';
 		}
-		if(memberSince !== undefined){
-			params.push(memberSince);
-			sql += '	AND "memberSince" >= $' + params.length;
+		if(joinDate !== undefined){
+			params.push(joinDate);
+			sql += '	AND "joinDate" >= $' + params.length;
 		}
 		if(q !== undefined){
 			q = '%' + q.toLowerCase() + '%';
@@ -69,6 +75,17 @@ module.exports = {
 				'			OR LOWER("email") LIKE $' + params.length +
 				'		)';
 		}
-		return query(sql, params, cb);
+		
+		return query(sql, params, onSuccess, onFailure);
 	},
+	
+	/**
+	 * Requires: { firstName, lastName, email, joinDate }
+	 **/
+	addUser: function(user, onSuccess, onFailure){
+		var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
+		var params = [user.email, user.firstName, user.lastName, user.joinDate];
+		
+		return query(sql, params, onSuccess, onFailure);
+	}
 };
