@@ -1,12 +1,7 @@
 /**
- *  Description:
- * Project Name:
- * 
- * 
+ * Project Name: Master Control System
+ *  Description: obstruction to the database.
  **/ 
-
-//~ mastercontrol program.
-//~ what exaclty the whole bloody thing does
 
 
 var fs = require('fs');
