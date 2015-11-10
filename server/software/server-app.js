@@ -19,7 +19,7 @@ backend.getPlugins(function(pluginList){
 			}
 		}
 		if(!found){
-			backend.registerPlugin(plugin);
+			backend.registerPlugin(plugin, plugin.onInstall);
 		}
 		plugins[plugin.name] = plugin;
 	}
@@ -90,6 +90,11 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 	task(
 		request.params.plugin,
 		function(){
+			if(request.params.value){
+				plugin.onEnable();
+			}else{
+				plugin.onDisable();
+			}
 			response.send();
 		},
 		function(error){

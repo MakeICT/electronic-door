@@ -1,11 +1,12 @@
 var https = require('https');
+var backend = require('../../backend.js');
+
 var api = {
 	apiKey: null,
 	accountID: null,
 	token: null,
 	
 	connect: function(next){
-		var backend = require('../../backend.js');
 		backend.getPluginOptions('wildApricotSync', function(settings){
 			settings = backend.regroup(settings, 'name', 'value');
 
@@ -30,7 +31,6 @@ var api = {
 				});
 				
 				response.on('end', function(){
-					console.log(keyJSON);
 					var tokenData = JSON.parse(keyJSON);
 					api.token = tokenData.access_token;
 					next(this.token);
@@ -87,7 +87,6 @@ var api = {
 
 module.exports = {
 	name: 'wildApricotSync',
-	
 	options: {
 		'API key': 'text',
 		'Account ID': 'text',
@@ -95,13 +94,48 @@ module.exports = {
 
 	actions: {
 		'Sync Now': function(){
-			var backend = require('../../backend.js');
+			console.log('Starting sync...');
 			backend.getPluginOptions('wildApricotSync', function(settings){
 				settings = backend.regroup(settings, 'name', 'value');
 				
 				api.connect(function(token){
 					api.get('contacts?$async=false', null, function(data){
-						console.log(data);
+						var contacts = JSON.parse(data)['Contacts'];
+
+						var contacts = JSON.parse(data)['Contacts'];
+						for(var i=0; i<contacts.length; i++){
+							var contact = contacts[i];
+							
+							var transaction = {
+								newContact: contact,
+								
+								applyNewDetails: function(user){
+									if(!user) user = {};
+									
+									user.firstName = this.newContact.FirstName;
+									user.lastName = this.newContact.LastName;
+									user.email = this.newContact.Email;
+									user.status = (this.newContact.Status == 'Active') ? 'active' : 'inactive'
+									for(var j=0; j<this.newContact.FieldValues; j++){
+										if(this.newContact.FieldValues[j].FieldName == 'Member since'){
+											user.joinDate = this.newContact.FieldValues[j].Value;
+											break;
+										}
+									}
+									
+									return user;
+								},
+								
+								addUser: function(){
+									backend.addProxyUser('WildApricot', this.newContact.Id, this.applyNewDetails());
+								},
+								
+								updateUser: function(user){
+									backend.updateUser(this.applyNewDetails(user));
+								},
+							};
+							backend.getUserByProxyID('WildApricot', contact.Id, transaction);
+						}
 					});
 				});
 			});
@@ -109,10 +143,17 @@ module.exports = {
 	},
 	
 	onInstall: function(){
-		
+		backend.addProxySystem('WildApricot');
 	},
 
 	onUninstall: function(){
 		
 	},
+	
+	onEnable: function(){
+	},
+	
+	onDisable: function(){
+	}
+	
 };
