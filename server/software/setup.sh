@@ -20,7 +20,7 @@ if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	su postgres -c "dropuser $db_user"
 	su postgres -c "psql -c \"CREATE USER $db_user WITH PASSWORD '$db_password'\"" > /dev/null
 	su postgres -c "createdb -O $db_user $db_name"
-	su postgres -c "psql -d $db_name -a -f schema.sql" > /dev/null
+	su postgres -c "psql -d $db_name -a < schema.sql" > /dev/null
 	su postgres -c "psql -d $db_name -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $db_user'" > /dev/null
 	su postgres -c "psql -d $db_name -c 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO $db_user'" > /dev/null
 	
