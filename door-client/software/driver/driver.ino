@@ -4,14 +4,17 @@
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Adafruit_NeoPixel.h>
+#include <EEPROM.h>
 //#include <Adafruit_PN532.h>
 #include <PN532_SPI.h>
 #include "PN532Interface.h"
 
 #include "ring.h"
 #include "reader.h"
-#include "rs485.h"
+#include "serial.h"
 #include "lcd.h"
+
+#include <MemoryFree.h>
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -20,18 +23,11 @@
 #define SSerialTX        7  //Serial Transmit pin
 #define SSerialTxControl 8   //RS485 Direction control
 
-#define FLAG      0x7E
-#define ESCAPE    0x7D
-
-#define IDLING      0
-#define RECEIVING   1
-#define ESCAPING    2
-
 //Software SPI pins for PN532
 #define PN532_SS   10
 
 //Info for NeoPixel ring
-#define PIN            2       //Pin communicating with NeoPixel Ring
+#define PIN            2        //Pin communicating with NeoPixel Ring
 #define NUMPIXELS      16       //Number of NeoPixels in Ring
 
 /*-----( Declare objects )-----*/
@@ -47,6 +43,8 @@ int byteSend;
 
 /*-----( Declare Functions )-----*/
 uint8_t* nfc_poll();
+void save_address(uint8_t addr);
+uint8_t get_address();
 
 //TEST
 //Adafruit_PN532 nfc1(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
@@ -55,7 +53,7 @@ PN532_SPI pn532spi1(SPI, PN532_SS);
 PN532 nfc1(pn532spi1);
 
 void setup(void) {
-  status_ring.lightSolid(20, 0, 20);
+  status_ring.lightSolid(20, 13, 0);
   Serial.begin(115200);
   Serial.println("Hello!");
   Serial.println("Waiting for an ISO14443A Card ...");
@@ -103,6 +101,8 @@ void loop(void) {
       id_number <<= 8;
       id_number |= uid[3]; 
     Serial.println(id_number);
+    bus.send(uid);
+    bus.send_packet(0x01, 0x00, uid, 1);
     Serial.println("End Poll");
     if (uid[0] != 0) {
       //Display some basic information about the card
@@ -116,10 +116,16 @@ void loop(void) {
       delay(1000);
       status_ring.lightSolid(20,0,0);
       }
-      Serial.println("");
+    Serial.println("");
 }
 
+void save_address(uint8_t addr)  {
+  EEPROM.write(0, addr);
+}
 
+uint8_t get_address()  {
+  EEPROM.read(0);
+}
 
 
 //workaround because the external file doesn't work right
