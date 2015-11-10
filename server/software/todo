@@ -34,7 +34,7 @@ Clients
 		
 	How to add clients to the system
 	
-	Client Types / Protocols
+	Client Types / Protocols / plugins
 		All clients send client ID
 		
 		Unlocker
@@ -50,3 +50,6 @@ Clients
 		Device / machine
 			Sends: NFC ID to unlock, close command to lock back up
 			Receives: confirmation
+
+Messaging system
+	atmosphere.js maybe? 
