@@ -1,0 +1,55 @@
+
+WildApricot Plugin
+	On install, add "WildApricot" to Proxy system list
+	On sync, users in our system should have corresponding record in "proxyUsers" table
+
+
+Clients
+	How to represent clients in the system
+		clients table
+			clientID
+			clientTypeID
+			clientName
+	
+		clientPluginOptions Table
+			clientID
+			optionID
+			optionValue
+			
+		clientTypes
+			clientTypeID
+			pluginID
+			name
+			
+		(exists) plugins
+			pluginID
+			name
+			
+		(exists) pluginOptions
+			pluginOptionID
+			pluginID
+			name
+			data type
+			
+		
+	How to add clients to the system
+	
+	Client Types / Protocols / plugins
+		All clients send client ID
+		
+		Unlocker
+			Sends: NFC ID
+			Receives: command to open
+		Chime
+			Receives: command to play tune / lights
+		Unlock and chime
+			Combines unlocker and chime
+		Locker opener
+			Sends: NFC ID
+			Receives: locker ID
+		Device / machine
+			Sends: NFC ID to unlock, close command to lock back up
+			Receives: confirmation
+
+Messaging system
+	atmosphere.js maybe? 
