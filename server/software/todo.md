@@ -26,7 +26,7 @@ Here's a list of todos for the server software. These are in no specific order.
 			* clientName
 		* clientPluginOptions Table
 			* clientID
-			* optionID
+			* optionID -> what does this point to? pluginOptions.pluginOptionID?
 			* optionValue
 		* clientTypes
 			* clientTypeID
@@ -35,7 +35,7 @@ Here's a list of todos for the server software. These are in no specific order.
 		* (exists) plugins
 			* pluginID
 			* name
-		* (exists) pluginOptions
+		* (exists) pluginOptions -> how to distinguish between a pluginOption and one that can be configured per client of that plugin type? Separate table? Also need this for per-user settings.
 			* pluginOptionID
 			* pluginID
 			* name
