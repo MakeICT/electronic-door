@@ -2,24 +2,23 @@
 
 Here's a list of todos for the server software. These are in no specific order.
 
-z. WildApricot Plugin
+1. WildApricot Plugin
 	* On install, add "WildApricot" to Proxy system list
 	* On sync, users in our system should have corresponding record in "proxyUsers" table
-z. Automated backup plugin
+1. Automated backup plugin
 	* Dump SQL
 	* Zip it up
-	* Upload to MakeICT drive (see https://github.com/MakeICT/electronic-door/blob/bda3515134e747f2715c7657a9eb3d13b6d8e1c7/backup-database.sh)
-z. Alarm system plugin
-	* For integration with VistaICM from Honeywell
-	* For messages TO Vista, see: https://github.com/MakeICT/electronic-door/tree/bda3515134e747f2715c7657a9eb3d13b6d8e1c7/vista
-	* For messages FROM Vista, see: https://github.com/MakeICT/electronic-door/tree/bda3515134e747f2715c7657a9eb3d13b6d8e1c7/alerter
-z. Messaging system
+	* Upload to MakeICT drive (see https://github.com/MakeICT/electronic-door/blob/master/backup-database.sh)
+1. Alarm system plugin for integration with VistaICM from Honeywell
+	* For messages TO Vista, see: https://github.com/MakeICT/electronic-door/blob/master/vista
+	* For messages FROM Vista, see: https://github.com/MakeICT/electronic-door/blob/master/alerter
+1. Messaging system
 	* Primary system and plugins should be able to broadcast and listen for messages
 	* atmosphere.js maybe?
-z. Email alert system
+1. Email alert system
 	* Example: If the alarm system plugin pumps an "alarm!" message on the messaging system, email alert system should listen for that and shoot out an email.
 	* Note: Would be nice if the email alert included the last couple of door entries from the log and contact details
-z. Clients
+1. Clients
 	* How to represent clients in the system:
 		* clients table
 			* clientID
@@ -65,5 +64,5 @@ z. Clients
 		* Device / machine (low priority)
 			* Sends: NFC ID to unlock, close command to lock back up
 			* Receives: confirmation
-z. Add ability to edit user details on the front-end
-z. Add user login/authentication
+1. Add ability to edit user details on the front-end
+1. Add user login/authentication
