@@ -14,8 +14,6 @@
 #include "serial.h"
 #include "lcd.h"
 
-#include <MemoryFree.h>
-
 /*-----( Declare Constants and Pin Numbers )-----*/
 
 //Serial protocol definitions
@@ -88,11 +86,12 @@ void loop(void) {
     //uint8_t* cardid = card_reader.poll();
     uint8_t uid[7];
     uint8_t id_length;
-    nfc_poll(uid, &id_length);
-    Serial.println(uid[0]);
-    Serial.println(uid[1]);
-    Serial.println(uid[2]);
-    Serial.println(uid[3]);
+    if(nfc_poll(uid, &id_length))
+    {
+//    Serial.println(uid[0]);
+//    Serial.println(uid[1]);
+//    Serial.println(uid[2]);
+//    Serial.println(uid[3]);
       uint32_t id_number = uid[0];
       id_number <<= 8;
       id_number |= uid[1];
@@ -100,9 +99,13 @@ void loop(void) {
       id_number |= uid[2];  
       id_number <<= 8;
       id_number |= uid[3]; 
-    Serial.println(id_number);
-    bus.send(uid);
-    bus.send_packet(0x01, 0x00, uid, 1);
+      bus.send_packet(0x01, 0x00, uid, 1); 
+      //uint8_t test_byte = 'c';
+      //bus.send(&test_byte);
+    }
+
+//    Serial.println(id_number);
+   // bus.send(uid);
     Serial.println("End Poll");
     if (uid[0] != 0) {
       //Display some basic information about the card

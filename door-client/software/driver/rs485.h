@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#define FLAG      0x7E
+#define FLAG      0x7F
 #define ESCAPE    0x7D
 
 #define IDLING      0
@@ -29,7 +29,7 @@ class rs485 {
   private:
     int ser_dir;
     SoftwareSerial* RS485Serial;
-    uint16_t compute_CRC(uint8_t* data, uint8_t len);
+    uint8_t compute_CRC(uint8_t* data, uint8_t len);
 };
 
 #endif
