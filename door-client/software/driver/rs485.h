@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#define FLAG      0x7F
+#define S_FLAG      0x7F
 #define ESCAPE    0x7D
 
 #define IDLING      0

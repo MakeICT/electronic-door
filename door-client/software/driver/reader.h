@@ -13,7 +13,8 @@ class Reader {
   public:
     Reader();
     ~Reader();
-    uint8_t poll();
+    uint8_t poll(uint8_t*, uint8_t*);
+    void start();
 
   private:
     //Adafruit_PN532* nfc;

@@ -1,3 +1,5 @@
+#define DEBUG
+
 /*-----( Import needed libraries )-----*/
 #include <SoftwareSerial.h>
 #include <Wire.h>
@@ -15,7 +17,6 @@
 #include "lcd.h"
 
 /*-----( Declare Constants and Pin Numbers )-----*/
-
 //Serial protocol definitions
 #define SSerialRX        6  //Serial Receive pin
 #define SSerialTX        7  //Serial Transmit pin
@@ -29,9 +30,10 @@
 #define NUMPIXELS      16       //Number of NeoPixels in Ring
 
 /*-----( Declare objects )-----*/
+Reader card_reader;
+
 rs485 bus(SSerialRX, SSerialTX, SSerialTxControl);
 Ring status_ring(PIN, NUMPIXELS);
-Reader card_reader;
 LCD readout;
 
 /*-----( Declare Variables )-----*/
@@ -51,20 +53,22 @@ PN532_SPI pn532spi1(SPI, PN532_SS);
 PN532 nfc1(pn532spi1);
 
 void setup(void) {
+  card_reader.start();
   status_ring.lightSolid(20, 13, 0);
   Serial.begin(115200);
   Serial.println("Hello!");
   Serial.println("Waiting for an ISO14443A Card ...");
   readout.print(0,1, "test");
 
-  //TEST
-   nfc1.begin();
-   nfc1.SAMConfig();
-   nfc1.setPassiveActivationRetries(1);
+//  //TEST
+//   nfc1.begin();
+//   nfc1.SAMConfig();
+//   nfc1.setPassiveActivationRetries(1);
 }
 
 
 void loop(void) {
+  //Serial.println("loop()");
   if (Serial.available())
   {
     byteReceived = Serial.read();
@@ -82,11 +86,12 @@ void loop(void) {
     } 
    }
    // uint32_t cardid = card_reader.poll();
-    Serial.println("Start Poll");
+    //Serial.println("Start Poll");
     //uint8_t* cardid = card_reader.poll();
     uint8_t uid[7];
     uint8_t id_length;
-    if(nfc_poll(uid, &id_length))
+//    if(nfc_poll(uid, &id_length))
+    if(card_reader.poll(uid, &id_length))
     {
 //    Serial.println(uid[0]);
 //    Serial.println(uid[1]);
@@ -106,7 +111,7 @@ void loop(void) {
 
 //    Serial.println(id_number);
    // bus.send(uid);
-    Serial.println("End Poll");
+    //Serial.println("End Poll");
     if (uid[0] != 0) {
       //Display some basic information about the card
      // Serial.println(cardid[0]);
@@ -119,7 +124,7 @@ void loop(void) {
       delay(1000);
       status_ring.lightSolid(20,0,0);
       }
-    Serial.println("");
+   // Serial.println("");
 }
 
 void save_address(uint8_t addr)  {
@@ -132,29 +137,29 @@ uint8_t get_address()  {
 
 
 //workaround because the external file doesn't work right
-bool nfc_poll(uint8_t uid[], uint8_t* len)
-{
-  uint8_t success;
-  for (int i = 0; i <8; i++)
-    uid[i] = 0;  // Buffer to store the returned UID
-  uint8_t uidLength;                        // Length of the UID 
- 
-  //success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 3000);
-  success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-    if (success)
-    {
-      if (uidLength == 4)  {
-        // We probably have a Mifare Classic card ... 
-        Serial.print("Seems to be a Mifare Classic card #");
-      }
-    
-      else if (uidLength == 7)  {
-        Serial.print("Seems to be a Mifare Ultralight card #");
-      }
-      
-      return 1;
-   }
-  
-  else return 0;
-}
+//bool nfc_poll(uint8_t uid[], uint8_t* len)
+//{
+//  uint8_t success;
+//  for (int i = 0; i <8; i++)
+//    uid[i] = 0;  // Buffer to store the returned UID
+//  uint8_t uidLength;                        // Length of the UID 
+// 
+//  //success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 3000);
+//  success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
+//    if (success)
+//    {
+//      if (uidLength == 4)  {
+//        // We probably have a Mifare Classic card ... 
+//        Serial.print("Seems to be a Mifare Classic card #");
+//      }
+//    
+//      else if (uidLength == 7)  {
+//        Serial.print("Seems to be a Mifare Ultralight card #");
+//      }
+//      
+//      return 1;
+//   }
+//  
+//  else return 0;
+//}
 
