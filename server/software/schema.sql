@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
 	FOREIGN KEY("nfcID") REFERENCES nfcs("nfcID")
 );
 
-CREATE TABLE IF NOT EXISTS "proxySystem" (
+CREATE TABLE IF NOT EXISTS "proxySystems" (
 	"systemID" SERIAL PRIMARY KEY,
 	name VARCHAR(64) NOT NULL,
 	UNIQUE(name)
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS "proxyUsers" (
 	"systemID" INT NOT NULL,
 	"userID" INT NOT NULL,
 	"proxyUserID" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("systemID") REFERENCES "proxySystem"("systemID"),
+	FOREIGN KEY("systemID") REFERENCES "proxySystems"("systemID"),
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
@@ -64,7 +64,6 @@ CREATE TABLE IF NOT EXISTS "pluginOptionValues" (
 	FOREIGN KEY("pluginOptionID") REFERENCES "pluginOptions"("pluginOptionID")
 );
 
-
 CREATE TABLE IF NOT EXISTS logs (
 	"logID" SERIAL PRIMARY KEY,
 	"timestamp" INT NOT NULL,
@@ -75,9 +74,9 @@ CREATE TABLE IF NOT EXISTS logs (
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
-INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
-INSERT INTO users ("firstName", "lastName", "email", "status") VALUES 
-	('User 1', 'Test', 'test1@makeict.org', 'active'),
-	('User 2', 'Test', 'test2@makeict.org', 'active');
+INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.', 1356998400);
+INSERT INTO users ("firstName", "lastName", "email", "status", "joinDate") VALUES 
+	('User 1', 'Test', 'test1@makeict.org', 'active', 1356998400),
+	('User 2', 'Test', 'test2@makeict.org', 'active', 1356998400);
 -- INSERT INTO proxy_system ("name") VALUES ('WildApricot');
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');

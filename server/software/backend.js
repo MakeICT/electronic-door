@@ -14,7 +14,7 @@ var connectionParameters = {
 	'database': 'master_control_program',
 };
 
-function query(sql, params, onSuccess, onError, keepOpen){
+function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
 			return console.error('Failed to connect', err);
@@ -27,8 +27,8 @@ function query(sql, params, onSuccess, onError, keepOpen){
 			if(err){
 				console.error('Error executing query', err);
 				console.error(sql);
-				if(onError){
-					return onError(err);
+				if(onFailure){
+					return onFailure(err);
 				}
 			}else{
 				if(onSuccess){
@@ -80,6 +80,30 @@ module.exports = {
 		return query(sql, params, onSuccess, onFailure);
 	},
 	
+	// @TODO: gross. This only works in the context of WA sync'ing
+	getUserByProxyID: function(proxySystem, proxyUserID, transaction) {
+		var sql =
+			'SELECT ' +
+			'   users."userID", ' + 
+			'	"isAdmin", "firstName", "lastName", "email", "joinDate", "status", ' +
+			'	"nfcID" IS NOT NULL AS "keyActive" ' +
+			'FROM users ' +
+			'	JOIN "proxyUsers" ON users."userID" = "proxyUsers"."userID" ' +
+			'	JOIN "proxySystems" ON "proxyUsers"."systemID" = "proxySystems"."systemID" ' +
+			'WHERE "proxySystems".name = $1 ' +
+			'	AND "proxyUsers"."proxyUserID" = $2';
+			
+		var extract = function(results){
+			if(results.length == 1){
+				transaction.updateUser(results[0]);
+			}else{
+				transaction.addUser();
+			}
+		};
+		
+		return query(sql, [proxySystem, proxyUserID], extract);
+	},
+	
 	/**
 	 * Requires: { firstName, lastName, email, joinDate }
 	 **/
@@ -90,6 +114,35 @@ module.exports = {
 		return query(sql, params, onSuccess, onFailure);
 	},
 		
+	addProxyUser: function(proxySystem, proxyUserID, user, onSuccess, onFailure){
+		var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
+		var params = [user.email, user.firstName, user.lastName, user.joinDate];
+		
+		return query(
+			sql, params,
+			function(){
+				var systemSQL = 'SELECT "systemID" FROM "proxySystems" WHERE name = $1 LIMIT 1';
+				var userSQL = 'SELECT "userID" FROM "users" WHERE "email" = $2 LIMIT 1';
+				var sql = 'INSERT INTO "proxyUsers" ("systemID", "userID", "proxyUserID") ' +
+					'VALUES ((' + systemSQL + '), (' + userSQL + '), $3)';
+					
+				var params = [proxySystem, user.email, proxyUserID];
+				
+				return query(sql, params, onSuccess, onFailure);
+			},
+			onFailure
+		);
+	},
+		
+	updateUser: function(user, onSuccess, onFailure){
+		var sql = 'UPDATE users SET email=$1, "firstName"=$2, "lastName"=$3, "joinDate"=$4 ' +
+			'WHERE "userID" = $5';
+		var params = [user.email, user.firstName, user.lastName, user.joinDate, user.userID];
+		
+		if(user.lastName == 'Canare') console.log(params);
+		return query(sql, params, onSuccess, onFailure);
+	},
+
 	enablePlugin: function(pluginName, onSuccess, onFailure){
 		return query('UPDATE plugins SET enabled = TRUE WHERE name = $1', [pluginName], onSuccess, onFailure);
 	},
@@ -98,7 +151,7 @@ module.exports = {
 		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], onSuccess, onFailure);
 	},
 	
-	registerPlugin: function(plugin, onSuccess, onError){
+	registerPlugin: function(plugin, onSuccess, onFailure){
 		return query(
 			'INSERT INTO plugins (name) VALUES ($1)',
 			[plugin.name],
@@ -122,14 +175,18 @@ module.exports = {
 						}
 						if(params.length > 0){
 							sql = sql.substring(0, sql.length-2);
-							return query(sql, params, onSuccess, onError);
+							return query(sql, params, onSuccess, onFailure);
 						}
 					},
-					onError
+					onFailure
 				);
 			},
-			onError
+			onFailure
 		);
+	},
+	
+	addProxySystem: function(systemName, onSuccess, onFailure){
+		return query('INSERT INTO "proxySystems" (name) VALUES ($1)', [systemName], onSuccess, onFailure);
 	},
 
 	getPlugins: function(onSuccess, onFailure){
@@ -156,7 +213,8 @@ module.exports = {
 		return query(sql, [pluginName], onSuccess, onFailure);
 	},
 	
-	setPluginOption: function(pluginName, optionName, value, onSuccess, onError){
+	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
+		// @TODO: collapse into a single query or find a better sequential execution method (async module?)
 		return query(
 			'SELECT "pluginID" FROM plugins WHERE name = $1',
 			[pluginName],
@@ -177,18 +235,18 @@ module.exports = {
 									[optionID],
 									function(){
 										var sql = 'INSERT INTO "pluginOptionValues" ("pluginOptionID", value) VALUES ($1, $2)';
-										return query(sql, [optionID, value], onSuccess, onError);
+										return query(sql, [optionID, value], onSuccess, onFailure);
 									},
-									onError
+									onFailure
 								);
 							},
-							onError
+							onFailure
 						);
 					},
-					onError
+					onFailure
 				);
 			},
-			onError
+			onFailure
 		);
 	}
 };
