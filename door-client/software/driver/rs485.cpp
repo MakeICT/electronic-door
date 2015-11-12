@@ -1,4 +1,4 @@
-#include "serial.h"
+#include "rs485.h"
 //#define DEBUG
 
 rs485::rs485 (uint8_t serial_rx, uint8_t serial_tx, uint8_t serial_dir) {
@@ -26,9 +26,10 @@ int rs485::send(uint8_t* data, uint8_t len) {
   delay(10);
   for (uint8_t sByte = 0; sByte < len; sByte ++)  {
     if (sByte != 0 && sByte != len-1)
-      if (data[sByte] == S_FLAG|| data[sByte] == ESCAPE)
-        RS485Serial->write(ESCAPE);          // Send byte to Remote Arduino
-    RS485Serial->write(data[sByte]);          // Send byte to Remote Arduino
+      if (data[sByte] == FLAG|| data[sByte] == ESCAPE)
+        RS485Serial->write(ESCAPE);           // Add escape byte
+    RS485Serial->write(data[sByte]);          // Send byte to bus
+    Serial.println(data[sByte]);
   }
 
   digitalWrite(ser_dir, RS485Receive);  // Disable RS485 Transmit       
@@ -62,15 +63,14 @@ void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t* payload
   #ifdef DEBUG
   Serial.println("rs485::send_packet() called");
   #endif
-  Serial.println(S_FLAG);
-
-  uint8_t flag = S_FLAG;
+  
+  uint8_t flag = FLAG;
   uint8_t pos = 0;
-  uint8_t packet_len = len + 5;
+  uint8_t packet_len = len + 4;
   uint8_t packet[packet_len];
+  packet[pos++] = packet_len;
   packet[pos++] = source_addr;
   packet[pos++] = dest_addr;
-  packet[pos++] = len;    //TODO:Payload length or Packet Length
 
   for (uint8_t i = 0; i < len; i++)  {
     packet[pos++] =  payload[i];

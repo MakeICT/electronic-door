@@ -1,11 +1,14 @@
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef RS485_H
+#define RS485_H
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#define S_FLAG      0x7F
+#define FLAG      0x7E
 #define ESCAPE    0x7D
+
+//Command bytes
+#define SEND_ID    0x03
 
 #define IDLING      0
 #define RECEIVING   1

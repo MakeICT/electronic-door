@@ -16,7 +16,7 @@ Reader::~Reader() {
   
 }
 
-void Reader::start() {
+boolean Reader::start() {
   //nfc(SCK, MISO, MOSI, SS);    //software SPI connection
   //nfc = new Adafruit_PN532(sck, miso, mosi, ss); //this?
 
@@ -25,11 +25,13 @@ void Reader::start() {
 
   uint32_t versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
-    //while (1); // halt
+    Serial.println("PN532 Not Found!");
+    return false;
   }
   
   //configure board to read RFID tags
-  //nfc.SAMConfig();
+  nfc.SAMConfig();
+  return true;
 }
 
 
@@ -43,20 +45,21 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
  
   //success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 3000);
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-    if (success)
-    {
-      if (uidLength == 4)  {
-        // We probably have a Mifare Classic card ... 
-        Serial.print("Seems to be a Mifare Classic card #");
-      }
-    
-      else if (uidLength == 7)  {
-        Serial.print("Seems to be a Mifare Ultralight card #");
-      }
-      
-      return 1;
-   }
+  if (success)
+  {
+      Serial.println("read done");
+
+    if (uidLength == 4)  {
+      // We probably have a Mifare Classic card ... 
+      Serial.print("Seems to be a Mifare Classic card #");
+    }
   
+    else if (uidLength == 7)  {
+      Serial.print("Seems to be a Mifare Ultralight card #");
+    }
+    
+    return 1;
+  } 
   else return 0;
 }
  

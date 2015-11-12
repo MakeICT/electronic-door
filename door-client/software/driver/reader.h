@@ -14,7 +14,7 @@ class Reader {
     Reader();
     ~Reader();
     uint8_t poll(uint8_t*, uint8_t*);
-    void start();
+    boolean start();
 
   private:
     //Adafruit_PN532* nfc;
