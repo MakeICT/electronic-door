@@ -8,7 +8,11 @@
 #define ESCAPE    0x7D
 
 //Command bytes
-#define SEND_ID    0x03
+#define F_SET_ADDRESS  0x00
+#define F_UNLOCK_DOOR  0x01
+#define F_LOCK_DOOR    0x02
+#define F_SEND_ID      0x03
+
 
 #define IDLING      0
 #define RECEIVING   1
@@ -27,7 +31,7 @@ class rs485 {
     int send(uint8_t* data, uint8_t len = 1);
     int available();
     void get_packet();
-    void send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t* payload, uint8_t len);
+    void send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len);
 
   private:
     int ser_dir;

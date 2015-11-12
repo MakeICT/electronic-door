@@ -31,6 +31,7 @@ boolean Reader::start() {
   
   //configure board to read RFID tags
   nfc.SAMConfig();
+  nfc.setPassiveActivationRetries(2);  //reduce retries to prevent hang
   return true;
 }
 

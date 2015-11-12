@@ -39,6 +39,8 @@ LCD readout;
 int state;
 uint8_t byteReceived;
 int byteSend;
+uint8_t packet[255];  //this could be made dynamic?
+uint8_t packetIndex;
 
 /*-----( Declare Functions )-----*/
 uint8_t* nfc_poll();
@@ -57,11 +59,12 @@ void setup(void) {
   status_ring.lightSolid(20, 13, 0);
   readout.print(0,1, "Ready!");
   }
+  pinMode(3, OUTPUT);
 }
 
 
 void loop(void) {
-  Serial.println("loop()");
+  //Serial.println("loop()");
   
   //check for NFC card
   uint8_t uid[7];
@@ -71,16 +74,56 @@ void loop(void) {
     if (uid[0]+uid[1]+uid[2]+uid[3] != 0)  {
       Serial.println("2");
       status_ring.lightSolid(40,30,0);  //change ring to yellow - indicate waiting state
-      bus.send_packet(0x01, 0x00, uid, 4); 
+      bus.send_packet(0x01, 0x00, F_SEND_ID, uid, 7); 
       delay(1000);
       status_ring.lightSolid(20,0,0);
     }
   }
   
   //check for data on the rs485 bus
-  if (bus.available())  {
+  for (int i = bus.available(); i > 0; i--)  {
     byteReceived = bus.receive();    // Read received byte
-    //TODO: Process data
+    Serial.println(byteReceived);
+    if(byteReceived == FLAG)  {
+      packetIndex = 0;
+      //TODO: verify packet integrity
+      //TODO: check addresses
+      uint8_t length = packet[0];
+      uint8_t src_address = packet[1];
+      uint8_t dst_address = packet[2];
+      uint8_t function = packet[3];
+      
+      //Display packet info
+      Serial.print("length: ");
+      Serial.println(length);
+      Serial.print("source address: ");
+      Serial.println(src_address);
+      Serial.print("destination address: ");
+      Serial.println(dst_address);
+      Serial.print("function: ");
+      Serial.println(function);
+      Serial.print("data: ");
+      for(uint8_t i = 4; i < length; i++)  {
+         Serial.print(packet[i]);
+         Serial.print(',');
+      }
+      Serial.println(' ');
+      
+      //Process functions
+      switch(function)
+      {
+        case F_UNLOCK_DOOR:
+          //TODO: add non-blocking timeout
+          digitalWrite(3, HIGH);
+          break;
+        case F_LOCK_DOOR:
+          digitalWrite(3, LOW);
+          break;
+      }
+    }
+    else  {
+      packet[packetIndex++] = byteReceived; 
+    }   
   } 
 }
 

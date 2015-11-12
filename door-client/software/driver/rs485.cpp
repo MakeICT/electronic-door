@@ -58,7 +58,7 @@ void rs485::get_packet() {
   #endif
 }
 
-void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t* payload, uint8_t len)  {
+void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len)  {
   //TODO: add byte stuffing
   #ifdef DEBUG
   Serial.println("rs485::send_packet() called");
@@ -66,11 +66,12 @@ void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t* payload
   
   uint8_t flag = FLAG;
   uint8_t pos = 0;
-  uint8_t packet_len = len + 4;
+  uint8_t packet_len = len + 5;
   uint8_t packet[packet_len];
   packet[pos++] = packet_len;
   packet[pos++] = source_addr;
   packet[pos++] = dest_addr;
+  packet[pos++] = function;
 
   for (uint8_t i = 0; i < len; i++)  {
     packet[pos++] =  payload[i];
