@@ -29,7 +29,7 @@ int rs485::send(uint8_t* data, uint8_t len) {
       if (data[sByte] == FLAG|| data[sByte] == ESCAPE)
         RS485Serial->write(ESCAPE);           // Add escape byte
     RS485Serial->write(data[sByte]);          // Send byte to bus
-    Serial.println(data[sByte]);
+//    Serial.println(data[sByte]);
   }
 
   digitalWrite(ser_dir, RS485Receive);  // Disable RS485 Transmit       

@@ -44,8 +44,7 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
     uid[i] = 0;  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID 
  
-  //success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 3000);
-  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
+  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength, 50);
   if (success)
   {
       Serial.println("read done");
