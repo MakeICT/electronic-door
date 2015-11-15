@@ -16,7 +16,6 @@ class Reader {
     boolean start();
 
   private:
-    //Adafruit_PN532* nfc;
 };
 
 #endif

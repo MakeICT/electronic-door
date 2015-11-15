@@ -13,7 +13,6 @@ Ring::Ring (uint8_t LED_pin, uint8_t number_of_LEDs) {
 
 void Ring::lightAll(uint32_t c) {
   for(int i=0;i<num_LEDs;i++){
-  // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
   pixels.setPixelColor(i, c);
   }
 }
@@ -35,7 +34,6 @@ void Ring::SetMode(byte m, uint32_t c, int p, int d)  {
       lightAll(c);
       pixels.show();
    }
-
 }
 
 void Ring::SetColor(uint32_t c)  {
@@ -110,7 +108,5 @@ void Ring::Update()  {
       }
       break;  
   }
-  
-//  pixels.show();
 }
 

@@ -15,9 +15,11 @@
 #include "rs485.h"
 #include "lcd.h"
 #include "audio.h"
+#include "strike.h"
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 #define SPEAKER_PIN 9
+#define LATCH_PIN   3
 #define USER_TUNE_LENGTH  30
 
 //Serial protocol definitions
@@ -51,7 +53,6 @@ Audio speaker(SPEAKER_PIN);
 uint8_t byteReceived;
 uint8_t packet[255];  //this could be made dynamic?
 uint8_t packetIndex;
-uint32_t lastRead = 0;
 
 int startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
 uint16_t startTuneDurations[] = {200, 100, 100, 200, 200, 200, 200, 200};
@@ -88,6 +89,7 @@ void setup(void) {
 
 void loop(void) {
  // Serial.println("loop()");
+  static uint32_t lastRead = 0;
   uint32_t currentMillis = millis();
   if ((currentMillis - lastRead )> NFC_READ_INTERVAL)  {
     check_reader();
@@ -146,10 +148,10 @@ void check_bus()  {
       {
         case F_UNLOCK_DOOR:
           //TODO: add non-blocking timeout
-          digitalWrite(3, HIGH);
+          digitalWrite(LATCH_PIN, HIGH);
           break;
         case F_LOCK_DOOR:
-          digitalWrite(3, LOW);
+          digitalWrite(LATCH_PIN, LOW);
           break;
       }
     }

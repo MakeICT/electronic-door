@@ -15,6 +15,7 @@ class Audio
     
   private:
     byte audioPin;
+    boolean playing;
     uint32_t currentNoteStartTime;
     uint8_t noteIndex;
     uint8_t tuneLength;
