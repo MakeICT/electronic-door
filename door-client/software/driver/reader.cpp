@@ -12,10 +12,6 @@ Reader::Reader() {
 
 }
 
-Reader::~Reader() {
-  
-}
-
 boolean Reader::start() {
   //nfc(SCK, MISO, MOSI, SS);    //software SPI connection
   //nfc = new Adafruit_PN532(sck, miso, mosi, ss); //this?

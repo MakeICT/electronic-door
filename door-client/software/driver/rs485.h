@@ -26,7 +26,6 @@
 class rs485 {
   public:
     rs485(uint8_t, uint8_t, uint8_t);
-    ~rs485();
     char receive();
     int send(uint8_t* data, uint8_t len = 1);
     int available();
@@ -34,7 +33,7 @@ class rs485 {
     void send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len);
 
   private:
-    int ser_dir;
+    uint8_t ser_dir;
     SoftwareSerial* RS485Serial;
     uint8_t compute_CRC(uint8_t* data, uint8_t len);
 };

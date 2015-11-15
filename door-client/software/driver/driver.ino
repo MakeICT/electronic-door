@@ -2,7 +2,7 @@
 
 /*-----( Import needed libraries )-----*/
 #include <SoftwareSerial.h>
-#include <Wire.h>
+//#include <Wire.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Adafruit_NeoPixel.h>
@@ -14,40 +14,49 @@
 #include "reader.h"
 #include "rs485.h"
 #include "lcd.h"
+#include "audio.h"
 
 /*-----( Declare Constants and Pin Numbers )-----*/
+#define SPEAKER_PIN 9
+#define USER_TUNE_LENGTH  30
+
 //Serial protocol definitions
 #define SSerialRX        6      //Serial Receive pin
 #define SSerialTX        7      //Serial Transmit pin
 #define SSerialTxControl 8      //RS485 Direction control
 
-//Software SPI pins for PN532
+//Constants for PN532 NFC reader
 #define PN532_SS   10
+#define NFC_READ_INTERVAL 100   //time in ms between NFC reads
 
-//Info for NeoPixel ring
+//Constants for NeoPixel ring
 #define PIN            2        //Pin communicating with NeoPixel Ring
 #define NUMPIXELS      16       //Number of NeoPixels in Ring
-#define COLOR_IDLE    {0,25,25}
+
+#define COLOR               Adafruit_NeoPixel::Color
+#define COLOR_IDLE          0,100,120
+#define COLOR_SUCCESS       0,60,20
+#define COLOR_ERROR         50,20,0
+#define COLOR_BACKGROUND    0,20,50
+
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
-
 rs485 bus(SSerialRX, SSerialTX, SSerialTxControl);
 Ring status_ring(PIN, NUMPIXELS);
 LCD readout;
+Audio speaker(SPEAKER_PIN);
 
 /*-----( Declare Variables )-----*/
-int state;
 uint8_t byteReceived;
-int byteSend;
 uint8_t packet[255];  //this could be made dynamic?
 uint8_t packetIndex;
+uint32_t lastRead = 0;
 
-uint8_t colorIdle[] = COLOR_IDLE;
-uint8_t colorSuccess[] = {0,20,0};
-uint8_t colorError[] = {50,0,0};
-uint8_t colorBackground[] = {0,0,10};
-
+int startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
+uint16_t startTuneDurations[] = {200, 100, 100, 200, 200, 200, 200, 200};
+int userTune[USER_TUNE_LENGTH];
+int userTuneDurations[USER_TUNE_LENGTH];
 
 /*-----( Declare Functions )-----*/
 uint8_t* nfc_poll();
@@ -56,8 +65,8 @@ uint8_t get_address();
 void check_reader();
 void check_bus();
 void update_lights();
+void update_sound();
 
-long lastRead = 0;
 
 void setup(void) {  
   readout.print(0,0, "Initializing...");
@@ -65,26 +74,28 @@ void setup(void) {
   Serial.println("setup()");
   if(!card_reader.start())  {
     readout.print(0,1,"ERROR: NFC");
-    status_ring.SetMode(M_FLASH, colorError, 100, 10000);  
+    status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
   }
   else  {
     readout.print(0,1, "Ready!");
   }
   pinMode(3, OUTPUT);
-  status_ring.SetBackground(colorBackground[0], colorBackground[1], colorBackground[2]);
-  status_ring.SetMode(M_PULSE, colorIdle, 1000, 0);
+  status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
+  status_ring.SetMode(M_CHASE, COLOR(COLOR_IDLE), 100 , 0);
+  speaker.Play(startTune, startTuneDurations, 8);
 }
 
 
 void loop(void) {
  // Serial.println("loop()");
-  long currentMillis = millis();
-  if ((currentMillis - lastRead )> 100)  {
+  uint32_t currentMillis = millis();
+  if ((currentMillis - lastRead )> NFC_READ_INTERVAL)  {
     check_reader();
     lastRead = currentMillis;
   }
   check_bus();
   update_lights();
+  update_sound();
 }
 
 void check_reader()  {
@@ -93,7 +104,7 @@ void check_reader()  {
   uint8_t id_length;
   if(card_reader.poll(uid, &id_length))  {
     if (uid[0]+uid[1]+uid[2]+uid[3] != 0)  {
-      status_ring.SetMode(M_FLASH,colorIdle,200, 3000);  //change ring to yellow - indicate waiting state
+      status_ring.SetMode(M_FLASH,COLOR(COLOR_SUCCESS),200, 3000);
       update_lights();
       bus.send_packet(0x01, 0x00, F_SEND_ID, uid, 7); 
     }
@@ -146,6 +157,10 @@ void check_bus()  {
       packet[packetIndex++] = byteReceived; 
     }   
   } 
+}
+
+void update_sound()  {
+  speaker.Update();
 }
 
 void update_lights()  {

@@ -12,10 +12,6 @@ rs485::rs485 (uint8_t serial_rx, uint8_t serial_tx, uint8_t serial_dir) {
   RS485Serial->begin(9600);   // set the data rate 
 }
 
-rs485::~rs485() {
-  
-}
-
 int rs485::send(uint8_t* data, uint8_t len) {
   #ifdef DEBUG
   Serial.println("rs485::send() called");

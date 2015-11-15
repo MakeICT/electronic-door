@@ -10,10 +10,6 @@ LCD::LCD() {
   lcd.print("LCD check");
 }
 
-LCD::~LCD() {
-  
-}
-
 void LCD::print(uint8_t row, uint8_t column, char* text)
 {
   lcd.setCursor(row, column);
