@@ -23,8 +23,7 @@ void Audio::Update()  {
     }
     else  {
       currentNoteStartTime = currentTime;
-      Serial.print("noteIndex: ");
-      Serial.println(noteIndex);
+      
       if(++noteIndex < tuneLength)  {
         tone(audioPin, notes[noteIndex], noteLengths[noteIndex]);
       }
