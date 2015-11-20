@@ -4,8 +4,9 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#define FLAG      0x7E
-#define ESCAPE    0x7D
+#define RS485_BAUD  9600
+#define FLAG        0x7E
+#define ESCAPE      0x7D
 
 // Command bytes
 #define F_SET_ADDRESS   0x00
@@ -32,6 +33,7 @@
 
 class rs485 {
   public:
+    rs485(uint8_t);
     rs485(uint8_t, uint8_t, uint8_t);
     char receive();
     int send(uint8_t* data, uint8_t len = 1);
@@ -46,6 +48,7 @@ class rs485 {
     uint16_t compute_CRC(uint8_t* data, uint8_t len);
     //byte lastPacket[255];
     uint8_t packetIndex;
+    bool hwSerial;
 };
 
 #endif

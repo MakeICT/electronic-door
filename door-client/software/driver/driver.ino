@@ -49,7 +49,10 @@
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
+// Software serial for RS485
 rs485 bus(SSerialRX, SSerialTX, SSerialTxControl);
+// Hardware serial for RS485
+//rs485 bus(SSerialTxControl);
 Ring status_ring(RING_PIN, NUMPIXELS);
 LCD readout;
 Audio speaker(SPEAKER_PIN);
