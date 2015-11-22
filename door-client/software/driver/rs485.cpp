@@ -25,9 +25,6 @@ rs485::rs485 (uint8_t serial_rx, uint8_t serial_tx, uint8_t serial_dir) {
 }
 
 int rs485::send(uint8_t* data, uint8_t len) {
-  #ifdef DEBUG
-  Serial.println("rs485::send() called");
-  #endif
 
   digitalWrite(ser_dir, RS485Transmit);  // Enable RS485 Transmit   
 
@@ -56,9 +53,6 @@ int rs485::send(uint8_t data) {
 }
 
 char rs485::receive() {
-  #ifdef DEBUG
-  Serial.println("rs485::receive() called");
-  #endif
   char byteReceived;
   if (hwSerial)
     byteReceived = Serial.read();    // Read received byte
@@ -68,9 +62,6 @@ char rs485::receive() {
 }
 
 int rs485::available() {
-  #ifdef DEBUG
-  Serial.println("rs485::available() called");
-  #endif
   if (hwSerial)
     return Serial.available();
   else
@@ -78,10 +69,6 @@ int rs485::available() {
 }
 
 boolean rs485::get_packet(uint8_t dev_addr, uint8_t* packet) {
-  #ifdef DEBUG
-  Serial.println("rs485::get_packet() called");
-  #endif
-
   for (int i = available(); i > 0; i--)  {
     byte byteReceived = receive();    // Read received byte
 //    Serial.println(byteReceived);
@@ -128,11 +115,6 @@ boolean rs485::get_packet(uint8_t dev_addr, uint8_t* packet) {
 }
 
 void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len)  {
-  //TODO: add byte stuffing
-  #ifdef DEBUG
-  Serial.println("rs485::send_packet() called");
-  #endif
-  
   uint8_t pos = 0;
   uint8_t packet_len = len + 6;
   uint8_t packet[packet_len];
@@ -154,9 +136,6 @@ void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function
 
 uint16_t rs485::compute_CRC(uint8_t* data, uint8_t len)
 {
-  #ifdef DEBUG
-  Serial.println("rs485::compute_CRC called");
-  #endif
   //TODO: implement 16 bit CRC
   return 0xFFFF;
 }

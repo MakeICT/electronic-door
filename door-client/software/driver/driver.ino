@@ -1,5 +1,3 @@
-#define DEBUG
-
 /*-----( Import needed libraries )-----*/
 #include <SoftwareSerial.h>
 #include <SPI.h>
@@ -97,13 +95,10 @@ void setup(void) {
   status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
   status_ring.SetMode(M_CHASE, COLOR(COLOR_IDLE), 100 , 0);
   speaker.Play(startTune, startTuneDurations, 8);
-
-  Serial.println(address);
 }
 
 
 void loop(void) {
- // Serial.println("loop()");
   static uint32_t lastRead = 0;
   uint32_t currentMillis = millis();
   if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
