@@ -143,14 +143,14 @@
 			.filter('memberForHumanReadable', function(){
 				return function(memberSinceUnix){
 					var currentUnixTime = Math.round((new Date()).getTime() / 1000);
-					console.log("currentUnixTime");
-					console.log(currentUnixTime);
+					// console.log("currentUnixTime");
+					// console.log(currentUnixTime);
 					var memberForUnix = currentUnixTime - memberSinceUnix;
-					console.log("memberForUnix");
-					console.log(memberForUnix);
+					// console.log("memberForUnix");
+					// console.log(memberForUnix);
 					var memberForDays = Math.floor(memberForUnix / 86400);
-					console.log("memberForDays");
-					console.log(memberForDays);
+					// console.log("memberForDays");
+					// console.log(memberForDays);
 					return memberForDays;
 				}
 			});
