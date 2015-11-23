@@ -48,7 +48,6 @@ class rs485 {
     uint16_t compute_CRC(uint8_t* data, uint8_t len);
     //byte lastPacket[255];
     uint8_t packetIndex;
-    bool hwSerial;
 };
 
 #endif

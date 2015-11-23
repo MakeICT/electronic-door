@@ -18,7 +18,7 @@ void Audio::Play(int melody[], uint16_t durations[], uint8_t length)  {
 void Audio::Update()  {
   if (playing)  {
     uint32_t currentTime = millis();
-    if(currentTime - currentNoteStartTime < noteLengths[noteIndex]+30) {
+    if(currentTime - currentNoteStartTime < noteLengths[noteIndex] + 1) {
       return;
     }
     else  {

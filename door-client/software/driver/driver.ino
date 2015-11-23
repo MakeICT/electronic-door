@@ -1,5 +1,4 @@
 /*-----( Import needed libraries )-----*/
-#include <SoftwareSerial.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Adafruit_NeoPixel.h>
@@ -47,10 +46,7 @@
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
-// Software serial for RS485
-rs485 bus(SSerialRX, SSerialTX, SSerialTxControl);
-// Hardware serial for RS485
-//rs485 bus(SSerialTxControl);
+rs485 bus(SSerialTxControl);
 Ring status_ring(RING_PIN, NUMPIXELS);
 LCD readout;
 Audio speaker(SPEAKER_PIN);
@@ -63,9 +59,9 @@ boolean alarmButton = 0;
 boolean doorState = 0;
 uint32_t lastIDSend = 0;
 byte packet[100];
-//TODO: store start tune in EEPROM, make configurable
+//TODO: store start tune and other settings in EEPROM, make configurable
 int startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
-uint16_t startTuneDurations[] = {200, 100, 100, 200, 200, 200, 200, 200};
+uint16_t startTuneDurations[] = {230, 130, 130, 230, 230, 230, 230, 230};
 int userTune[USER_TUNE_LENGTH];
 int userTuneDurations[USER_TUNE_LENGTH];
 
@@ -78,13 +74,13 @@ void check_inputs();
 
 
 void setup(void) {
+  Serial.begin(9600);
+  Serial.println("Start Program");
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   //save_address(0x02);
   address = get_address();
   readout.print(0,0, "Initializing...");
-  Serial.begin(115200);
-  Serial.println("setup()");
   if(!card_reader.start())  {
     readout.print(0,1,"ERROR: NFC");
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
