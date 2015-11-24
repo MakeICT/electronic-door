@@ -11,5 +11,8 @@ if(process.argv.length < 3){
 }
 
 var alarm = require('ad2usb').connect(alarmOptions.ip, alarmOptions.port, function() {
-	alarm[process.argv[2]](alarmOptions.code);
+	var command = process.argv[2];
+	console.log("Sending: " + command);
+	alarm[command](alarmOptions.code);
+	alarm.socket.destroy();
 });
