@@ -14,7 +14,9 @@ rw_pin = 26
 #GPIO.output(rw_pin, GPIO.HIGH)
 
 flag = 0x7E
-client_address = 0x02
+client_address = 0x01
+#ser = serial.Serial('/dev/ttyAMA0', 9600)
+ser = serial.Serial('/dev/ttyUSB0', 9600)
 
 state = "waiting"
 packet = []
@@ -66,8 +68,6 @@ def receive_packet():
     else:
         packet.append(byte)
 
-#ser = serial.Serial('/dev/ttyAMA0', 9600)
-ser = serial.Serial('/dev/ttyUSB0', 9600)
 
 while 0:
     receive_packet()
@@ -76,8 +76,8 @@ while 1:
     if user_input >= 0 and user_input <= 2:
         send_packet(function = user_input)
     elif user_input == 3:
-        send_packet(0x00, 0x02, 0x05,
-        [38,33,33,35,33,0,37,38,  12,6,6,6,6,15,15,6])
+        send_packet(function=0x05,
+        payload=[38,40,38,40,38,40,38,40,43,  21,7,7,7,21,7,7,7,42])
 send_packet(0x01, 0x02, 0x02, [0x05, 0x06, 0x07, 0x08, 0x09, 0x0A])
 arg_list = sys.argv
 send_packet(function=int(arg_list[1]))

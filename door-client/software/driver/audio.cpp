@@ -26,6 +26,7 @@ void Audio::Update()  {
       currentNoteStartTime = currentTime;
       
       if(++noteIndex < tuneLength)  {
+        noTone(audioPin);
         tone(audioPin, notes_array[notes[noteIndex]], (noteLengths[noteIndex]*20));
       }
       else  {

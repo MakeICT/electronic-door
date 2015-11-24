@@ -19,7 +19,7 @@ int rs485::send(uint8_t* data, uint8_t len) {
 
   digitalWrite(ser_dir, RS485Transmit);  // Enable RS485 Transmit   
 
-  delay(10);
+  //delay(10);
   Serial.write(FLAG);
   for (uint8_t sByte = 0; sByte < len; sByte ++)  {
       if (data[sByte] == FLAG || data[sByte] == ESCAPE)
@@ -31,7 +31,7 @@ int rs485::send(uint8_t* data, uint8_t len) {
   Serial.write(FLAG);
   digitalWrite(ser_dir, RS485Receive);  // Disable RS485 Transmit       
 
-  delay(20);
+  //delay(20);
 }
 
 int rs485::send(uint8_t data) {
@@ -48,18 +48,21 @@ int rs485::available() {
   return Serial.available();
 }
 
-boolean rs485::get_packet(uint8_t dev_addr, uint8_t packet[]) {
+byte rs485::get_packet(uint8_t dev_addr, uint8_t packet[]) {
   //TODO: add byte unstuffing
   for (int i = available(); i > 0; i--)  {
      byte byteReceived = receive();    // Read received byte
     if(byteReceived == FLAG)  {
+      byte receivedBytes = packetIndex;
       packetIndex = 0;
-      //TODO: verify packet integrity
-      uint8_t src_address = packet[1];
-      uint8_t dst_address = packet[2];
-
-      if (dst_address == dev_addr || dst_address == ADDR_BROADCAST)  {
-        return true;
+      if (receivedBytes >= P_H_F_LENGTH && receivedBytes == packet[0])  {
+        //TODO: verify packet integrity
+        uint8_t src_address = packet[1];
+        uint8_t dst_address = packet[2];
+  
+        if (dst_address == dev_addr || dst_address == ADDR_BROADCAST)  {
+          return receivedBytes;
+        }
       }
     }
     else  {

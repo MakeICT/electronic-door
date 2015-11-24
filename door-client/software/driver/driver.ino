@@ -76,14 +76,13 @@ void check_inputs();
 SoftwareSerial debugPort(6,7);
 
 void setup(void) {
-  packet[0] = 1;
   debugPort.begin(9600);
   Serial.begin(9600);
   debugPort.println("Start Program");
     bus.SetDebugPort(&debugPort);
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  save_address(0x02);
+  save_address(0x01);
   address = get_address();
   debugPort.print("Address: ");
   debugPort.println(address);

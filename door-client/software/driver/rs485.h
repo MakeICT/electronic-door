@@ -17,6 +17,11 @@
 #define F_DOOR_STATE    0x06
 #define F_ALARM_BUTTON  0x07
 
+// Sizes
+#define P_H_LENGTH      4
+#define P_F_LENGTH      2
+#define P_H_F_LENGTH    P_H_LENGTH + P_F_LENGTH
+
 // Reserved Addresses
 #define ADDR_MASTER     0x00
 #define ADDR_BROADCAST  0xFF
@@ -39,7 +44,7 @@ class rs485 {
     int send(uint8_t* data, uint8_t len = 1);
     int send(uint8_t data);
     int available();
-    boolean get_packet(uint8_t dev_addr, uint8_t packet[]);
+    byte get_packet(uint8_t dev_addr, uint8_t packet[]);
     void send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len);
     void SetDebugPort(SoftwareSerial*);
     
