@@ -2,8 +2,8 @@
 
 echo "Sending arm away..."
 
-/home/pi/code/makeictelectronicdoor/vista/send-code.sh 2
-/home/pi/code/makeictelectronicdoor/vista/send-code.sh 2
+cd /home/pi/code/makeictelectronicdoor/vista/
+node send-code.sh armAway
 
 exit $?
 

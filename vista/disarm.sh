@@ -2,8 +2,8 @@
 
 echo "Sending disarm..."
 
-/home/pi/code/makeictelectronicdoor/vista/send-code.sh 1
-/home/pi/code/makeictelectronicdoor/vista/send-code.sh 1
+cd /home/pi/code/makeictelectronicdoor/vista/
+node send-code.sh disarm
 
 exit $?
 

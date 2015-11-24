@@ -2,8 +2,8 @@
 
 echo "Sending arm-stay..."
 
-/home/pi/code/makeictelectronicdoor/vista/send-code.sh 3
-/home/pi/code/makeictelectronicdoor/vista/send-code.sh 3
+cd /home/pi/code/makeictelectronicdoor/vista/
+node send-code.sh armStay
 
 exit $?
 
