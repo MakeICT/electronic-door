@@ -11,11 +11,15 @@ rs485::rs485 (uint8_t serial_dir) {
   Serial.begin(RS485_BAUD);   // set the data rate 
 }
 
+void rs485::SetDebugPort(SoftwareSerial* port)  {
+  debugPort = port;
+}
+
 int rs485::send(uint8_t* data, uint8_t len) {
 
   digitalWrite(ser_dir, RS485Transmit);  // Enable RS485 Transmit   
 
-  //delay(10);
+  delay(10);
   Serial.write(FLAG);
   for (uint8_t sByte = 0; sByte < len; sByte ++)  {
       if (data[sByte] == FLAG || data[sByte] == ESCAPE)
@@ -27,64 +31,42 @@ int rs485::send(uint8_t* data, uint8_t len) {
   Serial.write(FLAG);
   digitalWrite(ser_dir, RS485Receive);  // Disable RS485 Transmit       
 
-  //delay(20);
+  delay(20);
 }
 
 int rs485::send(uint8_t data) {
   send(&data);
 }
 
-char rs485::receive() {
-  char byteReceived = Serial.read();    // Read received byte
+byte rs485::receive() {
+  byte byteReceived;
+  Serial.readBytes(&byteReceived, 1);    // Read received byte
   return byteReceived;
 }
 
 int rs485::available() {
-  Serial.available();
+  return Serial.available();
 }
 
-boolean rs485::get_packet(uint8_t dev_addr, uint8_t* packet) {
+boolean rs485::get_packet(uint8_t dev_addr, uint8_t packet[]) {
+  //TODO: add byte unstuffing
   for (int i = available(); i > 0; i--)  {
-    byte byteReceived = receive();    // Read received byte
+     byte byteReceived = receive();    // Read received byte
     if(byteReceived == FLAG)  {
       packetIndex = 0;
       //TODO: verify packet integrity
-      //TODO: check addresses
-      uint8_t length = packet[0];
       uint8_t src_address = packet[1];
       uint8_t dst_address = packet[2];
-      uint8_t function = packet[3];
-  
-      #ifdef DEBUG1
-      //Display packet info
-      Serial.print("length: ");
-      Serial.println(length);
-      Serial.print("source address: ");
-      Serial.println(src_address);
-      Serial.print("destination address: ");
-      Serial.println(dst_address);+
-      Serial.print("function: ");
-      Serial.println(function);
-      Serial.print("data: ");
-      for(uint8_t i = 4; i < length; i++)  {
-        Serial.print(packet[i]);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      Serial.print(dev_addr);
-      Serial.print(" : ");
-      Serial.println(dst_address);
-      #endif
+
       if (dst_address == dev_addr || dst_address == ADDR_BROADCAST)  {
-        //packet = lastPacket;
         return true;
       }
     }
     else  {
       packet[packetIndex++] = byteReceived; 
     }
-  return false;
   }
+  return false;
 }
 
 void rs485::send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len)  {

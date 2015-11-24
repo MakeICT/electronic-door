@@ -10,7 +10,7 @@ class Audio
 {
   public:
     Audio(byte);
-    void Play(int melody[], uint16_t durations[], uint8_t length);
+    void Play(byte melody[], byte durations[], byte length);
     void Update();
     
   private:
@@ -19,7 +19,7 @@ class Audio
     uint32_t currentNoteStartTime;
     uint8_t noteIndex;
     uint8_t tuneLength;
-    int* notes;   
-    uint16_t* noteLengths;
+    byte* notes;   
+    byte* noteLengths;
 };
 #endif

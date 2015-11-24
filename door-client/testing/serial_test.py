@@ -14,7 +14,7 @@ rw_pin = 26
 #GPIO.output(rw_pin, GPIO.HIGH)
 
 flag = 0x7E
-client_address = 0x01
+client_address = 0x02
 
 state = "waiting"
 packet = []
@@ -47,11 +47,11 @@ def process_packet(packet):
 
 def send_packet(from_addr=0x00, to_addr=client_address, function = 0x00, payload=[0x00]):
 #    GPIO.output(rw_pin, GPIO.HIGH)
-    length = 4 + len(payload)
+    length = 6 + len(payload)
     data = ''
     for byte in payload:
         data = data + chr(byte)
-    packet = chr(flag) + chr(length) + chr(from_addr) + chr(to_addr) + chr(function) + data + chr(length) + chr(flag)
+    packet = chr(flag) + chr(length) + chr(from_addr) + chr(to_addr) + chr(function) + data + chr(0xFF) + chr(0xFF)  + chr(flag)
     ser.write(packet)
 
 
@@ -75,10 +75,9 @@ while 1:
     user_input = input()
     if user_input >= 0 and user_input <= 2:
         send_packet(function = user_input)
-    if user_input == 3:
+    elif user_input == 3:
         send_packet(0x00, 0x02, 0x05,
-        [0x05, 24, 26, 28, 250, 250, 250])
-
+        [38,33,33,35,33,0,37,38,  12,6,6,6,6,15,15,6])
 send_packet(0x01, 0x02, 0x02, [0x05, 0x06, 0x07, 0x08, 0x09, 0x0A])
 arg_list = sys.argv
 send_packet(function=int(arg_list[1]))

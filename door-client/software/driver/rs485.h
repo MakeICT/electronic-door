@@ -35,16 +35,17 @@ class rs485 {
   public:
     rs485(uint8_t);
     rs485(uint8_t, uint8_t, uint8_t);
-    char receive();
+    byte receive();
     int send(uint8_t* data, uint8_t len = 1);
     int send(uint8_t data);
     int available();
-    boolean get_packet(uint8_t dev_addr, uint8_t* packet);
+    boolean get_packet(uint8_t dev_addr, uint8_t packet[]);
     void send_packet(uint8_t source_addr, uint8_t dest_addr, uint8_t function, uint8_t* payload, uint8_t len);
-
+    void SetDebugPort(SoftwareSerial*);
+    
   private:
     uint8_t ser_dir;
-    SoftwareSerial* RS485Serial;
+    SoftwareSerial* debugPort;
     uint16_t compute_CRC(uint8_t* data, uint8_t len);
     //byte lastPacket[255];
     uint8_t packetIndex;

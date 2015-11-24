@@ -1,4 +1,5 @@
 /*-----( Import needed libraries )-----*/
+#include <SoftwareSerial.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Adafruit_NeoPixel.h>
@@ -58,12 +59,12 @@ uint8_t address;
 boolean alarmButton = 0;
 boolean doorState = 0;
 uint32_t lastIDSend = 0;
-byte packet[100];
+byte packet[MAX_PACKET_SIZE];
 //TODO: store start tune and other settings in EEPROM, make configurable
-int startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
-uint16_t startTuneDurations[] = {230, 130, 130, 230, 230, 230, 230, 230};
-int userTune[USER_TUNE_LENGTH];
-int userTuneDurations[USER_TUNE_LENGTH];
+byte startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
+byte startTuneDurations[] = {12, 6, 6, 12, 12, 12, 12, 12};
+byte userTune[USER_TUNE_LENGTH];
+byte userTuneDurations[USER_TUNE_LENGTH];
 
 /*-----( Declare Functions )-----*/
 uint8_t* nfc_poll();
@@ -72,14 +73,20 @@ uint8_t get_address();
 void check_reader();
 void check_inputs();
 
+SoftwareSerial debugPort(6,7);
 
 void setup(void) {
+  packet[0] = 1;
+  debugPort.begin(9600);
   Serial.begin(9600);
-  Serial.println("Start Program");
+  debugPort.println("Start Program");
+    bus.SetDebugPort(&debugPort);
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  //save_address(0x02);
+  save_address(0x02);
   address = get_address();
+  debugPort.print("Address: ");
+  debugPort.println(address);
   readout.print(0,0, "Initializing...");
   if(!card_reader.start())  {
     readout.print(0,1,"ERROR: NFC");
@@ -126,32 +133,29 @@ void check_reader()  {
 }
 
 void process_packet(uint8_t dev_addr)  {
-  //uint8_t* packet;
-  if (bus.get_packet(address, packet))  {
-    Serial.println("got packet");
-    Serial.println(packet[3]);
-
+  if (bus.get_packet(dev_addr, packet))  {
     uint8_t length = packet[0];
-      uint8_t src_address = packet[1];
-      uint8_t dst_address = packet[2];
-      uint8_t function = packet[3];
-      #define DEBUG1
+    uint8_t src_address = packet[1];
+    uint8_t dst_address = packet[2];
+    uint8_t function = packet[3];
+    uint16_t CRC = packet[length-2] << 8 + packet[length-1];
+      //#define DEBUG1
       #ifdef DEBUG1
       //Display packet info
-      Serial.print("length: ");
-      Serial.println(length);
-      Serial.print("source address: ");
-      Serial.println(src_address);
-      Serial.print("destination address: ");
-      Serial.println(dst_address);
-      Serial.print("function: ");
-      Serial.println(function);
-      Serial.print("data: ");
-      for(uint8_t i = 4; i < length; i++)  {
-        Serial.print(packet[i]);
-        Serial.print(',');
+      debugPort.print("length: ");
+      debugPort.println(length);
+      debugPort.print("source address: ");
+      debugPort.println(src_address);
+      debugPort.print("destination address: ");
+      debugPort.println(dst_address);
+      debugPort.print("function: ");
+      debugPort.println(function);
+      debugPort.print("data: ");
+      for(uint8_t i = 4; i < length -2; i++)  {
+        debugPort.print(packet[i]);
+        debugPort.print(',');
       }
-      Serial.println(' ');
+      debugPort.println(' ');
       #endif
 
     //Process functions
@@ -164,9 +168,20 @@ void process_packet(uint8_t dev_addr)  {
         door_latch.Lock();
         break;
       case F_PLAY_TUNE:
-        int melody[30];
-        byte durations[30];
-        //speaker.Play(packet[4]        
+        //debugPort.println("play entry tune");
+
+        byte tune_length = (length - 6)/2;
+        //debugPort.println(tune_length);
+        for(byte i = 0; i < tune_length; i++)  {
+          //debugPort.println(packet[i+4]);
+          userTune[i] = packet[i + 4];
+        }
+        for(byte i = 0; i < tune_length; i++)  {
+          userTuneDurations[i] = packet[i + 4 + tune_length];
+          //debugPort.println(packet[i+4 + tune_length]);
+        }
+        speaker.Play(userTune, userTuneDurations, tune_length);   
+   
     }
   }
 }
