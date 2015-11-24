@@ -7,8 +7,12 @@ function connectToLCD(counter){
 	var port = "/dev/ttyUSB" + counter;
 	lcd = new SerialPort(port, {
 		baudrate: 9600
-	}).on('open', function(data){
+	});
+	lcd.on('open', function(data){
 		console.log("LCD Connected to " + port + " :)");
+		setTimeout(function(){
+			lcd.write("Press button for1s. Wait for msg");
+		}, 3000);
 	}).on('error', function(data){
 		setTimeout(function(){
 			connectToLCD(counter+1);
@@ -24,7 +28,7 @@ connectToLCD();
 
 function sendEmail(message){
 	console.log("Sending email: " + message);
-	child_process.exec('echo "' + message + '" | mail -s "JUST TESTING Security system" fablab-wichita-exploration@googlegroups.com');
+	child_process.exec('echo "' + message + '" | mail -s "Security system alarm!" fablab-wichita-exploration@googlegroups.com');
 }
 
 var config = require('fs').readFileSync('/home/pi/code/makeictelectronicdoor/vista/DOOR_CODE').toString().trim().split('\t');
@@ -36,23 +40,26 @@ var alarmOptions = {
 
 var alarm = require('ad2usb').connect(alarmOptions.ip, alarmOptions.port, function() {
 	alarm.on('alarm', function(alarmStatus) {
-		if(alarmStatus) sendEmail("<a href='https://makeict.greenlightgo.org'>The alarm is going off!</a>");
+		if(alarmStatus){
+			sendEmail("The alarm is going off! https://makeict.greenlightgo.org");
+			if(lcd.isOpen()) lcd.write("ALARM TRIGGERED!  316.712.4391  ");
+		}else{
+			if(lcd.isOpen()) lcd.write("Press button for1s. Wait for msg");
+		}
 	});
 	
 	alarm.on('fireAlarm', function(alarmStatus) {
-		if(alarmStatus) sendEmail("The fire alarm is going off!");
-	});
+		if(alarmStatus){
+		       	sendEmail("The fire alarm is going off!");
+			if(lcd.isOpen()) lcd.write("ALARM TRIGGERED!  316.712.4391  ");
+		}
+       	});
 	
 	alarm.on('armedAway', function() {
-		if(lcd.isOpen()){
-			lcd.write('\nThe alarm ARMED!\nYou may not exit');
-		}
+		if(lcd.isOpen()) lcd.write("The alarm ARMED!You may now exit");
 	});
 	
-	alarm.on('Disarmed', function() {
-		if(lcd.isOpen()){
-			lcd.write('\nPress button for\n1s, wait for msg');
-		}
+	alarm.on('disarmed', function() {
+		if(lcd.isOpen()) lcd.write("Press button for1s. Wait for msg");
 	});
-	
-});
+}); 
