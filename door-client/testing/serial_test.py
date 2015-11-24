@@ -67,14 +67,18 @@ def receive_packet():
         packet.append(byte)
 
 #ser = serial.Serial('/dev/ttyAMA0', 9600)
-ser = serial.Serial('/dev/ttyUSB2', 9600)
+ser = serial.Serial('/dev/ttyUSB0', 9600)
 
-while 1:
-    receive_packet()
 while 0:
+    receive_packet()
+while 1:
     user_input = input()
     if user_input >= 0 and user_input <= 2:
         send_packet(function = user_input)
+    if user_input == 3:
+        send_packet(0x00, 0x02, 0x05,
+        [0x05, 24, 26, 28, 250, 250, 250])
+
 send_packet(0x01, 0x02, 0x02, [0x05, 0x06, 0x07, 0x08, 0x09, 0x0A])
 arg_list = sys.argv
 send_packet(function=int(arg_list[1]))

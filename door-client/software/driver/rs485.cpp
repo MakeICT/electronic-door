@@ -71,12 +71,11 @@ boolean rs485::get_packet(uint8_t dev_addr, uint8_t* packet) {
         Serial.print(',');
       }
       Serial.println(' ');
-      #endif
       Serial.print(dev_addr);
       Serial.print(" : ");
       Serial.println(dst_address);
+      #endif
       if (dst_address == dev_addr || dst_address == ADDR_BROADCAST)  {
-        Serial.println("address match");
         //packet = lastPacket;
         return true;
       }
