@@ -1,10 +1,9 @@
 /*-----( Import needed libraries )-----*/
 #include <SoftwareSerial.h>
-#include <Wire.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Adafruit_NeoPixel.h>
-//#include <Adafruit_PN532.h>
+#include <EEPROM.h>
 #include <PN532_SPI.h>
 #include "PN532Interface.h"
 
@@ -12,140 +11,200 @@
 #include "reader.h"
 #include "rs485.h"
 #include "lcd.h"
+#include "audio.h"
+#include "strike.h"
 
 /*-----( Declare Constants and Pin Numbers )-----*/
+// Pin assignments
+#define RING_PIN          2       // Pin communicating with NeoPixel Ring
+#define PN532_SS_PIN      10      // SPI Slave Select pin
+#define SPEAKER_PIN       9       // Tone generation pin
+#define LATCH_PIN         3       // Digital pin to trigger door strike circuit
+#define SSerialRX         6       // Serial Receive pin
+#define SSerialTX         7       // Serial Transmit pin
+#define SSerialTxControl  8       // RS485 Direction control
+#define DOOR_SWITCH_PIN   A0      // Magnetic switch on door
+#define ALARM_BUTTON_PIN  A1      // Big button to arm the alarm
 
-//Serial protocol definitions
-#define SSerialRX        6  //Serial Receive pin
-#define SSerialTX        7  //Serial Transmit pin
-#define SSerialTxControl 8   //RS485 Direction control
+// Constants for RS485
+#define MAX_PACKET_SIZE   100
 
-#define FLAG      0x7E
-#define ESCAPE    0x7D
+// Constants for audio playback
+#define USER_TUNE_LENGTH  30      // Max number of notes in entry melody
 
-#define IDLING      0
-#define RECEIVING   1
-#define ESCAPING    2
+// Constants for PN532 NFC reader
+#define NFC_READ_INTERVAL 100     // time in ms between NFC reads
+#define ID_SEND_INTERVAL  1000    // time in ms between sending card IDs
 
-//Software SPI pins for PN532
-#define PN532_SS   10
+// Constants for NeoPixel ring
+#define NUMPIXELS         16      // Number of NeoPixels in Ring
+#define COLOR               Adafruit_NeoPixel::Color
+#define COLOR_IDLE          0,100,120
+#define COLOR_SUCCESS       0,60,20
+#define COLOR_ERROR         50,20,0
+#define COLOR_BACKGROUND    0,20,50
 
-//Info for NeoPixel ring
-#define PIN            2       //Pin communicating with NeoPixel Ring
-#define NUMPIXELS      16       //Number of NeoPixels in Ring
 
 /*-----( Declare objects )-----*/
-rs485 bus(SSerialRX, SSerialTX, SSerialTxControl);
-Ring status_ring(PIN, NUMPIXELS);
 Reader card_reader;
+rs485 bus(SSerialTxControl);
+Ring status_ring(RING_PIN, NUMPIXELS);
 LCD readout;
+Audio speaker(SPEAKER_PIN);
+Strike door_latch(LATCH_PIN);
 
 /*-----( Declare Variables )-----*/
-int state;
 uint8_t byteReceived;
-int byteSend;
+uint8_t address;
+boolean alarmButton = 0;
+boolean doorState = 0;
+uint32_t lastIDSend = 0;
+byte packet[MAX_PACKET_SIZE];
+//TODO: store start tune and other settings in EEPROM, make configurable
+byte startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
+byte startTuneDurations[] = {12, 6, 6, 12, 12, 12, 12, 12};
+byte userTune[USER_TUNE_LENGTH];
+byte userTuneDurations[USER_TUNE_LENGTH];
 
 /*-----( Declare Functions )-----*/
 uint8_t* nfc_poll();
+void save_address(uint8_t addr);
+uint8_t get_address();
+void check_reader();
+void check_inputs();
 
-//TEST
-//Adafruit_PN532 nfc1(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
-
-PN532_SPI pn532spi1(SPI, PN532_SS);
-PN532 nfc1(pn532spi1);
+SoftwareSerial debugPort(6,7);
 
 void setup(void) {
-  status_ring.lightSolid(20, 0, 20);
-  Serial.begin(115200);
-  Serial.println("Hello!");
-  Serial.println("Waiting for an ISO14443A Card ...");
-  readout.print(0,1, "test");
-
-  //TEST
-   nfc1.begin();
-   nfc1.SAMConfig();
-   nfc1.setPassiveActivationRetries(1);
+  packet[0] = 1;
+  debugPort.begin(9600);
+  Serial.begin(9600);
+  debugPort.println("Start Program");
+    bus.SetDebugPort(&debugPort);
+  pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
+  save_address(0x02);
+  address = get_address();
+  debugPort.print("Address: ");
+  debugPort.println(address);
+  readout.print(0,0, "Initializing...");
+  if(!card_reader.start())  {
+    readout.print(0,1,"ERROR: NFC");
+    status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
+  }
+  else  {
+    readout.print(0,1, "Ready!");
+  }
+  status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
+  status_ring.SetMode(M_CHASE, COLOR(COLOR_IDLE), 100 , 0);
+  speaker.Play(startTune, startTuneDurations, 8);
 }
 
 
 void loop(void) {
-  if (Serial.available())
-  {
-    byteReceived = Serial.read();
-    bus.send(&byteReceived);
+  static uint32_t lastRead = 0;
+  uint32_t currentMillis = millis();
+  if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
+      (currentMillis - lastIDSend) > ID_SEND_INTERVAL)  {
+    check_reader();
+    lastRead = currentMillis;
   }
-  
-  if (bus.available())  //Look for data from other Arduino
-   {
-    byteReceived = bus.receive();    // Read received byte
-    if(byteReceived == '\n' || byteReceived == '\r')
-      Serial.println();
-    else {
-      Serial.write(byteReceived);        // Show on Serial Monitor
-      delay(10);
-    } 
-   }
-   // uint32_t cardid = card_reader.poll();
-    Serial.println("Start Poll");
-    //uint8_t* cardid = card_reader.poll();
-    uint8_t uid[7];
-    uint8_t id_length;
-    nfc_poll(uid, &id_length);
-    Serial.println(uid[0]);
-    Serial.println(uid[1]);
-    Serial.println(uid[2]);
-    Serial.println(uid[3]);
-      uint32_t id_number = uid[0];
-      id_number <<= 8;
-      id_number |= uid[1];
-      id_number <<= 8;
-      id_number |= uid[2];  
-      id_number <<= 8;
-      id_number |= uid[3]; 
-    Serial.println(id_number);
-    Serial.println("End Poll");
-    if (uid[0] != 0) {
-      //Display some basic information about the card
-     // Serial.println(cardid[0]);
-  
-      
-  
-      //TODO: send cardid to pi and wait for further instructions
-      //bus.send(cardid[0]);
-      status_ring.lightSolid(40,30,0);  //change ring to yellow - indicate waiting state
-      delay(1000);
-      status_ring.lightSolid(20,0,0);
-      }
-      Serial.println("");
+  check_inputs(); 
+  speaker.Update();
+  status_ring.Update();
+  door_latch.Update();
+  //TODO: check for connection to Master
+  process_packet(address);
 }
 
+void check_reader()  {
+  //check for NFC card
+  uint8_t uid[7];
+  uint8_t id_length;
+  if(card_reader.poll(uid, &id_length))  {
+    bus.send_packet(0x01, 0x00, F_SEND_ID, uid, 7);
+    lastIDSend = millis();
 
+    //TEMPORARY TEST CODE
+    status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
+    door_latch.Unlock(3000);
+    speaker.Play(startTune, startTuneDurations, 8);
+  }
+}
 
+void process_packet(uint8_t dev_addr)  {
+  if (bus.get_packet(dev_addr, packet))  {
+    uint8_t length = packet[0];
+    uint8_t src_address = packet[1];
+    uint8_t dst_address = packet[2];
+    uint8_t function = packet[3];
+    uint16_t CRC = packet[length-2] << 8 + packet[length-1];
+      //#define DEBUG1
+      #ifdef DEBUG1
+      //Display packet info
+      debugPort.print("length: ");
+      debugPort.println(length);
+      debugPort.print("source address: ");
+      debugPort.println(src_address);
+      debugPort.print("destination address: ");
+      debugPort.println(dst_address);
+      debugPort.print("function: ");
+      debugPort.println(function);
+      debugPort.print("data: ");
+      for(uint8_t i = 4; i < length -2; i++)  {
+        debugPort.print(packet[i]);
+        debugPort.print(',');
+      }
+      debugPort.println(' ');
+      #endif
 
-//workaround because the external file doesn't work right
-bool nfc_poll(uint8_t uid[], uint8_t* len)
-{
-  uint8_t success;
-  for (int i = 0; i <8; i++)
-    uid[i] = 0;  // Buffer to store the returned UID
-  uint8_t uidLength;                        // Length of the UID 
- 
-  //success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 3000);
-  success = nfc1.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-    if (success)
+    //Process functions
+    switch(packet[3])
     {
-      if (uidLength == 4)  {
-        // We probably have a Mifare Classic card ... 
-        Serial.print("Seems to be a Mifare Classic card #");
-      }
+      case F_UNLOCK_DOOR:
+        door_latch.Unlock(packet[4] * 1000);
+        break;
+      case F_LOCK_DOOR:
+        door_latch.Lock();
+        break;
+      case F_PLAY_TUNE:
+        //debugPort.println("play entry tune");
+
+        byte tune_length = (length - 6)/2;
+        //debugPort.println(tune_length);
+        for(byte i = 0; i < tune_length; i++)  {
+          //debugPort.println(packet[i+4]);
+          userTune[i] = packet[i + 4];
+        }
+        for(byte i = 0; i < tune_length; i++)  {
+          userTuneDurations[i] = packet[i + 4 + tune_length];
+          //debugPort.println(packet[i+4 + tune_length]);
+        }
+        speaker.Play(userTune, userTuneDurations, tune_length);   
+   
+    }
+  }
+}
+
+void check_inputs()  {
+  if(digitalRead(ALARM_BUTTON_PIN) != alarmButton)  {
+    alarmButton = !alarmButton;
+    byte payload[1] = {alarmButton};
+    bus.send_packet(address, ADDR_MASTER, F_ALARM_BUTTON, payload, 1);
+  }
     
-      else if (uidLength == 7)  {
-        Serial.print("Seems to be a Mifare Ultralight card #");
-      }
-      
-      return 1;
-   }
-  
-  else return 0;
+  if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
+    doorState = !doorState;
+    byte payload[1] = {doorState};
+    bus.send_packet(address, ADDR_MASTER, F_DOOR_STATE, payload, 1);
+  }
+}
+
+void save_address(uint8_t addr)  {
+  EEPROM.update(0, addr);
+}
+
+uint8_t get_address()  {
+  return EEPROM.read(0);
 }
 
