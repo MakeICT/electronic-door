@@ -75,6 +75,28 @@ CREATE TABLE IF NOT EXISTS logs (
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
+CREATE TABLE IF NOT EXISTS clients (
+	"clientID" SERIAL PRIMARY KEY,
+	"clientTypeID" INT NULL,
+	"clientName" VARCHAR(128) NOT NULL,
+	 FOREIGN KEY("clientTypeID") REFERENCES "clientTypes"("clientTypeID")
+);
+
+CREATE TABLE IF NOT EXISTS "clientPluginOptions" (
+	"clientID" INT NULL,
+	"optionID" INT NULL,
+	"optionValue" VARCHAR(128) NOT NULL,
+	FOREIGN KEY("clientID") REFERENCES clients("clientID"),
+	FOREIGN KEY("optionID") REFERENCES "pluginOptions"("pluginOptionID")
+)
+
+CREATE TABLE IF NOT EXISTS "clientTypes" (
+	"clientTypeID" SERIAL PRIMARY KEY,
+	"pluginID" INT NULL,
+	"name" VARCHAR(128) NOT NULL,
+	FOREIGN KEY("pluginID") REFERENCES plugins("pluginID")
+);
+
 INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
 INSERT INTO users ("firstName", "lastName", "email", "status") VALUES 
 	('User 1', 'Test', 'test1@makeict.org', 'active'),
