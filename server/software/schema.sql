@@ -5,7 +5,7 @@
 CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
 CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
 
-CREATE TYPE DATA_TYPE AS ENUM('number', 'text');
+CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'hidden', 'password');
 
 CREATE TABLE IF NOT EXISTS nfcs (
 	"nfcID" SERIAL PRIMARY KEY,

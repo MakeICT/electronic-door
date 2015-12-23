@@ -145,7 +145,6 @@ module.exports = {
 	
 	onInstall: function(){
 		backend.addProxySystem('WildApricot');
-		console.log('WildApricot plugin installed');
 	},
 
 	onUninstall: function(){
