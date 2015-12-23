@@ -40,6 +40,7 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 }
 
 module.exports = {
+	connectionParameters: connectionParameters,
 	regroup: function(array, keyName, valueName){
 		var data = {};
 		for(var i=0; i<array.length; i++){
@@ -155,6 +156,7 @@ module.exports = {
 			console.error("Failed to register plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
 		};
+
 		return query(
 			'INSERT INTO plugins (name) VALUES ($1)',
 			[plugin.name],
@@ -178,7 +180,7 @@ module.exports = {
 						}
 						if(params.length > 0){
 							sql = sql.substring(0, sql.length-2);
-							return query(sql, params, onSuccess, logAndFail);
+							return query(sql, params, function(){onSuccess(plugin);}, logAndFail);
 						}
 					},
 					logAndFail
