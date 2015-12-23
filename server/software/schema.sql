@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
 	FOREIGN KEY("nfcID") REFERENCES nfcs("nfcID")
 );
 
-CREATE TABLE IF NOT EXISTS "proxySystem" (
+CREATE TABLE IF NOT EXISTS "proxySystems" (
 	"systemID" SERIAL PRIMARY KEY,
 	name VARCHAR(64) NOT NULL,
 	UNIQUE(name)
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS "proxyUsers" (
 	"systemID" INT NOT NULL,
 	"userID" INT NOT NULL,
 	"proxyUserID" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("systemID") REFERENCES "proxySystem"("systemID"),
+	FOREIGN KEY("systemID") REFERENCES "proxySystems"("systemID"),
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
@@ -75,6 +75,13 @@ CREATE TABLE IF NOT EXISTS logs (
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
+CREATE TABLE IF NOT EXISTS "clientTypes" (
+	"clientTypeID" SERIAL PRIMARY KEY,
+	"pluginID" INT NULL,
+	"name" VARCHAR(128) NOT NULL,
+	FOREIGN KEY("pluginID") REFERENCES plugins("pluginID")
+);
+
 CREATE TABLE IF NOT EXISTS clients (
 	"clientID" SERIAL PRIMARY KEY,
 	"clientTypeID" INT NULL,
@@ -88,13 +95,6 @@ CREATE TABLE IF NOT EXISTS "clientPluginOptions" (
 	"optionValue" VARCHAR(128) NOT NULL,
 	FOREIGN KEY("clientID") REFERENCES clients("clientID"),
 	FOREIGN KEY("optionID") REFERENCES "pluginOptions"("pluginOptionID")
-)
-
-CREATE TABLE IF NOT EXISTS "clientTypes" (
-	"clientTypeID" SERIAL PRIMARY KEY,
-	"pluginID" INT NULL,
-	"name" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("pluginID") REFERENCES plugins("pluginID")
 );
 
 INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');

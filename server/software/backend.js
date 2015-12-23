@@ -139,7 +139,6 @@ module.exports = {
 			'WHERE "userID" = $5';
 		var params = [user.email, user.firstName, user.lastName, user.joinDate, user.userID];
 		
-		if(user.lastName == 'Canare') console.log(params);
 		return query(sql, params, onSuccess, onFailure);
 	},
 
@@ -152,6 +151,10 @@ module.exports = {
 	},
 	
 	registerPlugin: function(plugin, onSuccess, onFailure){
+		var logAndFail = function(msg){
+			console.error("Failed to register plugin (" + plugin + "): " + msg);
+			if(onFailure) onFailure();
+		};
 		return query(
 			'INSERT INTO plugins (name) VALUES ($1)',
 			[plugin.name],
@@ -175,13 +178,13 @@ module.exports = {
 						}
 						if(params.length > 0){
 							sql = sql.substring(0, sql.length-2);
-							return query(sql, params, onSuccess, onFailure);
+							return query(sql, params, onSuccess, logAndFail);
 						}
 					},
-					onFailure
+					logAndFail
 				);
 			},
-			onFailure
+			logAndFail
 		);
 	},
 	
