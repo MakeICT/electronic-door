@@ -2,13 +2,6 @@
 
 Here's a list of todos for the server software. These are in no specific order.
 
-1. WildApricot Plugin
-	* On install, add "WildApricot" to Proxy system list
-	* On sync, users in our system should have corresponding record in "proxyUsers" table
-1. Automated backup plugin
-	* Dump SQL
-	* Zip it up
-	* Upload to MakeICT drive (see https://github.com/MakeICT/electronic-door/blob/master/backup-database.sh)
 1. Alarm system plugin for integration with VistaICM from Honeywell
 	* For messages TO Vista, see: https://github.com/MakeICT/electronic-door/blob/master/vista
 	* For messages FROM Vista, see: https://github.com/MakeICT/electronic-door/blob/master/alerter

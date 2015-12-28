@@ -136,6 +136,7 @@ module.exports = {
 							};
 							backend.getUserByProxyID('WildApricot', contact.Id, transaction);
 						}
+						console.log("WildApricot sync done (probably (I dunno, it's async...))");
 					});
 				});
 			});
