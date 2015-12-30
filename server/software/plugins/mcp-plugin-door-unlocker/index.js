@@ -1,4 +1,4 @@
-superSerial = null;
+var superSerial = require('../mcp-plugin-super-serial');
 
 module.exports = {
 	name: 'Door Unlocker',
@@ -16,10 +16,15 @@ module.exports = {
 			'Unlock duration': 'number',
 		},
 		actions: {
-			'Unlock': function(client){
-				superSerial.send(client.id, 0x01, client.options['unlockDuration']);
-			}, 'Lock': function(){
-				superSerial.send(client.id, 0x02);
+			'Unlock': function(client, callback){
+				superSerial.send(client.clientID, 0x01, client.options['unlockDuration']);
+				
+				if(callback) callback();
+			},
+			'Lock': function(client, callback){
+				superSerial.send(client.clientID, 0x02);
+				
+				if(callback) callback();
 			},
 		},
 	},

@@ -8,8 +8,6 @@ var api = {
 	
 	connect: function(next){
 		backend.getPluginOptions('Wild Apricot Sync', function(settings){
-			settings = backend.regroup(settings, 'name', 'value');
-
 			api.apiKey = settings['API key'];
 			api.accountID = settings['Account ID'];
 
@@ -96,8 +94,6 @@ module.exports = {
 		'Sync Now': function(){
 			console.log('Starting sync...');
 			backend.getPluginOptions(this.name, function(settings){
-				settings = backend.regroup(settings, 'name', 'value');
-				
 				api.connect(function(token){
 					api.get('contacts?$async=false', null, function(data){
 						var contacts = JSON.parse(data)['Contacts'];

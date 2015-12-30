@@ -236,6 +236,14 @@ module.exports = {
 	},
 	
 	getPluginOptions: function(pluginName, onSuccess, onFailure){
+		return this._getPluginOptions(pluginName, false, onSuccess, onFailure);
+	},
+	
+	getOrderedPluginOptions: function(pluginName, onSuccess, onFailure){
+		return this._getPluginOptions(pluginName, true, onSuccess, onFailure);
+	},
+	
+	_getPluginOptions: function(pluginName, leaveOrdered, onSuccess, onFailure){
 		var sql = 
 			'SELECT ' +
 			'	"pluginOptions"."name", ' +
@@ -248,11 +256,14 @@ module.exports = {
 			'ORDER BY ordinal ';
 		
 		var self = this;
-		var preProcess = function(data){
-			onSuccess(self.regroup(data, 'name', 'value'));
-		};
+		var process = onSuccess;
 		
-		return query(sql, [pluginName], onSuccess, onFailure);
+		if(!leaveOrdered){
+			process = function(data){
+				onSuccess(self.regroup(data, 'name', 'value'));
+			};
+		}
+		return query(sql, [pluginName], process, onFailure);
 	},
 	
 	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
@@ -348,13 +359,13 @@ module.exports = {
 		;
 	},
 	
-	getClientActions: function(clientID, onSuccess, onFailure){
-		var query = 
-			'SELECT * ' +
-			'	* ' + 
-			'FROM clients ' + 
-			'	LEFT JOIN "clientPluginAssociations" ' + 
-			'WHERE clients."clientID" = $1 ';
-		return query('SELECT * FROM clients JOIN "clientPlugin', null, onSuccess, onFailure);
+	addClient: function(name, onSuccess, onFailure){
+		var sql = 'INSERT INTO clients (name) VALUES ($1)';
+		return query(sql, [name], onSuccess, onFailure);
+	},
+	
+	associateClientPlugin: function(clientID, pluginID, onSuccess, onFailure){
+		var sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES ($1, $2)';
+		return query(sql, [clientID, pluginID], onSuccess, onFailure);
 	},
 };

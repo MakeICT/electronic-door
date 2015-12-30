@@ -73,8 +73,6 @@ module.exports = {
 	actions: {
 		'Backup Now': function(){
 			backend.getPluginOptions('Google Drive Backup', function(settings){
-				settings = backend.regroup(settings, 'name', 'value');
-			
 				tmp.file(function(err, tmpFilePath, fd, cleanupCallback){
 					var options = {
 						'env': { 

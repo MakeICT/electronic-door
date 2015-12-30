@@ -1,6 +1,7 @@
-// Flag	Packet Length	Transaction ID	From Address	To Address	Function	Data		CRC		Flag
-// 0x7E	8-bit			8-bit			8-bit			8-bit		8-bit		variable	16-bit	0x7E
 
+
+var backend = require('../../backend.js');
+var SerialPort = require("serialport").SerialPort;
 
 var serialPort;
 var transactionCount = 0;
@@ -19,15 +20,21 @@ module.exports = {
 		'flowControl': 'boolean',
 		'bufferSize': 'number',
 	},
-
+	
 	actions: {
 		'Connect': function(callback){
-			serialPort = new require("serialport").SerialPort(
-				options['Port'], { baudrate: options['Baud'] }, true, callback
-			);
+			var onConnected = function(error){
+				if(error){
+					console.log(error);
+				}else{
+					callback();
+				}
+			};
+			backend.getPluginOptions('Super Serial', function(settings){
+				serialPort = new SerialPort(settings['Port'], {baudrate: settings['Baud']}, true, onConnected);
+			});
 		},
-		'Disconnect': function(){
-		}
+		'Disconnect': function(callback){},
 	},
 	
 	onInstall: function(){
@@ -38,18 +45,43 @@ module.exports = {
 	},
 	
 	onEnable: function(){
+		this.actions['Connect'](function(){console.log('Serial connected!');});
 	},
 	
 	onDisable: function(){
+		console.log('Disabled');
 	},
 	
 	send: function(clientID, command, payload, callback){
-		// @TODO: figure out auto-reconnect
-		if(!serialPort || !serialPort.isOpen()){
-			console.err('Not connected');
+		if(serialPort == null || !serialPort.isOpen()){
+			// @TODO: figure out auto-reconnect
+			console.error('Not connected');
 		}else{
-			var packet = [0x7e, 7 + length(payload), transactionCount++, 0x0, clientID, command, 0xFFFF, 0x7e];
-			serialPort.write(packet, callback);
+			payload = [1, 2, 3, 4, 0x7E, 5, 6, 7, 0x7D, 8, 9, 10];
+			if(!(payload instanceof Array)){
+				payload = [payload];
+			}
+			for(var i=0; i<payload.length; i++){
+				if(!payload[i]) payload[i] = 0;
+				if(payload[i] == 0x7D || payload[i] == 0x7E){
+					payload.splice(i, 0, 0x7D);
+					i++;
+				}
+			}
+			var header = [0x7E, 7 + payload.length, transactionCount++, 0x0, clientID, command];
+			var footer = [0xFFFF, 0x7E];
+			var packet = header.concat(payload).concat(footer);
+			
+			console.log("Packet = " + packet);
+			
+			serialPort.write("test", function(error, results){
+				if(error){
+					console.log("ERROR: " + error);
+				}else{
+					console.log(results);
+					if(callback) callback();
+				}
+			});
 		}
 	}
 

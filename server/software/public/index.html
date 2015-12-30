@@ -27,14 +27,14 @@
 				$scope.clients = {};
 				
 				$http.get('/plugins').success(function(plugins){
-					for(var i=0; i<plugins.length; i++){
-						var plugin = plugins[i];
-						$scope.plugins[plugin.name] = plugin;
+					for(var pluginName in plugins){
+						var plugin = plugins[pluginName];
+						$scope.plugins[pluginName] = plugin;
 
 						var attachOptions = function(response){
 							$scope.plugins[response.plugin].options = response.options;
 						};
-						$http.get('/plugins/' + plugins[i].name + '/options').success(attachOptions);
+						$http.get('/plugins/' + pluginName + '/options').success(attachOptions);
 					}
 				});
 
@@ -129,17 +129,30 @@
 				$scope.doPluginAction = function(plugin, action){
 					$http.post('/plugins/' + plugin.name + '/actions/' + action).success(function(response){
 						if(response != ''){
-							alert('Failed to save option:\n' + response);
+							alert('Failed to perform plugin action:\n' + response);
 						}
 					});
 				};
+				
+				$scope.createClientPluginAssociation = function(client, pluginName){
+					$http.post('/clients/' + client.clientID + '/pluginAssociations/' + pluginName).success(function(response){
+						console.log("associated!");
+					});
+				};
+				
+				$scope.doClientPluginAction = function(client, plugin, action){
+					console.log(plugin);
+					$http.post('/clients/' + client.clientID + '/plugins/' + plugin.name + '/actions/' + action).success(function(response){
+						if(response != ''){
+							alert('Failed to perform client action:\n' + response);
+						}
+					});
+				};
+
 			})
 			.filter('memberSinceHumanReadable', function(){
 				return function(memberSinceUnix){
 					var memberSinceUnixMM = new Date(memberSinceUnix * 1000);
-					// console.log("DEBUG");
-					// console.log(memberSinceUnix);
-					// console.log(memberSinceUnixMM);
 					var humanDate = memberSinceUnixMM.toISOString(); // Returns "2013-05-31T11:54:44.000Z"
 					var monthList = ["January" , "February" , "March" , "April" , "May" , "June" , "July" , "August" , "September" , "October" , "November" , "December"]
 					var month = (monthList[(Math.floor(humanDate.substring(5,7))-1)]);
@@ -152,14 +165,8 @@
 			.filter('memberForHumanReadable', function(){
 				return function(memberSinceUnix){
 					var currentUnixTime = Math.round((new Date()).getTime() / 1000);
-					// console.log("currentUnixTime");
-					// console.log(currentUnixTime);
 					var memberForUnix = currentUnixTime - memberSinceUnix;
-					// console.log("memberForUnix");
-					// console.log(memberForUnix);
 					var memberForDays = Math.floor(memberForUnix / 86400);
-					// console.log("memberForDays");
-					// console.log(memberForDays);
 					return memberForDays;
 				}
 			});
@@ -313,12 +320,29 @@
 									<td>Name:</td>
 									<td><input type="text" ng-model="client.name" /></td>
 								</tr>
-								<tr ng-repeat="option in client.options">
-									<td>{{option.name}}</td>
-									<td><input ng-model="option.value" ng-change="saveClientOption(client, option)" type="text"></td>
+								<tr>
+									<td>Plugins:</td>
+									<td>
+										<select ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+											<option disabled selected hidden value=""> - Bind new plugin - </option>
+											<option ng-repeat="plugin in plugins" value="{{plugin.pluginID}}">{{plugin.name}}</option>
+										</select>
+									</td>
 								</tr>
+								<tbody ng-repeat="plugin in client.plugins">
+									<tr>
+										<th colspan="2">{{plugin.name}}</th>
+									</tr>
+									<tr ng-repeat="option in plugin.options">
+										<td>{{option.name}}</td>
+										<td><input type="text" ng-model="option.value"/></td>
+									</tr>
+									<tr>
+										<td colspan="2">
+											<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
+										</td>
+								</tbody>
 							</table><br/>
-
 						</div>
 					</tab>
 					<tab heading="Activity Log" id="log-tab">
