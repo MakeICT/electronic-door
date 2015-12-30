@@ -13,7 +13,7 @@ backend.getPlugins(function(pluginList){
 		var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
 		var found = false;
 		for(var j=0; j<pluginList.length; j++){
-			if(pluginList[j].name == pluginFolders[i]){
+			if(pluginList[j].name == plugin.name){
 				found = true;
 				break;
 			}

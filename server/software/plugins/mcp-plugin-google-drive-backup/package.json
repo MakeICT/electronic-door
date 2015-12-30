@@ -1,5 +1,5 @@
 {
-  "name": "mcp-plugin-serialClientUnlocker",
+  "name": "mcp-plugin-google-drive-backup",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,6 +9,8 @@
   "author": "Dominic Canare <dom@makeict.org>",
   "license": "GPL",
   "dependencies": {
-    "serialport": "^2.0.5"
+    "google-auth-library": "^0.9.7",
+    "googleapis": "^2.1.7",
+    "tmp": "0.0.28"
   }
 }
