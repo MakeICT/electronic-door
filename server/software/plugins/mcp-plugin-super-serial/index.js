@@ -1,5 +1,3 @@
-
-
 var backend = require('../../backend.js');
 var SerialPort = require("serialport").SerialPort;
 
@@ -27,7 +25,8 @@ module.exports = {
 				if(error){
 					console.log(error);
 				}else{
-					callback();
+					console.log('Serial connected!');
+					if(callback) callback();
 				}
 			};
 			backend.getPluginOptions('Super Serial', function(settings){
@@ -45,7 +44,7 @@ module.exports = {
 	},
 	
 	onEnable: function(){
-		this.actions['Connect'](function(){console.log('Serial connected!');});
+		this.actions['Connect']();
 	},
 	
 	onDisable: function(){
@@ -58,7 +57,9 @@ module.exports = {
 			console.error('Not connected');
 		}else{
 			payload = [1, 2, 3, 4, 0x7E, 5, 6, 7, 0x7D, 8, 9, 10];
-			if(!(payload instanceof Array)){
+			if(!payload){
+				payload = [];
+			}else if(!(payload instanceof Array)){
 				payload = [payload];
 			}
 			for(var i=0; i<payload.length; i++){

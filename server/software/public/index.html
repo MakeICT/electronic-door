@@ -29,6 +29,7 @@
 				$http.get('/plugins').success(function(plugins){
 					for(var pluginName in plugins){
 						var plugin = plugins[pluginName];
+						console.log(plugin);
 						$scope.plugins[pluginName] = plugin;
 
 						var attachOptions = function(response){
@@ -135,8 +136,9 @@
 				};
 				
 				$scope.createClientPluginAssociation = function(client, pluginName){
-					$http.post('/clients/' + client.clientID + '/pluginAssociations/' + pluginName).success(function(response){
+					$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
 						console.log("associated!");
+						window.location.reload();
 					});
 				};
 				
@@ -325,7 +327,7 @@
 									<td>
 										<select ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
 											<option disabled selected hidden value=""> - Bind new plugin - </option>
-											<option ng-repeat="plugin in plugins" value="{{plugin.pluginID}}">{{plugin.name}}</option>
+											<option ng-repeat="plugin in plugins" value="{{plugin.name}}">{{plugin.name}}</option>
 										</select>
 									</td>
 								</tr>
@@ -370,7 +372,7 @@
 									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="text"></td>
 								</tr>
 							</table><br/>
-							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doPluginAction(plugin, action)">{{action}}</button>
+							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 						</div>
 					</tab>
 				</tabset>

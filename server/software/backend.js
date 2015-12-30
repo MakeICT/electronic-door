@@ -152,7 +152,6 @@ module.exports = {
 	},
 	
 	registerPlugin: function(plugin, onSuccess, onFailure){
-		console.log("registering plugin...");
 		var logAndFail = function(msg){
 			console.error("Failed to register plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
@@ -166,8 +165,7 @@ module.exports = {
 					'SELECT "pluginID" FROM plugins WHERE name = $1',
 					[plugin.name],
 					function(rows){
-						plugin.id = rows[0].pluginID;
-						console.log("Options: " + Object.keys(plugin.options).length);
+						plugin.pluginID = rows[0].pluginID;
 						if(Object.keys(plugin.options).length > 0){
 							var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ';
 							var ordinal = 0;
@@ -177,7 +175,7 @@ module.exports = {
 								params.push(key);
 								params.push(plugin.options[key]);
 								params.push(ordinal);
-								params.push(plugin.id);
+								params.push(plugin.pluginID);
 								
 								ordinal++;
 							}
@@ -195,9 +193,7 @@ module.exports = {
 	},
 	
 	registerClientPlugin: function(plugin, onSuccess, onFailure){
-		console.log("blah 1");
 		this.registerPlugin(plugin, function(){
-			console.log('blah');
 			return query(
 				'SELECT "pluginID" FROM plugins WHERE name = $1',
 				[plugin.name],
@@ -215,7 +211,6 @@ module.exports = {
 						
 						ordinal++;
 					}
-					console.log(params);
 					if(params.length > 0){
 						sql = sql.substring(0, sql.length-2);
 						return query(sql, params, function(){onSuccess(plugin);}, onFailure);

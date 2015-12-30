@@ -1,5 +1,8 @@
 var superSerial = require('../mcp-plugin-super-serial');
 
+// this is only needed for backend.regroup convenience
+var backend = require('../../backend.js');
+
 module.exports = {
 	name: 'Door Unlocker',
 	options: {},
@@ -17,7 +20,10 @@ module.exports = {
 		},
 		actions: {
 			'Unlock': function(client, callback){
-				superSerial.send(client.clientID, 0x01, client.options['unlockDuration']);
+				// regroup the options by key/value pairs for easy lookup
+				var options = backend.regroup(client.plugins['Door Unlocker'].options, 'name', 'value');
+				
+				superSerial.send(client.clientID, 0x01, options['unlockDuration']);
 				
 				if(callback) callback();
 			},
@@ -33,7 +39,6 @@ module.exports = {
 	},
 
 	onUninstall: function(){
-		
 	},
 	
 	onEnable: function(){

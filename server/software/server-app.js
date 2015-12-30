@@ -56,13 +56,6 @@ server.post('/users', function (request, response, next) {
  * Plugins
  **/
 server.get('/plugins', function (request, response, next) {
-	backend.getPlugins(function(pluginsInDB){
-		for(var i=0; i<pluginsInDB.length; i++){
-			pluginsInDB[i].actions = Object.keys(plugins[pluginsInDB[i].name].actions);
-			pluginsInDB[i].clientDetails = plugins.clientDetails;
-		}
-		response.send(pluginsInDB);
-	});
 	response.send(plugins);
 	return next();
 });
@@ -131,17 +124,22 @@ server.get('/clients', function (request, response, next) {
 	return next();
 });
 
-server.post('/clients/:clientID/pluginAssociations/:pluginID', function (request, response, next) {
+server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	// @TODO: change this to plugin name instead of plugin ID and /clients/:clientID/plugins/:pluginName
-	backend.associateClientPlugin(request.params.clientID, request.params.pluginID, function(){response.send();});	
+	var pluginID = plugins[request.params.pluginName].pluginID;
+	var addOptionsAndActions = function(){
+		loadClients(function(){
+			response.send();
+		});
+	};
+	backend.associateClientPlugin(request.params.clientID, pluginID, addOptionsAndActions);	
 	return next();
 });
 
 server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
 	var client = clients[request.params.clientID];
 	var plugin = plugins[request.params.pluginName];
-	var action = request.params.action;
-	action = plugin['clientDetails']['actions'][action];
+	var action = plugin['clientDetails']['actions'][request.params.action];
 	
 	action(client, function(){ response.send(); });
 	
@@ -189,7 +187,20 @@ io.sockets.on('connection', function (socket) {
 
 
 
-
+function loadClients(callback){
+	backend.getClients(function(clientList){
+		for(var i=0; i<clientList.length; i++){
+			var client = clientList[i];
+			
+			clients[client.clientID] = client;
+			
+			for(var pluginName in client.plugins){
+				client.plugins[pluginName].actions = Object.keys(plugins[pluginName].clientDetails.actions);
+			}
+			callback();
+		}
+	});
+}
 
 function loadData(){
 	// Load plugins
@@ -201,9 +212,11 @@ function loadData(){
 	backend.getPlugins(function(pluginList){
 		for(var i=0; i<pluginFolders.length; i++){
 			var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
+			plugin.actionNames = Object.keys(plugin.actions);
 			var found = false;
 			for(var j=0; j<pluginList.length; j++){
 				if(pluginList[j].name == plugin.name){
+					plugin.pluginID = pluginList[j].pluginID;
 					found = true;
 					break;
 				}
@@ -223,19 +236,7 @@ function loadData(){
 		}
 		
 	// Load clients
-		backend.getClients(function(clientList){
-			for(var i=0; i<clientList.length; i++){
-				var client = clientList[i];
-				
-				clients[client.clientID] = client;
-				
-				for(var pluginName in client.plugins){
-					client.plugins[pluginName].actions = Object.keys(plugins[pluginName].clientDetails.actions);
-				}
-			}
-
-			startServer();
-		});
+		loadClients(startServer);
 	});
 }
 
