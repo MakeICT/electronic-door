@@ -2,7 +2,9 @@
 
 if [ "$(id -u)" != "0" ]; then
 	echo "Sorry, you are not root :("
-	exit 1
+	echo "Lemme help you out..."
+	sudo $0 $@
+	exit $?
 fi
 
 #########################
@@ -31,8 +33,8 @@ fi
 #############################
 # Setup EXIM4 to send emails
 #############################
-read -p "Install exim4 for email alerts? [Y/n]: " response
-if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
+read -p "Install exim4 for email alerts? [y/N]: " response
+if [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	echo -e "\nSetting up email for alerts..."
 	echo -e "\n**** Configuration Notes ****"
 	echo "		Type: mail sent by smarthost; received via SMTP or fetchmail"
