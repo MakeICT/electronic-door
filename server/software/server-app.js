@@ -19,10 +19,15 @@ backend.getPlugins(function(pluginList){
 			}
 		}
 		if(!found){
-			backend.registerPlugin(plugin, function(plugin){
+			var onRegistered = function(plugin){
 				console.log('Plugin registered: ' + plugin.name);
 				plugin.onInstall();
-			});
+			};
+			if(plugin.clientDetails){
+				backend.registerClientPlugin(plugin, onRegistered);
+			}else{
+				backend.registerPlugin(plugin, onRegistered);
+			}
 		}
 		plugins[plugin.name] = plugin;
 	}

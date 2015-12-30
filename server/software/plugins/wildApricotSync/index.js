@@ -7,7 +7,7 @@ var api = {
 	token: null,
 	
 	connect: function(next){
-		backend.getPluginOptions('wildApricotSync', function(settings){
+		backend.getPluginOptions('Wild Apricot Sync', function(settings){
 			settings = backend.regroup(settings, 'name', 'value');
 
 			api.apiKey = settings['API key'];
@@ -86,7 +86,7 @@ var api = {
 
 
 module.exports = {
-	name: 'wildApricotSync',
+	name: 'Wild Apricot Sync',
 	options: {
 		'API key': 'text',
 		'Account ID': 'text',
@@ -95,7 +95,7 @@ module.exports = {
 	actions: {
 		'Sync Now': function(){
 			console.log('Starting sync...');
-			backend.getPluginOptions('wildApricotSync', function(settings){
+			backend.getPluginOptions(this.name, function(settings){
 				settings = backend.regroup(settings, 'name', 'value');
 				
 				api.connect(function(token){

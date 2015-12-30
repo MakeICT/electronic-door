@@ -50,14 +50,14 @@ function getNewToken(oauth2Client, callback) {
 				return;
 			}
 			oauth2Client.credentials = token;
-			backend.setPluginOption('googleDriveBackup', 'Token', token);
+			backend.setPluginOption('Google Drive Backup', 'Token', token);
 			callback(oauth2Client);
 		});
 	});
 }
 
 module.exports = {
-	name: 'googleDriveBackup',
+	name: 'Google Drive Backup',
 	
 	// @TODO: hide fields that should be hidden (like Token)
 	// @TODO: add read-only field for displaying authorized account name
@@ -72,7 +72,7 @@ module.exports = {
 	// @TODO: add action to set/clear authorization token
 	actions: {
 		'Backup Now': function(){
-			backend.getPluginOptions('googleDriveBackup', function(settings){
+			backend.getPluginOptions('Google Drive Backup', function(settings){
 				settings = backend.regroup(settings, 'name', 'value');
 			
 				tmp.file(function(err, tmpFilePath, fd, cleanupCallback){

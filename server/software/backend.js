@@ -152,6 +152,7 @@ module.exports = {
 	},
 	
 	registerPlugin: function(plugin, onSuccess, onFailure){
+		console.log("registering plugin...");
 		var logAndFail = function(msg){
 			console.error("Failed to register plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
@@ -165,22 +166,25 @@ module.exports = {
 					'SELECT "pluginID" FROM plugins WHERE name = $1',
 					[plugin.name],
 					function(rows){
-						var pluginID = rows[0].pluginID;
-						var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ';
-						var ordinal = 0;
-						var params = [];
-						for(var key in plugin.options){
-							sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
-							params.push(key);
-							params.push(plugin.options[key]);
-							params.push(ordinal);
-							params.push(pluginID);
-							
-							ordinal++;
-						}
-						if(params.length > 0){
+						plugin.id = rows[0].pluginID;
+						console.log("Options: " + Object.keys(plugin.options).length);
+						if(Object.keys(plugin.options).length > 0){
+							var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ';
+							var ordinal = 0;
+							var params = [];
+							for(var key in plugin.options){
+								sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
+								params.push(key);
+								params.push(plugin.options[key]);
+								params.push(ordinal);
+								params.push(plugin.id);
+								
+								ordinal++;
+							}
 							sql = sql.substring(0, sql.length-2);
 							return query(sql, params, function(){onSuccess(plugin);}, logAndFail);
+						}else{
+							onSuccess(plugin);
 						}
 					},
 					logAndFail
@@ -188,6 +192,39 @@ module.exports = {
 			},
 			logAndFail
 		);
+	},
+	
+	registerClientPlugin: function(plugin, onSuccess, onFailure){
+		console.log("blah 1");
+		this.registerPlugin(plugin, function(){
+			console.log('blah');
+			return query(
+				'SELECT "pluginID" FROM plugins WHERE name = $1',
+				[plugin.name],
+				function(rows){
+					var pluginID = rows[0].pluginID;
+					var sql = 'INSERT INTO "clientPluginOptions" (name, type, ordinal, "pluginID") VALUES ';
+					var ordinal = 0;
+					var params = [];
+					for(var key in plugin.clientDetails['options']){
+						sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
+						params.push(key);
+						params.push(plugin.clientDetails['options'][key]);
+						params.push(ordinal);
+						params.push(pluginID);
+						
+						ordinal++;
+					}
+					console.log(params);
+					if(params.length > 0){
+						sql = sql.substring(0, sql.length-2);
+						return query(sql, params, function(){onSuccess(plugin);}, onFailure);
+					}
+				},
+				onFailure
+			);
+			
+		}, onFailure);
 	},
 	
 	addProxySystem: function(systemName, onSuccess, onFailure){

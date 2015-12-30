@@ -1,0 +1,14 @@
+{
+  "name": "mcp-plugin-serialClientUnlocker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dominic Canare <dom@makeict.org>",
+  "license": "GPL",
+  "dependencies": {
+    "serialport": "^2.0.5"
+  }
+}

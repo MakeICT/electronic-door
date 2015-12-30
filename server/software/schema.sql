@@ -5,7 +5,7 @@
 CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
 CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
 
-CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'hidden', 'password');
+CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'boolean', 'hidden', 'password');
 
 CREATE TABLE IF NOT EXISTS nfcs (
 	"nfcID" SERIAL PRIMARY KEY,
@@ -90,11 +90,22 @@ CREATE TABLE IF NOT EXISTS clients (
 );
 
 CREATE TABLE IF NOT EXISTS "clientPluginOptions" (
-	"clientID" INT NULL,
-	"optionID" INT NULL,
+	"clientPluginOptionID" SERIAL PRIMARY KEY,
+	"pluginID" INT NOT NULL,
+	"name" VARCHAR(128) NOT NULL,
+	"type" DATA_TYPE NOT NULL DEFAULT 'text',
+	"ordinal" INT NOT NULL,
+	UNIQUE("pluginID", "name"),
+	UNIQUE("pluginID", "ordinal"),
+	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID")
+);
+
+CREATE TABLE IF NOT EXISTS "clientPluginOptionValues" (
+	"clientID" INT NOT NULL,
+	"clientPluginOptionID" INT NOT NULL,
 	"optionValue" VARCHAR(128) NOT NULL,
 	FOREIGN KEY("clientID") REFERENCES clients("clientID"),
-	FOREIGN KEY("optionID") REFERENCES "pluginOptions"("pluginOptionID")
+	FOREIGN KEY("clientPluginOptionID") REFERENCES "clientPluginOptions"("clientPluginOptionID")
 );
 
 INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
