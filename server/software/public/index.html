@@ -24,6 +24,8 @@
 			var app = angular.module('electronic-door', ['ui.bootstrap']);
 			angular.module('electronic-door').controller('controller', function($scope, $http){
 				$scope.plugins = {};
+				$scope.clients = {};
+				
 				$http.get('/plugins').success(function(plugins){
 					for(var i=0; i<plugins.length; i++){
 						var plugin = plugins[i];
@@ -33,6 +35,13 @@
 							$scope.plugins[response.plugin].options = response.options;
 						};
 						$http.get('/plugins/' + plugins[i].name + '/options').success(attachOptions);
+					}
+				});
+
+				$http.get('/clients').success(function(clients){
+					for(var clientName in clients){
+						var client = clients[clientName];
+						$scope.clients[client.clientName] = client;
 					}
 				});
 
@@ -293,7 +302,24 @@
 					</tab>
 					<tab heading="Clients" id="clients-tab">
 						<h2>Clients</h2>
-						<p>Options and commands for connected readers, door controls, buzzers, relays, etc</p>
+						<div ng-repeat="client in clients" class="well pull-left">
+							<h3>{{client.name}}</h3>
+							<table>
+								<tr>
+									<td>ID:</td>
+									<td><input type="text" ng-model="client.clientID" /></td>
+								</tr>
+								<tr>
+									<td>Name:</td>
+									<td><input type="text" ng-model="client.name" /></td>
+								</tr>
+								<tr ng-repeat="option in client.options">
+									<td>{{option.name}}</td>
+									<td><input ng-model="option.value" ng-change="saveClientOption(client, option)" type="text"></td>
+								</tr>
+							</table><br/>
+
+						</div>
 					</tab>
 					<tab heading="Activity Log" id="log-tab">
 						<h2>Activity Log</h2>

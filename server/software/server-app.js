@@ -8,6 +8,8 @@ var pluginFolders = fs.readdirSync('./plugins').filter(function(file) {
 	return fs.statSync(path.join('./plugins', file)).isDirectory();
 });
 var plugins = {};
+var clients = {};
+
 backend.getPlugins(function(pluginList){
 	for(var i=0; i<pluginFolders.length; i++){
 		var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
@@ -30,6 +32,14 @@ backend.getPlugins(function(pluginList){
 			}
 		}
 		plugins[plugin.name] = plugin;
+	}
+});
+
+backend.getClients(function(clientList){
+	for(var i=0; i<clientList.length; i++){
+		var client = clientList[i];
+		
+		clients[client.name] = client;
 	}
 });
 
@@ -81,7 +91,9 @@ server.post('/users', function (request, response, next) {
 	return next();
 });
 
-
+/**
+ * Plugins
+ **/
 server.get('/plugins', function (request, response, next) {
 	backend.getPlugins(function(pluginsInDB){
 		for(var i=0; i<pluginsInDB.length; i++){
@@ -145,6 +157,53 @@ server.post('/plugins/:plugin/actions/:action', function (request, response, nex
 	
 	return next();
 });
+
+
+/**
+ * Clients
+ **/
+server.get('/clients', function (request, response, next) {
+	response.send(clients);
+	
+	return next();
+});
+
+
+// @TODO: check this
+server.get('/clients/:name/options', function (request, response, next) {
+	backend.getClientOptions(request.params.name, function(options){
+		response.send(
+			{
+				'client': request.params.name,
+				'options': options,
+			}
+		);
+	});
+	
+	return next();
+});
+
+server.put('/clients/:client/options/:option', function (request, response, next) {
+	backend.setClientOption(
+		request.params.client, request.params.option, request.params.value,
+		function(){
+			response.send();
+		},
+		function(error){
+			response.send(error.detail);
+		}
+	);
+	
+	return next();
+});
+
+server.post('/clients/:client/actions/:action', function (request, response, next) {
+	clients[request.params.client].actions[request.params.action]();
+	
+	return next();
+});
+
+
 
 
 /**

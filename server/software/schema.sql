@@ -75,18 +75,17 @@ CREATE TABLE IF NOT EXISTS logs (
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
-CREATE TABLE IF NOT EXISTS "clientTypes" (
-	"clientTypeID" SERIAL PRIMARY KEY,
-	"pluginID" INT NULL,
-	"name" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("pluginID") REFERENCES plugins("pluginID")
-);
-
 CREATE TABLE IF NOT EXISTS clients (
 	"clientID" SERIAL PRIMARY KEY,
-	"clientTypeID" INT NULL,
-	"clientName" VARCHAR(128) NOT NULL,
-	 FOREIGN KEY("clientTypeID") REFERENCES "clientTypes"("clientTypeID")
+	"name" VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "clientPluginAssociations" (
+	"clientID" INT NOT NULL,
+	"pluginID" INT NOT NULL,
+	FOREIGN KEY("clientID") REFERENCES "clients"("clientID"),
+	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID"),
+	PRIMARY KEY("clientID", "pluginID")
 );
 
 CREATE TABLE IF NOT EXISTS "clientPluginOptions" (
@@ -114,3 +113,4 @@ INSERT INTO users ("firstName", "lastName", "email", "status") VALUES
 	('User 2', 'Test', 'test2@makeict.org', 'active');
 -- INSERT INTO proxy_system ("name") VALUES ('WildApricot');
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
+INSERT INTO clients ("name") VALUES ('Dummy client');

@@ -290,5 +290,71 @@ module.exports = {
 			},
 			onFailure
 		);
-	}
+	},
+	
+	getClients: function(onSuccess, onFailure){
+		var sql = 
+			'SELECT ' +
+			'	clients."clientID", ' + 
+			'	clients.name AS "clientName", ' + 
+			'	plugins.name AS "pluginName", ' + 
+			'	"clientPluginOptions".name AS "optionName", ' + 
+			'	"clientPluginOptions".type AS "optionType", ' + 
+			'	"clientPluginOptionValues"."optionValue" AS "optionValue" ' + 
+			'FROM clients ' + 
+			'	LEFT JOIN "clientPluginAssociations" ON clients."clientID" = "clientPluginAssociations"."clientID" ' +
+			'	LEFT JOIN "plugins" ON "clientPluginAssociations"."pluginID" = "plugins"."pluginID" ' + 
+			'	LEFT JOIN "clientPluginOptions" ON "plugins"."pluginID" = "clientPluginOptions"."pluginID" ' + 
+			'	LEFT JOIN "clientPluginOptionValues" ON "clientPluginOptions"."clientPluginOptionID" = "clientPluginOptionValues"."clientPluginOptionID" ' + 
+			'		AND clients."clientID" = "clientPluginOptionValues"."clientID" ';
+		return query(
+			sql,
+			null,
+			function(rows){
+				var clients = [];
+				var currentClient = null;
+				var currentPlugin = null;
+				for(var i=0; i<rows.length; i++){
+					if(!currentClient || currentClient.clientID != rows[i].clientID){
+						currentClient = {
+							'clientID' : rows[i].clientID,
+							'name' : rows[i].clientName,
+							'plugins': {},
+						};
+						clients.push(currentClient);
+						
+						currentPlugin = null;
+					}
+					if(rows[i].pluginName){
+						if(!currentPlugin || currentPlugin.name != rows[i].pluginName){
+							currentPlugin = {
+								'name': rows[i].pluginName,
+								'options': [],
+							};
+							currentClient['plugins'][currentPlugin.name] = currentPlugin;
+						}
+					}
+					if(rows[i].optionName){
+						currentPlugin.options.push({
+							'name': rows[i].optionName,
+							'type': rows[i].optionType,
+							'value': rows[i].optionValue,
+						});
+					}
+				}
+				onSuccess(clients);
+			},
+			onFailure)
+		;
+	},
+	
+	getClientActions: function(clientID, onSuccess, onFailure){
+		var query = 
+			'SELECT * ' +
+			'	* ' + 
+			'FROM clients ' + 
+			'	LEFT JOIN "clientPluginAssociations" ' + 
+			'WHERE clients."clientID" = $1 ';
+		return query('SELECT * FROM clients JOIN "clientPlugin', null, onSuccess, onFailure);
+	},
 };
