@@ -56,7 +56,6 @@ module.exports = {
 			// @TODO: figure out auto-reconnect
 			console.error('Not connected');
 		}else{
-			payload = [1, 2, 3, 4, 0x7E, 5, 6, 7, 0x7D, 8, 9, 10];
 			if(!payload){
 				payload = [];
 			}else if(!(payload instanceof Array)){
