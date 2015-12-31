@@ -68,7 +68,8 @@ module.exports = {
 					i++;
 				}
 			}
-			var header = [0x7E, 7 + payload.length, transactionCount++, 0x0, clientID, command];
+//			var header = [0x7E, 7 + payload.length, transactionCount++, 0x0, clientID, command];
+			var header = [0x7E, 7 + payload.length, 0x0, clientID, command];
 			var footer = [0xFFFF, 0x7E];
 			var packet = header.concat(payload).concat(footer);
 			
