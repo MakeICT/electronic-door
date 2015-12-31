@@ -75,7 +75,7 @@ module.exports = {
 			
 			console.log("Packet = " + packet);
 			
-			serialPort.write("test", function(error, results){
+			serialPort.write(packet, function(error, results){
 				if(error){
 					console.log("ERROR: " + error);
 				}else{
