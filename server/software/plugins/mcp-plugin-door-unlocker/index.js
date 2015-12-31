@@ -22,7 +22,7 @@ module.exports = {
 			'Unlock': function(client, callback){
 				// regroup the options by key/value pairs for easy lookup
 				var options = backend.regroup(client.plugins['Door Unlocker'].options, 'name', 'value');
-				
+				if(options['unlockDuration'] == undefined) options['unlockDuration'] = 3;
 				superSerial.send(client.clientID, 0x01, options['unlockDuration']);
 				
 				if(callback) callback();
