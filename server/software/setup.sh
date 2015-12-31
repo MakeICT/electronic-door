@@ -12,6 +12,8 @@ fi
 #########################
 read -p "Drop and install database? [Y/n]: " response
 if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
+	apt-get install postgresql
+	
 	db_name=master_control_program
 	db_user=clu
 	db_password=$(openssl rand -base64 32)
@@ -28,6 +30,19 @@ if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	
 	echo "$db_user	$db_password" > $credentials_file
 	echo -e "Generated new credentials in $credentials_file\n"
+fi
+
+#############################
+# Node dependencies
+#############################
+read -p "Install node dependencies [Y/n]: " response
+if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
+	npm install
+	for plugin in plugins/*; do
+		cd $plugin
+		npm install
+		cd ../../
+	done
 fi
 
 #############################
