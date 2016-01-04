@@ -14,7 +14,7 @@ function updateStatuses(){
 	$waContacts = $waApiClient->get('contacts?$async=false');
 	$waActives = array();
 	foreach($waContacts as $contact){
-		if(!empty($contact['Status']) && ($contact['Status'] == 'Active' || $contact['Status'] == 'PendingRenewal'){
+		if(!empty($contact['Status']) && ($contact['Status'] == 'Active' || $contact['Status'] == 'PendingRenewal')){
 			$waActives[$contact['Email']] = $contact;
 		}
 	}
