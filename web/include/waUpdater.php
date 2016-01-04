@@ -4,7 +4,6 @@ require_once('config.php');
 require_once('Backend.php');
 require_once('WildApricotAPIClient.php');
 
-
 function updateStatuses(){
 	$backend = Backend::instance();
 	echo "Connecting...\n";
@@ -15,7 +14,7 @@ function updateStatuses(){
 	$waContacts = $waApiClient->get('contacts?$async=false');
 	$waActives = array();
 	foreach($waContacts as $contact){
-		if(!empty($contact['Status']) && $contact['Status'] == 'Active'){
+		if(!empty($contact['Status']) && ($contact['Status'] == 'Active' || $contact['Status'] == 'PendingRenewal'){
 			$waActives[$contact['Email']] = $contact;
 		}
 	}
