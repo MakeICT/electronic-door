@@ -30,7 +30,7 @@ void Ring::SetMode(byte m, uint32_t c, int p, int d)  {
      SetColor(c);
      SetPeriod(p);
    }
-   if (mode == M_SOLID)  {
+   if (m == M_SOLID)  {
       lightAll(c);
       pixels.show();
    }

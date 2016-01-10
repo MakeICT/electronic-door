@@ -6,5 +6,12 @@ vista/DOOR_CODE
 alerter/node_modules/
 logs/
 lcd/.build
-
+*.pyc
 *.swp
+*.swo
+*.swn
+*.s##
+*.b##
+*.brd.lck
+*.sch.lck
+.cli_history

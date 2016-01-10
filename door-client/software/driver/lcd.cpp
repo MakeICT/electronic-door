@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-LiquidCrystal lcd(5, 4, A2, A3, A4, A5);
+LiquidCrystal lcd(3, 4, A2, A3, A4, A5);
 
 LCD::LCD() {
   // initialize the library with the numbers of the interface pins
