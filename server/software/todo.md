@@ -2,9 +2,6 @@
 
 Here's a list of todos for the server software. These are in no specific order.
 
-1. Alarm system plugin for integration with VistaICM from Honeywell
-	* For messages TO Vista, see: https://github.com/MakeICT/electronic-door/blob/master/vista
-	* For messages FROM Vista, see: https://github.com/MakeICT/electronic-door/blob/master/alerter
 1. Messaging system
 	* Primary system and plugins should be able to broadcast and listen for messages
 	* atmosphere.js maybe?
