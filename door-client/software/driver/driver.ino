@@ -19,7 +19,7 @@
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
 #define PN532_SS_PIN      10      // SPI Slave Select pin
 #define SPEAKER_PIN       9       // Tone generation pin
-#define LATCH_PIN         3       // Digital pin to trigger door strike circuit
+#define LATCH_PIN         5       // Digital pin to trigger door strike circuit
 #define SSerialRX         6       // Serial Receive pin
 #define SSerialTX         7       // Serial Transmit pin
 #define SSerialTxControl  8       // RS485 Direction control
