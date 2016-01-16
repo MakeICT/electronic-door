@@ -151,6 +151,30 @@ module.exports = {
 		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], onSuccess, onFailure);
 	},
 	
+	addPluginOption: function(pluginName, optionName, type, onSuccess, onFailure){
+		return query(
+			'SELECT "pluginID" FROM plugins WHERE name = $1',
+			[pluginName],
+			function(rows){
+				var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ($1, $2, 999, $3)';
+				var params = [optionName, type, rows[0].pluginID];
+				return query(sql, params, onSuccess, onFailure);
+			}
+		);
+	},
+	
+	removePluginOption: function(pluginName, optionName, onSuccess, onFailure){
+		return query(
+			'SELECT "pluginID" FROM plugins WHERE name = $1',
+			[pluginName],
+			function(rows){
+				var sql = 'DELETE FROM "pluginOptions" WHERE "pluginID" = $1 AND name = $2';
+				var params = [rows[0].pluginID, optionName];
+				return query(sql, params, onSuccess, onFailure);
+			}
+		);
+	},
+	
 	registerPlugin: function(plugin, onSuccess, onFailure){
 		var logAndFail = function(msg){
 			console.error("Failed to register plugin (" + plugin + "): " + msg);

@@ -202,7 +202,7 @@
 							<table>
 								<tr ng-repeat="option in plugin.options">
 									<td>{{option.name}}</td>
-									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="text"></td>
+									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type}}"></td>
 								</tr>
 							</table><br/>
 							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
