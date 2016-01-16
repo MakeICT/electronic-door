@@ -9,7 +9,7 @@ module.exports = {
 	options: {
 		'IP': 'number',
 		'Port': 'number',
-		'Code': 'number',
+		'Code': 'password',
 	},
 	
 	actions: {

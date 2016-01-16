@@ -11,7 +11,12 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			$scope.plugins[pluginName] = plugin;
 
 			var attachOptions = function(response){
-				$scope.plugins[response.plugin].options = response.options;
+				$scope.plugins[response.plugin].options = {};
+				for(var i in response.options){
+					if(response.options[i].type != 'hidden'){
+						$scope.plugins[response.plugin].options[i] = response.options[i];
+					}
+				}
 			};
 			$http.get('/plugins/' + pluginName + '/options').success(attachOptions);
 			

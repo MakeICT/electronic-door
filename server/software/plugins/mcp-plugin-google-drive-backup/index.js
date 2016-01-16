@@ -63,7 +63,7 @@ module.exports = {
 	// @TODO: add read-only field for displaying authorized account name
 	options: {
 		'Client ID': 'text',
-		'Client secret': 'text',
+		'Client secret': 'password',
 		'Redirect URI': 'text',
 		'Folder ID': 'text',
 		'Token': 'hidden',

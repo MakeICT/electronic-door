@@ -86,7 +86,7 @@ var api = {
 module.exports = {
 	name: 'Wild Apricot Sync',
 	options: {
-		'API key': 'text',
+		'API key': 'password',
 		'Account ID': 'text',
 	},
 
