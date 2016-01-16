@@ -44,39 +44,3 @@ if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 		cd ../../
 	done
 fi
-
-#############################
-# Setup EXIM4 to send emails
-#############################
-read -p "Install exim4 for email alerts? [y/N]: " response
-if [ "Y" = "$response" ] || [ "y" = "$response" ]; then
-	echo -e "\nSetting up email for alerts..."
-	echo -e "\n**** Configuration Notes ****"
-	echo "		Type: mail sent by smarthost; received via SMTP or fetchmail"
-	echo "		Hostname: whatever hostname you want"
-	echo "		Allowed IPs: 127.0.0.1 ; ::1"
-	echo "		Other destinations: type your hostname again"
-	echo "		Machines for relay: (leave it blank)"
-	echo "		Outgoing smarthost: smtp.gmail.com::587"
-	echo "		Hide local name: No"
-	echo "		DNS queries minimal: No"
-	echo "		Delivery method for local: Maildir format in home directory"
-	echo "		Split config: No"
-	echo -e "\nCopy these notes real quick. You'll need them in a sec."
-	read -p "Press [ENTER] when you're ready"
-
-	sudo apt-get -y install exim4
-	sudo dpkg-reconfigure exim4-config
-
-	read -p "Email login: " EMAIL
-	read -p "Password   : " PASSWORD
-
-	sudo chmod o+w /etc/exim4/passwd.client
-	echo "gmail-smtp.l.google.com:$EMAIL:$PASSWORD" > /etc/exim4/passwd.client
-	echo "*.google.com:$EMAIL:$PASSWORD" >> /etc/exim4/passwd.client
-	echo "smtp.gmail.com:$EMAIL:$PASSWORD" >> /etc/exim4/passwd.client
-	sudo chmod o-w /etc/exim4/passwd.client
-
-	sudo update-exim4.conf
-	sudo /etc/init.d/exim4 restart
-fi

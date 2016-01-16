@@ -9,6 +9,5 @@
   "author": "Dominic Canare <dom@makeict.org>",
   "license": "GPL",
   "dependencies": {
-    "ad2usb": "git+https://github.com/alexkwolfe/node-ad2usb.git"
   }
 }
