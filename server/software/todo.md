@@ -2,12 +2,6 @@
 
 Here's a list of todos for the server software. These are in no specific order.
 
-1. Messaging system
-	* Primary system and plugins should be able to broadcast and listen for messages
-	* atmosphere.js maybe?
-1. Email alert system
-	* Example: If the alarm system plugin pumps an "alarm!" message on the messaging system, email alert system should listen for that and shoot out an email.
-	* Note: Would be nice if the email alert included the last couple of door entries from the log and contact details
 1. Clients
 	* Figure out how to add / register clients to the system?
 	* Client Types / Protocols / plugins
