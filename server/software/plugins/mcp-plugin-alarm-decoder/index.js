@@ -1,9 +1,11 @@
 var backend = require('../../backend.js');
+var broadcaster = require('../../broadcast.js');
 var ad2usb = require('./node_modules/ad2usb');
+
+var alarm;
 
 module.exports = {
 	name: 'Alarm Decoder',
-	alarm: null,
 	options: {
 		'IP': 'number',
 		'Port': 'number',
@@ -13,17 +15,17 @@ module.exports = {
 	actions: {
 		'Arm away': function(callback){
 			backend.getPluginOptions(module.exports.name, function(settings){
-				module.exports.alarm.armAway(settings['Code']);
+				alarm.armAway(settings['Code']);
 			});
 		},
 		'Arm stay': function(callback){
 			backend.getPluginOptions(module.exports.name, function(settings){
-				module.exports.alarm.armStay(settings['Code']);
+				alarm.armStay(settings['Code']);
 			});
 		},
 		'Disarm': function(callback){
 			backend.getPluginOptions(module.exports.name, function(settings){
-				module.exports.alarm.disarm(settings['Code']);
+				alarm.disarm(settings['Code']);
 			});
 		},
 	},
@@ -36,30 +38,47 @@ module.exports = {
 	
 	onEnable: function(){
 		backend.getPluginOptions(module.exports.name, function(settings){
-			var alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {
-				console.log("Connected");
+			alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {
+				broadcaster.subscribe(module.exports);
 				
-				alarm.on('alarm', function(alarmStatus) {
-					if(alarmStatus){
-					}else{
+				alarm.on('alarm', function(status) {
+					if(status){
+						broadcaster.broadcast(module.exports, "alarm-triggered", {});
 					}
 				});
 				
-				alarm.on('fireAlarm', function(alarmStatus) {
+				alarm.on('fireAlarm', function(status) {
+					if(status){
+						broadcaster.broadcast(module.exports, "fire-alarm-triggered", {});
+					}
 				});
 				
 				alarm.on('armedAway', function() {
+					broadcaster.broadcast(module.exports, "alarm-armed-away", {});
+				});
+				
+				alarm.on('armedStay', function() {
+					broadcaster.broadcast(module.exports, "alarm-armed-stay", {});
 				});
 				
 				alarm.on('disarmed', function() {
+					broadcaster.broadcast(module.exports, "alarm-disarmed", {});
 				});
 			});
-			module.exports.alarm = alarm;
 		});
 	},
 	
 	onDisable: function(){
-		module.exports.alarm.socket.destroy();
-		module.exports.alarm = null;
-	},	
+		alarm.socket.destroy();
+		alarm = null;
+		broadcaster.unsubscribe(module.exports);
+	},
+	
+	receiveMessage: function(source, message, data){
+		if(message == "door-unlocked"){
+			backend.getPluginOptions(module.exports.name, function(settings){
+				alarm.disarm(settings['Code']);
+			});
+		}
+	},
 };

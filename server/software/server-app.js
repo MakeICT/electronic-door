@@ -13,9 +13,6 @@ var server = restify.createServer({
 });
 var io = require('socket.io').listen(server.server);
 
-//var backend = require('./backend.js');
-//var sequelize = backend.buildSchema();
-
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
@@ -109,7 +106,11 @@ server.put('/plugins/:plugin/options/:option', function (request, response, next
 });
 
 server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
-	plugins[request.params.plugin].actions[request.params.action]();
+	try{
+		plugins[request.params.plugin].actions[request.params.action]();
+	}catch(exc){
+		console.log(exc);
+	}
 	
 	return next();
 });
@@ -218,6 +219,10 @@ function loadData(){
 				if(pluginList[j].name == plugin.name){
 					plugin.pluginID = pluginList[j].pluginID;
 					found = true;
+					
+					if(pluginList[j].enabled){
+						plugin.onEnable();
+					}
 					break;
 				}
 			}
