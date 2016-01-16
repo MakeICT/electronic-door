@@ -48,12 +48,26 @@ module.exports = {
 		},
 		'Add subscription': function(callback){
 			backend.getPluginOptions(module.exports.name, function(settings){
-				backend.addPluginOption(module.exports.name, settings['Add subscription'], 'text', callback, callback);
+				backend.addPluginOption(
+					module.exports.name,
+					settings['Add subscription'], 'text',
+					function(){
+						return backend.setPluginOption(module.exports.name, 'Add subscription', '', callback, callback);
+					},
+					callback
+				);
 			});
 		},
 		'Delete subscription': function(callback){
 			backend.getPluginOptions(module.exports.name, function(settings){
-				backend.removePluginOption(module.exports.name, settings['Delete subscription'], callback, callback);
+				backend.removePluginOption(
+					module.exports.name,
+					settings['Delete subscription'],
+					function(){
+						return backend.setPluginOption(module.exports.name, 'Delete subscription', '', callback, callback);
+					},
+					callback
+				);
 			});
 		},
 	},
