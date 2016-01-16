@@ -217,10 +217,12 @@ function loadData(){
 			var found = false;
 			for(var j=0; j<pluginList.length; j++){
 				if(pluginList[j].name == plugin.name){
-					plugin.pluginID = pluginList[j].pluginID;
+					for(var propertyName in pluginList[j]){
+						plugin[propertyName] = pluginList[j][propertyName];
+					}
 					found = true;
 					
-					if(pluginList[j].enabled){
+					if(plugin.enabled){
 						plugin.onEnable();
 					}
 					break;
