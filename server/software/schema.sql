@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS "pluginOptions" (
 CREATE TABLE IF NOT EXISTS "pluginOptionValues" (
 	"pluginOptionID" INT NOT NULL,
 	"value" TEXT,
-	FOREIGN KEY("pluginOptionID") REFERENCES "pluginOptions"("pluginOptionID")
+	FOREIGN KEY("pluginOptionID") REFERENCES "pluginOptions"("pluginOptionID") ON DELETE CASCADE
 );
 
 
