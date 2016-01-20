@@ -5,11 +5,9 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.clients = {};
 	
 	$http.get('/plugins').success(function(plugins){
-		for(var pluginName in plugins){
-			var plugin = plugins[pluginName];
-			console.log(plugin);
-			$scope.plugins[pluginName] = plugin;
-
+		for(var i=0; i<plugins.length; i++){
+			var plugin = plugins[i];
+			$scope.plugins[plugin.name] = plugin;
 			var attachOptions = function(response){
 				$scope.plugins[response.plugin].options = {};
 				for(var i in response.options){
@@ -18,7 +16,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 					}
 				}
 			};
-			$http.get('/plugins/' + pluginName + '/options').success(attachOptions);
+			$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
 			
 			if(plugin.clientDetails){
 				$scope.clientPlugins.push(plugin);
@@ -124,17 +122,22 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.createClientPluginAssociation = function(client, pluginName){
 		$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
-			console.log("associated!");
 			window.location.reload();
 		});
 	};
 	
 	$scope.doClientPluginAction = function(client, plugin, action){
-		console.log(plugin);
 		$http.post('/clients/' + client.clientID + '/plugins/' + plugin.name + '/actions/' + action).success(function(response){
 			if(response != ''){
 				alert('Failed to perform client action:\n' + response);
 			}
+		});
+	};
+	
+	$scope.saveClientPluginOption = function(client, plugin, option){
+		var params = {'option': option.name, 'value': option.value};
+		
+		$http.put('/clients/' + client.clientID + '/plugins/' + plugin.name, params).success(function(response){
 		});
 	};
 

@@ -5,6 +5,7 @@
 
 var fs = require('fs');
 var pg = require('pg');
+var path = require('path');
 
 var credentials = fs.readFileSync('DB_CREDENTIALS').toString().trim().split('\t');
 var connectionParameters = {
@@ -39,6 +40,8 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 	});
 }
 
+var plugins = [];
+var clients = [];
 module.exports = {
 	connectionParameters: connectionParameters,
 	regroup: function(array, keyName, valueName){
@@ -47,6 +50,34 @@ module.exports = {
 			data[array[i][keyName]] = array[i][valueName];
 		}
 		return data;
+	},
+
+	// Synchronous
+	getPluginByName: function(name){
+		for(var i=0; i<plugins.length; i++){
+			if(plugins[i].name == name){
+				return plugins[i];
+			}
+		}
+		return null;
+	},
+	
+	// Synchronous
+	getClientByID: function(id){
+		for(var i=0; i<clients.length; i++){
+			if(clients[i].clientID == id){
+				return clients[i];
+			}
+		}
+		return null;
+	},
+	
+	getPlugins: function(){
+		return plugins;
+	},
+	
+	getClients: function(){
+		return clients;
 	},
 	
 	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
@@ -175,9 +206,9 @@ module.exports = {
 		);
 	},
 	
-	registerPlugin: function(plugin, onSuccess, onFailure){
+	installPlugin: function(plugin, onSuccess, onFailure){
 		var logAndFail = function(msg){
-			console.error("Failed to register plugin (" + plugin + "): " + msg);
+			console.error("Failed to install plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
 		};
 
@@ -216,8 +247,8 @@ module.exports = {
 		);
 	},
 	
-	registerClientPlugin: function(plugin, onSuccess, onFailure){
-		this.registerPlugin(plugin, function(){
+	installClientPlugin: function(plugin, onSuccess, onFailure){
+		this.installPlugin(plugin, function(){
 			return query(
 				'SELECT "pluginID" FROM plugins WHERE name = $1',
 				[plugin.name],
@@ -249,8 +280,8 @@ module.exports = {
 	addProxySystem: function(systemName, onSuccess, onFailure){
 		return query('INSERT INTO "proxySystems" (name) VALUES ($1)', [systemName], onSuccess, onFailure);
 	},
-
-	getPlugins: function(onSuccess, onFailure){
+	
+	getInstalledPlugins: function(onSuccess, onFailure){
 		return query('SELECT * FROM plugins', null, onSuccess, onFailure);
 	},
 	
@@ -322,7 +353,7 @@ module.exports = {
 		);
 	},
 	
-	getClients: function(onSuccess, onFailure){
+	getInstalledClients: function(onSuccess, onFailure){
 		var sql = 
 			'SELECT ' +
 			'	clients."clientID", ' + 
@@ -383,8 +414,103 @@ module.exports = {
 		return query(sql, [name], onSuccess, onFailure);
 	},
 	
-	associateClientPlugin: function(clientID, pluginID, onSuccess, onFailure){
+	associateClientPlugin: function(clientID, pluginName, onSuccess, onFailure){
+		var plugin = module.exports.getPluginByName(pluginName);
+		var client = module.exports.getClientByID(clientID);
+		
 		var sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES ($1, $2)';
-		return query(sql, [clientID, pluginID], onSuccess, onFailure);
+		
+		var addOptions = function(){
+			module.exports.reloadClients();
+			if(onSuccess) onSuccess();
+		}
+		
+		return query(sql, [clientID, plugin.pluginID], addOptions, onFailure);
+	},
+	
+	setClientPluginOption: function(clientID, pluginName, option, value, onSuccess, onFailure){
+		var plugin = module.exports.getPluginByName(pluginName);
+		var params = [clientID, plugin.pluginID, option];
+		
+		var subquery = 
+			'SELECT "clientPluginOptionID" FROM "clientPluginOptions" ' +
+			'		WHERE "pluginID" = $2 AND "name" = $3';
+			
+		var deleteSQL = 
+			'DELETE FROM "clientPluginOptionValues" ' +
+			'WHERE "clientID" = $1 ' +
+			'	AND "clientPluginOptionID" IN (' + subquery + ')';
+			
+		var insertSQL = 'INSERT INTO "clientPluginOptionValues" ("clientID", "clientPluginOptionID", "optionValue") ' +
+			'VALUES ($1, (' + subquery + '), $4)';
+		
+		var updateRAM = function(){
+			module.exports.reloadClients();
+			if(onSuccess) onSuccess();
+		};
+		
+		var insert = function(){
+			params.push(value);
+			return query(insertSQL, params, updateRAM, onFailure);
+		};
+		
+		return query(deleteSQL, params, insert, onFailure);
+	},
+	
+	reloadPlugins: function(){
+		var pluginFolders = fs.readdirSync('./plugins').filter(function(file) {
+			return fs.statSync(path.join('./plugins', file)).isDirectory();
+		});
+		module.exports.getInstalledPlugins(function(pluginList){
+			// load plugins
+			for(var i=0; i<pluginFolders.length; i++){
+				var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
+				plugin.actionNames = Object.keys(plugin.actions);
+				var found = false;
+				for(var j=0; j<pluginList.length; j++){
+					if(pluginList[j].name == plugin.name){
+						for(var propertyName in pluginList[j]){
+							plugin[propertyName] = pluginList[j][propertyName];
+						}
+						found = true;
+						
+						if(plugin.enabled){
+							plugin.onEnable();
+						}
+						break;
+					}
+				}
+				if(!found){
+					var onInstalled = function(plugin){
+						plugin.onInstall();
+					};
+					if(plugin.clientDetails){
+						module.exports.installClientPlugin(plugin, onInstalled);
+					}else{
+						module.exports.installPlugin(plugin, onInstalled);
+					}
+				}
+				plugins.push(plugin);
+			}
+			
+			module.exports.reloadClients();
+		});
+	},
+	
+	reloadClients: function(){
+		module.exports.getInstalledClients(function(clientList){
+			clients.length = 0;
+			
+			for(var i=0; i<clientList.length; i++){
+				var client = clientList[i];
+				
+				for(var pluginName in client.plugins){
+					client.plugins[pluginName].actions = Object.keys(module.exports.getPluginByName(pluginName).clientDetails.actions);
+				}
+				clients.push(client);
+			}
+		});
 	},
 };
+
+module.exports.reloadPlugins();

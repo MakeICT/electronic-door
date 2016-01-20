@@ -169,7 +169,7 @@
 									</tr>
 									<tr ng-repeat="option in plugin.options">
 										<td>{{option.name}}</td>
-										<td><input type="text" ng-model="option.value"/></td>
+										<td><input type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)"/></td>
 									</tr>
 									<tr>
 										<td colspan="2" class="client-plugin-actions">
