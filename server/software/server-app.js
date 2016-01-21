@@ -47,6 +47,18 @@ server.post('/users', function (request, response, next) {
 	return next();
 });
 
+server.put('/users/:userID', function (request, response, next) {
+	if(request.params.nfcID !== undefined){
+		backend.enrollUser(request.params.userID, request.params.nfcID, function(){ response.send(); });
+	}else{
+		response.send();
+	}
+	
+	// @TODO: update other fields too...
+	
+	return next();
+});
+
 /**
  * Plugins
  **/
@@ -152,6 +164,11 @@ server.put('/clients/:clientID/plugins/:pluginName', function (request, response
 	return next();
 });
 
+server.get('/log', function(request, response, next) {
+	backend.getLog(request.params.type, function(data){ response.send(data); });	
+	return next();
+});
+
 /**
  * #############
  * # Stuff
@@ -173,6 +190,5 @@ io.sockets.on('connection', function (socket) {
 
 
 server.listen(3000, function () {
-	console.log('%s listening at %s', server.name, server.url);
+	backend.log(server.name + ' listening at ' + server.url);
 });
-

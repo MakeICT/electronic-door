@@ -112,7 +112,7 @@ module.exports = {
 						superSerial.send(client.clientID, UNLOCK, options['unlockDuration']);
 					};
 					var deny = function(){
-						console.log('DENY ' + data['data']);
+						backend.log(data['data'], 'deny');
 					};
 					
 					backend.checkAuthorizationByNFC(data['data'], options['Authorization token'], unlock, deny);
@@ -120,5 +120,4 @@ module.exports = {
 			}
 		}
 	},
-
 };

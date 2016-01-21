@@ -44,7 +44,7 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 
 function generateFailureCallback(msg, failCallback){
 	return function(err){
-		console.error(msg + err);
+		module.exports.log(msg);
 		if(failCallback) failCallback();
 	};
 }
@@ -92,6 +92,7 @@ module.exports = {
 	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
 		var sql =
 			'SELECT ' +
+			'	"userID", ' +
 			'	"isAdmin", "firstName", "lastName", "email", "joinDate", "status", ' +
 			'	"nfcID" IS NOT NULL AS "keyActive" ' +
 			'FROM users ' +
@@ -582,6 +583,31 @@ module.exports = {
 	
 	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
 		return module.exports.checkAuthorization(nfcID, what, onAuthorized, onUnauthorized, true);
+	},
+	
+	log: function(message, userID, code, logType){
+		if(!logType) logType = 'message';
+		
+		sql = 'INSERT INTO logs (timestamp, "message", "logType", "userID", "code") VALUES (EXTRACT(\'epoch\' FROM current_timestamp), $1, $2, $3, $4)';
+		console.log(logType, message, userID ? userID : '', code ? code : '');
+		
+		return query(sql,  [message, logType, userID, code]);
+	},
+	
+	getLog: function(type, onSuccess, onFailure){
+		// @TODO: time range? Paging? Something
+		var sql;
+		if(type == 'nfc'){
+			sql = 'SELECT * FROM logs WHERE code IS NOT NULL ORDER BY timestamp DESC LIMIT 10';
+		}else{
+			sql = 'SELECT * FROM logs ORDER BY timestamp DESC LIMIT 100';
+		}
+		return query(sql, [], onSuccess, onFailure);
+	},
+	
+	enrollUser: function(userID, nfcID, onSuccess, onFailure){
+		var sql = 'UPDATE users SET "nfcID" = $1 WHERE "userID" = $2';
+		return query(sql, [nfcID, userID], onSuccess, onFailure);
 	},
 };
 

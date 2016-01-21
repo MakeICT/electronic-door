@@ -118,17 +118,21 @@
 												<td>{{user.status}}</td>
 											</tr><tr>
 												<th>Member since</th>
-												<td>{{user.joinDate|memberSinceHumanReadable}}</td>
+												<td>{{user.joinDate|timestampToHumanReadableDate}}</td>
 											</tr><tr>
 												<th>Member for</th>
-												<td>{{user.joinDate|memberForHumanReadable}} days</td>
+												<td>{{user.joinDate|timestampToHumanReadableDuration}} days</td>
 											</tr><tr>
 												<th>Key status</th>
 												<td>
-													<div class="btn-group">
-														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="false">No key</label>
-														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="true">{{user.keyActive?"Enrolled":"Enroll now"}}</label>
-													</div>
+													{{user.keyActive?"Enrolled":"NOT Enrolled"}}
+													<button class="btn btn-sm btn-default" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"Unenroll":"Enroll now"}}</button>
+													<table ng-if="nfcLog">
+														<tr ng-repeat="log in nfcLog">
+															<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
+															<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
+														</tr>
+													</table>
 												</td>
 											</tr>
 										</table>
@@ -182,7 +186,27 @@
 					</tab>
 					<tab heading="Activity Log" id="log-tab">
 						<h2>Activity Log</h2>
-						<p>Big fat table</p>
+						<button ng-click="loadLog()">Load</button>
+						<table>
+							<thead>
+								<tr>
+									<th>Timestamp</th>
+									<th>Log Type</th>
+									<th>Message</th>
+									<th>User</th>
+									<th>NFC</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="row in log">
+									<td>{{row.timestamp|timestampToHumanReadableDate:true}}</td>
+									<td>{{row.logType}}</td>
+									<td>{{row.message}}</td>
+									<td>{{row.user}}</td>
+									<td>{{row.code}}</td>
+								</tr>
+							</tbody>
+						</table>
 					</tab>
 					<tab heading="Options" id="options-tab">
 						<h2>System Options</h2>

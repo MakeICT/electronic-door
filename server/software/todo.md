@@ -2,6 +2,7 @@
 
 Here's a list of todos for the server software. These are in no specific order.
 
+1. Give users authorizations
 1. Clients
 	* Figure out how to add / register clients to the system?
 	* Client Types / Protocols / plugins

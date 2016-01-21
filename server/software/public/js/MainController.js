@@ -1,3 +1,9 @@
+function pad(n, width, z) {
+	z = z || '0';
+	n = n + '';
+	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
 var app = angular.module('electronic-door', ['ui.bootstrap']);
 angular.module('electronic-door').controller('controller', function($scope, $http){
 	$scope.plugins = {};
@@ -61,7 +67,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	};
 
 
-
 	$scope.userSearchResults = [];
 	$scope.currentUser = null;
 	$scope.newUser = {
@@ -92,7 +97,32 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			}
 		});
 	};
-
+	
+	$scope.toggleKeyEnrollment = function(user){
+		if(user.keyActive){
+			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){
+				user.keyActive = false;
+			});
+		}else{
+			$http.get('/log?type=nfc').success(function(log){
+				$scope.nfcLog = log;
+			});
+		}
+	};
+	
+	$scope.enrollUser = function(user, nfcID){
+		$http.put('/users/' + user.userID, { nfcID: nfcID }).success(function(response){
+			$scope.nfcLog = null;
+			user.keyActive = true;
+		});
+	};
+	
+	$scope.loadLog = function(){
+		$http.get('/log').success(function(log){
+			$scope.log = log;
+		});
+	};
+	
 	$scope.togglePlugin = function(plugin, enabled){
 		$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
 			if(response != ''){
@@ -139,24 +169,25 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	};
 
 })
-.filter('memberSinceHumanReadable', function(){
-	return function(memberSinceUnix){
-		var memberSinceUnixMM = new Date(memberSinceUnix * 1000);
-		var humanDate = memberSinceUnixMM.toISOString(); // Returns "2013-05-31T11:54:44.000Z"
-		var monthList = ["January" , "February" , "March" , "April" , "May" , "June" , "July" , "August" , "September" , "October" , "November" , "December"]
-		var month = (monthList[(Math.floor(humanDate.substring(5,7))-1)]);
-		var day = humanDate.substring(8,10);
-		var year = humanDate.substring(0,4);
-		var finalDate = (month + " " + day + ", " + year);
-		return finalDate;
+.filter('timestampToHumanReadableDate', function(){
+	var monthList = ["January" , "February" , "March" , "April" , "May" , "June" , "July" , "August" , "September" , "October" , "November" , "December"]
+
+	return function(timestamp, showTime){
+		var date = new Date(timestamp * 1000);
+		var humanReadable = date.getFullYear() + '-' + monthList[date.getMonth()]  + '-' + pad(date.getDate(), 2);
+		if(showTime){
+			humanReadable += ' ' + pad(date.getHours(), 2) + ':' + pad(date.getMinutes(), 2) + ':' + pad(date.getSeconds(), 2);
+		}
+		return humanReadable;
 	}
 })
-.filter('memberForHumanReadable', function(){
-	return function(memberSinceUnix){
+.filter('timestampToHumanReadableDuration', function(){
+	return function(timestamp){
 		var currentUnixTime = Math.round((new Date()).getTime() / 1000);
-		var memberForUnix = currentUnixTime - memberSinceUnix;
-		var memberForDays = Math.floor(memberForUnix / 86400);
-		return memberForDays;
+		var durationInUnix = currentUnixTime - timestamp;
+		var durationInDays = Math.floor(durationInUnix / 86400);
+		
+		return durationInDays;
 	}
 });
 
