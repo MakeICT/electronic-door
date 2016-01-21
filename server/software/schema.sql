@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS "authorizationTags" (
 	"name" VARCHAR(128) NOT NULL,
 	"sourcePluginID" INT NULL,
 	"description" VARCHAR(1024),
+	UNIQUE("name", "sourcePluginID"),
 	FOREIGN KEY("sourcePluginID") REFERENCES "plugins"("pluginID")
 );
 
@@ -122,4 +123,4 @@ INSERT INTO users ("firstName", "lastName", "email", "status") VALUES
 	('User 2', 'Test', 'test2@makeict.org', 'active');
 
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
-INSERT INTO clients ("name") VALUES ('Dummy client');
+INSERT INTO clients ("name") VALUES ('Front door'), ('Back door');

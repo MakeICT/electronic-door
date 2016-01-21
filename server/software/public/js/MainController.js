@@ -25,10 +25,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	});
 
 	$http.get('/clients').success(function(clients){
-		for(var clientName in clients){
-			var client = clients[clientName];
-			$scope.clients[client.clientName] = client;
-		}
+		$scope.clients = clients;
 	});
 
 	$scope.locals = {

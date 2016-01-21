@@ -49,18 +49,23 @@ module.exports = {
 		},
 		optionUpdated: function(client, option, newValue, oldValue, callback){
 			// if no other clients are using the same authorization token, delete it from the database
+			// if the tag doesn't exist, add it to the database
 			if(option == 'Authorization tag'){
-				var foundDuplicate = function(){
+				var findDuplicateTag = function(tag){
 					var clientList = backend.getClients();
 					var foundDuplicate = false;
 					for(var i=0; i<clientList.length; i++){
-						var client = clientList[i];
-						var plugin = client.plugins[module.exports.name];
+						var searchClient = clientList[i];
+						if(searchClient.clientID == client.clientID){
+							continue;
+						}
+						
+						var plugin = searchClient.plugins[module.exports.name];
 						if(plugin){
 							var allOptions = plugin.options;
-							for(var i=0; i<allOptions.length; i++){
-								if(allOptions[i].name == option){
-									if(oldValue == allOptions[i].value){
+							for(var j=0; j<allOptions.length; j++){
+								if(allOptions[j].name == option){
+									if(tag == allOptions[j].value){
 										return true;
 									}
 									break;
@@ -69,12 +74,14 @@ module.exports = {
 						}
 					}
 					return false;
-				}();
+				};
 				
-				if(!foundDuplicate){
+				if(!findDuplicateTag(oldValue)){
 					backend.deleteAuthorizationTag(oldValue, module.exports.name);
 				}
-				backend.registerAuthorizationTag(newValue, '', module.exports.name);
+				if(!findDuplicateTag(newValue)){
+					backend.registerAuthorizationTag(newValue, '', module.exports.name);
+				}
 			}
 		},
 	},

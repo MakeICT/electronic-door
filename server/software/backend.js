@@ -382,7 +382,8 @@ module.exports = {
 			'	LEFT JOIN "plugins" ON "clientPluginAssociations"."pluginID" = "plugins"."pluginID" ' + 
 			'	LEFT JOIN "clientPluginOptions" ON "plugins"."pluginID" = "clientPluginOptions"."pluginID" ' + 
 			'	LEFT JOIN "clientPluginOptionValues" ON "clientPluginOptions"."clientPluginOptionID" = "clientPluginOptionValues"."clientPluginOptionID" ' + 
-			'		AND clients."clientID" = "clientPluginOptionValues"."clientID" ';
+			'		AND clients."clientID" = "clientPluginOptionValues"."clientID" ' +
+			'ORDER BY clients.name, plugins.name, "clientPluginOptions".name';
 		return query(
 			sql,
 			null,
@@ -390,6 +391,9 @@ module.exports = {
 				var clients = [];
 				var currentClient = null;
 				var currentPlugin = null;
+				
+				// There is an individual row for each client/plugin/option-value. Collapse these
+				// (boy, an ORM might be nice here...)
 				for(var i=0; i<rows.length; i++){
 					if(!currentClient || currentClient.clientID != rows[i].clientID){
 						currentClient = {
