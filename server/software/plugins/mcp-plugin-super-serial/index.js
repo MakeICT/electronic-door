@@ -20,20 +20,6 @@ module.exports = {
 	},
 	
 	actions: {
-		'Connect': function(callback){
-			var onConnected = function(error){
-				if(error){
-					console.log(error);
-				}else{
-					console.log('Serial connected!');
-					if(callback) callback();
-				}
-			};
-			backend.getPluginOptions('Super Serial', function(settings){
-				serialPort = new SerialPort(settings['Port'], {baudrate: settings['Baud']}, true, onConnected);
-			});
-		},
-		'Disconnect': function(callback){},
 	},
 	
 	onInstall: function(){
@@ -44,7 +30,40 @@ module.exports = {
 	},
 	
 	onEnable: function(){
-		this.actions['Connect']();
+		var onData = function(data){
+			console.log('data received: ' + data);
+			packet = {
+				'transactionID': data[0],
+				'from': data[1],
+				'to': data[2],
+				'function': data[3],
+				'data': data.slide(5, data[4]),
+			};
+			// @TODO: if CRC matches, send ACK back
+			broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+		};
+		
+		var onConnected = function(error){
+			if(error){
+				console.log(error);
+			}else{
+				console.log('Serial connected!');
+				serialPort.on('data', onData);
+				if(callback) callback();
+			}
+		};
+		
+		backend.getPluginOptions(module.exports.name, function(settings){
+			serialPort = new SerialPort(
+				settings['Port'],
+				{
+					baudrate: settings['Baud'],
+					parser: SerialPort.parers.readline(0x7E),
+				},
+				true,
+				onConnected
+			);
+		});
 	},
 	
 	onDisable: function(){
@@ -85,6 +104,4 @@ module.exports = {
 			});
 		}
 	}
-
-	
 };

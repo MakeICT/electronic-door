@@ -1,8 +1,10 @@
 /**
  * Project Name: Master Control System
- *  Description: obstruction to the database.
+ *  Description: abstraction to the database.
+ * @TODO: create a consistent interface to these functions (some have onSuccess/failure, some don't)
+ * @TODO: transactions with commits/rollbacks
  **/ 
-
+ 
 var fs = require('fs');
 var pg = require('pg');
 var path = require('path');
@@ -38,6 +40,13 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 			}
 		});
 	});
+}
+
+function generateFailureCallback(msg, failCallback){
+	return function(err){
+		console.error(msg + err);
+		if(failCallback) failCallback();
+	};
 }
 
 var plugins = [];
@@ -106,6 +115,7 @@ module.exports = {
 			sql += '	AND (LOWER("firstName") LIKE $' + params.length +
 				'			OR LOWER("lastName") LIKE $' + params.length +
 				'			OR LOWER("email") LIKE $' + params.length +
+				'			OR LOWER("nfcID") LIKE $' + params.length +
 				'		)';
 		}
 		
@@ -134,6 +144,11 @@ module.exports = {
 		};
 		
 		return query(sql, [proxySystem, proxyUserID], extract);
+	},
+	
+	getUserByNFC: function(nfcID, onSuccess, onFailure) {
+		var sql = 'SELECT * FROM users WHERE "nfcID" = $1';
+		return query(sql, [nfcID], onSuccess, onFailure);
 	},
 	
 	/**
@@ -432,6 +447,15 @@ module.exports = {
 		var plugin = module.exports.getPluginByName(pluginName);
 		var params = [clientID, plugin.pluginID, option];
 		
+		var oldValue;
+		var allOptions = module.exports.getClientByID(clientID).plugins[pluginName].options;
+		for(var i=0; i<allOptions.length; i++){
+			if(allOptions[i].name == option){
+				oldValue = allOptions[i].value;
+				break;
+			}
+		};
+		
 		var subquery = 
 			'SELECT "clientPluginOptionID" FROM "clientPluginOptions" ' +
 			'		WHERE "pluginID" = $2 AND "name" = $3';
@@ -443,9 +467,17 @@ module.exports = {
 			
 		var insertSQL = 'INSERT INTO "clientPluginOptionValues" ("clientID", "clientPluginOptionID", "optionValue") ' +
 			'VALUES ($1, (' + subquery + '), $4)';
-		
+			
 		var updateRAM = function(){
-			module.exports.reloadClients();
+			var updatePlugin = function(){
+				if(plugin.clientDetails.optionUpdated){
+					var client = module.exports.getClientByID(clientID);
+					// @TODO: this should probably be first (update the plugin and let it update the backend?)
+					plugin.clientDetails.optionUpdated(client, option, value, oldValue);
+				}
+			};
+			
+			module.exports.reloadClients(updatePlugin);
 			if(onSuccess) onSuccess();
 		};
 		
@@ -497,7 +529,7 @@ module.exports = {
 		});
 	},
 	
-	reloadClients: function(){
+	reloadClients: function(callback){
 		module.exports.getInstalledClients(function(clientList){
 			clients.length = 0;
 			
@@ -509,7 +541,43 @@ module.exports = {
 				}
 				clients.push(client);
 			}
+			if(callback) callback(clients);
 		});
+	},
+	
+	registerAuthorizationTag: function(name, description, sourcePluginName, onSuccess, onFailure){
+		var pluginID = module.exports.getPluginByName(sourcePluginName).pluginID;
+		var sql = 'INSERT INTO "authorizationTags" (name, description, "sourcePluginID") VALUES ($1, $2, $3)';
+		query(sql, [name, description, pluginID], onSuccess, onFailure);
+	},
+	
+	deleteAuthorizationTag: function(name, sourcePluginName, onSuccess, onFailure){
+		var pluginID = module.exports.getPluginByName(sourcePluginName).pluginID;
+		var sql = 'DELETE FROM "authorizationTags" WHERE name = $1 AND "sourcePluginID" = $2';
+		query(sql, [name, pluginID], onSuccess, onFailure);
+	},
+	
+	addAuthorization: function(who, what, onSuccess, onFailure){
+		var sql = 'INSERT INTO "userAuthorizationTags" ("userID", "tagID") VALUES ($1, (SELECT "tagID" FROM "authorizationTags" WHERE name = $2))';
+		query(sql, [who, what], onSuccess, onFailure);
+	},
+	
+	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
+		var idField = idIsNFC ? 'userID' : 'nfcID';
+		var sql = 'SELECT COUNT(0) > 0 AS authorized FROM "userAuthorizationTags" WHERE "' + idField + '" = $1 AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
+		
+		var process = function(data){
+			if(data[0]['authorized']){
+				onAuthorized();
+			}else{
+				onUnauthorized();
+			}
+		}
+		return query(sql, [who, what], process, generateFailureCallback('Authorization attempt failed', onUnauthorized));
+	},
+	
+	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
+		return module.exports.checkAuthorization(nfcID, what, onAuthorized, onUnauthorized, true);
 	},
 };
 
