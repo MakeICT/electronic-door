@@ -97,8 +97,7 @@ module.exports = {
 					i++;
 				}
 			}
-//			var header = [messageEndcap, 7 + payload.length, transactionCount++, 0x0, clientID, command];
-			var header = [messageEndcap, 5 + payload.length, 0x0, clientID, command];
+			var header = [messageEndcap, 6 + payload.length, transactionCount++, 0x0, clientID, command];
 			var footer = [0xFFFF, messageEndcap];
 			var packet = header.concat(payload).concat(footer);
 			
