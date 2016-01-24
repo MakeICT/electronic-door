@@ -1,8 +1,6 @@
 var broadcaster = require('../../broadcast.js');
 var backend = require('../../backend.js');
 var SerialPort = require("serialport");
-var Worker = require('webworker-threads').Worker;
-var Worker = require('webworker-threads').Worker;
 
 var serialPort;
 var transactionCount = 0;
@@ -97,7 +95,7 @@ module.exports = {
 					i++;
 				}
 			}
-			var header = [messageEndcap, 6 + payload.length, transactionCount++, 0x0, clientID, command];
+			var header = [messageEndcap, transactionCount++, 0x0, clientID, command, payload.length];
 			var footer = [0xFFFF, messageEndcap];
 			var packet = header.concat(payload).concat(footer);
 			
