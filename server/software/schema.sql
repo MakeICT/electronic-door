@@ -123,4 +123,4 @@ INSERT INTO users ("firstName", "lastName", "email", "status") VALUES
 	('User 2', 'Test', 'test2@makeict.org', 'active');
 
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
-INSERT INTO clients ("name") VALUES ('Front door'), ('Back door');
+INSERT INTO clients ("name") VALUES ('Front door');
