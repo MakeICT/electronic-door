@@ -56,9 +56,13 @@ class DebugCLI(Cmd):
         try:
             packet = []
             while 1:
-                if control.receive_packet(packet):
-                    control.process_packet(packet)
-                    del packet[:]
+                print "get update"
+                control.get_update()
+                while 1:
+                    if control.receive_packet(packet):
+                        control.process_packet(packet)
+                        del packet[:]
+                        break
         except KeyboardInterrupt:
             pass
 
