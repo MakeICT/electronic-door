@@ -9,6 +9,6 @@
   "author": "Dominic Canare <dom@makeict.org>",
   "license": "GPL",
   "dependencies": {
-    "serialport": "^2.0.5"
+    "serialport": "^2.0.5",
   }
 }

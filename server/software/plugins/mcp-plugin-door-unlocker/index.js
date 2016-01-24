@@ -1,6 +1,5 @@
 var broadcaster = require('../../broadcast.js');
 var superSerial = require('../mcp-plugin-super-serial');
-//var Threads = require('threads_a_gogo');
 
 // this is only needed for backend.regroup convenience
 var backend = require('../../backend.js');
@@ -94,8 +93,6 @@ module.exports = {
 	
 	onEnable: function(){
 		broadcaster.subscribe(module.exports);
-		var thread = Threads.create();
-		//thread
 	},
 	
 	onDisable: function(){
@@ -112,10 +109,11 @@ module.exports = {
 						superSerial.send(client.clientID, UNLOCK, options['unlockDuration']);
 					};
 					var deny = function(){
-						backend.log(data['data'], 'deny');
+						// @TODO: add user if there's a match
+						backend.log(client.name, null, data['data'], 'deny');
 					};
 					
-					backend.checkAuthorizationByNFC(data['data'], options['Authorization token'], unlock, deny);
+					backend.checkAuthorizationByNFC(data['data'], options['Authorization tag'], unlock, deny);
 				}
 			}
 		}

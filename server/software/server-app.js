@@ -28,6 +28,20 @@ server.get('/users', function (request, response, next) {
 	return next();
 });
 
+server.get('/users/:userID/authorizations', function (request, response, next) {
+	backend.getUserAuthorizations(request.params.userID, function(auths){
+		response.send(auths);
+	});
+	
+	return next();
+});
+
+server.put('/users/:userID/authorizations/:authTag', function (request, response, next) {
+	backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body);
+});
+
+
+
 /**
  * Sends empty response on success
  * Sends a message 

@@ -567,9 +567,44 @@ module.exports = {
 		query(sql, [who, what], onSuccess, onFailure);
 	},
 	
+	getUserAuthorizations: function(who, onSuccess, onFailure){
+		var sql =
+			'SELECT ' +
+			'	name, ' +
+			'	"userAuthorizationTags"."userID" IS NOT NULL AS authorized ' +
+			'FROM "authorizationTags" ' +
+			'	LEFT JOIN "userAuthorizationTags" ON "authorizationTags"."tagID" = "userAuthorizationTags"."tagID" ' +
+			'		AND "userID" = $1 ' +
+			'WHERE "userID" = $1 OR "userID" IS NULL ' +
+			'GROUP BY name, "userID" ' +
+			'ORDER BY name';
+		return query(sql, [who], onSuccess, onFailure);
+	},
+	
+	setUserAuthorization: function(who, what, authorized, onSuccess, onFailure){
+		var sql;
+		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
+		
+		if(authorized){
+			sql = 
+				'INSERT INTO "userAuthorizationTags" ("userID", "tagID") ' +
+				'VALUES ($1, (' + tagSQL + '))';
+		}else{
+			sql = 
+				'DELETE FROM "userAuthorizationTags" WHERE "userID" = $1 ' +
+				'AND "tagID" = (' + tagSQL + ')';
+		}
+		return query(sql, [who, what], onSuccess, onFailure);
+	},
+	
 	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
-		var idField = idIsNFC ? 'userID' : 'nfcID';
-		var sql = 'SELECT COUNT(0) > 0 AS authorized FROM "userAuthorizationTags" WHERE "' + idField + '" = $1 AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
+		var idField = idIsNFC ? 'nfcID' : 'userID';
+		var sql =
+			'SELECT COUNT(0) > 0 AS authorized ' +
+			'FROM "userAuthorizationTags" ' +
+			'	JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' +
+			'WHERE "' + idField + '" = $1 ' +
+			'	AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
 		
 		var process = function(data){
 			if(data[0]['authorized']){
@@ -578,7 +613,7 @@ module.exports = {
 				onUnauthorized();
 			}
 		}
-		return query(sql, [who, what], process, generateFailureCallback('Authorization attempt failed', onUnauthorized));
+		return query(sql, [who, what], process, onUnauthorized);
 	},
 	
 	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
@@ -588,17 +623,21 @@ module.exports = {
 	log: function(message, userID, code, logType){
 		if(!logType) logType = 'message';
 		
-		sql = 'INSERT INTO logs (timestamp, "message", "logType", "userID", "code") VALUES (EXTRACT(\'epoch\' FROM current_timestamp), $1, $2, $3, $4)';
-		console.log(logType, message, userID ? userID : '', code ? code : '');
-		
-		return query(sql,  [message, logType, userID, code]);
+		sql =
+			'INSERT INTO logs (timestamp, "message", "logType", "userID", "code") ' +
+			'VALUES (EXTRACT(\'epoch\' FROM current_timestamp), $1, $2, $3, $4)';
+		params = [message, logType, userID, code];
+		return query(sql,  params);
 	},
 	
 	getLog: function(type, onSuccess, onFailure){
 		// @TODO: time range? Paging? Something
 		var sql;
 		if(type == 'nfc'){
-			sql = 'SELECT * FROM logs WHERE code IS NOT NULL ORDER BY timestamp DESC LIMIT 10';
+			sql = 
+				'SELECT * FROM logs LEFT JOIN users ON logs.code = users."nfcID" ' +
+				'WHERE code IS NOT NULL ' +
+				'	AND users."userID" IS NULL';
 		}else{
 			sql = 'SELECT * FROM logs ORDER BY timestamp DESC LIMIT 100';
 		}

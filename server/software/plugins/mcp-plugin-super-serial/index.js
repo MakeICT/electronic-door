@@ -1,8 +1,21 @@
+var broadcaster = require('../../broadcast.js');
 var backend = require('../../backend.js');
-var SerialPort = require("serialport").SerialPort;
+var SerialPort = require("serialport");
+var Worker = require('webworker-threads').Worker;
+var Worker = require('webworker-threads').Worker;
 
 var serialPort;
 var transactionCount = 0;
+
+var messageEndcap = 0x7E;
+
+var currentlyPolledClientIndex = -1;
+
+function pollNextClient(){
+	var clients = backend.getClients();
+	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
+	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
+}
 
 module.exports = {
 	name: 'Super Serial',
@@ -19,28 +32,25 @@ module.exports = {
 		'bufferSize': 'number',
 	},
 	
-	actions: {
-	},
-	
-	onInstall: function(){
-	},
-
-	onUninstall: function(){
-		
-	},
+	actions: {},
+	onInstall: function(){},
+	onUninstall: function(){},
 	
 	onEnable: function(){
 		var onData = function(data){
-			console.log('data received: ' + data);
+			if(data == '') return;
+			
+			console.log('Serial received: ' + data);
 			packet = {
 				'transactionID': data[0],
 				'from': data[1],
 				'to': data[2],
 				'function': data[3],
-				'data': data.slide(5, data[4]),
+				'data': data.slice(5, data[4]),
 			};
 			// @TODO: if CRC matches, send ACK back
 			broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+			pollNextClient();
 		};
 		
 		var onConnected = function(error){
@@ -49,16 +59,16 @@ module.exports = {
 			}else{
 				console.log('Serial connected!');
 				serialPort.on('data', onData);
-				if(callback) callback();
+				pollNextClient();
 			}
 		};
 		
 		backend.getPluginOptions(module.exports.name, function(settings){
-			serialPort = new SerialPort(
+			serialPort = new SerialPort.SerialPort(
 				settings['Port'],
 				{
 					baudrate: settings['Baud'],
-					parser: SerialPort.parers.readline(0x7E),
+					parser: SerialPort.parsers.readline(messageEndcap),
 				},
 				true,
 				onConnected
@@ -67,7 +77,7 @@ module.exports = {
 	},
 	
 	onDisable: function(){
-		console.log('Disabled');
+		serialPort.destroy();
 	},
 	
 	send: function(clientID, command, payload, callback){
@@ -82,23 +92,21 @@ module.exports = {
 			}
 			for(var i=0; i<payload.length; i++){
 				if(!payload[i]) payload[i] = 0;
-				if(payload[i] == 0x7D || payload[i] == 0x7E){
+				if(payload[i] == 0x7D || payload[i] == messageEndcap){
 					payload.splice(i, 0, 0x7D);
 					i++;
 				}
 			}
-//			var header = [0x7E, 7 + payload.length, transactionCount++, 0x0, clientID, command];
-			var header = [0x7E, 5 + payload.length, 0x0, clientID, command];
-			var footer = [0xFFFF, 0x7E];
+//			var header = [messageEndcap, 7 + payload.length, transactionCount++, 0x0, clientID, command];
+			var header = [messageEndcap, 5 + payload.length, 0x0, clientID, command];
+			var footer = [0xFFFF, messageEndcap];
 			var packet = header.concat(payload).concat(footer);
-			
-			console.log("Packet = " + packet);
 			
 			serialPort.write(packet, function(error, results){
 				if(error){
 					console.log("ERROR: " + error);
 				}else{
-					console.log(results);
+					console.log("Serial sent: " + packet);
 					if(callback) callback();
 				}
 			});

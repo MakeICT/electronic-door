@@ -66,7 +66,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});
 	};
 
-
 	$scope.userSearchResults = [];
 	$scope.currentUser = null;
 	$scope.newUser = {
@@ -96,6 +95,19 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				$scope.resetNewUser();
 			}
 		});
+	};
+	
+	$scope.getUserAuthorizations = function(user){
+		$http.get('/users/' + user.userID + '/authorizations').success(function(response){
+			console.log(response);
+			user.authorizations = response;
+		});
+	};
+	
+	$scope.setUserAuthorization = function(user, authTag, authorized){
+		$http.put('/users/' + user.userID + '/authorizations/' + authTag, authorized).success(function(response){
+			// @TODO: give feedback to user that this worked
+		});		
 	};
 	
 	$scope.toggleKeyEnrollment = function(user){
