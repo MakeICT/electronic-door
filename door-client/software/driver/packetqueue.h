@@ -1,46 +1,74 @@
-#ifndef PacketQueue_H
-#define PacketQueue_H
+#ifndef Packet_H
+#define Packet_H
 
 #include <Arduino.h>
 #include "utils.h"
 
-#define P_H_LENGTH      4
+
+#define FLAG        0x7E
+#define ESCAPE      0x7D
+#define MAX_PACKET_SIZE   64
+
+#define P_H_LENGTH      5
 #define P_F_LENGTH      2
 #define P_H_F_LENGTH    P_H_LENGTH + P_F_LENGTH
 
+class Message { 
+  public:
+    //Initializer
+    Message();
+    Message(byte function, byte length, byte* payload);
+    
+    //Set functions
+    void SetMsg(byte function, byte length, byte* payload);
+    
+    //Message data
+    byte function;
+    byte length;
+    byte payload[64]; //TODO: this should be made configurable
+};
+
 class Packet {
   public:
-    byte length;
-    byte transactionID;
+    //Initializers
+    Packet();
+    Packet(byte function, byte* payload, byte length);
+    
+    //Get functions
+    byte SrcAddr();
+    byte DestAddr();
+    byte TransID();
+    uint16_t CRC();
+    Message Msg();
+    byte Func();
+    byte MsgLength();
+    byte Size();
+    byte Escapes();
+    byte EscapedSize();
+    
+    //Set functions
+    void SetSrcAddr(byte addr);
+    void SetDestAddr(byte addr);
+    void SetTransID(byte transID);
+    void SetMsg(byte function, byte* payload, byte length);
+    
+    //Functions
+    void ComputeCRC();
+    byte ToArray(byte* array);
+    byte ToEscapedArray(byte* array);
+    void Escape();
+    
+  private:
+    byte size;
+    byte escapedSize;
+    
+    //Header and footer info
     byte sourceAddr;
     byte destAddr;
-    byte function;
-    byte *payload;
-    uint16_t CRC;
-    Packet();
-    Packet(byte, byte*, byte);
-    void ComputeCRC();
-    byte PacketToArray(byte*);
-};
-
-class PacketNode {
-  public:
-    Packet *packet;
-    PacketNode *next;
-    PacketNode(Packet*);
-    PacketNode* Next();
-};
-
-class PacketQueue  {
-  public:
-    PacketQueue();
-    byte length;
-    PacketNode *first;
-    PacketNode *last;
-    void Push(Packet*);
-    Packet Pop();
-    Packet* Top();
-
-};
-
+    byte transactionID;
+    uint16_t crc;
+    
+    //Message content
+    Message message;
+  };
 #endif

@@ -7,10 +7,6 @@
 #include "utils.h"
 #include <SoftwareSerial.h>  //DEBUG
 
-#define FLAG        0x7E
-#define ESCAPE      0x7D
-#define MAX_PACKET_SIZE   64
-
 // Command bytes
 #define F_SET_ADDRESS   0x00
 #define F_UNLOCK_DOOR   0x01
@@ -21,6 +17,7 @@
 #define F_ALARM_BUTTON  0x07
 #define F_SET_LIGHTS    0x08
 #define F_GET_UPDATE    0x0A
+#define F_NOP           0x0B
 
 #define F_ACK           0xAA
 #define F_NAK           0xAB
@@ -43,12 +40,23 @@ class SuperSerial
     void SetDebugPort(SoftwareSerial*);
     int QueueLength();
     void QueueMessage(byte, byte*, byte);
-    boolean GetMessage(byte* function, byte message[MAX_PACKET_SIZE], byte* length);
+    bool NewMessage();
+    bool DataQueued();
+    void Update();
+    Message GetMessage();
     
   private:
-	rs485* bus;
-	byte deviceAddress;
-    PacketQueue* queue;
+    //Message/Packet Buffers
+    bool newMessage;
+    Message message;
+    bool dataQueued;
+    Packet queuedPacket;
+    Packet responsePacket;
+    byte currentPacket[MAX_PACKET_SIZE];
+    byte currentTransaction;
+    
+    rs485* bus;
+    byte deviceAddress;
     SoftwareSerial* debugPort;
     uint16_t ComputeCRC(uint8_t* data, uint8_t len);
     void ReplyToQuery(byte);
@@ -56,10 +64,9 @@ class SuperSerial
     void QueuePacket(Packet*);
     void SendPacket(Packet*);
     void SendPacket(uint8_t sourceAddr, uint8_t destAddr, uint8_t function, uint8_t* payload, uint8_t len);
-    void SendNAK(uint8_t sourceAddr, uint8_t destAddr);
-    void SendACK(uint8_t sourceAddr, uint8_t destAddr);
-    PacketQueue packetqueue;
-    uint8_t currentPacket[MAX_PACKET_SIZE];
+    void SendNAK(byte transID);
+    void SendACK(byte transID);
+    void SendNOP(byte transID);
 };
 
 #endif

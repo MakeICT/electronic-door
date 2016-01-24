@@ -1,38 +1,63 @@
 #include "packetqueue.h"
 
-Packet::Packet()  {
-  
-}
-Packet::Packet(byte function, byte* payload, byte length)  {
-  this->function = function;
-  this->payload = payload;
-  this->length = length + P_H_F_LENGTH;
+
+Message::Message()  {
+  //Do Nothing
 }
 
-byte Packet::PacketToArray(byte* array)  {
+void Message::SetMsg(byte func, byte length, byte* payload)  {
+  this->function = func;
+  this->length = length;
+  arrayCopy(payload, this->payload, length);
+  this->length = length;
+}
+
+//initialize empty packet
+Packet::Packet()  {
+  //Do nothing
+}
+
+//Initialize packet based on function info
+Packet::Packet(byte function, byte* payload, byte length)  {
+  this->message.function = function;
+  this->message.length = length;
+  for (int i = 0; i < length; i++)  {
+    this->message.payload[i] = payload[i];
+  }
+  this->size = this->message.length + P_H_F_LENGTH;
+  this->escapedSize = this->size + this->Escapes();
+}
+
+//Convert packet to an array and return
+byte Packet::ToArray(byte* array)  {
   byte index = 0;
-  array[index++] = this->length;
   array[index++] = this->transactionID;
   array[index++] = this->sourceAddr;
   array[index++] = this->destAddr;
-  array[index++] = this->function;
-  for(;index < this->length - 2; index++)  {
-    array[index] = payload[index-5];
+  array[index++] = this->message.function;
+  array[index++] = this->message.length;
+    
+  for(int i = 0;i < this->message.length; i++)  {
+    array[index++] = this->message.payload[i];
   }
-  return this->length;
+  array[index++] = this->CRC() >> 8;
+  array[index++] = this->CRC() & 0xFF;
+  return this->message.length + P_H_F_LENGTH;
 }
 
+//Compute MODBUS CRC16 for the packet
 void Packet::ComputeCRC()  {
   //this part is borrowed from somewhere....
   //TODO: implement 16 bit CRC
-  //return 0xFFFF;
+  this->crc = 0xFFFF;
+  return;
   // Compute the MODBUS RTU CRC
   
-  byte data[this->length];
-  this->PacketToArray(data);
+  byte data[this->Size()-2];
+  this->ToArray(data);
   uint16_t crc = 0xFFFF;
  
-  for (byte pos = 0; pos < this->length; pos++) {
+  for (byte pos = 0; pos < this->Size()-2; pos++) {
     crc ^= (uint16_t)data[pos];          // XOR byte into least sig. byte of crc
  
     for (int i = 8; i != 0; i--) {    // Loop over each bit
@@ -46,42 +71,74 @@ void Packet::ComputeCRC()  {
   }
   // Note, this number has low and high bytes swapped, so use it accordingly (or swap bytes)
   //return crc;
-  this->CRC = crc;  
+  this->crc = crc;  
 }
 
-PacketNode::PacketNode(Packet* p)  {
-  packet = p;
-  next = NULL;
+//Calculate number of bytes in the packet that need escaping
+byte Packet::Escapes()  {
+  byte escapes = 0;
+  byte unescapedArray[this->Size()];
+  this->ToArray(unescapedArray);
+  
+  for (int i = 0; i < this->Size(); i++)  {
+    if (unescapedArray[i] == ESCAPE || unescapedArray[i] == FLAG)  {
+      escapes +=1; 
+    }
+  }
+  return escapes;
 }
 
-PacketQueue::PacketQueue( )  {
-  this->first = NULL;
-  this->last = NULL;
-  this->length = 0;
-}
-
-void PacketQueue::Push(Packet* p)  {
-  PacketNode* newPacket = new PacketNode(p);
-  if (first == NULL)  {
-    this->first = newPacket;
-    this->last = newPacket;
+//Insert escape bytes into the packet if necessary
+byte Packet::ToEscapedArray(byte* array)  { 
+  byte unescapedArray[this->Size()];
+    this->ToArray(unescapedArray);
+  if (this->EscapedSize() > this->Size())  {
+    byte escapes = this->Escapes();
+    byte escapedArray[this->Size() + escapes];
+    for (int i=0 ,j = 0; i < this->Size(); i++, j++)  {
+      if (unescapedArray[i] == ESCAPE || unescapedArray[i] == FLAG)  {
+        escapedArray[i++] =  ESCAPE;
+      }
+      escapedArray[i] = unescapedArray[j];
+    }
+    arrayCopy(escapedArray, array, this->EscapedSize());
+    this->escapedSize = this->Size() + escapes;
+    return this->EscapedSize();
   }
   else  {
-    this->last->next = newPacket;
-    this->last = newPacket;
+    arrayCopy(unescapedArray, array, this->Size());
+    return this->Size();
   }
-  this->length += 1;
 }
 
-Packet PacketQueue::Pop()  {
-  Packet temp = *first->packet;
-  PacketNode* previous_first = first;
-  this->first = first->next;
-  delete previous_first;
-  this->length -= 1;
-  return temp;
+void Packet::SetMsg(byte func, byte* payload, byte length)  {
+  this->message.function = func;
+  this->message.length = length;
+  arrayCopy(payload, this->message.payload, length);
+  this->size = length + P_H_F_LENGTH;
 }
 
-Packet* PacketQueue::Top()  {
-  return this->first->packet;
+void Packet::SetSrcAddr(byte addr)  {
+  this->sourceAddr = addr;
+}
+
+void Packet::SetDestAddr(byte addr)  {
+  this->destAddr = addr;
+}
+
+void Packet::SetTransID(byte transID)  {
+  this->transactionID = transID;
+}
+
+uint16_t Packet::CRC()  {
+  return crc;
+}
+
+byte Packet::Size()  {
+  return this->size;
+}
+
+byte Packet::EscapedSize()  {
+  this->escapedSize = this->Size() + this->Escapes();
+  return this->escapedSize;
 }

@@ -16,27 +16,20 @@ void rs485::SetDebugPort(SoftwareSerial* port)  {
 }
 
 int rs485::Send(uint8_t* data, uint8_t len) {
-
+  //D("rs485.send called");
   digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
-
+  //D(len);
   delay(10);
   Serial.write(FLAG);
-  //debugPort->print(FLAG);
-  //debugPort->print(' ');
+  debugPort->print(FLAG);
+  debugPort->print(' ');
   for (uint8_t sByte = 0; sByte < len; sByte ++)  {
-      if (data[sByte] == FLAG || data[sByte] == ESCAPE)
-      {
-          Serial.write(ESCAPE);            // Add escape byte
-          //debugPort->print(ESCAPE);
-          //debugPort->print(' ');
-
-      }
       Serial.write(data[sByte]);          // Send byte to bus
-      //debugPort->print(data[sByte]);
-      //debugPort->print(' ');
+      debugPort->print(data[sByte]);
+      debugPort->print(' ');
   }
   Serial.write(FLAG);
-  //debugPort->println(FLAG);
+  debugPort->println(FLAG);
   delay(20);
   digitalWrite(serDir, RS485Receive);  // Disable RS485 Transmit       
 }

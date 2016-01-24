@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "utils.h"
 
 #define RS485_BAUD        9600
 #define FLAG              0x7E

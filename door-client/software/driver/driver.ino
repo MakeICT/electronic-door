@@ -57,7 +57,9 @@
 /*-----( Declare objects )-----*/
 Reader card_reader;
 rs485 bus(SSerialTxControl);
-SuperSerial* superSerial;
+//SuperSerial* superSerial;
+//TEMPORARY TEST CODE
+SuperSerial superSerial(&bus, 0x01);
 
 Ring status_ring(RING_PIN, NUMPIXELS);
 LCD readout;
@@ -83,19 +85,20 @@ void CheckReader();
 void CheckInputs();
 void ProcessMessage();
 
-
 SoftwareSerial debugPort(6,7);
 
 void setup(void) {
-  debugPort.begin(9600);
+  debugPort.begin(57600);
   Serial.begin(9600);
   debugPort.println("Start Program");
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  //conf.SaveAddress(0x01);
+  conf.SaveAddress(0x01);
   uint8_t address = conf.GetAddress();
-  superSerial = new SuperSerial(&bus, address);
-  superSerial->SetDebugPort(&debugPort);
+  debugPort.println("before SS");
+  //superSerial = new SuperSerial(&bus, address);
+  superSerial.SetDebugPort(&debugPort);
+  bus.SetDebugPort(&debugPort);
   debugPort.print("Address: ");
   debugPort.println(address);
   readout.print(0,0, "Initializing...");
@@ -116,6 +119,12 @@ void setup(void) {
 void loop(void) {
   //debugPort.print("Free RAM: ");
   //debugPort.println(freeRam());
+  static byte lastState = state;
+  if (state != lastState)  {
+    lastState = state;
+    //debugPort.print("State: ");
+    //debugPort.println(state);
+  }
   switch(state)
   {
     //debugPort.print("State: ");
@@ -144,12 +153,17 @@ void loop(void) {
     case S_UNADDRESSED:
    //debugPort.println("Unaddressed");
     {
-      ProcessMessage();
+      superSerial.Update();
+      if (!superSerial.DataQueued())
+        state = S_READY;
+      if (superSerial.NewMessage())  {
+        debugPort.println("Processing New Message");
+        ProcessMessage();
+      }
     }
 
    // case S_INITIALIZING:  
   }
-
 }
 
 void CheckReader()  {
@@ -157,66 +171,63 @@ void CheckReader()  {
   uint8_t uid[7];
   uint8_t id_length;
   if(card_reader.poll(uid, &id_length))  {
-    superSerial->QueueMessage(F_SEND_ID, uid, 7);
-    //state == S_WAIT_SEND;
+    superSerial.QueueMessage(F_SEND_ID, uid, 7);
+    state == S_WAIT_SEND;
 
     lastIDSend = millis();
 
     //TEMPORARY TEST CODE
     status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
-    door_latch.Unlock(3000);
+    //door_latch.Unlock(3000);
     speaker.Play(startTune, startTuneDurations, 8);
   }
 }
 
 void ProcessMessage()  {
-  byte message[MAX_PACKET_SIZE] = {0};
-  byte messageLength = 0;
-  byte function = 0;
-  if (superSerial->GetMessage(&function, message, &messageLength))  {
-    // If address is not set, ignore all functions other than setting address
-    if (state == S_UNADDRESSED && function != F_SET_ADDRESS)  {
-      return;
-    }
-    //Process functions
-    switch(function)
+  Message msg = superSerial.GetMessage();
+  // If address is not set, ignore all functions other than setting address
+  if (state == S_UNADDRESSED && msg.function != F_SET_ADDRESS)  {
+    return;
+  }
+  //Process functions
+  debugPort.print("Got Message: ");
+  debugPort.println(msg.function);
+  switch(msg.function)
+  {
+    case F_SET_ADDRESS:
+      conf.SaveAddress(msg.payload[0]);
+      state = S_READY;
+      break;
+    case F_GET_UPDATE:
+      //if there are events on the event stack
+          //report them
+      //else
+          //NAK
+    case F_UNLOCK_DOOR:
+      door_latch.Unlock(msg.payload[0] * 1000);
+      break;
+    case F_LOCK_DOOR:
+      door_latch.Lock();
+      break;
+    case F_PLAY_TUNE:
     {
-      case F_SET_ADDRESS:
-        conf.SaveAddress(message[0]);
-        state = S_READY;
-        break;
-      case F_GET_UPDATE:
-        //if there are events on the event stack
-            //report them
-        //else
-            //NAK
-      case F_UNLOCK_DOOR:
-        door_latch.Unlock(message[0] * 1000);
-        break;
-      case F_LOCK_DOOR:
-        door_latch.Lock();
-        break;
-      case F_PLAY_TUNE:
-      {
-
-        byte tune_length = (messageLength - 6)/2;
-        for(byte i = 0; i < tune_length; i++)  {
-          userTune[i] = message[i];
-        }
-        for(byte i = 0; i < tune_length; i++)  {
-          userTuneDurations[i] = message[i + tune_length];
-        }
-        speaker.Play(userTune, userTuneDurations, tune_length);   
-        break;
+      byte tune_length = (msg.length)/2;
+      for(byte i = 0; i < tune_length; i++)  {
+        userTune[i] = msg.payload[i];
       }
-      case F_SET_LIGHTS:
-      {
-        debugPort.println("setting lights");
-        status_ring.SetMode(message[0], 
-                            COLOR(message[1],message[2],message[3]), 
-                           (message[4]<<8) + message[5], (message[6]<<8)+message[7]);
-        break;
+      for(byte i = 0; i < tune_length; i++)  {
+        userTuneDurations[i] = msg.payload[i + tune_length];
       }
+      speaker.Play(userTune, userTuneDurations, tune_length);   
+      break;
+    }
+    case F_SET_LIGHTS:
+    {
+      debugPort.println("setting lights");
+      status_ring.SetMode(msg.payload[0], 
+                          COLOR(msg.payload[1],msg.payload[2],msg.payload[3]), 
+                         (msg.payload[4]<<8) + msg.payload[5], (msg.payload[6]<<8)+msg.payload[7]);
+      break;
     }
   }
 }
@@ -224,17 +235,19 @@ void ProcessMessage()  {
 void CheckInputs()  {
   if(digitalRead(ALARM_BUTTON_PIN) != alarmButton)  {
     alarmButton = !alarmButton;
-    byte payload[1] = {alarmButton};
-    superSerial->QueueMessage(F_ALARM_BUTTON, payload, 1);
-    //state = S_WAIT_SEND;
+    if (alarmButton == 1)  {
+      byte payload[1] = {alarmButton};
+      superSerial.QueueMessage(F_ALARM_BUTTON, payload, 1);
+      state = S_WAIT_SEND;
+    }
     return;
   }
     
   if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
     doorState = !doorState;
     byte payload[1] = {doorState};
-    superSerial->QueueMessage(F_DOOR_STATE, payload, 1);
-    //state = S_WAIT_SEND;
+    superSerial.QueueMessage(F_DOOR_STATE, payload, 1);
+    state = S_WAIT_SEND;
     return;
   }
 }
