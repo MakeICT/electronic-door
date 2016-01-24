@@ -43,4 +43,6 @@ if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 		npm install
 		cd ../../
 	done
+	cd plugins/mcp-plugin-alarm-decoder/node_modules/ad2usb
+	npm install
 fi
