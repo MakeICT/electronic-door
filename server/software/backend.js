@@ -628,7 +628,7 @@ module.exports = {
 			'VALUES (EXTRACT(\'epoch\' FROM current_timestamp), $1, $2, $3, $4)';
 		params = [message, logType, userID, code];
 		
-		console.log(logType, message, userID ? userID : ' - ', code ? code : ' - ');
+		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
 		return query(sql,  params);
 	},
 	

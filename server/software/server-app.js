@@ -202,7 +202,6 @@ io.sockets.on('connection', function (socket) {
 	});
 });
 
-
 server.listen(3000, function () {
 	backend.log(server.name + ' listening at ' + server.url);
 });

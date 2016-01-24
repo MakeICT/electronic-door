@@ -233,8 +233,8 @@
 						<div ng-repeat="plugin in plugins" class="well pull-left plugin-container">
 							<h3>{{plugin.name}}</h3>
 							<div class="btn-group">
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
+								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
 							</div>
 							<br/><br/>
 							<table>

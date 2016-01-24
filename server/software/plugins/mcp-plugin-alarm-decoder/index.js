@@ -38,33 +38,38 @@ module.exports = {
 	
 	onEnable: function(){
 		backend.getPluginOptions(module.exports.name, function(settings){
-			alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {
-				broadcaster.subscribe(module.exports);
-				
-				alarm.on('alarm', function(status) {
-					if(status){
-						broadcaster.broadcast(module.exports, "alarm-triggered", {});
-					}
+			try{
+				alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {
+					broadcaster.subscribe(module.exports);
+					
+					alarm.on('alarm', function(status) {
+						if(status){
+							broadcaster.broadcast(module.exports, "alarm-triggered", {});
+						}
+					});
+					
+					alarm.on('fireAlarm', function(status) {
+						if(status){
+							broadcaster.broadcast(module.exports, "fire-alarm-triggered", {});
+						}
+					});
+					
+					alarm.on('armedAway', function() {
+						broadcaster.broadcast(module.exports, "alarm-armed-away", {});
+					});
+					
+					alarm.on('armedStay', function() {
+						broadcaster.broadcast(module.exports, "alarm-armed-stay", {});
+					});
+					
+					alarm.on('disarmed', function() {
+						broadcaster.broadcast(module.exports, "alarm-disarmed", {});
+					});
 				});
-				
-				alarm.on('fireAlarm', function(status) {
-					if(status){
-						broadcaster.broadcast(module.exports, "fire-alarm-triggered", {});
-					}
-				});
-				
-				alarm.on('armedAway', function() {
-					broadcaster.broadcast(module.exports, "alarm-armed-away", {});
-				});
-				
-				alarm.on('armedStay', function() {
-					broadcaster.broadcast(module.exports, "alarm-armed-stay", {});
-				});
-				
-				alarm.on('disarmed', function() {
-					broadcaster.broadcast(module.exports, "alarm-disarmed", {});
-				});
-			});
+			}catch(exc){
+				backend.log('Failed to start AlarmDecoder Plugin', null, null, 'error');
+				console.log(exc);
+			}
 		});
 	},
 	

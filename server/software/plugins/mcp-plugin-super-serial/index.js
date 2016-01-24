@@ -73,6 +73,7 @@ module.exports = {
 	onUninstall: function(){},
 	
 	onEnable: function(){
+		return;
 		var onConnected = function(error){
 			if(error){
 				console.log(error);
@@ -96,7 +97,10 @@ module.exports = {
 	},
 	
 	onDisable: function(){
-		serialPort.destroy();
+		if(serialPort){
+			serialPort.stream.destroy();
+			serialPort = null;
+		}
 	},
 	
 	send: function(clientID, command, payload, callback){
