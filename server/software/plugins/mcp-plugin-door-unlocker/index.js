@@ -107,6 +107,8 @@ module.exports = {
 					
 					var unlock = function(){
 						superSerial.send(client.clientID, UNLOCK, options['unlockDuration']);
+						// @TODO: add user
+						backend.log(client.name, null, data['data'], 'unlock');
 					};
 					var deny = function(){
 						// @TODO: add user if there's a match
