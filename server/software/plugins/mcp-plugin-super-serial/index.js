@@ -96,7 +96,7 @@ module.exports = {
 				}
 			}
 			var header = [messageEndcap, transactionCount++, 0x0, clientID, command, payload.length];
-			var footer = [0xFFFF, messageEndcap];
+			var footer = [0xFF, 0xFF, messageEndcap];
 			var packet = header.concat(payload).concat(footer);
 			
 			serialPort.write(packet, function(error, results){
