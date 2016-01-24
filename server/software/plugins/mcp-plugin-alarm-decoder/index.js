@@ -39,7 +39,12 @@ module.exports = {
 	onEnable: function(){
 		backend.getPluginOptions(module.exports.name, function(settings){
 			try{
+				ad2usb.errorHandler = function(error){
+					backend.log('Alarm Decoder failed: ' + error.code);
+				};
+				
 				alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {
+					backend.log('Alarm Decoder connected');
 					broadcaster.subscribe(module.exports);
 					
 					alarm.on('alarm', function(status) {
