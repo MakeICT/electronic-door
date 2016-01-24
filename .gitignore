@@ -8,3 +8,6 @@ logs/
 lcd/.build
 
 *.swp
+
+.cli-history
+*.pyc
