@@ -72,8 +72,8 @@ uint16_t Packet::ComputeCRC()  {
   return crc;
 }
 
-void Packet::SetCRC()  {
-  this->crc = this->ComputeCRC();
+void Packet::SetCRC(uint16_t crc)  {
+  this->crc = crc;
 }
 
 bool Packet::VerifyCRC()  {

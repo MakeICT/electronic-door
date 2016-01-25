@@ -53,8 +53,9 @@ class Packet {
     void SetMsg(byte function, byte* payload, byte length, byte offset=0);
     
     //Functions
+    uint16_t ComputeCRC();
     bool VerifyCRC();
-    void SetCRC();
+    void SetCRC(uint16_t crc);
     byte ToArray(byte* array);
     byte ToEscapedArray(byte* array);
     void Escape();
@@ -71,8 +72,5 @@ class Packet {
     
     //Message content
     Message message;
-    
-    uint16_t ComputeCRC();
-
   };
 #endif

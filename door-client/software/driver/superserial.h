@@ -52,7 +52,6 @@ class SuperSerial
     bool dataQueued;
     Packet queuedPacket;
     Packet responsePacket;
-    byte currentPacket[MAX_PACKET_SIZE];
     byte currentTransaction;
     
     rs485* bus;

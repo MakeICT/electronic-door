@@ -24,17 +24,14 @@
 
 // Pin assignments
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
-#define PN532_SS_PIN      10      // SPI Slave Select pin
-#define SPEAKER_PIN       9       // Tone generation pin
 #define LATCH_PIN         5       // Digital pin to trigger door strike circuit
 #define SSerialRX         6       // Serial Receive pin
 #define SSerialTX         7       // Serial Transmit pin
 #define SSerialTxControl  8       // RS485 Direction control
+#define SPEAKER_PIN       9       // Tone generation pin
+#define PN532_SS_PIN      10      // SPI Slave Select pin
 #define DOOR_SWITCH_PIN   A0      // Magnetic switch on door
 #define ALARM_BUTTON_PIN  A1      // Big button to arm the alarm
-
-// Constants for RS485
-#define MAX_PACKET_SIZE   100
 
 // Constants for audio playback
 #define USER_TUNE_LENGTH    30      // Max number of notes in entry melody
@@ -45,11 +42,11 @@
 
 // Constants for NeoPixel ring
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
-#define COLOR               Adafruit_NeoPixel::Color
 #define COLOR_IDLE          0,100,120
 #define COLOR_SUCCESS       0,60,20
 #define COLOR_ERROR         50,20,0
 #define COLOR_BACKGROUND    0,20,50
+#define COLOR               Adafruit_NeoPixel::Color
 
 // Constants for machine states
 #define S_INITIALIZING      0
@@ -124,9 +121,9 @@ void setup(void) {
 
 
 void loop(void) {
-  //LOG_DEBUG(F("Free RAM: "));
-  //LOG_DEBUG(freeRam());
-  //LOG_DEBUG(F("\r\n"));
+  LOG_DUMP(F("Free RAM: "));
+  LOG_DUMP(freeRam());
+  LOG_DUMP (F("\r\n"));
   static byte lastState = state;
   if (state != lastState)  {
     lastState = state;
