@@ -43,11 +43,11 @@
 				</div>
 
 				<uib-tabset>
-					<uib-tab heading="Status">
+					<uib-tab heading="Status" active="tabs.status.active" select="setLocation('status');">
 						<h2>Status</h2>
 						<p>System status, alarm controls</p>
 					</uib-tab>
-					<uib-tab heading="Users">
+					<uib-tab heading="Users" active="tabs.users.active" select="setLocation('users');">
 						<h2>Users</h2>
 						Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()"/>
 						<div style="margin-top: 0.5em;">
@@ -159,7 +159,7 @@
 							</accordion>
 						</div>
 					</uib-tab>
-					<uib-tab heading="Clients">
+					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
 						<h2>Clients</h2>
 						<div masonry>
 							<div ng-repeat="client in clients" class="masonry-brick well">
@@ -203,7 +203,7 @@
 							</div>
 						</div>
 					</uib-tab>
-					<uib-tab heading="Activity Log">
+					<uib-tab heading="Activity Log" active="tabs.log.active" select="setLocation('log');">
 						<h2>Activity Log</h2>
 						<button ng-click="loadLog()" class="btn btn-sm btn-primary">Load</button>
 						<table>
@@ -227,13 +227,13 @@
 							</tbody>
 						</table>
 					</uib-tab>
-					<uib-tab heading="Options">
+					<uib-tab heading="Options" active="tabs.options.active" select="setLocation('options');">
 						<h2>System Options</h2>
 						<p>Yo</p>
 						<h2>Personal Options</h2>
 						<p>Yo</p>
 					</uib-tab>
-					<uib-tab heading="Plugins">
+					<uib-tab heading="Plugins" active="tabs.plugins.active" select="setLocation('plugins');">
 						<h2>Plugins</h2>
 						<div masonry>
 							<div ng-repeat="plugin in plugins" class="masonry-brick well">
