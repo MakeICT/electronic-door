@@ -7,6 +7,7 @@
 #define LOG_WARNING(t)       //t
 #define LOG_INFO(t)          //t
 #define LOG_DEBUG(t)         //t
+#define LOG_DUMP(t)          //t
 
 #if LOG_LVL > 0
   #define LOG_ERROR(t)    debugPort->print(t)
@@ -19,6 +20,9 @@
 #endif
 #if LOG_LVL > 3
   #define LOG_DEBUG(t)    debugPort->print(t)
+#endif
+#if LOG_LVL > 4
+  #define LOG_DUMP(t)  debugPort->print(t)
 #endif
 
 #define D debugPort->println
@@ -33,9 +37,9 @@ inline int freeRam ()
 }
 
 //copy contents of array1 to array 2
-inline void arrayCopy (byte* array1, byte* array2, byte length)  {
+inline void arrayCopy (byte* array1, byte* array2, byte length, byte offset=0)  {
   for (int i = 0; i < length; i++)  {
-    array2[i] = array1[i];
+    array2[i] = array1[i + offset];
   }
 }
 

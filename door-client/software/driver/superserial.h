@@ -48,7 +48,7 @@ class SuperSerial
   private:
     //Message/Packet Buffers
     bool newMessage;
-    Message message;
+    Packet receivedPacket;
     bool dataQueued;
     Packet queuedPacket;
     Packet responsePacket;
@@ -58,12 +58,11 @@ class SuperSerial
     rs485* bus;
     byte deviceAddress;
     SoftwareSerial* debugPort;
-    uint16_t ComputeCRC(uint8_t* data, uint8_t len);
     void ReplyToQuery(byte);
-    byte GetPacket();
+    bool GetPacket();
     void QueuePacket(Packet*);
     void SendPacket(Packet*);
-    void SendPacket(uint8_t sourceAddr, uint8_t destAddr, uint8_t function, uint8_t* payload, uint8_t len);
+    void SendControl(byte function, byte transactionID);
     void SendNAK(byte transID);
     void SendACK(byte transID);
     void SendNOP(byte transID);
