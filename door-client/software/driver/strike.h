@@ -14,6 +14,7 @@ class Strike  {
     void Update();
   private:
     byte strikePin;
+    bool locked;
     uint32_t unlockTime;
     uint32_t unlockDuration;    
 };
