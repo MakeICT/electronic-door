@@ -25,7 +25,7 @@ class Message {
     //Message data
     byte function;
     byte length;
-    byte payload[64]; //TODO: this should be made configurable
+    byte payload[MAX_PACKET_SIZE - P_H_F_LENGTH]; //TODO: this should be made configurable
 };
 
 class Packet {
@@ -50,10 +50,11 @@ class Packet {
     void SetSrcAddr(byte addr);
     void SetDestAddr(byte addr);
     void SetTransID(byte transID);
-    void SetMsg(byte function, byte* payload, byte length);
+    void SetMsg(byte function, byte* payload, byte length, byte offset=0);
     
     //Functions
-    void ComputeCRC();
+    bool VerifyCRC();
+    void SetCRC();
     byte ToArray(byte* array);
     byte ToEscapedArray(byte* array);
     void Escape();
@@ -70,5 +71,8 @@ class Packet {
     
     //Message content
     Message message;
+    
+    uint16_t ComputeCRC();
+
   };
 #endif

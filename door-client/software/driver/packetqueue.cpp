@@ -1,8 +1,12 @@
 #include "packetqueue.h"
 
-
+//Initialize empty message
 Message::Message()  {
   //Do Nothing
+}
+
+Message::Message(byte f, byte l, byte* p)  {
+  this->SetMsg(f, l, p);
 }
 
 void Message::SetMsg(byte func, byte length, byte* payload)  {
@@ -18,14 +22,8 @@ Packet::Packet()  {
 }
 
 //Initialize packet based on function info
-Packet::Packet(byte function, byte* payload, byte length)  {
-  this->message.function = function;
-  this->message.length = length;
-  for (int i = 0; i < length; i++)  {
-    this->message.payload[i] = payload[i];
-  }
-  this->size = this->message.length + P_H_F_LENGTH;
-  this->escapedSize = this->size + this->Escapes();
+Packet::Packet(byte f, byte* p, byte l)  {
+  this->SetMsg(f, p, l);
 }
 
 //Convert packet to an array and return
@@ -46,11 +44,11 @@ byte Packet::ToArray(byte* array)  {
 }
 
 //Compute MODBUS CRC16 for the packet
-void Packet::ComputeCRC()  {
+uint16_t Packet::ComputeCRC()  {
   //this part is borrowed from somewhere....
   //TODO: implement 16 bit CRC
-  this->crc = 0xFFFF;
-  return;
+  return 0xFFFF;
+  
   // Compute the MODBUS RTU CRC
   
   byte data[this->Size()-2];
@@ -71,7 +69,18 @@ void Packet::ComputeCRC()  {
   }
   // Note, this number has low and high bytes swapped, so use it accordingly (or swap bytes)
   //return crc;
-  this->crc = crc;  
+  return crc;
+}
+
+void Packet::SetCRC()  {
+  this->crc = this->ComputeCRC();
+}
+
+bool Packet::VerifyCRC()  {
+  if (this->CRC() == this->ComputeCRC())
+    return true;
+  else
+    return false;
 }
 
 //Calculate number of bytes in the packet that need escaping
@@ -111,11 +120,13 @@ byte Packet::ToEscapedArray(byte* array)  {
   }
 }
 
-void Packet::SetMsg(byte func, byte* payload, byte length)  {
-  this->message.function = func;
+/*==========( Set Functions )==========*/
+void Packet::SetMsg(byte function, byte* payload, byte length, byte offset)  {
+  this->message.function = function;
   this->message.length = length;
-  arrayCopy(payload, this->message.payload, length);
+  arrayCopy(payload, this->message.payload, length, offset);
   this->size = length + P_H_F_LENGTH;
+  this->escapedSize = this->size + this->Escapes();
 }
 
 void Packet::SetSrcAddr(byte addr)  {
@@ -128,6 +139,22 @@ void Packet::SetDestAddr(byte addr)  {
 
 void Packet::SetTransID(byte transID)  {
   this->transactionID = transID;
+}
+/*==========( Get Functions )==========*/
+Message Packet::Msg()  {
+  return this->message;
+}
+
+byte Packet::DestAddr()  {
+  return this->destAddr;
+}
+
+byte Packet::SrcAddr()  {
+  return this->sourceAddr;
+}
+
+byte Packet::TransID()  {
+  return this->transactionID;
 }
 
 uint16_t Packet::CRC()  {

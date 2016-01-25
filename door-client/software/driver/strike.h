@@ -2,6 +2,7 @@
 #define STRIKE_H
 
 #include <Arduino.h>
+#include "utils.h"
 
 #define STRIKE_HIGH_TIME  2000
 #define HOLD_DUTY_CYCLE   800
