@@ -1,6 +1,26 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define LOG_LVL 3
+
+#define LOG_ERROR(t)         //t
+#define LOG_WARNING(t)       //t
+#define LOG_INFO(t)          //t
+#define LOG_DEBUG(t)         //t
+
+#if LOG_LVL > 0
+  #define LOG_ERROR(t)    debugPort->print(t)
+#endif
+#if LOG_LVL > 1
+  #define LOG_WARNING(t)  debugPort->print(t)
+#endif
+#if LOG_LVL > 2
+  #define LOG_INFO(t)     debugPort->print(t)
+#endif
+#if LOG_LVL > 3
+  #define LOG_DEBUG(t)    debugPort->print(t)
+#endif
+
 #define D debugPort->println
 #define dbg debugPort->print
 

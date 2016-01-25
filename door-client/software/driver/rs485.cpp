@@ -16,20 +16,20 @@ void rs485::SetDebugPort(SoftwareSerial* port)  {
 }
 
 int rs485::Send(uint8_t* data, uint8_t len) {
-  //D("rs485.send called");
+  LOG_DEBUG(F("rs485.send called"));
   digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
-  //D(len);
   delay(10);
   Serial.write(FLAG);
-  debugPort->print(FLAG);
-  debugPort->print(' ');
+  LOG_DEBUG(FLAG);
+  LOG_DEBUG(' ');
   for (uint8_t sByte = 0; sByte < len; sByte ++)  {
       Serial.write(data[sByte]);          // Send byte to bus
-      debugPort->print(data[sByte]);
-      debugPort->print(' ');
+      LOG_DEBUG(data[sByte]);
+      LOG_DEBUG(' ');
   }
   Serial.write(FLAG);
-  debugPort->println(FLAG);
+  LOG_DEBUG(FLAG);
+  LOG_DEBUG(F("\r\n"));
   delay(20);
   digitalWrite(serDir, RS485Receive);  // Disable RS485 Transmit       
 }

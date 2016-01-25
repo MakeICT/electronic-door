@@ -32,20 +32,18 @@ Message SuperSerial::GetMessage()  {
 }
 
 byte SuperSerial::GetPacket() {
-  //debugPort->println("GetPacket");
+  LOG_DEBUG(F("SuperSerial::GetPacket()\r\n"));
   static uint8_t packetIndex = 0;
   static uint8_t escape_count = 0;
   static boolean escaping = false;
   for (int i = bus->Available(); i > 0; i--)  {
-    //debugPort->print("Free RAM 2: ");
-    //debugPort->println(freeRam());
     byte byteReceived = bus->Receive();    // Read received byte
     if (byteReceived == ESCAPE && !escaping) {
       escaping = true;
       escape_count++;
     }
     else if(byteReceived == FLAG && !escaping)  {
-      //debugPort->println("=====================");
+      LOG_DEBUG(F("=============================="));
       byte receivedBytes = packetIndex;
       byte escapes = escape_count;
       escape_count = 0;
@@ -56,17 +54,17 @@ byte SuperSerial::GetPacket() {
         uint8_t dstAddress = currentPacket[2];
   
         if (dstAddress == this->deviceAddress || dstAddress == ADDR_BROADCAST)  {
-          debugPort->println("THE PACKET IS MINE!");
+          LOG_DEBUG(F("Verifying new packet\r\n"));
           if (ComputeCRC(currentPacket, receivedBytes) == 0xFFFF  )  {    //verify CRC //TODO: this is fake
             this->currentTransaction = transactionID;   //TODO: fix this ugly hack
             if (currentPacket[3] == F_GET_UPDATE)   {
               if (this->DataQueued())  {
-                D("Send Update");
+                LOG_INFO(F("Sending Update\r\n"));
                 this->SendPacket(&this->queuedPacket);
                 this->dataQueued = false;
               }
               else  {
-                D("Send NOP");
+                LOG_DEBUG(F("Sending NOP\r\n"));
                 this->SendNOP(currentTransaction);
               }
               return false;
@@ -79,7 +77,7 @@ byte SuperSerial::GetPacket() {
             }
             newMessage = true;
             SendACK(currentTransaction);
-            debugPort->println("GetPacket returns true");
+            LOG_INFO(F("Got valid packet\r\n"));
             return receivedBytes;
             }
           }
@@ -90,25 +88,23 @@ byte SuperSerial::GetPacket() {
     }
     else  {
       currentPacket[packetIndex++] = byteReceived;
-      //debugPort->print("rcv: ");
-      //debugPort->println(byteReceived);
+      LOG_DEBUG(F("rcv: "));
+      LOG_DEBUG(byteReceived);
+      LOG_DEBUG(F("\r\n"));
       escaping = false; 
     }
   }
   return false;
-  //debugPort->println("GetPacket returns false");
 }
 
 void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
-  debugPort->println("SuperSerial.QueueMessage called");
- //D(length);
+  LOG_DEBUG(F("SuperSerial.QueueMessage() called\r\n"));
+  LOG_INFO(F("Update Queued\r\n"));
   //TODO: Currently only supports queueing one message
   this->queuedPacket.SetMsg(function, payload, length);
   this->queuedPacket.SetDestAddr(ADDR_MASTER);
   this->queuedPacket.SetSrcAddr(this->deviceAddress);
   this->dataQueued = true;
-  //TEMPORARY TEST CODE
-  //this->SendPacket(&queuedPacket);
 }
 
 void SuperSerial::ReplyToQuery(byte transID)  {
@@ -118,34 +114,12 @@ void SuperSerial::ReplyToQuery(byte transID)  {
 }
 
 void SuperSerial::SendPacket(Packet* p)  {
-  debugPort->println("SuperSerial.SendPacket called");
+  LOG_DEBUG(F("SuperSerial.SendPacket called"));
   p->ComputeCRC();
   byte array[p->EscapedSize()];
   p->ToEscapedArray(array);
   bus->Send(array, p->EscapedSize());
 }
-
-//~ //TODO: get rid of this function.  Use new send function.
-//~ void SuperSerial::SendPacket(uint8_t sourceAddr, uint8_t destAddr, uint8_t function, uint8_t* payload, uint8_t len)  {
-  //~ //TODO: do all byte stuffing here / recalculate packet length
-  //~ uint8_t pos = 0;
-  //~ uint8_t packet_len = len + P_H_F_LENGTH;
-  //~ uint8_t packet[packet_len];
-  //~ uint16_t CRC = ComputeCRC(packet, packet_len - 2);
-  //~ packet[pos++] = currentTransaction;
-  //~ packet[pos++] = sourceAddr;
-  //~ packet[pos++] = destAddr;
-  //~ packet[pos++] = function;
-  //~ packet[pos++] = len;
-//~ 
-//~ 
-  //~ for (uint8_t i = 0; i < len; i++)  {
-    //~ packet[pos++] =  payload[i];
-  //~ }
-  //~ packet[pos++] = CRC >> 8;
-  //~ packet[pos++] = CRC & 0xFF;
-  //~ bus->Send(packet, packet_len);
-//~ }
 
 inline void SuperSerial::SendACK(byte transID)  {
   responsePacket.SetMsg(F_ACK, NULL, 0);

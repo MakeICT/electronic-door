@@ -1,4 +1,4 @@
-/*-----( Import needed libraries )-----*/
+/*-----( Include needed libraries )-----*/
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>
@@ -7,6 +7,7 @@
 #include <PN532_SPI.h>
 #include "PN532Interface.h"
 
+/*-----( Include project files )-----*/
 #include "packetqueue.h"
 #include "ring.h"
 #include "reader.h"
@@ -88,22 +89,25 @@ void CheckReader();
 void CheckInputs();
 void ProcessMessage();
 
-SoftwareSerial debugPort(6,7);
+SoftwareSerial dbgPort(6,7);
+SoftwareSerial* debugPort = &dbgPort;
 
 void setup(void) {
-  debugPort.begin(57600);
+  dbgPort.begin(57600);
   Serial.begin(9600);
-  debugPort.println("Start Program");
+  superSerial.SetDebugPort(debugPort);
+  bus.SetDebugPort(debugPort);
+  LOG_DEBUG(F("Start Program\r\n"));
+  
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   conf.SaveAddress(0x01);
   uint8_t address = conf.GetAddress();
-  debugPort.println("before SS");
   //superSerial = new SuperSerial(&bus, address);
-  superSerial.SetDebugPort(&debugPort);
-  bus.SetDebugPort(&debugPort);
-  debugPort.print("Address: ");
-  debugPort.println(address);
+
+  LOG_INFO(F("Address: "));
+  LOG_INFO(address);
+  LOG_INFO(F("\r\n"));
   readout.print(0,0, "Initializing...");
   if(!card_reader.start())  {
     readout.print(0,1,"ERROR: NFC");
@@ -120,21 +124,20 @@ void setup(void) {
 
 
 void loop(void) {
-  //debugPort.print("Free RAM: ");
-  //debugPort.println(freeRam());
+  //LOG_DEBUG(F("Free RAM: "));
+  //LOG_DEBUG(freeRam());
+  //LOG_DEBUG(F("\r\n"));
   static byte lastState = state;
   if (state != lastState)  {
     lastState = state;
-    //debugPort.print("State: ");
-    //debugPort.println(state);
+    LOG_INFO(F("State changed to: "));
+    LOG_INFO(state);
+    LOG_INFO(F("\r\n"));
   }
   switch(state)
   {
-    //debugPort.print("State: ");
     case S_READY:
-    //debugPort.println("Ready");
     {
-      //debugPort.println("");
       static uint32_t lastRead = 0;
       uint32_t currentMillis = millis();
       if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
@@ -146,7 +149,6 @@ void loop(void) {
     }
       
     case S_WAIT_SEND:
-    //debugPort.println("Waiting to send");
     {
       speaker.Update();
       status_ring.Update();
@@ -154,13 +156,11 @@ void loop(void) {
     }
 
     case S_UNADDRESSED:
-   //debugPort.println("Unaddressed");
     {
       superSerial.Update();
       if (!superSerial.DataQueued())
         state = S_READY;
       if (superSerial.NewMessage())  {
-        debugPort.println("Processing New Message");
         ProcessMessage();
       }
     }
@@ -176,9 +176,17 @@ void CheckReader()  {
   if(card_reader.poll(uid, &id_length))  {
     superSerial.QueueMessage(F_SEND_ID, uid, 7);
     state == S_WAIT_SEND;
-
     lastIDSend = millis();
-
+    
+    #if LOG_LVL>2
+    LOG_INFO(F("Scanned ID: "));
+    for(int i=0; i<7; i++)  {
+      LOG_INFO(uid[i]);
+      LOG_INFO(F(" "));
+    }
+    LOG_INFO(F("\r\n"));
+    #endif
+    
     //TEMPORARY TEST CODE
     status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
     //door_latch.Unlock(3000);
@@ -193,27 +201,25 @@ void ProcessMessage()  {
     return;
   }
   //Process functions
-  debugPort.print("Got Message: ");
-  debugPort.println(msg.function);
+  LOG_INFO(F("Got Message: "));
   switch(msg.function)
   {
     case F_SET_ADDRESS:
+      LOG_INFO(F("Set Address\r\n"));
       conf.SaveAddress(msg.payload[0]);
       state = S_READY;
       break;
-    case F_GET_UPDATE:
-      //if there are events on the event stack
-          //report them
-      //else
-          //NAK
     case F_UNLOCK_DOOR:
+      LOG_INFO(F("Unlock Door\r\n"));
       door_latch.Unlock(msg.payload[0] * 1000);
       break;
     case F_LOCK_DOOR:
+      LOG_INFO(F("Lock Door\r\n"));
       door_latch.Lock();
       break;
     case F_PLAY_TUNE:
     {
+      LOG_INFO(F("Play Tune\r\n"));
       byte tune_length = (msg.length)/2;
       for(byte i = 0; i < tune_length; i++)  {
         userTune[i] = msg.payload[i];
@@ -226,12 +232,14 @@ void ProcessMessage()  {
     }
     case F_SET_LIGHTS:
     {
-      debugPort.println("setting lights");
+      LOG_INFO(F("Set Lights\r\n"));
       status_ring.SetMode(msg.payload[0], 
                           COLOR(msg.payload[1],msg.payload[2],msg.payload[3]), 
                          (msg.payload[4]<<8) + msg.payload[5], (msg.payload[6]<<8)+msg.payload[7]);
       break;
     }
+    default:
+      LOG_WARNING(F("UNRECOGNIZED\r\n"));
   }
 }
 
@@ -239,6 +247,7 @@ void CheckInputs()  {
   if(digitalRead(ALARM_BUTTON_PIN) != alarmButton)  {
     alarmButton = !alarmButton;
     if (alarmButton == 1)  {
+      LOG_INFO(F("Arm Alarm Button Pressed\r\n"));
       byte payload[1] = {alarmButton};
       superSerial.QueueMessage(F_ALARM_BUTTON, payload, 1);
       state = S_WAIT_SEND;
@@ -247,6 +256,7 @@ void CheckInputs()  {
   }
     
   if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
+    LOG_INFO(F("Door State Changed\r\n"));
     doorState = !doorState;
     byte payload[1] = {doorState};
     superSerial.QueueMessage(F_DOOR_STATE, payload, 1);
@@ -254,5 +264,3 @@ void CheckInputs()  {
     return;
   }
 }
-
-
