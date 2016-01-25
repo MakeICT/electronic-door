@@ -17,6 +17,10 @@
 		<script src="/js/angular/angular.js"></script>
 		<script src="/js/bootstrap/bootstrap.min.js"></script>
 		<script src="/js/ui-bootstrap-tpls.js"></script>
+		<script src="/js/imagesloaded.pkgd.min.js"></script>
+		<script src="/js/jquery-bridget.js"></script>
+		<script src="/js/masonry.pkgd.min.js"></script>
+		<script src="/js/angular-masonry.min.js"></script>
 
 		<script src="/js/MainController.js"></script>
 	</head>
@@ -157,45 +161,46 @@
 					</uib-tab>
 					<uib-tab heading="Clients">
 						<h2>Clients</h2>
-						<div ng-repeat="client in clients" class="well pull-left client-container">
-							<h3>{{client.name}}</h3>
-							<table>
-								<tbody>
-									<tr>
-										<td>ID:</td>
-										<td><input type="text" ng-model="client.clientID" /></td>
-									</tr>
-									<tr>
-										<td>Name:</td>
-										<td><input type="text" ng-model="client.name" /></td>
-									</tr>
-								</tbody>
-								<tbody>
-									<tr>
-										<td>Plugins:</td>
-										<td>
-											<select ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
-												<option disabled selected hidden value=""> - Bind new plugin - </option>
-												<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
-											</select>
-										</td>
-									</tr>
-								</tbody>
-								<tbody ng-repeat="plugin in client.plugins">
-									<tr>
-										<th colspan="2" class="plugin-name">{{plugin.name}}</th>
-									</tr>
-									<tr ng-repeat="option in plugin.options">
-										<td>{{option.name}}</td>
-										<td><input type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)"/></td>
-									</tr>
-									<tr>
-										<td colspan="2" class="client-plugin-actions">
-											<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
-										</td>
-								</tbody>
-							</table>
-							<br/>
+						<div masonry>
+							<div ng-repeat="client in clients" class="masonry-brick well">
+								<h3>{{client.name}}</h3>
+								<table>
+									<tbody>
+										<tr>
+											<td>ID:</td>
+											<td><input type="text" ng-model="client.clientID" /></td>
+										</tr>
+										<tr>
+											<td>Name:</td>
+											<td><input type="text" ng-model="client.name" /></td>
+										</tr>
+									</tbody>
+									<tbody>
+										<tr>
+											<td>Plugins:</td>
+											<td>
+												<select ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+													<option disabled selected hidden value=""> - Bind new plugin - </option>
+													<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
+												</select>
+											</td>
+										</tr>
+									</tbody>
+									<tbody ng-repeat="plugin in client.plugins">
+										<tr>
+											<th colspan="2" class="plugin-name">{{plugin.name}}</th>
+										</tr>
+										<tr ng-repeat="option in plugin.options">
+											<td>{{option.name}}</td>
+											<td><input type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)"/></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="client-plugin-actions">
+												<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
+											</td>
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</uib-tab>
 					<uib-tab heading="Activity Log">
@@ -230,20 +235,22 @@
 					</uib-tab>
 					<uib-tab heading="Plugins">
 						<h2>Plugins</h2>
-						<div ng-repeat="plugin in plugins" class="well pull-left plugin-container">
-							<h3>{{plugin.name}}</h3>
-							<div class="btn-group">
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+						<div masonry>
+							<div ng-repeat="plugin in plugins" class="masonry-brick well">
+								<h3>{{plugin.name}}</h3>
+								<div class="btn-group">
+									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
+									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+								</div>
+								<br/><br/>
+								<table>
+									<tr ng-repeat="option in plugin.options">
+										<td>{{option.name}}</td>
+										<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}"></td>
+									</tr>
+								</table><br/>
+								<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 							</div>
-							<br/><br/>
-							<table>
-								<tr ng-repeat="option in plugin.options">
-									<td>{{option.name}}</td>
-									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}"></td>
-								</tr>
-							</table><br/>
-							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 						</div>
 					</uib-tab>
 				</tabset>

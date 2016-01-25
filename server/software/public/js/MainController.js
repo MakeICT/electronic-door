@@ -4,7 +4,7 @@ function pad(n, width, z) {
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var app = angular.module('electronic-door', ['ui.bootstrap']);
+var app = angular.module('electronic-door', ['ui.bootstrap', 'wu.masonry']);
 angular.module('electronic-door').controller('controller', function($scope, $http){
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
