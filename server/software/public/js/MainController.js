@@ -99,7 +99,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.getUserAuthorizations = function(user){
 		$http.get('/users/' + user.userID + '/authorizations').success(function(response){
-			console.log(response);
 			user.authorizations = response;
 		});
 	};

@@ -31,8 +31,8 @@
 			<div ng-if="!locals.authenticated" class="form">
 				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>
 				<form class="form" id="login-form">
-					<input type="email" class="form-control" placeholder="Email">
-					<input type="password" class="form-control" placeholder="Password">
+					<input type="email" class="form-control input-sm" placeholder="Email">
+					<input type="password" class="form-control input-sm" placeholder="Password">
 					<button type="submit" class="btn btn-default">Sign in</button>
 				</form>
 			</div>
@@ -141,7 +141,7 @@
 										</tr><tr>
 											<th>Authorizations</th>
 											<td>
-												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);">Load authorizations</button>
+												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);" class="btn btn-sm btn-default">Load authorizations</button>
 												<button
 													ng-repeat="auth in user.authorizations"
 													uib-btn-checkbox
@@ -168,18 +168,18 @@
 									<tbody>
 										<tr>
 											<td>ID:</td>
-											<td><input type="text" ng-model="client.clientID" /></td>
+											<td><input class="form-control input-sm" type="text" ng-model="client.clientID" /></td>
 										</tr>
 										<tr>
 											<td>Name:</td>
-											<td><input type="text" ng-model="client.name" /></td>
+											<td><input class="form-control input-sm" type="text" ng-model="client.name" /></td>
 										</tr>
 									</tbody>
 									<tbody>
 										<tr>
 											<td>Plugins:</td>
 											<td>
-												<select ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+												<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
 													<option disabled selected hidden value=""> - Bind new plugin - </option>
 													<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
 												</select>
@@ -192,7 +192,7 @@
 										</tr>
 										<tr ng-repeat="option in plugin.options">
 											<td>{{option.name}}</td>
-											<td><input type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)"/></td>
+											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)"/></td>
 										</tr>
 										<tr>
 											<td colspan="2" class="client-plugin-actions">
@@ -205,7 +205,7 @@
 					</uib-tab>
 					<uib-tab heading="Activity Log">
 						<h2>Activity Log</h2>
-						<button ng-click="loadLog()">Load</button>
+						<button ng-click="loadLog()" class="btn btn-sm btn-primary">Load</button>
 						<table>
 							<thead>
 								<tr>
@@ -246,7 +246,7 @@
 								<table>
 									<tr ng-repeat="option in plugin.options">
 										<td>{{option.name}}</td>
-										<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}"></td>
+										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}"></td>
 									</tr>
 								</table><br/>
 								<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
