@@ -1,0 +1,1 @@
+../../node_modules/angular-masonry/node_modules/jquery-bridget/jquery-bridget.js

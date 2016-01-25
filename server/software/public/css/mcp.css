@@ -19,10 +19,6 @@ h1 img {
 	text-align: left;
 }
 
-.plugin-container {
-	margin: 1em;
-}
-
 #status-header {
 	position: absolute;
 	top: 0;
@@ -51,11 +47,16 @@ tbody>tr:last-child>td {
 	padding-bottom: 1em;
 }
 
-.client-container .plugin-name {
-	padding-top: 1em;
-	text-align: center;
-}
-
 .client-plugin-actions {
 	padding-top: 1em;
+}
+
+.masonry-brick {
+	text-align: center;
+	width: 25em;
+	margin: 1em;
+}
+
+.masonry-brick>table{
+	width: 100%;
 }

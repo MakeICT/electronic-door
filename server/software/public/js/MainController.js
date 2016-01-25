@@ -4,11 +4,21 @@ function pad(n, width, z) {
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var app = angular.module('electronic-door', ['ui.bootstrap']);
-angular.module('electronic-door').controller('controller', function($scope, $http){
+var app = angular.module('electronic-door', ['ui.bootstrap', 'wu.masonry']);
+angular.module('electronic-door').controller('controller', function($scope, $http, $location){
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
 	$scope.clients = {};
+	
+	$scope.tabs = {};
+	var path = $location.path().substring(1).split('/');
+	if(path != ''){
+		$scope.tabs[path] = { active: true };
+	}
+	
+	$scope.setLocation = function(path){
+		$location.path(path);
+	}
 	
 	$http.get('/plugins').success(function(plugins){
 		for(var i=0; i<plugins.length; i++){
@@ -99,7 +109,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.getUserAuthorizations = function(user){
 		$http.get('/users/' + user.userID + '/authorizations').success(function(response){
-			console.log(response);
 			user.authorizations = response;
 		});
 	};

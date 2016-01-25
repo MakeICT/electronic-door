@@ -26,7 +26,6 @@ function onData(data){
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
-			console.log("Endcap");
 			if(dataBuffer.length > 0){
 				packet = {
 					'transactionID': dataBuffer[0],
@@ -35,7 +34,6 @@ function onData(data){
 					'function': dataBuffer[3],
 					'data': "",
 				};
-				console.log("DataBuffer = " + dataBuffer);
 				for(var j=5; j<5+dataBuffer[4]; j++){
 					packet.data += dataBuffer[j].toString(16);
 				}
@@ -45,16 +43,27 @@ function onData(data){
 				pollNextClient();
 			}
 		}else if(byte == escapeChar && !escapeFlag){
-			console.log("Escape enabled");
 			escapeFlag = true;
 		}else{
-			if(escapeFlag) console.log("Escape cleared");
 			escapeFlag = false;
-			console.log("Push " + byte);
 			dataBuffer.push(byte);
 		}
 	}
 };
+
+function breakupBytes(byteArray){
+	var output = [];
+	for(var i=0; i<byteArray.length; i++){
+		var byte = byteArray[i];
+		while(byte > 0xFF){
+			output.push((byte >> 8) & 0xFF);
+			byte = (byte & 0xFF);
+		}
+		output.push(byte);
+	}
+	
+	return output;
+}
 
 module.exports = {
 	name: 'Super Serial',
@@ -95,7 +104,7 @@ module.exports = {
 						serialPort.on('data', onData);
 						setTimeout(pollNextClient, 3000);
 					}
-				};
+				}
 			);
 		});
 	},
@@ -119,9 +128,11 @@ module.exports = {
 			}else if(!(payload instanceof Array)){
 				payload = [payload];
 			}
+			payload = breakupBytes(payload);
+			
 			var header = [messageEndcap, transactionCount++, 0x0, clientID, command, payload.length];
-			var footer = [0xFF, 0xFF, messageEndcap];
-			var packet = header.concat(payload).concat(footer);
+			var footer = [0xFFFF, messageEndcap];
+			var packet = breakupBytes(header.concat(payload).concat(footer));
 			
 			for(var i=1; i<packet.length-1; i++){
 				if(!packet[i]) packet[i] = 0;
