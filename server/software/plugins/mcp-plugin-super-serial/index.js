@@ -1,12 +1,15 @@
 var broadcaster = require('../../broadcast.js');
 var backend = require('../../backend.js');
 var SerialPort = require("serialport");
+var GPIO = require('onoff').Gpio;
 
 var serialPort;
 var transactionCount = 0;
 
 var escapeChar = 0x7D;
 var messageEndcap = 0x7E;
+
+var readWriteToggle;
 
 var currentlyPolledClientIndex = -1;
 
@@ -58,32 +61,22 @@ module.exports = {
 	options: {
 		'Port': 'text',
 		'Baud': 'number',
-		'Data bits': 'number',
-		'Stop bits': 'number',
+		'R/W Toggle Pin': 'number',
+		//'Data bits': 'number',
+		//'Stop bits': 'number',
 		//'Parity': 'selection list',
-		'xon': 'boolean',
-		'xoff': 'boolean',
-		'xany': 'boolean',
-		'flowControl': 'boolean',
-		'bufferSize': 'number',
+		//'xon': 'boolean',
+		//'xoff': 'boolean',
+		//'xany': 'boolean',
+		//'flowControl': 'boolean',
+		//'bufferSize': 'number',
 	},
 	
 	actions: {},
 	onInstall: function(){},
 	onUninstall: function(){},
 	
-	onEnable: function(){
-		return;
-		var onConnected = function(error){
-			if(error){
-				console.log(error);
-			}else{
-				console.log('Serial connected!');
-				serialPort.on('data', onData);
-				setTimeout(pollNextClient, 3000);
-			}
-		};
-		
+	onEnable: function(){		
 		backend.getPluginOptions(module.exports.name, function(settings){
 			serialPort = new SerialPort.SerialPort(
 				settings['Port'],
@@ -91,7 +84,18 @@ module.exports = {
 					baudrate: settings['Baud'],
 				},
 				true,
-				onConnected
+				function(error){
+					if(error){
+						console.log(error);
+					}else{
+						console.log('Serial connected!');
+						if(settings['R/W Toggle Pin']){
+							readWriteToggle = new GPIO(settings['R/W Toggle Pin'], 'out');
+						}
+						serialPort.on('data', onData);
+						setTimeout(pollNextClient, 3000);
+					}
+				};
 			);
 		});
 	},
@@ -108,6 +112,8 @@ module.exports = {
 			// @TODO: figure out auto-reconnect
 			console.error('Not connected');
 		}else{
+			if(readWriteToggle) readWriteToggle.writeSync(0);
+
 			if(!payload){
 				payload = [];
 			}else if(!(payload instanceof Array)){
@@ -125,6 +131,7 @@ module.exports = {
 				}
 			}
 			serialPort.write(packet, function(error, results){
+				if(readWriteToggle) readWriteToggle.writeSync(1);
 				if(error){
 					console.log("ERROR: " + error);
 				}else{
