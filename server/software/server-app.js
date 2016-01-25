@@ -1,33 +1,7 @@
 var restify = require('restify');
 var backend = require('./backend.js');
 
-// Load plugins
-var fs = require('fs');
-var path = require('path');
-var pluginFolders = fs.readdirSync('./plugins').filter(function(file) {
-	return fs.statSync(path.join('./plugins', file)).isDirectory();
-});
-var plugins = {};
-backend.getPlugins(function(pluginList){
-	for(var i=0; i<pluginFolders.length; i++){
-		var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
-		var found = false;
-		for(var j=0; j<pluginList.length; j++){
-			if(pluginList[j].name == pluginFolders[i]){
-				found = true;
-				break;
-			}
-		}
-		if(!found){
-			backend.registerPlugin(plugin, function(plugin){
-				console.log('Plugin registered: ' + plugin.name);
-				plugin.onInstall();
-			});
-		}
-		plugins[plugin.name] = plugin;
-	}
-});
-
+var doneLoading = false;
 
 
 var server = restify.createServer({
@@ -36,9 +10,6 @@ var server = restify.createServer({
 	name: 'master-control-program',
 });
 var io = require('socket.io').listen(server.server);
-
-//var backend = require('./backend.js');
-//var sequelize = backend.buildSchema();
 
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
@@ -56,6 +27,20 @@ server.get('/users', function (request, response, next) {
 	
 	return next();
 });
+
+server.get('/users/:userID/authorizations', function (request, response, next) {
+	backend.getUserAuthorizations(request.params.userID, function(auths){
+		response.send(auths);
+	});
+	
+	return next();
+});
+
+server.put('/users/:userID/authorizations/:authTag', function (request, response, next) {
+	backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body);
+});
+
+
 
 /**
  * Sends empty response on success
@@ -76,22 +61,31 @@ server.post('/users', function (request, response, next) {
 	return next();
 });
 
-
-server.get('/plugins', function (request, response, next) {
-	backend.getPlugins(function(pluginsInDB){
-		for(var i=0; i<pluginsInDB.length; i++){
-			pluginsInDB[i].actions = Object.keys(plugins[pluginsInDB[i].name].actions);
-		}
-		response.send(pluginsInDB);
-	});
+server.put('/users/:userID', function (request, response, next) {
+	if(request.params.nfcID !== undefined){
+		backend.enrollUser(request.params.userID, request.params.nfcID, function(){ response.send(); });
+	}else{
+		response.send();
+	}
 	
+	// @TODO: update other fields too...
+	
+	return next();
+});
+
+/**
+ * Plugins
+ **/
+server.get('/plugins', function (request, response, next) {
+	response.send(backend.getPlugins());
 	return next();
 });
 
 server.put('/plugins/:plugin/enabled', function (request, response, next) {
 	var task = request.params.value ? backend.enablePlugin : backend.disablePlugin;
+	var plugin = backend.getPluginByName(request.params.plugin);
 	task(
-		request.params.plugin,
+		plugin.name,
 		function(){
 			if(request.params.value){
 				plugin.onEnable();
@@ -109,13 +103,13 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 });
 
 server.get('/plugins/:name/options', function (request, response, next) {
-	backend.getPluginOptions(request.params.name, function(options){
-		response.send(
-			{
-				'plugin': request.params.name,
-				'options': options,
-			}
-		);
+	backend.getOrderedPluginOptions(request.params.name, function(options){
+		// sending the plugin name is back because of a weird front-end scoping issue
+		// also, options here are ordered, so don't make a dict out of them.
+		response.send({
+			'plugin': request.params.name,
+			'options': options,
+		});
 	});
 	
 	return next();
@@ -136,11 +130,58 @@ server.put('/plugins/:plugin/options/:option', function (request, response, next
 });
 
 server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
-	plugins[request.params.plugin].actions[request.params.action]();
+	try{
+		backend.getPluginByName(request.params.plugin).actions[request.params.action]();
+	}catch(exc){
+		console.log(exc);
+	}
 	
 	return next();
 });
 
+
+/**
+ * Clients
+ **/
+server.get('/clients', function(request, response, next) {
+	response.send(backend.getClients());
+	
+	return next();
+});
+
+server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+	backend.associateClientPlugin(request.params.clientID, request.params.pluginName, function(){ response.send(); });
+	return next();
+});
+
+server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
+	var client = backend.getClientByID(request.params.clientID);
+	var plugin = backend.getPluginByName(request.params.pluginName);
+	var action = plugin['clientDetails']['actions'][request.params.action];
+	
+	action(client, function(){ response.send(); });
+	
+	return next();
+});
+
+server.put('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+	backend.setClientPluginOption(
+		request.params.clientID, request.params.pluginName, request.body.option, request.body.value,
+		function(){
+			response.send();
+		},
+		function(error){
+			response.send(error.detail);
+		}
+	);
+
+	return next();
+});
+
+server.get('/log', function(request, response, next) {
+	backend.getLog(request.params.type, function(data){ response.send(data); });	
+	return next();
+});
 
 /**
  * #############
@@ -162,5 +203,5 @@ io.sockets.on('connection', function (socket) {
 });
 
 server.listen(3000, function () {
-	console.log('%s listening at %s', server.name, server.url);
+	backend.log(server.name + ' listening at ' + server.url);
 });

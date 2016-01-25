@@ -5,25 +5,18 @@
 CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
 CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
 
-CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'hidden', 'password');
-
-CREATE TABLE IF NOT EXISTS nfcs (
-	"nfcID" SERIAL PRIMARY KEY,
-	"id" VARCHAR(256) UNIQUE
-);
+CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'boolean', 'hidden', 'password');
 
 CREATE TABLE IF NOT EXISTS users (
 	"userID" SERIAL PRIMARY KEY,
 	"isAdmin" BOOLEAN DEFAULT FALSE,
 	"firstName" VARCHAR(64) NOT NULL,
 	"lastName" VARCHAR(64) NOT NULL,
-	"email" VARCHAR(256) NULL,
+	"email" VARCHAR(256) NULL UNIQUE,
 	"passwordHash" VARCHAR(128) NULL,
 	"joinDate" INT NULL,
-	"nfcID" INT NULL,
-	"status" USER_STATUS NOT NULL DEFAULT 'inactive',
-	UNIQUE("email"),
-	FOREIGN KEY("nfcID") REFERENCES nfcs("nfcID")
+	"nfcID" VARCHAR(256) UNIQUE,
+	"status" USER_STATUS NOT NULL DEFAULT 'inactive'
 );
 
 CREATE TABLE IF NOT EXISTS "proxySystems" (
@@ -61,7 +54,7 @@ CREATE TABLE IF NOT EXISTS "pluginOptions" (
 CREATE TABLE IF NOT EXISTS "pluginOptionValues" (
 	"pluginOptionID" INT NOT NULL,
 	"value" TEXT,
-	FOREIGN KEY("pluginOptionID") REFERENCES "pluginOptions"("pluginOptionID")
+	FOREIGN KEY("pluginOptionID") REFERENCES "pluginOptions"("pluginOptionID") ON DELETE CASCADE
 );
 
 
@@ -75,31 +68,59 @@ CREATE TABLE IF NOT EXISTS logs (
 	FOREIGN KEY("userID") REFERENCES users("userID")
 );
 
-CREATE TABLE IF NOT EXISTS "clientTypes" (
-	"clientTypeID" SERIAL PRIMARY KEY,
-	"pluginID" INT NULL,
-	"name" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("pluginID") REFERENCES plugins("pluginID")
-);
-
 CREATE TABLE IF NOT EXISTS clients (
 	"clientID" SERIAL PRIMARY KEY,
-	"clientTypeID" INT NULL,
-	"clientName" VARCHAR(128) NOT NULL,
-	 FOREIGN KEY("clientTypeID") REFERENCES "clientTypes"("clientTypeID")
+	"name" VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "clientPluginAssociations" (
+	"clientID" INT NOT NULL,
+	"pluginID" INT NOT NULL,
+	FOREIGN KEY("clientID") REFERENCES "clients"("clientID"),
+	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID"),
+	PRIMARY KEY("clientID", "pluginID")
 );
 
 CREATE TABLE IF NOT EXISTS "clientPluginOptions" (
-	"clientID" INT NULL,
-	"optionID" INT NULL,
+	"clientPluginOptionID" SERIAL PRIMARY KEY,
+	"pluginID" INT NOT NULL,
+	"name" VARCHAR(128) NOT NULL,
+	"type" DATA_TYPE NOT NULL DEFAULT 'text',
+	"ordinal" INT NOT NULL,
+	UNIQUE("pluginID", "name"),
+	UNIQUE("pluginID", "ordinal"),
+	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID")
+);
+
+CREATE TABLE IF NOT EXISTS "clientPluginOptionValues" (
+	"clientID" INT NOT NULL,
+	"clientPluginOptionID" INT NOT NULL,
 	"optionValue" VARCHAR(128) NOT NULL,
 	FOREIGN KEY("clientID") REFERENCES clients("clientID"),
-	FOREIGN KEY("optionID") REFERENCES "pluginOptions"("pluginOptionID")
+	FOREIGN KEY("clientPluginOptionID") REFERENCES "clientPluginOptions"("clientPluginOptionID")
+);
+
+CREATE TABLE IF NOT EXISTS "authorizationTags" (
+	"tagID" SERIAL PRIMARY KEY,
+	"name" VARCHAR(128) NOT NULL,
+	"sourcePluginID" INT NULL,
+	"description" VARCHAR(1024),
+	UNIQUE("name", "sourcePluginID"),
+	FOREIGN KEY("sourcePluginID") REFERENCES "plugins"("pluginID")
+);
+
+CREATE TABLE IF NOT EXISTS "userAuthorizationTags" (
+	"userID" INT NOT NULL,
+	"tagID" INT NOT NULL,
+	UNIQUE("userID", "tagID"),
+	FOREIGN KEY("userID") REFERENCES "users"("userID"),
+	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID")
 );
 
 INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
 INSERT INTO users ("firstName", "lastName", "email", "status") VALUES 
 	('User 1', 'Test', 'test1@makeict.org', 'active'),
 	('User 2', 'Test', 'test2@makeict.org', 'active');
--- INSERT INTO proxy_system ("name") VALUES ('WildApricot');
+
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
+INSERT INTO clients ("name") VALUES ('Front door');

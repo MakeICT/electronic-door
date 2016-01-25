@@ -19,6 +19,10 @@ h1 img {
 	text-align: left;
 }
 
+.plugin-container {
+	margin: 1em;
+}
+
 #status-header {
 	position: absolute;
 	top: 0;
@@ -32,4 +36,26 @@ h1 img {
 
 #login-form input {
 	max-width: 540px;
+}
+
+th, td {
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+}
+
+tbody>tr:first-child>td {
+	padding-top: 1em;
+}
+
+tbody>tr:last-child>td {
+	padding-bottom: 1em;
+}
+
+.client-container .plugin-name {
+	padding-top: 1em;
+	text-align: center;
+}
+
+.client-plugin-actions {
+	padding-top: 1em;
 }

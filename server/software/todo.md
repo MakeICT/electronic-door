@@ -2,37 +2,8 @@
 
 Here's a list of todos for the server software. These are in no specific order.
 
-1. Alarm system plugin for integration with VistaICM from Honeywell
-	* For messages TO Vista, see: https://github.com/MakeICT/electronic-door/blob/master/vista
-	* For messages FROM Vista, see: https://github.com/MakeICT/electronic-door/blob/master/alerter
-1. Messaging system
-	* Primary system and plugins should be able to broadcast and listen for messages
-	* atmosphere.js maybe?
-1. Email alert system
-	* Example: If the alarm system plugin pumps an "alarm!" message on the messaging system, email alert system should listen for that and shoot out an email.
-	* Note: Would be nice if the email alert included the last couple of door entries from the log and contact details
+1. Give users authorizations
 1. Clients
-	* How to represent clients in the system:
-		* clients table
-			* clientID
-			* clientTypeID
-			* clientName
-		* clientPluginOptions Table
-			* clientID
-			* optionID -> what does this point to? pluginOptions.pluginOptionID?
-			* optionValue
-		* clientTypes
-			* clientTypeID
-			* pluginID
-			* name
-		* (exists) plugins
-			* pluginID
-			* name
-		* (exists) pluginOptions -> how to distinguish between a pluginOption and one that can be configured per client of that plugin type? Separate table? Also need this for per-user settings.
-			* pluginOptionID
-			* pluginID
-			* name
-			* data type
 	* Figure out how to add / register clients to the system?
 	* Client Types / Protocols / plugins
 		* Note: all clients send/receive client ID along with message

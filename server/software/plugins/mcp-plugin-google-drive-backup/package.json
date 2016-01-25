@@ -1,0 +1,16 @@
+{
+  "name": "mcp-plugin-google-drive-backup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dominic Canare <dom@makeict.org>",
+  "license": "GPL",
+  "dependencies": {
+    "google-auth-library": "^0.9.7",
+    "googleapis": "^2.1.7",
+    "tmp": "0.0.28"
+  }
+}

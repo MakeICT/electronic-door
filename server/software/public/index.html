@@ -16,165 +16,9 @@
 		<script src="/js/socket.io.js"></script>
 		<script src="/js/angular/angular.js"></script>
 		<script src="/js/bootstrap/bootstrap.min.js"></script>
-		<script src="/js/ui-bootstrap-tpls.min.js"></script>
-		<!-- current version of ui-bootstrap js file breaks accordian smooth transitions. old version fixes it -->
-		<script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.js"></script>
+		<script src="/js/ui-bootstrap-tpls.js"></script>
 
-		<script>
-			var app = angular.module('electronic-door', ['ui.bootstrap']);
-			angular.module('electronic-door').controller('controller', function($scope, $http){
-				$scope.plugins = {};
-				$http.get('/plugins').success(function(plugins){
-					for(var i=0; i<plugins.length; i++){
-						var plugin = plugins[i];
-						$scope.plugins[plugin.name] = plugin;
-
-						var attachOptions = function(response){
-							$scope.plugins[response.plugin].options = response.options;
-						};
-						$http.get('/plugins/' + plugins[i].name + '/options').success(attachOptions);
-					}
-				});
-
-				$scope.locals = {
-					'authenticated': true,
-				};
-				$scope.search = {
-					'admin': false,
-					'active': true,
-					'keyed': false,
-					'thirtyDays': false,
-				};
-
-				$scope.searchForUser = function(){
-					// @TODO: encode search string
-					var params = {}
-					if($scope.search.query && $scope.search.query != '') params['q'] = $scope.search.query;
-					if($scope.search.admin) params['isAdmin'] = 1;
-					if($scope.search.active) params['status'] = 'active';
-					if($scope.search.keyed) params['keyActive'] = 1;
-					if($scope.search.thirtyDays){
-						var today = new Date();
-						var thirtyDaysAgo = (new Date()).setDate(today.getDate()-30);
-						params['joinDate'] = Math.floor(thirtyDaysAgo / 1000);
-					}
-
-					var url = '/users?';
-					for(var p in params){
-						url += p + '=' + params[p] + '&';
-					}
-					$http.get(url).success(function(users){
-						$scope.userSearchResults = users;
-					});
-				};
-
-
-
-				$scope.userSearchResults = [];
-				$scope.currentUser = null;
-				$scope.newUser = {
-					'email': '',
-					'firstName': '',
-					'lastName': '',
-					'joinDate': new Date(),
-				};
-
-				$scope.setCurrentUser = function(user){
-					$scope.currentUser = user;
-				};
-
-				$scope.resetNewUser = function(){
-					$scope.newUser.email = null;
-					$scope.newUser.firstName = null;
-					$scope.newUser.lastName = null;
-					$scope.newUser.joinDate = new Date();
-				};
-
-				$scope.saveNewUser = function(){
-					$http.post('/users', $scope.newUser).success(function(response){
-						if(response != ''){
-							alert('Failed to add user:\n' + response);
-						}else{
-							alert('Added!');
-							$scope.resetNewUser();
-						}
-					});
-				};
-
-				$scope.togglePlugin = function(plugin, enabled){
-					$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
-						if(response != ''){
-							alert('Failed to toggle plugin:\n' + response);
-						}
-					});
-				};
-
-				$scope.savePluginOption = function(plugin, option){
-					$http.put('/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
-						if(response != ''){
-							alert('Failed to save option:\n' + response);
-						}
-					});
-				};
-
-				$scope.doPluginAction = function(plugin, action){
-					$http.post('/plugins/' + plugin.name + '/actions/' + action).success(function(response){
-						if(response != ''){
-							alert('Failed to save option:\n' + response);
-						}
-					});
-				};
-			})
-			.filter('memberSinceHumanReadable', function(){
-				return function(memberSinceUnix){
-					var memberSinceUnixMM = new Date(memberSinceUnix * 1000);
-					// console.log("DEBUG");
-					// console.log(memberSinceUnix);
-					// console.log(memberSinceUnixMM);
-					var humanDate = memberSinceUnixMM.toISOString(); // Returns "2013-05-31T11:54:44.000Z"
-					var monthList = ["January" , "February" , "March" , "April" , "May" , "June" , "July" , "August" , "September" , "October" , "November" , "December"]
-					var month = (monthList[(Math.floor(humanDate.substring(5,7))-1)]);
-					var day = humanDate.substring(8,10);
-					var year = humanDate.substring(0,4);
-					var finalDate = (month + " " + day + ", " + year);
-					return finalDate;
-				}
-			})
-			.filter('memberForHumanReadable', function(){
-				return function(memberSinceUnix){
-					var currentUnixTime = Math.round((new Date()).getTime() / 1000);
-					// console.log("currentUnixTime");
-					// console.log(currentUnixTime);
-					var memberForUnix = currentUnixTime - memberSinceUnix;
-					// console.log("memberForUnix");
-					// console.log(memberForUnix);
-					var memberForDays = Math.floor(memberForUnix / 86400);
-					// console.log("memberForDays");
-					// console.log(memberForDays);
-					return memberForDays;
-				}
-			});
-
-			app.directive('toggle', function() {
-				return {
-					require: 'ngModel',
-					restrict: 'A',
-					scope: { ngModel: '=' },
-					link: function postLink(scope, element, attributes) {
-						element.bind('click', function(event){
-							scope.ngModel = !scope.ngModel;
-							if(scope.ngModel){
-								element.addClass('active');
-							}else{
-								element.removeClass('active');
-							}
-
-							scope.$apply();
-						});
-					},
-				}
-			});
-		</script>
+		<script src="/js/MainController.js"></script>
 	</head>
 
 	<body>
@@ -194,135 +38,214 @@
 					Alarm status: <span>Lorem Ipsum</span>
 				</div>
 
-				<tabset>
-					<tab heading="Status" id="status-tab">
+				<uib-tabset>
+					<uib-tab heading="Status">
 						<h2>Status</h2>
 						<p>System status, alarm controls</p>
-					</tab>
-					<tab heading="Users" id="users-tab">
-						<div ng-if="currentUser == null">
-							<h2>Users</h2>
-							Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()"/>
-							<div style="margin-top: 0.5em;">
-								<span class="btn-group">
-									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
-									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.active">Active</span>
-									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.keyed">Keyed</span>
-									<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.thirtyDays">30+ days</span>
-								</span>
-							</div>
-							<hr/>
-							<accordion close-others="true">
-								<accordion-group>
-									<accordion-heading>
-										<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">Add new</h4>
-									</accordion-heading>
-									<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
-									<form>
-										<table class="table table-striped user-details">
-											<tr>
-												<th>Email</th>
-												<td><input type="email" ng-model="newUser.email"></td>
-											</tr><tr>
-												<th>First Name</th>
-												<td><input type="text" ng-model="newUser.firstName"></td>
-											</tr><tr>
-												<th>Last Name</th>
-												<td><input type="text" ng-model="newUser.lastName"></td>
-											</tr><tr>
-												<th>Join Date</th>
-												<td><input type="date" ng-model="newUser.joinDate"></td>
-											</tr>
-										</table>
-										<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
-										<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
-									</form>
-								</accordion-group>
-							</accordian>
-							<hr/>
-							<h3 ng-if="userSearchResults.length == 0">No search results</h3>
-							<div ng-if="userSearchResults.length > 0">
-								<h3>Search results</h3>
-
-								<accordion close-others="true">
-									<accordion-group ng-repeat="user in userSearchResults">
-										<accordion-heading>
-											<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">{{user.firstName}} {{user.lastName}}</h4>
-										</accordion-heading>
-										<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
-										<table class="table table-striped user-details">
-											<tr>
-												<th>Account type</th>
-												<td>
-													<form class="form-inline">
-														<div class="btn-group">
-															<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="false">User</label>
-															<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="true">Admin</label>
-														</div>
-
-														<span ng-if="user.isAdmin" class="btn-group">
-															&nbsp;
-															<input type="password" placeholder="New password" class="form-control input-sm btn"/>
-															<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
-														</span>
-													</form>
-												</td>
-											</tr><tr>
-												<th>Member status</th>
-												<td>{{user.status}}</td>
-											</tr><tr>
-												<th>Member since</th>
-												<td>{{user.joinDate|memberSinceHumanReadable}}</td>
-											</tr><tr>
-												<th>Member for</th>
-												<td>{{user.joinDate|memberForHumanReadable}} days</td>
-											</tr><tr>
-												<th>Key status</th>
-												<td>
-													<div class="btn-group">
-														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="false">No key</label>
-														<label class="btn btn-sm btn-default" ng-model="user.keyActive" btn-radio="true">{{user.keyActive?"Enrolled":"Enroll now"}}</label>
-													</div>
-												</td>
-											</tr>
-										</table>
-									</accordion-group>
-								</accordion>
-							</div>
+					</uib-tab>
+					<uib-tab heading="Users">
+						<h2>Users</h2>
+						Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()"/>
+						<div style="margin-top: 0.5em;">
+							<span class="btn-group">
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.active">Active</span>
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.keyed">Keyed</span>
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.thirtyDays">30+ days</span>
+							</span>
 						</div>
-					</tab>
-					<tab heading="Clients" id="clients-tab">
+						<hr/>
+						<uib-accordion close-others="true">
+							<uib-accordion-group>
+								<uib-accordion-heading>
+									<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">Add new</h4>
+								</uib-accordion-heading>
+								<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
+								<form>
+									<table class="table table-striped user-details">
+										<tr>
+											<th>Email</th>
+											<td><input type="email" ng-model="newUser.email"></td>
+										</tr><tr>
+											<th>First Name</th>
+											<td><input type="text" ng-model="newUser.firstName"></td>
+										</tr><tr>
+											<th>Last Name</th>
+											<td><input type="text" ng-model="newUser.lastName"></td>
+										</tr><tr>
+											<th>Join Date</th>
+											<td><input type="date" ng-model="newUser.joinDate"></td>
+										</tr>
+									</table>
+									<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
+									<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
+								</form>
+							</uib-accordion-group>
+						</uib-accordian>
+						<hr/>
+						<h3 ng-if="userSearchResults.length == 0">No search results</h3>
+						<div ng-if="userSearchResults.length > 0">
+							<h3>Search results</h3>
+
+							<uib-accordion close-others="true">
+								<uib-accordion-group ng-repeat="user in userSearchResults">
+									<uib-accordion-heading>
+										<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">{{user.firstName}} {{user.lastName}}</h4>
+									</uib-accordion-heading>
+									<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
+									<table class="table table-striped user-details">
+										<tr>
+											<th>Account type</th>
+											<td>
+												<form class="form-inline">
+													<div class="btn-group">
+														<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="false">User</label>
+														<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="true">Admin</label>
+													</div>
+
+													<span ng-if="user.isAdmin" class="btn-group">
+														&nbsp;
+														<input type="password" placeholder="New password" class="form-control input-sm btn"/>
+														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
+													</span>
+												</form>
+											</td>
+										</tr><tr>
+											<th>Member status</th>
+											<td>{{user.status}}</td>
+										</tr><tr>
+											<th>Member since</th>
+											<td>{{user.joinDate|timestampToHumanReadableDate}}</td>
+										</tr><tr>
+											<th>Member for</th>
+											<td>{{user.joinDate|timestampToHumanReadableDuration}} days</td>
+										</tr><tr>
+											<th>Key status</th>
+											<td>
+												{{user.keyActive?"Enrolled":"NOT Enrolled"}}
+												<button class="btn btn-sm btn-default" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"Unenroll":"Enroll now"}}</button>
+												<table ng-if="nfcLog && nfcLog.length > 0">
+													<tr ng-repeat="log in nfcLog">
+														<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
+														<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
+													</tr>
+												</table>
+												<div ng-if="nfcLog && nfcLog.length == 0">
+													Please scan an NFC card and try again.
+												</div>
+											</td>
+										</tr><tr>
+											<th>Authorizations</th>
+											<td>
+												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);">Load authorizations</button>
+												<button
+													ng-repeat="auth in user.authorizations"
+													uib-btn-checkbox
+													ng-model="auth.authorized"
+													ng-click="setUserAuthorization(user, auth.name, auth.authorized)"
+													type="button"
+													class="btn btn-default btn-sm"
+												>
+													{{auth.name}}
+												</button>
+											</td>
+										</tr>
+									</table>
+								</uib-accordion-group>
+							</accordion>
+						</div>
+					</uib-tab>
+					<uib-tab heading="Clients">
 						<h2>Clients</h2>
-						<p>Options and commands for connected readers, door controls, buzzers, relays, etc</p>
-					</tab>
-					<tab heading="Activity Log" id="log-tab">
+						<div ng-repeat="client in clients" class="well pull-left client-container">
+							<h3>{{client.name}}</h3>
+							<table>
+								<tbody>
+									<tr>
+										<td>ID:</td>
+										<td><input type="text" ng-model="client.clientID" /></td>
+									</tr>
+									<tr>
+										<td>Name:</td>
+										<td><input type="text" ng-model="client.name" /></td>
+									</tr>
+								</tbody>
+								<tbody>
+									<tr>
+										<td>Plugins:</td>
+										<td>
+											<select ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+												<option disabled selected hidden value=""> - Bind new plugin - </option>
+												<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
+											</select>
+										</td>
+									</tr>
+								</tbody>
+								<tbody ng-repeat="plugin in client.plugins">
+									<tr>
+										<th colspan="2" class="plugin-name">{{plugin.name}}</th>
+									</tr>
+									<tr ng-repeat="option in plugin.options">
+										<td>{{option.name}}</td>
+										<td><input type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)"/></td>
+									</tr>
+									<tr>
+										<td colspan="2" class="client-plugin-actions">
+											<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
+										</td>
+								</tbody>
+							</table>
+							<br/>
+						</div>
+					</uib-tab>
+					<uib-tab heading="Activity Log">
 						<h2>Activity Log</h2>
-						<p>Big fat table</p>
-					</tab>
-					<tab heading="Options" id="options-tab">
+						<button ng-click="loadLog()">Load</button>
+						<table>
+							<thead>
+								<tr>
+									<th>Timestamp</th>
+									<th>Log Type</th>
+									<th>Message</th>
+									<th>User</th>
+									<th>NFC</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="row in log">
+									<td>{{row.timestamp|timestampToHumanReadableDate:true}}</td>
+									<td>{{row.logType}}</td>
+									<td>{{row.message}}</td>
+									<td>{{row.user}}</td>
+									<td>{{row.code}}</td>
+								</tr>
+							</tbody>
+						</table>
+					</uib-tab>
+					<uib-tab heading="Options">
 						<h2>System Options</h2>
 						<p>Yo</p>
 						<h2>Personal Options</h2>
 						<p>Yo</p>
-					</tab>
-					<tab heading="Plugins" id="plugins-tab">
+					</uib-tab>
+					<uib-tab heading="Plugins">
 						<h2>Plugins</h2>
-						<div ng-repeat="plugin in plugins" class="well pull-left">
+						<div ng-repeat="plugin in plugins" class="well pull-left plugin-container">
 							<h3>{{plugin.name}}</h3>
 							<div class="btn-group">
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
+								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
 							</div>
 							<br/><br/>
 							<table>
 								<tr ng-repeat="option in plugin.options">
 									<td>{{option.name}}</td>
-									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="text"></td>
+									<td><input ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}"></td>
 								</tr>
 							</table><br/>
-							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doPluginAction(plugin, action)">{{action}}</button>
+							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 						</div>
-					</tab>
+					</uib-tab>
 				</tabset>
 			</div>
 		</div>

@@ -8,13 +8,13 @@ import sys
 from CRC16 import CRC16
 
 class DoorControl:
-    #import RPi.GPIO as GPIO
+    import RPi.GPIO as GPIO
 
-    #GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BCM)
 
-    rw_pin = 26
-    #GPIO.setup(rw_pin, GPIO.OUT)
-    #GPIO.output(rw_pin, GPIO.HIGH)
+    rw_pin = 18
+    GPIO.setup(rw_pin, GPIO.OUT)
+    GPIO.output(rw_pin, GPIO.LOW)
     
     checker = CRC16(modbus_flag = True)
 
@@ -23,11 +23,11 @@ class DoorControl:
     ACK_wait = False
     escaping = False
     client_address = 0x01
-    #ser = serial.Serial('/dev/ttyAMA0', 9600)
-    try:
-        ser = serial.Serial('/dev/ttyUSB0', 9600)
-    except:
-        ser = None
+    trans_ID = 0x10
+    ser = serial.Serial('/dev/ttyAMA0', 9600)
+    
+    def __init__(self):
+        self.set_driver('input');
 
     def set_port(self, port):
         self.ser = serial.Serial(port, 9600)
@@ -41,20 +41,11 @@ class DoorControl:
     def find_port(self):
         pass
 
-    def process_packet(self, packet):
-        length = packet[0]
-        print packet
-        if not (length > 3):
-            return
-        from_address = packet[1]
-        to_address = packet[2]
-        function = packet[3]
-        crc = packet[-2:]
-        payload = packet[4:-2]
-
+    def display_packet():
         print "========================"
         print packet
         print "length:", length
+        print "transaction ID:", hex(transactionID)
         print "from:", hex(from_address)
         print "to:", hex(to_address)
         print "------------------------"
@@ -71,6 +62,24 @@ class DoorControl:
             print "ERROR: Packet length incorrect"
         if not self.check_CRC(packet):
             print "ERROR: CRC incorrect"
+
+
+    def process_packet(self, packet):
+        length = len(packet)
+        transactionID = packet[0]
+        print packet
+        if not (length > 3):
+            return
+        from_address = packet[1]
+        to_address = packet[2]
+        function = packet[3]
+        crc = packet[-2:]
+        payload = packet[4:-2]
+        if function < 0x0A:
+            print function
+
+
+
             
 
     def compute_CRC(self, data, length):
@@ -91,24 +100,35 @@ class DoorControl:
             pos += 1
         return crc
 
-    def send_packet(self, from_addr=0x00, to_addr=client_address, function=0x00, payload=[0x00]):
-    #    GPIO.output(rw_pin, GPIO.HIGH)
-        length = 6 + len(payload)
+    def set_driver(self, mode):
+        if mode == 'output':
+            self.GPIO.output(self.rw_pin, self.GPIO.LOW)
+            time.sleep(0.01)
+        elif mode == 'input':
+            time.sleep(0.02)
+            self.GPIO.output(self.rw_pin, self.GPIO.HIGH)
+
+    def send_packet(self, from_addr=0x00, to_addr=client_address, function=0x00, payload=[]):
+        length = len(payload)
         data = ''
+        self.set_driver('output');
         for byte in payload:
             if byte == self.b_flag or byte == self.b_esc:
                 data = data + chr(self.b_esc)
             data = data + chr(byte)
-        packet = chr(self.b_flag) + chr(length) + chr(from_addr) + chr(to_addr) + chr(function) + data + chr(0xFF) + chr(0xFF)  + chr(self.b_flag)
+        packet = chr(self.b_flag) + chr(self.trans_ID) +  chr(from_addr) + chr(to_addr) + chr(function) + chr(length) +  data + chr(0xFF) + chr(0xFF)  + chr(self.b_flag)
         try:
             self.ser.write(packet)
         except AttributeError:
+            self.set_driver('input')
             return 1
+        self.set_driver('input')
         return 0
 
+    def get_update(self):
+        self.send_packet(function=0x0A)
 
     def receive_packet(self, packet):
-    #    GPIO.output(rw_pin, GPIO.LOW)
         try:
             byte = int(binascii.b2a_hex(self.ser.read()), 16)
         except AttributeError:
@@ -121,6 +141,7 @@ class DoorControl:
                 #self.process_packet(packet)
         else:
             packet.append(byte)
+            print "received:", byte
             self.escaping = False
             return False
 
