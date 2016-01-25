@@ -104,7 +104,7 @@ module.exports = {
 						serialPort.on('data', onData);
 						setTimeout(pollNextClient, 3000);
 					}
-				};
+				}
 			);
 		});
 	},
