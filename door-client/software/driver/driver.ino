@@ -7,14 +7,20 @@
 #include <PN532_SPI.h>
 #include "PN532Interface.h"
 
+#include "packetqueue.h"
 #include "ring.h"
 #include "reader.h"
 #include "rs485.h"
 #include "lcd.h"
 #include "audio.h"
 #include "strike.h"
+#include "config.h"
+#include "superserial.h"
+#include "utils.h"
 
 /*-----( Declare Constants and Pin Numbers )-----*/
+#define DEBUG1
+
 // Pin assignments
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
 #define PN532_SS_PIN      10      // SPI Slave Select pin
@@ -30,60 +36,72 @@
 #define MAX_PACKET_SIZE   100
 
 // Constants for audio playback
-#define USER_TUNE_LENGTH  30      // Max number of notes in entry melody
+#define USER_TUNE_LENGTH    30      // Max number of notes in entry melody
 
 // Constants for PN532 NFC reader
-#define NFC_READ_INTERVAL 100     // time in ms between NFC reads
-#define ID_SEND_INTERVAL  1000    // time in ms between sending card IDs
+#define NFC_READ_INTERVAL   100     // time in ms between NFC reads
+#define ID_SEND_INTERVAL    1000    // time in ms between sending card IDs
 
 // Constants for NeoPixel ring
-#define NUMPIXELS         16      // Number of NeoPixels in Ring
+#define NUMPIXELS           16      // Number of NeoPixels in Ring
 #define COLOR               Adafruit_NeoPixel::Color
 #define COLOR_IDLE          0,100,120
 #define COLOR_SUCCESS       0,60,20
 #define COLOR_ERROR         50,20,0
 #define COLOR_BACKGROUND    0,20,50
 
+// Constants for machine states
+#define S_INITIALIZING      0
+#define S_UNADDRESSED       1
+#define S_WAIT_SEND         2
+#define S_READY             3          
+
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
 rs485 bus(SSerialTxControl);
+//SuperSerial* superSerial;
+//TEMPORARY TEST CODE
+SuperSerial superSerial(&bus, 0x01);
+
 Ring status_ring(RING_PIN, NUMPIXELS);
 LCD readout;
 Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
+Config conf;
 
 /*-----( Declare Variables )-----*/
 uint8_t byteReceived;
-uint8_t address;
 boolean alarmButton = 0;
 boolean doorState = 0;
 uint32_t lastIDSend = 0;
-byte packet[MAX_PACKET_SIZE];
 //TODO: store start tune and other settings in EEPROM, make configurable
 byte startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
 byte startTuneDurations[] = {12, 6, 6, 12, 12, 12, 12, 12};
 byte userTune[USER_TUNE_LENGTH];
 byte userTuneDurations[USER_TUNE_LENGTH];
+byte state = S_INITIALIZING;
 
 /*-----( Declare Functions )-----*/
 uint8_t* nfc_poll();
-void save_address(uint8_t addr);
-uint8_t get_address();
-void check_reader();
-void check_inputs();
+void CheckReader();
+void CheckInputs();
+void ProcessMessage();
 
 SoftwareSerial debugPort(6,7);
 
 void setup(void) {
-  debugPort.begin(9600);
+  debugPort.begin(57600);
   Serial.begin(9600);
   debugPort.println("Start Program");
-    bus.SetDebugPort(&debugPort);
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  save_address(0x01);
-  address = get_address();
+  conf.SaveAddress(0x01);
+  uint8_t address = conf.GetAddress();
+  debugPort.println("before SS");
+  //superSerial = new SuperSerial(&bus, address);
+  superSerial.SetDebugPort(&debugPort);
+  bus.SetDebugPort(&debugPort);
   debugPort.print("Address: ");
   debugPort.println(address);
   readout.print(0,0, "Initializing...");
@@ -95,115 +113,146 @@ void setup(void) {
     readout.print(0,1, "Ready!");
   }
   status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
-  status_ring.SetMode(M_CHASE, COLOR(COLOR_IDLE), 100 , 0);
+  status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), 1000 , 0);
   speaker.Play(startTune, startTuneDurations, 8);
+  state = S_READY;
 }
 
 
 void loop(void) {
-  static uint32_t lastRead = 0;
-  uint32_t currentMillis = millis();
-  if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
-      (currentMillis - lastIDSend) > ID_SEND_INTERVAL)  {
-    check_reader();
-    lastRead = currentMillis;
+  //debugPort.print("Free RAM: ");
+  //debugPort.println(freeRam());
+  static byte lastState = state;
+  if (state != lastState)  {
+    lastState = state;
+    //debugPort.print("State: ");
+    //debugPort.println(state);
   }
-  check_inputs(); 
-  speaker.Update();
-  status_ring.Update();
-  door_latch.Update();
-  //TODO: check for connection to Master
-  process_packet(address);
+  switch(state)
+  {
+    //debugPort.print("State: ");
+    case S_READY:
+    //debugPort.println("Ready");
+    {
+      //debugPort.println("");
+      static uint32_t lastRead = 0;
+      uint32_t currentMillis = millis();
+      if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
+          (currentMillis - lastIDSend) > ID_SEND_INTERVAL)  {
+        CheckReader();
+        lastRead = currentMillis;
+      }
+      CheckInputs();
+    }
+      
+    case S_WAIT_SEND:
+    //debugPort.println("Waiting to send");
+    {
+      speaker.Update();
+      status_ring.Update();
+      door_latch.Update();
+    }
+
+    case S_UNADDRESSED:
+   //debugPort.println("Unaddressed");
+    {
+      superSerial.Update();
+      if (!superSerial.DataQueued())
+        state = S_READY;
+      if (superSerial.NewMessage())  {
+        debugPort.println("Processing New Message");
+        ProcessMessage();
+      }
+    }
+
+   // case S_INITIALIZING:  
+  }
 }
 
-void check_reader()  {
+void CheckReader()  {
   //check for NFC card
   uint8_t uid[7];
   uint8_t id_length;
   if(card_reader.poll(uid, &id_length))  {
-    bus.send_packet(0x01, 0x00, F_SEND_ID, uid, 7);
+    superSerial.QueueMessage(F_SEND_ID, uid, 7);
+    state == S_WAIT_SEND;
+
     lastIDSend = millis();
 
     //TEMPORARY TEST CODE
     status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
-    door_latch.Unlock(3000);
+    //door_latch.Unlock(3000);
     speaker.Play(startTune, startTuneDurations, 8);
   }
 }
 
-void process_packet(uint8_t dev_addr)  {
-  if (bus.get_packet(dev_addr, packet))  {
-    uint8_t length = packet[0];
-    uint8_t src_address = packet[1];
-    uint8_t dst_address = packet[2];
-    uint8_t function = packet[3];
-    uint16_t CRC = packet[length-2] << 8 + packet[length-1];
-      //#define DEBUG1
-      #ifdef DEBUG1
-      //Display packet info
-      debugPort.print("length: ");
-      debugPort.println(length);
-      debugPort.print("source address: ");
-      debugPort.println(src_address);
-      debugPort.print("destination address: ");
-      debugPort.println(dst_address);
-      debugPort.print("function: ");
-      debugPort.println(function);
-      debugPort.print("data: ");
-      for(uint8_t i = 4; i < length -2; i++)  {
-        debugPort.print(packet[i]);
-        debugPort.print(',');
-      }
-      debugPort.println(' ');
-      #endif
-
-    //Process functions
-    switch(packet[3])
+void ProcessMessage()  {
+  Message msg = superSerial.GetMessage();
+  // If address is not set, ignore all functions other than setting address
+  if (state == S_UNADDRESSED && msg.function != F_SET_ADDRESS)  {
+    return;
+  }
+  //Process functions
+  debugPort.print("Got Message: ");
+  debugPort.println(msg.function);
+  switch(msg.function)
+  {
+    case F_SET_ADDRESS:
+      conf.SaveAddress(msg.payload[0]);
+      state = S_READY;
+      break;
+    case F_GET_UPDATE:
+      //if there are events on the event stack
+          //report them
+      //else
+          //NAK
+    case F_UNLOCK_DOOR:
+      door_latch.Unlock(msg.payload[0] * 1000);
+      break;
+    case F_LOCK_DOOR:
+      door_latch.Lock();
+      break;
+    case F_PLAY_TUNE:
     {
-      case F_UNLOCK_DOOR:
-        door_latch.Unlock(packet[4] * 1000);
-        break;
-      case F_LOCK_DOOR:
-        door_latch.Lock();
-        break;
-      case F_PLAY_TUNE:
-        //debugPort.println("play entry tune");
-
-        byte tune_length = (length - 6)/2;
-        //debugPort.println(tune_length);
-        for(byte i = 0; i < tune_length; i++)  {
-          //debugPort.println(packet[i+4]);
-          userTune[i] = packet[i + 4];
-        }
-        for(byte i = 0; i < tune_length; i++)  {
-          userTuneDurations[i] = packet[i + 4 + tune_length];
-          //debugPort.println(packet[i+4 + tune_length]);
-        }
-        speaker.Play(userTune, userTuneDurations, tune_length);   
-   
+      byte tune_length = (msg.length)/2;
+      for(byte i = 0; i < tune_length; i++)  {
+        userTune[i] = msg.payload[i];
+      }
+      for(byte i = 0; i < tune_length; i++)  {
+        userTuneDurations[i] = msg.payload[i + tune_length];
+      }
+      speaker.Play(userTune, userTuneDurations, tune_length);   
+      break;
+    }
+    case F_SET_LIGHTS:
+    {
+      debugPort.println("setting lights");
+      status_ring.SetMode(msg.payload[0], 
+                          COLOR(msg.payload[1],msg.payload[2],msg.payload[3]), 
+                         (msg.payload[4]<<8) + msg.payload[5], (msg.payload[6]<<8)+msg.payload[7]);
+      break;
     }
   }
 }
 
-void check_inputs()  {
+void CheckInputs()  {
   if(digitalRead(ALARM_BUTTON_PIN) != alarmButton)  {
     alarmButton = !alarmButton;
-    byte payload[1] = {alarmButton};
-    bus.send_packet(address, ADDR_MASTER, F_ALARM_BUTTON, payload, 1);
+    if (alarmButton == 1)  {
+      byte payload[1] = {alarmButton};
+      superSerial.QueueMessage(F_ALARM_BUTTON, payload, 1);
+      state = S_WAIT_SEND;
+    }
+    return;
   }
     
   if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
     doorState = !doorState;
     byte payload[1] = {doorState};
-    bus.send_packet(address, ADDR_MASTER, F_DOOR_STATE, payload, 1);
+    superSerial.QueueMessage(F_DOOR_STATE, payload, 1);
+    state = S_WAIT_SEND;
+    return;
   }
 }
 
-void save_address(uint8_t addr)  {
-  EEPROM.update(0, addr);
-}
-
-uint8_t get_address()  {
-  return EEPROM.read(0);
-}
 

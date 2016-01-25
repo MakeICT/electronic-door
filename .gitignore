@@ -6,8 +6,13 @@ web/include/WA_API_KEY
 vista/DOOR_CODE
 logs/
 lcd/.build
-
-*.swp
-
-.cli-history
 *.pyc
+*.swp
+*.pyc
+*.swo
+*.swn
+*.s##
+*.b##
+*.brd.lck
+*.sch.lck
+.cli_history
