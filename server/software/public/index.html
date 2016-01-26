@@ -254,7 +254,17 @@
 						</div>
 					</uib-tab>
 				</tabset>
+				<div id="message-log" ng-if="messages.length > 0">
+					<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '^' : 'v'}}</button>
+					<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
+					<div uib-collapse="logWindowDisplayed">
+						<div ng-repeat="message in messages">
+							{{message.type}} - {{message.text}}
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
+		<br/><br/>
 	</body>
 </html>

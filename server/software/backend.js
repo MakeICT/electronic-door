@@ -8,6 +8,7 @@
 var fs = require('fs');
 var pg = require('pg');
 var path = require('path');
+var broadcaster = require('./broadcast.js')
 
 var credentials = fs.readFileSync('DB_CREDENTIALS').toString().trim().split('\t');
 var connectionParameters = {
@@ -629,7 +630,20 @@ module.exports = {
 		params = [message, logType, userID, code];
 		
 		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
+		broadcaster.broadcast(module.exports, 'log', message);
+		
 		return query(sql,  params);
+	},
+	
+	error: function(message){
+		console.error(message);
+		module.exports.log(message, null, null, 'error');
+		broadcaster.broadcast(module.exports, 'error', message);
+	},
+	
+	debug: function(message){
+		console.log(message);
+		broadcaster.broadcast(module.exports, 'debug', message);
 	},
 	
 	getLog: function(type, onSuccess, onFailure){
