@@ -71,3 +71,15 @@ tbody>tr:last-child>td {
 	text-align: left;
 	padding: 0.25em;
 }
+
+#message-log .error{
+	color: #f44;
+}
+
+#message-log .debug{
+	color: #ff0;
+}
+
+#message-log {
+	color: #fff;
+}

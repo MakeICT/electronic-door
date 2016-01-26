@@ -14,7 +14,9 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.socket = io();
 
 	var addMessage = function(type, message){
-		$scope.messages.push({type:type, text: message});
+		var date = new Date();
+		var time = pad(date.getHours(), 2) + ':' + pad(date.getMinutes(), 2) + ':' + pad(date.getSeconds(), 2);
+		$scope.messages.push({type:type, text: message, timestamp: time});
 		$scope.$apply();
 	};
 

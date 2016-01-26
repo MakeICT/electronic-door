@@ -21,11 +21,15 @@ function sendMessage(subject, message, recipient){
 		};
 							 
 		// send mail with defined transport object 
-		transporter.sendMail(mailOptions, function(error, info){
-			if(error){
-				return console.log(error);
-			}
-		});
+		try{
+			transporter.sendMail(mailOptions, function(error, info){
+				if(error){
+					return backend.error(error.toString());
+				}
+			});
+		}catch(exc){
+			backend.error('Failed to send email: ' + exc);
+		}
 	});
 }
 
@@ -72,18 +76,14 @@ module.exports = {
 		},
 	},
 	
-	onInstall: function(){
-	},
-
-	onUninstall: function(){
-	},
+	onInstall: function(){},
+	onUninstall: function(){},
 	
 	onEnable: function(){
 		broadcaster.subscribe(module.exports);
 	},
 	
-	onDisable: function(){
-	},
+	onDisable: function(){},
 	
 	receiveMessage: function(source, messageID, data){
 		backend.getPluginOptions(module.exports.name, function(settings){

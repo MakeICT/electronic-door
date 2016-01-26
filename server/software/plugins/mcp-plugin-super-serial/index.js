@@ -97,7 +97,7 @@ module.exports = {
 					if(error){
 						backend.error(error);
 					}else{
-						backend.debug('Serial connected!');
+						backend.log('Serial connected!');
 						if(settings['R/W Toggle Pin']){
 							readWriteToggle = new GPIO(settings['R/W Toggle Pin'], 'out');
 						}
@@ -111,8 +111,9 @@ module.exports = {
 	
 	onDisable: function(){
 		if(serialPort){
-			serialPort.stream.destroy();
+			serialPort.close();
 			serialPort = null;
+			backend.log('Serial disconnected!');
 		}
 	},
 	

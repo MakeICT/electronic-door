@@ -258,9 +258,7 @@
 					<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '^' : 'v'}}</button>
 					<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
 					<div uib-collapse="logWindowDisplayed">
-						<div ng-repeat="message in messages">
-							{{message.type}} - {{message.text}}
-						</div>
+						<div ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>
 					</div>
 				</div>
 			</div>

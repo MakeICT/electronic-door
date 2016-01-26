@@ -621,7 +621,7 @@ module.exports = {
 		return module.exports.checkAuthorization(nfcID, what, onAuthorized, onUnauthorized, true);
 	},
 	
-	log: function(message, userID, code, logType){
+	log: function(message, userID, code, logType, skipBroadcast){
 		if(!logType) logType = 'message';
 		
 		sql =
@@ -630,14 +630,16 @@ module.exports = {
 		params = [message, logType, userID, code];
 		
 		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
-		broadcaster.broadcast(module.exports, 'log', message);
+		
+		if(!skipBroadcast){
+			broadcaster.broadcast(module.exports, 'log', message);
+		}
 		
 		return query(sql,  params);
 	},
 	
 	error: function(message){
-		console.error(message);
-		module.exports.log(message, null, null, 'error');
+		module.exports.log(message, null, null, 'error', true);
 		broadcaster.broadcast(module.exports, 'error', message);
 	},
 	

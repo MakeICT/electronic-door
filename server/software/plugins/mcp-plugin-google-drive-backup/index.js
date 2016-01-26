@@ -82,8 +82,8 @@ module.exports = {
 					};
 					child_process.exec('pg_dump -h localhost -f ' + tmpFilePath + ' ' + backend.connectionParameters.database, options, function(error, stdout, stderr){
 						if(error !== null){
-							console.error('Failed to run backup: ' + error);
-							console.error(stderr);
+							backend.error('Google Drive Backup failed: ' + error);
+							backend.error(stderr);
 							return;
 						}else{
 							var zipProc = child_process.spawn('gzip', [tmpFilePath]);
@@ -113,7 +113,7 @@ module.exports = {
 										}
 									}, function(error, response){
 										if(error){
-											console.log(error);
+											backend.error(error);
 										}else{
 											fs.unlink(tmpFilePath + '.gz');
 											cleanupCallback();
@@ -128,16 +128,8 @@ module.exports = {
 		},
 	},
 	
-	onInstall: function(){
-	},
-
-	onUninstall: function(){
-	},
-	
-	onEnable: function(){
-	},
-	
-	onDisable: function(){
-	}
-	
+	onInstall: function(){},
+	onUninstall: function(){},
+	onEnable: function(){},
+	onDisable: function(){}
 };
