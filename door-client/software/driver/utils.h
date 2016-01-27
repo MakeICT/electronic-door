@@ -25,9 +25,6 @@
   #define LOG_DUMP(t)     debugPort->print(t)
 #endif
 
-#define D debugPort->println
-#define dbg debugPort->print
-
 //from Adafruit
 inline int freeRam () 
 {

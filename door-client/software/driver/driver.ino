@@ -5,6 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <EEPROM.h>
 #include <PN532_SPI.h>
+#include <MFRC522.h>    //TODO: only include if necessary
 #include "PN532Interface.h"
 
 /*-----( Include project files )-----*/
@@ -24,6 +25,7 @@
 
 // Pin assignments
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
+#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module-
 #define LATCH_PIN         5       // Digital pin to trigger door strike circuit
 #define SSerialRX         6       // Serial Receive pin
 #define SSerialTX         7       // Serial Transmit pin
@@ -63,7 +65,7 @@ rs485 bus(SSerialTxControl);
 SuperSerial superSerial(&bus, 0x01);
 
 Ring status_ring(RING_PIN, NUMPIXELS);
-LCD readout;
+//LCD readout;
 Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
 Config conf;
@@ -94,6 +96,7 @@ void setup(void) {
   Serial.begin(9600);
   superSerial.SetDebugPort(debugPort);
   bus.SetDebugPort(debugPort);
+  card_reader.SetDebugPort(debugPort);
   LOG_DEBUG(F("Start Program\r\n"));
   
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
@@ -105,13 +108,13 @@ void setup(void) {
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
-  readout.print(0,0, "Initializing...");
+  //readout.print(0,0, "Initializing...");
   if(!card_reader.start())  {
-    readout.print(0,1,"ERROR: NFC");
+    //readout.print(0,1,"ERROR: NFC");
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
   }
   else  {
-    readout.print(0,1, "Ready!");
+    //readout.print(0,1, "Ready!");
   }
   status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
   status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), 1000 , 0);
@@ -131,12 +134,12 @@ void loop(void) {
     LOG_INFO(state);
     LOG_INFO(F("\r\n"));
   }
+  static uint32_t lastRead = 0;
+  uint32_t currentMillis = millis();
   switch(state)
   {
     case S_READY:
     {
-      static uint32_t lastRead = 0;
-      uint32_t currentMillis = millis();
       if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
           (currentMillis - lastIDSend) > ID_SEND_INTERVAL)  {
         CheckReader();
@@ -167,6 +170,7 @@ void loop(void) {
 }
 
 void CheckReader()  {
+  LOG_DUMP(F("Checking NFC Reader\r\n"));
   //check for NFC card
   uint8_t uid[7];
   uint8_t id_length;
