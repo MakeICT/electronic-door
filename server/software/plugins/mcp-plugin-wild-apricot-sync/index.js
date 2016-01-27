@@ -132,7 +132,7 @@ module.exports = {
 							};
 							backend.getUserByProxyID('WildApricot', contact.Id, transaction);
 						}
-						console.log("WildApricot sync done (probably (I dunno, it's async...))");
+						backend.log("WildApricot sync done (probably (I dunno, it's async...))");
 					});
 				});
 			});
@@ -143,14 +143,7 @@ module.exports = {
 		backend.addProxySystem('WildApricot');
 	},
 
-	onUninstall: function(){
-		
-	},
-	
-	onEnable: function(){
-	},
-	
-	onDisable: function(){
-	}
-	
+	onUninstall: function(){},
+	onEnable: function(){},
+	onDisable: function(){}
 };

@@ -1,15 +1,24 @@
 var restify = require('restify');
 var backend = require('./backend.js');
+var broadcaster = require('./broadcast.js');
 
 var doneLoading = false;
-
 
 var server = restify.createServer({
 //	certificate: fs.readFileSync('cert.pem'),
 //	key: fs.readFileSync('key.pem'),
 	name: 'master-control-program',
 });
+
 var io = require('socket.io').listen(server.server);
+broadcaster.subscribe({
+	receiveMessage: function(source, messageID, message){
+		if(messageID == 'log' || messageID == 'error' || messageID == 'debug'){
+			io.emit(messageID, message);
+		}
+	},
+});
+
 
 server.use(restify.fullResponse());
 server.use(restify.queryParser());

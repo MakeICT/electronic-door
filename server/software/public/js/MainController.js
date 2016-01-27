@@ -9,6 +9,31 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
 	$scope.clients = {};
+	$scope.messages = [];
+
+	$scope.socket = io();
+
+	var addMessage = function(type, message){
+		var date = new Date();
+		var time = pad(date.getHours(), 2) + ':' + pad(date.getMinutes(), 2) + ':' + pad(date.getSeconds(), 2);
+		$scope.messages.push({type:type, text: message, timestamp: time});
+		$scope.$apply();
+	};
+
+	$scope.socket.on('debug', function(message){
+		addMessage('debug', message);
+	});
+	$scope.socket.on('error', function(message){
+		addMessage('error', message);
+	});
+	$scope.socket.on('log', function(message){
+		addMessage('log', message);
+	});
+	
+	$scope.clearMessages = function(){
+		$scope.messages.length = 0;
+	};
+		
 	
 	$scope.tabs = {};
 	var path = $location.path().substring(1).split('/');

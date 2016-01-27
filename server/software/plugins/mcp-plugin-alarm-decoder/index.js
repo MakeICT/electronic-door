@@ -40,7 +40,7 @@ module.exports = {
 		backend.getPluginOptions(module.exports.name, function(settings){
 			try{
 				ad2usb.errorHandler = function(error){
-					backend.log('Alarm Decoder failed: ' + error.code);
+					backend.error('Alarm Decoder failed: ' + error.code);
 				};
 				
 				alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {

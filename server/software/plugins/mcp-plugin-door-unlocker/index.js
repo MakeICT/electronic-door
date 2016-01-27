@@ -37,7 +37,7 @@ module.exports = {
 					
 					if(callback) callback();
 				}catch(exc){
-					console.log(exc);
+					backend.error(exc);
 				}
 			},
 			'Lock': function(client, callback){
