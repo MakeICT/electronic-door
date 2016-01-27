@@ -200,7 +200,8 @@ module.exports = {
 		payload = breakupBytes(payload);
 		
 		// assemble the packet
-		var packet = [transactionCount++, 0, clientID, command, payload.length].concat(payload);
+		if(++transactionCount > 255) transactionCount = 0;
+		var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
 		packet.push(crc.crc16modbus(packet));
 		packet = [messageEndcap].concat(packet).concat([messageEndcap]);
 		
