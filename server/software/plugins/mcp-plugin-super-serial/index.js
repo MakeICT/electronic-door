@@ -31,7 +31,7 @@ function reallyShittyDelay(ms){
 }
 
 function pollNextClient(){
-	reallyShittyDelay(500);
+	reallyShittyDelay(100);
 	var clients = backend.getClients();
 	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
 	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
@@ -79,7 +79,7 @@ function sendPacket(packet, callback){
 
 
 function onData(data){
-	backend.debug("RAW: " + data.toString());
+	backend.debug("RAW: " + data.toString('hex'));
 	clearTimeout(responseTimeout);
 
 	for(var i=0; i<data.length; i++){
