@@ -1,7 +1,7 @@
 var SerialPort = require("serialport");
 
 serialPort = new SerialPort.SerialPort(
-	'/dev/pts/3', { baudrate: 9600},
+	'/dev/ttyAMA0', { baudrate: 9600},
 	false
 );
 serialPort.on('open', function(error){
