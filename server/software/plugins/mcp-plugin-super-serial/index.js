@@ -60,7 +60,7 @@ function sendPacket(packet, callback){
 							}
 						});
 					};
-					setTimeout(doRead, .02);
+					setTimeout(doRead, .04);
 				}
 			});
 		};
@@ -77,7 +77,7 @@ function sendPacket(packet, callback){
 
 
 function onData(data){
-	console.log(JSON.stringify(data));
+	backend.debug(data);
 	clearTimeout(responseTimeout);
 
 	for(var i=0; i<data.length; i++){
