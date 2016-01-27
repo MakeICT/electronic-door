@@ -103,9 +103,11 @@ function onData(data){
 					}else{
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 //						module.exports.send(packet.from, ACK, [], pollNextClient());
+						pollNextClient();
 					}
 				}else{
 //					module.exports.send(packet.from, NAK, [], pollNextClient());
+					pollNextClient();
 				}
 				dataBuffer = [];
 			}
