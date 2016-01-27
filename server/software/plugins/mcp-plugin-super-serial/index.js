@@ -31,10 +31,12 @@ function reallyShittyDelay(ms){
 }
 
 function pollNextClient(){
-	reallyShittyDelay(100);
-	var clients = backend.getClients();
-	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
-	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
+	var doPoll = function(){
+		var clients = backend.getClients();
+		currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
+		module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
+	}
+	setTimeout(doPoll, 100);
 }
 
 function sendPacket(packet, callback){
@@ -44,7 +46,6 @@ function sendPacket(packet, callback){
 	}else{
 		backend.debug("attempting to send packet");
 		readWriteToggle.writeSync(0);
-		//reallyShittyDelay(20);
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
@@ -53,8 +54,8 @@ function sendPacket(packet, callback){
 				if(callback) callback();
 				if(readWriteToggle){
 					backend.debug('flipping to read mode...');
-					reallyShittyDelay(20);
-					readWriteToggle.writeSync(1);
+					//reallyShittyDelay(20);
+					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
 					backend.debug('flipped');
 				}
 				backend.getPluginOptions(module.exports.name, function(settings){
