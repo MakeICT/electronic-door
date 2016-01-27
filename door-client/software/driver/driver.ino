@@ -176,7 +176,7 @@ void CheckReader()  {
   uint8_t id_length;
   if(card_reader.poll(uid, &id_length))  {
     superSerial.QueueMessage(F_SEND_ID, uid, 7);
-    state == S_WAIT_SEND;
+    state = S_WAIT_SEND;
     lastIDSend = millis();
     
     #if LOG_LVL>2
