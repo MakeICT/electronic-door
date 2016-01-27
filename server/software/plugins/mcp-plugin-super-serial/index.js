@@ -49,7 +49,6 @@ function sendPacket(packet, callback){
 							readWriteToggle.writeSync(1);
 							console.log('flipped');
 						}
-						/*
 						backend.getPluginOptions(module.exports.name, function(settings){
 							if(settings['Timeout']){
 								var packetTimeout = function(){
@@ -65,7 +64,6 @@ function sendPacket(packet, callback){
 								responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
 							}
 						});
-						*/
 					};
 					setTimeout(doRead, 20);
 				}
