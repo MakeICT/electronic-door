@@ -102,10 +102,10 @@ function onData(data){
 						sendPacket(lastPackets[packet.from]);
 					}else{
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
-						module.exports.send(packet.from, ACK, [], pollNextClient());
+//						module.exports.send(packet.from, ACK, [], pollNextClient());
 					}
 				}else{
-					module.exports.send(packet.from, NAK, [], pollNextClient());
+//					module.exports.send(packet.from, NAK, [], pollNextClient());
 				}
 				dataBuffer = [];
 			}
