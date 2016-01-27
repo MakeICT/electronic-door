@@ -128,7 +128,7 @@ module.exports = {
 		'Baud': 'number',
 		'Timeout': 'number',
 		'Max retries': 'number',
-		'R/W Toggle Pin': 'number',
+		'RW Toggle Pin': 'number',
 		//'Data bits': 'number',
 		//'Stop bits': 'number',
 		//'Parity': 'selection list',
@@ -156,8 +156,8 @@ module.exports = {
 						backend.error(error);
 					}else{
 						backend.log('Super Serial connected');
-						if(settings['R/W Toggle Pin']){
-							readWriteToggle = new GPIO(settings['R/W Toggle Pin'], 'out');
+						if(settings['RW Toggle Pin']){
+							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
 						}
 						serialPort.on('data', onData);
 						setTimeout(pollNextClient, 1000);
