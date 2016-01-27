@@ -42,8 +42,11 @@ function sendPacket(packet, callback){
 				}else{
 					var doRead = function(){
 						if(callback) callback();
-						if(readWriteToggle) readWriteToggle.writeSync(1);
-						
+						if(readWriteToggle){
+							console.log('flipping to read mode');
+							readWriteToggle.writeSync(1);
+						}
+						/*
 						backend.getPluginOptions(module.exports.name, function(settings){
 							if(settings['Timeout']){
 								var packetTimeout = function(){
@@ -59,6 +62,7 @@ function sendPacket(packet, callback){
 								responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
 							}
 						});
+						*/
 					};
 					setTimeout(doRead, .04);
 				}
@@ -156,9 +160,7 @@ module.exports = {
 		backend.getPluginOptions(module.exports.name, function(settings){
 			serialPort = new SerialPort.SerialPort(
 				settings['Port'],
-				{
-					baudrate: settings['Baud'],
-				},
+				{ baudrate: settings['Baud'], },
 				true,
 				function(error){
 					if(error){
@@ -168,8 +170,12 @@ module.exports = {
 						if(settings['RW Toggle Pin']){
 							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
 						}
-						serialPort.on('data', onData);
-						setTimeout(pollNextClient, 3000);
+						try{
+							serialPort.on('data', onData);
+							setTimeout(pollNextClient, 3000);
+						}catch(exc){
+							backend.error(exc);
+						}
 					}
 				}
 			);
