@@ -96,8 +96,7 @@ function onData(data){
 					packet.data += dataBuffer[j].toString(16);
 				}
 				
-				var crc = crc.crc16modbus(dataBuffer);
-				if(crc == dataBuffer[5+dataLength] + dataBuffer[6+dataLength]){
+				if(crc.crc16modbus(dataBuffer) == (dataBuffer[5+dataLength]<<8) + dataBuffer[6+dataLength]){
 					if(packet.function == ACK){
 						// ignore the ack
 					}else if(packet.function == NAK){
