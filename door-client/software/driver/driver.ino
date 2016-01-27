@@ -1,4 +1,5 @@
 /*-----( Include needed libraries )-----*/
+#include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>

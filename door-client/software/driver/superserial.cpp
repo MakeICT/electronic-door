@@ -47,27 +47,30 @@ bool SuperSerial::GetPacket() {
     if (byteReceived == ESCAPE && !escaping) {
       escaping = true;
     }
-    else if(byteReceived == FLAG && !escaping)  {
+    else if (byteReceived == FLAG && !escaping)  {
       LOG_DEBUG(F("==============================\r\n"));
       byte receivedBytes = bufferIndex;
       bufferIndex = 0;
+      LOG_DEBUG(F("Received bytes: "));
+      LOG_DEBUG(receivedBytes);
+      LOG_DEBUG(F("\r\n"));
       if (receivedBytes >= P_H_F_LENGTH)  {
         this->receivedPacket.SetTransID(dataBuffer[0]);
         this->receivedPacket.SetSrcAddr(dataBuffer[1]);
         this->receivedPacket.SetDestAddr(dataBuffer[2]);
-        this->receivedPacket.SetMsg(dataBuffer[3], dataBuffer ,dataBuffer[4], P_H_LENGTH);
+        this->receivedPacket.SetMsg(dataBuffer[3], dataBuffer , dataBuffer[4], P_H_LENGTH);
         LOG_DUMP(F("CRC hbyte: "));
-        LOG_DUMP(((uint16_t)dataBuffer[receivedBytes-2])<<8);
+        LOG_DUMP(((uint16_t)dataBuffer[receivedBytes - 2]) << 8);
         LOG_DUMP(F("\r\n"));
         LOG_DUMP(F("CRC lbyte: "));
-        LOG_DUMP(dataBuffer[receivedBytes-1]);
+        LOG_DUMP(dataBuffer[receivedBytes - 1]);
         LOG_DUMP(F("\r\n"));
         LOG_DUMP(F("CRC Full: "));
-        LOG_DUMP((uint16_t)(dataBuffer[receivedBytes-2])<<8 | (uint16_t)dataBuffer[receivedBytes-1]);
+        LOG_DUMP((uint16_t)(dataBuffer[receivedBytes - 2]) << 8 | (uint16_t)dataBuffer[receivedBytes - 1]);
         LOG_DUMP(F("\r\n"));
-        this->receivedPacket.SetCRC((uint16_t)(dataBuffer[receivedBytes-2])<<8 | (uint16_t)dataBuffer[receivedBytes-1]);
-  
-        if (this->receivedPacket.DestAddr() == this->deviceAddress || 
+        this->receivedPacket.SetCRC((uint16_t)(dataBuffer[receivedBytes - 2]) << 8 | (uint16_t)dataBuffer[receivedBytes - 1]);
+
+        if (this->receivedPacket.DestAddr() == this->deviceAddress ||
             this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
           LOG_DEBUG(F("Verifying new packet\r\n"));
           if (receivedPacket.VerifyCRC())  {    //verify CRC
@@ -75,7 +78,7 @@ bool SuperSerial::GetPacket() {
               if (this->DataQueued())  {
                 LOG_INFO(F("Sending Update\r\n"));
                 this->SendPacket(&this->queuedPacket);
-                this->dataQueued = false;
+                this->dataQueued = false;   //TODO: This should not go here
               }
               else  {
                 LOG_DEBUG(F("Sending NOP\r\n"));
@@ -84,9 +87,20 @@ bool SuperSerial::GetPacket() {
               return false;
             }
             this->newMessage = true;
-            SendACK(this->receivedPacket.TransID());
             LOG_INFO(F("Got valid packet\r\n"));
-            return true;
+            if ( this->receivedPacket.Msg().function == F_NAK)  {
+              LOG_DEBUG(F("Received NAK"));
+              //TODO: resend last packet
+            }
+            else if (this->receivedPacket.Msg().function == F_ACK)  {
+              LOG_DEBUG(F("Received ACK"));
+              //this->dataQueued = false;   //TODO:  this should go here-ish
+            }
+            else  {
+              LOG_DEBUG(F("Sending ACK.\r\n"));
+              SendACK(this->receivedPacket.TransID());
+              return true;
+            }
           }
           else  {
             LOG_DEBUG(F("Received invalid packet.\r\n"));
@@ -99,6 +113,10 @@ bool SuperSerial::GetPacket() {
           LOG_DEBUG(F("Ignoring packet sent to different address\r\n"));
         }
       }
+      else  {
+        if (receivedBytes != 0)
+          LOG_DEBUG(F("Packet too short, discarding\r\n"));
+      }
     }
     else  {
       // add received byte to data buffer
@@ -106,7 +124,7 @@ bool SuperSerial::GetPacket() {
       LOG_DEBUG(F("rcv: "));
       LOG_DEBUG(byteReceived);
       LOG_DEBUG(F("\r\n"));
-      escaping = false; 
+      escaping = false;
     }
   }
   return false;

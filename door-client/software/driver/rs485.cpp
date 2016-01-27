@@ -18,8 +18,11 @@ void rs485::SetDebugPort(SoftwareSerial* port)  {
 
 int rs485::Send(uint8_t* data, uint8_t len) {
   LOG_DUMP(F("rs485::Send()\r\n"));
+
+  //TEST
+  //delay(1500);
   digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
-  delay(10);
+  delay(20);
   Serial.write(FLAG);
   LOG_DEBUG(F("Sending: "));
   LOG_DEBUG(FLAG);

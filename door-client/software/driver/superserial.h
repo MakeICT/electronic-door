@@ -27,12 +27,6 @@
 #define ADDR_BROADCAST  0xFF
 
 
-#define S_              0
-#define S_WAIT_SEND     1
-#define S_ESCAPING      2
-
-
-
 class SuperSerial 
 {
   public:
