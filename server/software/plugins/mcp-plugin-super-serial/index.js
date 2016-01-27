@@ -35,11 +35,13 @@ function sendPacket(packet, callback){
 		backend.error('Failed to send packet - Super Serial not connected');
 	}else{
 		var doWrite = function(){
-			backend.debug(packet);
+			backend.debug("attempting to send packet");
 			serialPort.write(packet, function(error, results){
 				if(error){
 					backend.error(error);
 				}else{
+					backend.debug(packet);
+					backend.debug("written!");
 					var doRead = function(){
 						if(callback) callback();
 						if(readWriteToggle){
