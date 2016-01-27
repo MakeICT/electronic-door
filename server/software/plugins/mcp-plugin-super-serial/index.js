@@ -31,7 +31,7 @@ function reallyShittyDelay(ms){
 }
 
 function pollNextClient(){
-	reallyShittyDelay(20);
+	reallyShittyDelay(1000);
 	var clients = backend.getClients();
 	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
 	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
@@ -44,7 +44,7 @@ function sendPacket(packet, callback){
 	}else{
 		backend.debug("attempting to send packet");
 		readWriteToggle.writeSync(0);
-		reallyShittyDelay(20);
+		//reallyShittyDelay(20);
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
