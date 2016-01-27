@@ -34,29 +34,43 @@ function sendPacket(packet, callback){
 		// @TODO: figure out auto-reconnect
 		backend.error('Failed to send packet - Super Serial not connected');
 	}else{
-		serialPort.write(packet, function(error, results){
-			if(readWriteToggle) readWriteToggle.writeSync(1);
-			if(error){
-				backend.error(error);
-			}else{
-				if(callback) callback();
-				backend.getPluginOptions(module.exports.name, function(settings){
-					if(settings['Timeout']){
-						var packetTimeout = function(){
-							backend.debug('packet timeout ' + retries + ' / ' + settings['Max retries']);
-							if(settings['Max retries'] == undefined || retries < settings['Max retries']){
-								sendPacket(packet);
-								retries++;
-							}else{
-								retries = 0;
-								pollNextClient();
+		var doWrite = function(){
+			serialPort.write(packet, function(error, results){
+				if(error){
+					backend.error(error);
+				}else{
+					var doRead = function(){
+						if(callback) callback();
+						if(readWriteToggle) readWriteToggle.writeSync(1);
+						
+						backend.getPluginOptions(module.exports.name, function(settings){
+							if(settings['Timeout']){
+								var packetTimeout = function(){
+									backend.debug('packet timeout ' + retries + ' / ' + settings['Max retries']);
+									if(settings['Max retries'] == undefined || retries < settings['Max retries']){
+										sendPacket(packet);
+										retries++;
+									}else{
+										retries = 0;
+										pollNextClient();
+									}
+								};
+								responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
 							}
-						};
-						responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
-					}
-				});
-			}
-		});
+						});
+					};
+					setTimeout(doRead, .02);
+				}
+			});
+		};
+		
+		if(readWriteToggle){
+			readWriteToggle.writeSync(0);
+			setTimeout(doWrite, .01);
+		}else{
+			doWrite();
+		}
+
 	}
 }
 
@@ -160,7 +174,7 @@ module.exports = {
 							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
 						}
 						serialPort.on('data', onData);
-						setTimeout(pollNextClient, 1000);
+						setTimeout(pollNextClient, 3000);
 					}
 				}
 			);
@@ -177,7 +191,6 @@ module.exports = {
 	},
 	
 	send: function(clientID, command, payload, callback){
-		if(readWriteToggle) readWriteToggle.writeSync(0);
 		if(!payload){
 			payload = [];
 		}else if(!(payload instanceof Array)){
@@ -204,6 +217,7 @@ module.exports = {
 		}
 
 		lastPackets[clientID] = packet;
+		
 		sendPacket(packet, callback);
 	}
 };
