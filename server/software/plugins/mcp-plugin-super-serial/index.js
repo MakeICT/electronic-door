@@ -43,7 +43,7 @@ function sendPacket(packet, callback){
 	}else{
 		backend.debug("attempting to send packet");
 		readWriteToggle.writeSync(0);
-		reallyShittyDelay(10);
+		reallyShittyDelay(20);
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
