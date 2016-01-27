@@ -47,6 +47,7 @@ function sendPacket(packet, callback){
 						if(readWriteToggle){
 							console.log('flipping to read mode');
 							readWriteToggle.writeSync(1);
+							console.log('flipped');
 						}
 						/*
 						backend.getPluginOptions(module.exports.name, function(settings){
@@ -66,14 +67,14 @@ function sendPacket(packet, callback){
 						});
 						*/
 					};
-					setTimeout(doRead, .04);
+					setTimeout(doRead, 20);
 				}
 			});
 		};
 		
 		if(readWriteToggle){
 			readWriteToggle.writeSync(0);
-			setTimeout(doWrite, .01);
+			setTimeout(doWrite, 10);
 		}else{
 			doWrite();
 		}
