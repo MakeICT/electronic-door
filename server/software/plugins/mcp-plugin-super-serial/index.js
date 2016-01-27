@@ -37,23 +37,20 @@ function sendPacket(packet, callback){
 		// @TODO: figure out auto-reconnect
 		backend.error('Failed to send packet - Super Serial not connected');
 	}else{
-		backend.debug("attempting to send packet");
 		readWriteToggle.writeSync(0);
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
 			}else{
-				backend.debug("Wrote packet: " + packet.toString());
+				console.log("Wrote packet: " + packet.toString());
 				if(callback) callback();
 				if(readWriteToggle){
-					backend.debug('flipping to read mode...');
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
-					backend.debug('flipped');
 				}
 				backend.getPluginOptions(module.exports.name, function(settings){
 					if(settings['Timeout']){
 						var packetTimeout = function(){
-							backend.debug('packet timeout ' + retries + ' / ' + settings['Max retries']);
+							console.log('packet timeout ' + retries + ' / ' + settings['Max retries']);
 							if(settings['Max retries'] == undefined || retries < settings['Max retries']){
 								sendPacket(packet);
 								retries++;
@@ -72,14 +69,14 @@ function sendPacket(packet, callback){
 
 
 function onData(data){
-	backend.debug("RAW: " + data.toString('hex'));
+	console.log("RAW: " + data.toString('hex'));
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
 			if(dataBuffer.length > 0){
 				clearTimeout(responseTimeout);
-				backend.debug("RECEIVED A FULL PACKET : " + dataBuffer);
+				console.log("RECEIVED A FULL PACKET : " + dataBuffer);
 				// We have a full packet. Let's process it :)
 				packet = {
 					'transactionID': dataBuffer[0],
