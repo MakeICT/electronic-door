@@ -31,6 +31,7 @@ function reallyShittyDelay(ms){
 }
 
 function pollNextClient(){
+	reallyShittyDelay(20);
 	var clients = backend.getClients();
 	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
 	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
