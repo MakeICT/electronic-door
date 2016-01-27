@@ -107,7 +107,7 @@ function onData(data){
 						module.exports.send(packet.from, ACK, [], pollNextClient());
 					}
 				}else{
-					sendNAK(packet.from);
+					module.exports.send(packet.from, NAK, [], pollNextClient());
 				}
 				dataBuffer = [];
 			}
