@@ -14,7 +14,7 @@ var io = require('socket.io').listen(server.server);
 broadcaster.subscribe({
 	receiveMessage: function(source, messageID, message){
 		if(messageID == 'log' || messageID == 'error' || messageID == 'debug'){
-			io.emit(messageID, message);
+//			io.emit(messageID, message);
 		}
 	},
 });

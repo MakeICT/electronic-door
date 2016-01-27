@@ -34,49 +34,37 @@ function sendPacket(packet, callback){
 		// @TODO: figure out auto-reconnect
 		backend.error('Failed to send packet - Super Serial not connected');
 	}else{
-		var doWrite = function(){
-			backend.debug("attempting to send packet");
-			serialPort.write(packet, function(error, results){
-				if(error){
-					backend.error(error);
-				}else{
-					backend.debug(packet);
-					backend.debug("written!");
-					var doRead = function(){
-						if(callback) callback();
-						if(readWriteToggle){
-							console.log('flipping to read mode');
-							readWriteToggle.writeSync(1);
-							console.log('flipped');
-						}
-						backend.getPluginOptions(module.exports.name, function(settings){
-							if(settings['Timeout']){
-								var packetTimeout = function(){
-									backend.debug('packet timeout ' + retries + ' / ' + settings['Max retries']);
-									if(settings['Max retries'] == undefined || retries < settings['Max retries']){
-										sendPacket(packet);
-										retries++;
-									}else{
-										retries = 0;
-										pollNextClient();
-									}
-								};
-								responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
-							}
-						});
-					};
-					setTimeout(doRead, 20);
+		backend.debug("attempting to send packet");
+		readWriteToggle.writeSync(0);
+		serialPort.write(packet, function(error, results){
+			if(error){
+				backend.error(error);
+			}else{
+				backend.debug(packet);
+				backend.debug("written!");
+				if(callback) callback();
+				if(readWriteToggle){
+					console.log('flipping to read mode');
+					readWriteToggle.writeSync(1);
+					console.log('flipped');
 				}
-			});
-		};
-		
-		if(readWriteToggle){
-			readWriteToggle.writeSync(0);
-			setTimeout(doWrite, 10);
-		}else{
-			doWrite();
-		}
-
+				backend.getPluginOptions(module.exports.name, function(settings){
+					if(settings['Timeout']){
+						var packetTimeout = function(){
+							backend.debug('packet timeout ' + retries + ' / ' + settings['Max retries']);
+							if(settings['Max retries'] == undefined || retries < settings['Max retries']){
+								sendPacket(packet);
+								retries++;
+							}else{
+								retries = 0;
+								pollNextClient();
+							}
+						};
+						responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
+					}
+				});
+			}
+		});
 	}
 }
 
@@ -173,7 +161,7 @@ module.exports = {
 						}
 						try{
 							serialPort.on('data', onData);
-							setTimeout(pollNextClient, 3000);
+							setTimeout(pollNextClient, 1000);
 						}catch(exc){
 							backend.error(exc);
 						}
