@@ -23,6 +23,13 @@ var escapeFlag = false;
 var responseTimeout;
 var retries = 0;
 
+function reallyShittyDelay(ms){
+	// I'm so embarrased :(
+	var now = function() { return (new Date).getTime(); };
+	var startTime = now();
+	while(now()-startTime < ms);
+}
+
 function pollNextClient(){
 	var clients = backend.getClients();
 	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
@@ -36,6 +43,7 @@ function sendPacket(packet, callback){
 	}else{
 		backend.debug("attempting to send packet");
 		readWriteToggle.writeSync(0);
+		reallyShittyDelay(10);
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
@@ -45,6 +53,7 @@ function sendPacket(packet, callback){
 				if(callback) callback();
 				if(readWriteToggle){
 					console.log('flipping to read mode');
+					reallyShittyDelay(20);
 					readWriteToggle.writeSync(1);
 					console.log('flipped');
 				}
