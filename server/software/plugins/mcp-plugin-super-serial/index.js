@@ -1,32 +1,75 @@
 var broadcaster = require('../../broadcast.js');
 var backend = require('../../backend.js');
-var SerialPort = require("serialport");
+var SerialPort = require('serialport');
 var GPIO = require('onoff').Gpio;
+var crc = require('crc');
 
 var serialPort;
 var transactionCount = 0;
 
 var escapeChar = 0x7D;
 var messageEndcap = 0x7E;
+var ACK = 0xAA;
+var NAK = 0xAB;
 
 var readWriteToggle;
 
 var currentlyPolledClientIndex = -1;
 
 var dataBuffer = [];
+var lastPackets = {};
+var escapeFlag = false;
+
+var responseTimeout;
+var retries = 0;
+
 function pollNextClient(){
 	var clients = backend.getClients();
 	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
 	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
 }
 
-var escapeFlag = false;
+function sendPacket(packet, callback){
+	if(serialPort == null || !serialPort.isOpen()){
+		// @TODO: figure out auto-reconnect
+		backend.error('Failed to send packet - Super Serial not connected');
+	}else{
+		serialPort.write(packet, function(error, results){
+			if(readWriteToggle) readWriteToggle.writeSync(1);
+			if(error){
+				backend.error(error);
+			}else{
+				if(callback) callback();
+				backend.getPluginOptions(module.exports.name, function(settings){
+					if(settings['Timeout']){
+						var packetTimeout = function(){
+							backend.debug('packet timeout ' + retries + ' / ' + settings['Max retries']);
+							if(settings['Max retries'] == undefined || retries < settings['Max retries']){
+								sendPacket(packet);
+								retries++;
+							}else{
+								retries = 0;
+								pollNextClient();
+							}
+						};
+						responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
+					}
+				});
+			}
+		});
+	}
+}
+
+
 function onData(data){
 	console.log(JSON.stringify(data));
+	clearTimeout(responseTimeout);
+
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
 			if(dataBuffer.length > 0){
+				// We have a full packet. Let's process it :)
 				packet = {
 					'transactionID': dataBuffer[0],
 					'from': dataBuffer[1],
@@ -34,13 +77,26 @@ function onData(data){
 					'function': dataBuffer[3],
 					'data': "",
 				};
-				for(var j=5; j<5+dataBuffer[4]; j++){
+				var dataLength = dataBuffer[4];
+				for(var j=5; j<5+dataLength; j++){
 					packet.data += dataBuffer[j].toString(16);
 				}
-				// @TODO: if CRC matches, send ACK back
-				broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+				
+				var crc = crc.crc16modbus(dataBuffer);
+				if(crc == dataBuffer[5+dataLength] + dataBuffer[6+dataLength]){
+					if(packet.function == ACK){
+						// ignore the ack
+					}else if(packet.function == NAK){
+						// resend last packet to this client
+						sendPacket(lastPackets[packet.from]);
+					}else{
+						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+						module.exports.send(packet.from, ACK, [], pollNextClient());
+					}
+				}else{
+					sendNAK(packet.from);
+				}
 				dataBuffer = [];
-				pollNextClient();
 			}
 		}else if(byte == escapeChar && !escapeFlag){
 			escapeFlag = true;
@@ -70,6 +126,8 @@ module.exports = {
 	options: {
 		'Port': 'text',
 		'Baud': 'number',
+		'Timeout': 'number',
+		'Max retries': 'number',
 		'R/W Toggle Pin': 'number',
 		//'Data bits': 'number',
 		//'Stop bits': 'number',
@@ -97,12 +155,12 @@ module.exports = {
 					if(error){
 						backend.error(error);
 					}else{
-						backend.log('Serial connected!');
+						backend.log('Super Serial connected');
 						if(settings['R/W Toggle Pin']){
 							readWriteToggle = new GPIO(settings['R/W Toggle Pin'], 'out');
 						}
 						serialPort.on('data', onData);
-						setTimeout(pollNextClient, 3000);
+						setTimeout(pollNextClient, 1000);
 					}
 				}
 			);
@@ -111,46 +169,41 @@ module.exports = {
 	
 	onDisable: function(){
 		if(serialPort){
+			clearTimeout(responseTimeout);
 			serialPort.close();
 			serialPort = null;
-			backend.log('Serial disconnected!');
+			backend.log('Super Serial disconnected');
 		}
 	},
 	
 	send: function(clientID, command, payload, callback){
-		if(serialPort == null || !serialPort.isOpen()){
-			// @TODO: figure out auto-reconnect
-			console.error('Not connected');
-		}else{
-			if(readWriteToggle) readWriteToggle.writeSync(0);
-
-			if(!payload){
-				payload = [];
-			}else if(!(payload instanceof Array)){
-				payload = [payload];
-			}
-			payload = breakupBytes(payload);
-			
-			var header = [messageEndcap, transactionCount++, 0x0, clientID, command, payload.length];
-			var footer = [0xFFFF, messageEndcap];
-			var packet = breakupBytes(header.concat(payload).concat(footer));
-			
-			for(var i=1; i<packet.length-1; i++){
-				if(!packet[i]) packet[i] = 0;
-				if(packet[i] == 0x7D || packet[i] == messageEndcap){
-					packet.splice(i, 0, 0x7D);
-					i++;
-				}
-			}
-			serialPort.write(packet, function(error, results){
-				if(readWriteToggle) readWriteToggle.writeSync(1);
-				if(error){
-					console.log("ERROR: " + error);
-				}else{
-					console.log("Serial sent: " + packet);
-					if(callback) callback();
-				}
-			});
+		if(readWriteToggle) readWriteToggle.writeSync(0);
+		if(!payload){
+			payload = [];
+		}else if(!(payload instanceof Array)){
+			payload = [payload];
 		}
+		// break up the payload early, so we can correctly calculate its size
+		payload = breakupBytes(payload);
+		
+		// assemble the packet
+		var packet = [transactionCount++, 0, clientID, command, payload.length].concat(payload);
+		packet.push(crc.crc16modbus(packet));
+		packet = [messageEndcap].concat(packet).concat([messageEndcap]);
+		
+		// break up multi-bytes. Not sure why it doesn't just work without :(
+		packet = breakupBytes(packet);
+		
+		// add escape characters where necessary
+		for(var i=1; i<packet.length-1; i++){
+			if(!packet[i]) packet[i] = 0;
+			if(packet[i] == 0x7D || packet[i] == messageEndcap){
+				packet.splice(i, 0, 0x7D);
+				i++;
+			}
+		}
+
+		lastPackets[clientID] = packet;
+		sendPacket(packet, callback);
 	}
 };

@@ -83,3 +83,13 @@ tbody>tr:last-child>td {
 #message-log {
 	color: #fff;
 }
+
+#message-log .message-list {
+	max-height: 10em;
+	overflow-y: auto;
+}
+
+#message-log .message {
+	font-family: monospace;
+	white-space: pre;
+}
