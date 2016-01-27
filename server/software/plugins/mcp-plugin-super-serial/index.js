@@ -90,14 +90,9 @@ function onData(data){
 					'from': dataBuffer[1],
 					'to': dataBuffer[2],
 					'function': dataBuffer[3],
-					'data': "",
-				};
-				var dataLength = dataBuffer[4];
-				for(var j=5; j<5+dataLength; j++){
-					packet.data += dataBuffer[j].toString(16);
-				}
-				
-				if(crc.crc16modbus(dataBuffer) == (dataBuffer[5+dataLength]<<8) + dataBuffer[6+dataLength]){
+					'data': dataBuffer.slice(5, 5+dataBuffer[4]),
+				};				
+				if(crc.crc16modbus(dataBuffer) == (dataBuffer[5+dataBuffer[4]]<<8) + dataBuffer[6+dataBuffer[4]]){
 					if(packet.function == ACK){
 						// ignore the ack
 					}else if(packet.function == NAK){
