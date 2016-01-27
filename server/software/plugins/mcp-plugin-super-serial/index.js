@@ -23,13 +23,6 @@ var escapeFlag = false;
 var responseTimeout;
 var retries = 0;
 
-function reallyShittyDelay(ms){
-	// I'm so embarrased :(
-	var now = function() { return (new Date).getTime(); };
-	var startTime = now();
-	while(now()-startTime < ms);
-}
-
 function pollNextClient(){
 	var doPoll = function(){
 		var clients = backend.getClients();
@@ -54,7 +47,6 @@ function sendPacket(packet, callback){
 				if(callback) callback();
 				if(readWriteToggle){
 					backend.debug('flipping to read mode...');
-					//reallyShittyDelay(20);
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
 					backend.debug('flipped');
 				}
@@ -81,12 +73,12 @@ function sendPacket(packet, callback){
 
 function onData(data){
 	backend.debug("RAW: " + data.toString('hex'));
-	clearTimeout(responseTimeout);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
 			if(dataBuffer.length > 0){
+				clearTimeout(responseTimeout);
 				backend.debug("RECEIVED A FULL PACKET : " + dataBuffer);
 				// We have a full packet. Let's process it :)
 				packet = {
