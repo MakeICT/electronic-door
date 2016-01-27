@@ -31,7 +31,7 @@ function reallyShittyDelay(ms){
 }
 
 function pollNextClient(){
-	reallyShittyDelay(1000);
+	reallyShittyDelay(500);
 	var clients = backend.getClients();
 	currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
 	module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
@@ -49,14 +49,13 @@ function sendPacket(packet, callback){
 			if(error){
 				backend.error(error);
 			}else{
-				backend.debug(packet);
-				backend.debug("written!");
+				backend.debug("Wrote packet: " + packet.toString());
 				if(callback) callback();
 				if(readWriteToggle){
-					console.log('flipping to read mode');
+					backend.debug('flipping to read mode...');
 					reallyShittyDelay(20);
 					readWriteToggle.writeSync(1);
-					console.log('flipped');
+					backend.debug('flipped');
 				}
 				backend.getPluginOptions(module.exports.name, function(settings){
 					if(settings['Timeout']){
@@ -80,13 +79,14 @@ function sendPacket(packet, callback){
 
 
 function onData(data){
-	backend.debug(data);
+	backend.debug("RAW: " + data.toString());
 	clearTimeout(responseTimeout);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
 			if(dataBuffer.length > 0){
+				backend.debug("RECEIVED A FULL PACKET : " + dataBuffer);
 				// We have a full packet. Let's process it :)
 				packet = {
 					'transactionID': dataBuffer[0],
