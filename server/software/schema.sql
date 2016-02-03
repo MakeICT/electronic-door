@@ -137,13 +137,13 @@ CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 	PRIMARY KEY("groupID", "tagID")
 );
 
-INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
+INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.', EXTRACT('epoch' FROM current_timestamp));
 INSERT INTO "groups" ("name") VALUES ('administrators');
 INSERT INTO "userGroups" ("userID", "groupID") ( SELECT "userID", "groupID"	FROM "users" JOIN "groups" ON 1=1);
 
-INSERT INTO users ("firstName", "lastName", "email", "status") VALUES 
-	('User 1', 'Test', 'test1@makeict.org', 'active'),
-	('User 2', 'Test', 'test2@makeict.org', 'active');
+INSERT INTO users ("firstName", "lastName", "email", "status", "joinDate") VALUES 
+	('User 1', 'Test', 'test1@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp)),
+	('User 2', 'Test', 'test2@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp));
 
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
 INSERT INTO clients ("name") VALUES ('Front door');

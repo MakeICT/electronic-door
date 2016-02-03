@@ -255,7 +255,13 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		var durationInUnix = currentUnixTime - timestamp;
 		var durationInDays = Math.floor(durationInUnix / 86400);
 		
-		return durationInDays;
+		if(durationInDays > 365){
+			return Math.round(durationInDays / 365, 1) + ' years';
+		}else if(durationInDays > 90){
+			return Math.round(durationInDays / 7, 1) + ' weeks';
+		}else{
+			return durationInDays + ' days';
+		}
 	}
 });
 

@@ -119,10 +119,7 @@
 											<td>{{user.status}}</td>
 										</tr><tr>
 											<th>Member since</th>
-											<td>{{user.joinDate|timestampToHumanReadableDate}}</td>
-										</tr><tr>
-											<th>Member for</th>
-											<td>{{user.joinDate|timestampToHumanReadableDuration}} days</td>
+											<td>{{user.joinDate|timestampToHumanReadableDate}} ({{user.joinDate|timestampToHumanReadableDuration}})</td>
 										</tr><tr>
 											<th>Key status</th>
 											<td>
