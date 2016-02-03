@@ -46,7 +46,7 @@ server.get('/users/:userID/authorizations', function (request, response, next) {
 });
 
 server.put('/users/:userID/authorizations/:authTag', function (request, response, next) {
-	backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body);
+	backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body, function(){response.send();});
 });
 
 server.get('/users/:userID/groups', function (request, response, next) {
@@ -58,7 +58,7 @@ server.get('/users/:userID/groups', function (request, response, next) {
 });
 
 server.put('/users/:userID/groups/:groupName', function (request, response, next) {
-	backend.setGroupEnrollment(request.context.userID, request.context.groupName, request.body);
+	backend.setGroupEnrollment(request.context.userID, request.context.groupName, request.body, function(){response.send();});
 });
 
 
