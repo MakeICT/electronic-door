@@ -174,6 +174,36 @@
 							</accordion>
 						</div>
 					</uib-tab>
+					<uib-tab heading="Groups" active="tabs.groups.active" select="setLocation('groups');">
+						<h2>Groups</h2>
+						<table>
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Description</th>
+									<th>Authorizations</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="group in groups">
+									<td>{{group.name}}</td>
+									<td> - </td>
+									<td>
+										<button
+											ng-repeat="auth in group.authorizations"
+											uib-btn-checkbox
+											ng-model="auth.authorized"
+											ng-click="setGroupAuthorization(group, auth.name, auth.authorized)"
+											type="button"
+											class="btn btn-default btn-sm"
+										>
+											{{auth.name}}
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</uib-tab>
 					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
 						<h2>Clients</h2>
 						<div masonry>

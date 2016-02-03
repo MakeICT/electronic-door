@@ -69,6 +69,10 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		$scope.clients = clients;
 	});
 
+	$http.get('/groups').success(function(groups){
+		$scope.groups = groups;
+	});
+
 	$scope.locals = {
 		'authenticated': true,
 	};
@@ -153,6 +157,12 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
 		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
+			// @TODO: give feedback to user that this worked
+		});		
+	};
+	
+	$scope.setGroupAuthorization = function(group, authTag, authorized){
+		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
 			// @TODO: give feedback to user that this worked
 		});		
 	};

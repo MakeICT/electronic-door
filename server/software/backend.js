@@ -132,6 +132,44 @@ module.exports = {
 		}
 	},
 	
+	getGroups: function(onSuccess, onFailure){
+		try{
+			var sql = 
+				'SELECT ' +
+				'	groups.*, ' +
+				'	"authorizationTags".name AS "tagName", ' +
+				'	"groupAuthorizationTags"."groupID" IS NOT NULL AS enrolled ' +
+				'FROM groups ' +
+				'	JOIN "authorizationTags" ON 1=1 ' +
+				'	LEFT JOIN "groupAuthorizationTags" ON "groups"."groupID" = "groupAuthorizationTags"."groupID" ' +
+				'		AND "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID" ' +
+				'ORDER BY groups.name, "authorizationTags".name';
+				
+			var process = function(data){
+				var groups = [];
+				for(var i=0; i<data.length; i++){
+					if(i == 0 || groups[groups.length-1].groupID != data[i].groupID){
+						groups.push({
+							'groupID': data[i].groupID,
+							'name': data[i].name,
+							'authorizations': []
+						});
+					}
+					groups[groups.length-1].authorizations.push({
+						'name': data[i].tagName,
+						'authorized': data[i].enrolled,
+					});
+				}
+				
+				onSuccess(groups);
+			};
+			return query(sql, [], process, onFailure);
+
+		}catch(exc){
+			backend.error(exc);
+		}
+	},
+	
 	// @TODO: gross. This only works in the context of WA sync'ing
 	getUserByProxyID: function(proxySystem, proxyUserID, transaction) {
 		var sql =
@@ -571,11 +609,6 @@ module.exports = {
 		query(sql, [name, pluginID], onSuccess, onFailure);
 	},
 	
-	addAuthorization: function(who, what, onSuccess, onFailure){
-		var sql = 'INSERT INTO "userAuthorizationTags" ("userID", "tagID") VALUES ($1, (SELECT "tagID" FROM "authorizationTags" WHERE name = $2))';
-		query(sql, [who, what], onSuccess, onFailure);
-	},
-	
 	getUserAuthorizations: function(who, onSuccess, onFailure){
 		var sql =
 			'SELECT ' +
@@ -603,6 +636,24 @@ module.exports = {
 				'DELETE FROM "userAuthorizationTags" WHERE "userID" = $1 ' +
 				'AND "tagID" = (' + tagSQL + ')';
 		}
+		return query(sql, [who, what], onSuccess, onFailure);
+	},
+	
+	setGroupAuthorization: function(who, what, authorized, onSuccess, onFailure){
+		var sql;
+		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
+		
+		if(authorized){
+			sql = 
+				'INSERT INTO "groupAuthorizationTags" ("groupID", "tagID") ' +
+				'VALUES ($1, (' + tagSQL + '))';
+		}else{
+			sql = 
+				'DELETE FROM "groupAuthorizationTags" WHERE "groupID" = $1 ' +
+				'AND "tagID" = (' + tagSQL + ')';
+		}
+		
+		backend.debug(sql);
 		return query(sql, [who, what], onSuccess, onFailure);
 	},
 	

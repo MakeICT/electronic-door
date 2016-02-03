@@ -63,7 +63,10 @@ server.put('/users/:userID/groups/:groupName', function (request, response, next
 	return next();
 });
 
-
+server.put('/groups/:groupID/authorizations/:authTag', function (request, response, next) {
+	backend.setGroupAuthorization(request.context.groupID, request.context.authTag, request.body, function(){response.send();});
+	return next();
+});
 
 /**
  * Sends empty response on success
@@ -92,6 +95,14 @@ server.put('/users/:userID', function (request, response, next) {
 	}
 	
 	// @TODO: update other fields too...
+	
+	return next();
+});
+
+server.get('/groups', function(request, response, next){
+	backend.getGroups(function(groups){
+		response.send(groups);
+	});
 	
 	return next();
 });
