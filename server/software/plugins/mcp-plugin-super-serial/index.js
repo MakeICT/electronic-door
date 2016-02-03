@@ -14,30 +14,25 @@ var NAK = 0xAB;
 
 var readWriteToggle;
 
-var currentlyPolledClientIndex = -1;
-
 var dataBuffer = [];
 var lastPackets = {};
 var escapeFlag = false;
+var packetToValidate;
 
 var responseTimeout;
-var retries = 0;
-
-function pollNextClient(){
-	var doPoll = function(){
-		var clients = backend.getClients();
-		currentlyPolledClientIndex = (currentlyPolledClientIndex + 1) % clients.length;
-		module.exports.send(clients[currentlyPolledClientIndex].clientID, 0x0A);
-	}
-	setTimeout(doPoll, 100);
-}
+var retryDelay = 0;
 
 function sendPacket(packet, callback){
 	if(serialPort == null || !serialPort.isOpen()){
 		// @TODO: figure out auto-reconnect
 		backend.error('Failed to send packet - Super Serial not connected');
 	}else{
-		readWriteToggle.writeSync(0);
+		if(readWriteToggle) readWriteToggle.writeSync(0);
+		
+		if(packetToValidate){
+			backend.error('Packet validation out of order! :(');
+		}
+		packetToValidate = packet;
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
@@ -56,7 +51,6 @@ function sendPacket(packet, callback){
 								retries++;
 							}else{
 								retries = 0;
-								pollNextClient();
 							}
 						};
 						responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
@@ -84,21 +78,27 @@ function onData(data){
 					'to': dataBuffer[2],
 					'function': dataBuffer[3],
 					'data': dataBuffer.slice(5, 5+dataBuffer[4]),
-				};				
+				};
 				if(crc.crc16modbus(dataBuffer) == (dataBuffer[5+dataBuffer[4]]<<8) + dataBuffer[6+dataBuffer[4]]){
-					if(packet.function == ACK){
+					if(packetToValidate){
+						if(packetToValidate == packet){
+							packetToValidate = null;
+							retryDelay = 100;
+						}else{
+							console.log('Packed failed validation');
+							console.log('\tReceived: ' + packet);
+							console.log('\tExpected: ' + packetToValidate);
+							setTimeout(function(){sendPacket(packetToValidate);}, retryDelay * Math.random());
+							retryDelay *= 2;
+						}
+					}else if(packet.function == ACK){
 						// ignore the ack
 					}else if(packet.function == NAK){
 						// resend last packet to this client
 						sendPacket(lastPackets[packet.from]);
 					}else{
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
-//						module.exports.send(packet.from, ACK, [], pollNextClient());
-						pollNextClient();
 					}
-				}else{
-//					module.exports.send(packet.from, NAK, [], pollNextClient());
-					pollNextClient();
 				}
 				dataBuffer = [];
 			}
@@ -163,7 +163,6 @@ module.exports = {
 						}
 						try{
 							serialPort.on('data', onData);
-							setTimeout(pollNextClient, 1000);
 						}catch(exc){
 							backend.error(exc);
 						}
