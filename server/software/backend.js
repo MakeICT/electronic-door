@@ -672,8 +672,7 @@ module.exports = {
 			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
 			'	WHERE users."' + idField + '" = $1 ' + 
 			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
-			') AS foo;
-
+			') AS foo';
 		
 		var process = function(data){
 			if(data[0]['authorized']){
