@@ -653,18 +653,27 @@ module.exports = {
 				'AND "tagID" = (' + tagSQL + ')';
 		}
 		
-		backend.debug(sql);
 		return query(sql, [who, what], onSuccess, onFailure);
 	},
 	
 	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
 		var idField = idIsNFC ? 'nfcID' : 'userID';
 		var sql =
-			'SELECT COUNT(0) > 0 AS authorized ' +
-			'FROM "userAuthorizationTags" ' +
-			'	JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' +
-			'WHERE "' + idField + '" = $1 ' +
-			'	AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
+			'SELECT SUM(authorized) > 0 AS authorized FROM ( ' + 
+			'	SELECT COUNT(0) AS authorized ' + 
+			'	FROM "userAuthorizationTags" ' + 
+			'		JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' + 
+			'	WHERE users."' + idField + '" = $1 ' + 
+			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
+			'	UNION ' + 
+			'	SELECT COUNT(0) AS authorized ' + 
+			'	FROM "groupAuthorizationTags" ' + 
+			'		JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
+			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
+			'	WHERE users."' + idField + '" = $1 ' + 
+			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
+			') AS foo;
+
 		
 		var process = function(data){
 			if(data[0]['authorized']){
