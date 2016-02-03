@@ -99,22 +99,6 @@
 									<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
 									<table class="table table-striped user-details">
 										<tr>
-											<th>Account type</th>
-											<td>
-												<form class="form-inline">
-													<div class="btn-group">
-														<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="false">User</label>
-														<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="true">Admin</label>
-													</div>
-
-													<span ng-if="user.isAdmin" class="btn-group">
-														&nbsp;
-														<input type="password" placeholder="New password" class="form-control input-sm btn"/>
-														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
-													</span>
-												</form>
-											</td>
-										</tr><tr>
 											<th>Member status</th>
 											<td>{{user.status}}</td>
 										</tr><tr>
@@ -164,6 +148,14 @@
 												>
 													{{auth.name}}
 												</button>
+											</td>
+										</tr><tr>
+											<th>Password reset</th>
+											<td>
+												<form class="form-inline">
+													<input type="password" placeholder="New password" class="form-control input-sm"/>
+													<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
+												</form>
 											</td>
 										</tr>
 									</table>
