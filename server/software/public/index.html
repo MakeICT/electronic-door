@@ -139,7 +139,22 @@
 												</div>
 											</td>
 										</tr><tr>
-											<th>Authorizations</th>
+											<th>Groups</th>
+											<td>
+												<button ng-if="!user.groups" ng-click="getUserGroups(user);" class="btn btn-sm btn-default">Load groups</button>
+												<button
+													ng-repeat="group in user.groups"
+													uib-btn-checkbox
+													ng-model="group.enrolled"
+													ng-click="setGroupEnrollment(user, group.name, group.enrolled)"
+													type="button"
+													class="btn btn-default btn-sm"
+												>
+													{{group.name}}
+												</button>
+											</td>
+										</tr><tr>
+											<th>Personal authorizations</th>
 											<td>
 												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);" class="btn btn-sm btn-default">Load authorizations</button>
 												<button

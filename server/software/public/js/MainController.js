@@ -144,6 +144,19 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});		
 	};
 	
+	$scope.getUserGroups = function(user){
+		$http.get('/users/' + user.userID + '/groups').success(function(response){
+			console.log(response);
+			user.groups = response;
+		});
+	};
+	
+	$scope.setGroupEnrollment = function(user, groupName, enrolled){
+		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
+			// @TODO: give feedback to user that this worked
+		});		
+	};
+	
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
 			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){

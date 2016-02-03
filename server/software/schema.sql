@@ -9,7 +9,6 @@ CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'boolean', 'hidden', 'password')
 
 CREATE TABLE IF NOT EXISTS users (
 	"userID" SERIAL PRIMARY KEY,
-	"isAdmin" BOOLEAN DEFAULT FALSE,
 	"firstName" VARCHAR(64) NOT NULL,
 	"lastName" VARCHAR(64) NOT NULL,
 	"email" VARCHAR(256) NULL UNIQUE,
@@ -17,6 +16,19 @@ CREATE TABLE IF NOT EXISTS users (
 	"joinDate" INT NULL,
 	"nfcID" VARCHAR(256) UNIQUE,
 	"status" USER_STATUS NOT NULL DEFAULT 'inactive'
+);
+
+CREATE TABLE IF NOT EXISTS groups (
+	"groupID" SERIAL PRIMARY KEY,
+	"name" VARCHAR(64) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS "userGroups" (
+	"groupID" INT NOT NULL,
+	"userID" INT NOT NULL,
+	FOREIGN KEY("groupID") REFERENCES "groups"("groupID"),
+	FOREIGN KEY("userID") REFERENCES users("userID"),
+	PRIMARY KEY("groupID", "userID")
 );
 
 CREATE TABLE IF NOT EXISTS "proxySystems" (
@@ -117,7 +129,18 @@ CREATE TABLE IF NOT EXISTS "userAuthorizationTags" (
 	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID")
 );
 
-INSERT INTO users ("isAdmin", "firstName", "lastName", "email", "status", "passwordHash") VALUES (TRUE, 'Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
+CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
+	"groupID" INT NOT NULL,
+	"tagID" INT NOT NULL,
+	FOREIGN KEY("groupID") REFERENCES "groups"("groupID"),
+	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID"),
+	PRIMARY KEY("groupID", "tagID")
+);
+
+INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.');
+INSERT INTO "groups" ("name") VALUES ('administrators');
+INSERT INTO "userGroups" ("userID", "groupID") ( SELECT "userID", "groupID"	FROM "users" JOIN "groups" ON 1=1);
+
 INSERT INTO users ("firstName", "lastName", "email", "status") VALUES 
 	('User 1', 'Test', 'test1@makeict.org', 'active'),
 	('User 2', 'Test', 'test2@makeict.org', 'active');
