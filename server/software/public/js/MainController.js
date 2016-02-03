@@ -150,7 +150,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.getUserGroups = function(user){
 		$http.get('/users/' + user.userID + '/groups').success(function(response){
-			console.log(response);
 			user.groups = response;
 		});
 	};
