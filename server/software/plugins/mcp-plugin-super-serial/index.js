@@ -32,7 +32,7 @@ function sendPacket(packet, callback){
 		if(packetToValidate){
 			backend.error('Packet validation out of order! :(');
 		}
-		packetToValidate = packet;
+		packetToValidate = packet.slice(1, packet.length-1);
 		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error(error);
@@ -70,31 +70,44 @@ function onData(data){
 		if(byte == messageEndcap && !escapeFlag){
 			if(dataBuffer.length > 0){
 				clearTimeout(responseTimeout);
+				var unescapedPacket = [];
+				for(var i=0; i<dataBuffer.length; i++){
+					if(dataBuffer[i] == escapeChar && !escapeFlag){
+						escapeFlag = true;
+					}else{
+						unescapedPacket.push(dataBuffer[i]);
+						escapeFlag = false;
+					}
+				}
 				console.log("RECEIVED A FULL PACKET : " + dataBuffer);
+				console.log("             Unescaped : " + unescapedPacket);
 				// We have a full packet. Let's process it :)
 				packet = {
-					'transactionID': dataBuffer[0],
-					'from': dataBuffer[1],
-					'to': dataBuffer[2],
-					'function': dataBuffer[3],
-					'data': dataBuffer.slice(5, 5+dataBuffer[4]),
+					'transactionID': unescapedPacket[0],
+					'from': unescapedPacket[1],
+					'to': unescapedPacket[2],
+					'function': unescapedPacket[3],
+					'data': unescapedPacket.slice(5, 5+unescapedPacket[4]),
 				};
-				var computedCRC = crc.crc16modbus(dataBuffer.slice(0, 5+dataBuffer[4]));
-				var incomingCRC = (dataBuffer[5+dataBuffer[4]]<<8) + dataBuffer[6+dataBuffer[4]];
+				var computedCRC = crc.crc16modbus(unescapedPacket.slice(0, 5+unescapedPacket[4]));
+				var incomingCRC = (unescapedPacket[5+unescapedPacket[4]]<<8) + unescapedPacket[6+unescapedPacket[4]];
 				if(computedCRC == incomingCRC){
 					if(packetToValidate){
-						if(packetToValidate == packet){
+						if(packetToValidate.toString() == dataBuffer.toString()){
 							packetToValidate = null;
 							retryDelay = 100;
 						}else{
-							console.log('Packed failed validation');
-							console.log('\tReceived: ' + packet);
-							console.log('\tExpected: ' + packetToValidate);
+							console.log('Packet failed validation');
+							console.log('Received: ');
+							console.log(dataBuffer);
+							console.log('Expected: ');
+							console.log(packetToValidate);
 							setTimeout(function(){sendPacket(packetToValidate);}, retryDelay * Math.random());
 							retryDelay *= 2;
 						}
 					}else if(packet.function == ACK){
 						// ignore the ack
+						console.log("ACK received");
 					}else if(packet.function == NAK){
 						// resend last packet to this client
 						sendPacket(lastPackets[packet.from]);
@@ -103,12 +116,19 @@ function onData(data){
 					}
 				}else{
 					backend.debug("Bad CRC");
+					backend.debug("\tComputed = " + computedCRC);
+					backend.debug("\tReceived = " + incomingCRC);
+					backend.debug("\tByte 1   = " + unescapedPacket[5+unescapedPacket[4]]);
+					backend.debug("\tByte 2   = " + unescapedPacket[6+unescapedPacket[4]]);
 				}
 				dataBuffer = [];
 			}
 		}else if(byte == escapeChar && !escapeFlag){
 			escapeFlag = true;
+			console.log("Escape flag set");
+			dataBuffer.push(byte);
 		}else{
+			if(escapeFlag) console.log("Escape flag cleared: " + byte);
 			escapeFlag = false;
 			dataBuffer.push(byte);
 		}
