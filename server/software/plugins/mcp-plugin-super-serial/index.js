@@ -79,7 +79,9 @@ function onData(data){
 					'function': dataBuffer[3],
 					'data': dataBuffer.slice(5, 5+dataBuffer[4]),
 				};
-				if(crc.crc16modbus(dataBuffer) == (dataBuffer[5+dataBuffer[4]]<<8) + dataBuffer[6+dataBuffer[4]]){
+				var computedCRC = crc.crc16modbus(dataBuffer.slice(0, 5+dataBuffer[4]));
+				var incomingCRC = (dataBuffer[5+dataBuffer[4]]<<8) + dataBuffer[6+dataBuffer[4]];
+				if(computedCRC == incomingCRC){
 					if(packetToValidate){
 						if(packetToValidate == packet){
 							packetToValidate = null;
@@ -99,6 +101,8 @@ function onData(data){
 					}else{
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 					}
+				}else{
+					backend.debug("Bad CRC");
 				}
 				dataBuffer = [];
 			}
