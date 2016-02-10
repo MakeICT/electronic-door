@@ -100,8 +100,11 @@ module.exports = {
 	
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'serial-data-received'){
+			backend.debug('door unlocker received some serial data');
 			if(data['to'] == 0){
+				backend.debug('it is for the master');
 				if(data['function'] == NFC){
+					backend.debug('and it is a request to unlock a door');
 					var client = backend.getClientByID(data['from']);
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 					

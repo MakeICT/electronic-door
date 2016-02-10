@@ -160,6 +160,7 @@ module.exports = {
 						backend.log('Super Serial connected');
 						if(settings['RW Toggle Pin']){
 							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
+							readWriteToggle.writeSync(1);
 						}
 						try{
 							serialPort.on('data', onData);
