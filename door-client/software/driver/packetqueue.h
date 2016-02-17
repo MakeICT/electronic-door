@@ -2,6 +2,7 @@
 #define Packet_H
 
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 #include "utils.h"
 
 
@@ -51,6 +52,7 @@ class Packet {
     void SetDestAddr(byte addr);
     void SetTransID(byte transID);
     void SetMsg(byte function, byte* payload, byte length, byte offset=0);
+    void SetDebugPort(SoftwareSerial*);
     
     //Functions
     uint16_t ComputeCRC();
@@ -61,6 +63,7 @@ class Packet {
     void Escape();
     
   private:
+    SoftwareSerial* debugPort;
     byte size;
     byte escapedSize;
     

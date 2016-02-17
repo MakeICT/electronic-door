@@ -9,11 +9,15 @@ SuperSerial::SuperSerial (rs485* b, byte addr) {
   this->newMessage = false;
   this->responsePacket.SetDestAddr(ADDR_MASTER);
   this->responsePacket.SetSrcAddr(this->deviceAddress);
+  this->currentTransaction = 124;
 }
 
 void SuperSerial::SetDebugPort(SoftwareSerial* port)  {
   LOG_DUMP(F("SuperSerial::SetDebugPort()\r\n"));
   debugPort = port;
+  queuedPacket.SetDebugPort(debugPort);
+  receivedPacket.SetDebugPort(debugPort);
+  responsePacket.SetDebugPort(debugPort);
 }
 
 bool SuperSerial::NewMessage()  {
@@ -29,6 +33,7 @@ bool SuperSerial::DataQueued()  {
 void SuperSerial::Update()  {
   LOG_DUMP(F("SuperSerial::Update()\r\n"));
   this->GetPacket();
+  //TODO: check if any messages have failed to send
 }
 
 Message SuperSerial::GetMessage()  {
@@ -42,8 +47,8 @@ bool SuperSerial::GetPacket() {
   static byte dataBuffer[MAX_PACKET_SIZE];
   static uint8_t bufferIndex = 0;
   static boolean escaping = false;
-  for (int i = bus->Available(); i > 0; i--)  {
-    byte byteReceived = bus->Receive();    // Read received byte
+  for (int i = this->bus->Available(); i > 0; i--)  {
+    byte byteReceived = this->bus->Receive();    // Read received byte
     if (byteReceived == ESCAPE && !escaping) {
       escaping = true;
     }
@@ -74,11 +79,11 @@ bool SuperSerial::GetPacket() {
             this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
           LOG_DEBUG(F("Verifying new packet\r\n"));
           if (receivedPacket.VerifyCRC())  {    //verify CRC
+            this->currentTransaction = receivedPacket.TransID();
             if (dataBuffer[3] == F_GET_UPDATE)   {
               if (this->DataQueued())  {
                 LOG_INFO(F("Sending Update\r\n"));
                 this->SendPacket(&this->queuedPacket);
-                this->dataQueued = false;   //TODO: This should not go here
               }
               else  {
                 LOG_DEBUG(F("Sending NOP\r\n"));
@@ -138,21 +143,24 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
   this->queuedPacket.SetDestAddr(ADDR_MASTER);
   this->queuedPacket.SetSrcAddr(this->deviceAddress);
   this->dataQueued = true;
-}
-
-void SuperSerial::ReplyToQuery(byte transID)  {
-  LOG_DUMP(F("SuperSerial::ReplyToQuery()\r\n"));
-  queuedPacket.SetTransID(transID);
-  SendPacket(&queuedPacket);
-  this->dataQueued = false;
+  if (!bus->QueueFull())  {
+    this->SendPacket(&queuedPacket);
+    this->dataQueued = false;
+  }
 }
 
 void SuperSerial::SendPacket(Packet* p)  {
   LOG_DUMP(F("SuperSerial::SendPacket()\r\n"));
+  
+  currentTransaction = (currentTransaction + 1) % 255;
+  p->SetTransID(currentTransaction);
   p->SetCRC(p->ComputeCRC());
   byte array[p->EscapedSize()];
+
   p->ToEscapedArray(array);
-  bus->Send(array, p->EscapedSize());
+
+  bus->Queue(array, p->EscapedSize());
+  this->dataQueued = false;
 }
 
 inline void SuperSerial::SendControl(byte function, byte transID)  {

@@ -26,6 +26,11 @@ Packet::Packet(byte f, byte* p, byte l)  {
   this->SetMsg(f, p, l);
 }
 
+void Packet::SetDebugPort(SoftwareSerial* port)  {
+  LOG_DUMP(F("Packet::SetDebugPort()\r\n"));
+  debugPort = port;
+}
+
 //Convert packet to an array and return
 byte Packet::ToArray(byte* array)  {
   byte index = 0;
@@ -47,7 +52,7 @@ byte Packet::ToArray(byte* array)  {
 uint16_t Packet::ComputeCRC()  {
   //this part is borrowed from somewhere....
   //TODO: implement 16 bit CRC
-  return 0xFFFF;
+  //return 0xFFFF;
   
   // Compute the MODBUS RTU CRC
   
@@ -56,6 +61,9 @@ uint16_t Packet::ComputeCRC()  {
   uint16_t crc = 0xFFFF;
  
   for (byte pos = 0; pos < this->Size()-2; pos++) {
+    LOG_DUMP(F("CRC'ing byte: "));
+    LOG_DUMP(data[pos]);
+    LOG_DUMP("\r\n");
     crc ^= (uint16_t)data[pos];          // XOR byte into least sig. byte of crc
  
     for (int i = 8; i != 0; i--) {    // Loop over each bit
@@ -69,6 +77,9 @@ uint16_t Packet::ComputeCRC()  {
   }
   // Note, this number has low and high bytes swapped, so use it accordingly (or swap bytes)
   //return crc;
+  LOG_DUMP(F("Computed CRC: "));
+  LOG_DUMP(crc);
+  LOG_DUMP(F("\r\n"));
   return crc;
 }
 
@@ -101,16 +112,37 @@ byte Packet::Escapes()  {
 //Insert escape bytes into the packet if necessary
 byte Packet::ToEscapedArray(byte* array)  { 
   byte unescapedArray[this->Size()];
-    this->ToArray(unescapedArray);
+  this->ToArray(unescapedArray);
+  LOG_DUMP(F("Unescaped Array: "));
+  for (int i=0; i < this->Size(); i++)  {
+    LOG_DUMP(unescapedArray[i]);
+    LOG_DUMP(F(" "));
+  }
+  LOG_DEBUG(F("\r\n"));
   if (this->EscapedSize() > this->Size())  {
     byte escapes = this->Escapes();
-    byte escapedArray[this->Size() + escapes];
+    LOG_DUMP(F("Escapes: "));
+    LOG_DUMP(escapes);
+    LOG_DUMP(F("\r\n"));
+    byte escapedArray[this->EscapedSize()];
     for (int i=0 ,j = 0; i < this->Size(); i++, j++)  {
       if (unescapedArray[i] == ESCAPE || unescapedArray[i] == FLAG)  {
-        escapedArray[i++] =  ESCAPE;
+        escapedArray[j++] =  ESCAPE;
       }
-      escapedArray[i] = unescapedArray[j];
+      escapedArray[j] = unescapedArray[i];
     }
+    LOG_DUMP(F("Escaped Array: "));
+    for (int i=0; i < this->EscapedSize(); i++)  {
+      LOG_DUMP(escapedArray[i]);
+      LOG_DUMP(F(" "));
+    }
+    LOG_DUMP(F("\r\n"));
+    LOG_DUMP(F("Unescaped Size: "));
+    LOG_DUMP(this->Size());
+    LOG_DUMP(F("\r\n"));
+    LOG_DUMP(F("Escaped Size: "));
+    LOG_DUMP(this->EscapedSize());
+    LOG_DUMP(F("\r\n"));
     arrayCopy(escapedArray, array, this->EscapedSize());
     this->escapedSize = this->Size() + escapes;
     return this->EscapedSize();

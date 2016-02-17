@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define LOG_LVL 0
+#define LOG_LVL 4
 
 #define LOG_ERROR(t)         //t
 #define LOG_WARNING(t)       //t
