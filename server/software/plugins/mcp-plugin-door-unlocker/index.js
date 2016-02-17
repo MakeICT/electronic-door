@@ -29,13 +29,14 @@ module.exports = {
 			'Unlock': function(client, callback){
 				try{
 					// regroup the options by key/value pairs for easy lookup
-					var options = backend.regroup(client.plugins['Door Unlocker'].options, 'name', 'value');
-					if(options['unlockDuration'] == undefined) options['unlockDuration'] = 3;
-					superSerial.send(client.clientID, UNLOCK, options['unlockDuration']);
-					
-					broadcaster.broadcast(module.exports, "door-unlocked", { client: client, user: null });
-					
-					if(callback) callback();
+					backend.getPluginOptions(module.exports.name, function(settings){
+						if(settings['Unlock duration'] == undefined) settings['Unlock duration'] = 3;
+						superSerial.send(client.clientID, UNLOCK, settings['Unlock duration']);
+						
+						broadcaster.broadcast(module.exports, "door-unlocked", { client: client, user: null });
+						
+						if(callback) callback();
+					});
 				}catch(exc){
 					backend.error(exc);
 				}
