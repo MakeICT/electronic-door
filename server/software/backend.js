@@ -91,37 +91,83 @@ module.exports = {
 	},
 	
 	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
-		var sql =
-			'SELECT ' +
-			'	"userID", ' +
-			'	"isAdmin", "firstName", "lastName", "email", "joinDate", "status", ' +
-			'	"nfcID" IS NOT NULL AS "keyActive" ' +
-			'FROM users ' +
-			'WHERE 1=1 ';
+		try{
+			var sql =
+				'SELECT ' +
+				'	users."userID", ' +
+				'	"firstName", "lastName", "email", "joinDate", "status", ' +
+				'	"nfcID" IS NOT NULL AS "keyActive", ' +
+				'	"groups"."groupID" IS NOT NULL AS "isAdmin" ' +
+				'FROM users ' +
+				'	LEFT JOIN "userGroups" ON "users"."userID" = "userGroups"."userID" ' +
+				'	LEFT JOIN "groups" ON "userGroups"."groupID" = groups."groupID" ' +
+				'		AND groups.name = \'administrators\' ' +
+				'WHERE 1=1 ';
 
-		var params = [];
-		if(isAdmin !== undefined){
-			params.push(isAdmin);
-			sql += '	AND "isAdmin" = $' + params.length;
+			var params = [];
+			if(isAdmin !== undefined){
+				sql += '	AND "groups"."groupID" IS ' + (isAdmin ? 'NOT ' : '') + 'NULL ';
+			}
+			if(keyActive !== undefined){
+				sql += '	AND "nfcID" IS ' + (keyActive ? 'NOT ': '') + 'NULL';
+			}
+			if(joinDate !== undefined){
+				params.push(joinDate);
+				sql += '	AND "joinDate" >= $' + params.length;
+			}
+
+			if(q !== undefined){
+				q = '%' + q.toLowerCase() + '%';
+				params.push(q);
+				sql += '	AND (LOWER("firstName") LIKE $' + params.length +
+					'			OR LOWER("lastName") LIKE $' + params.length +
+					'			OR LOWER("email") LIKE $' + params.length +
+					'			OR LOWER("nfcID") LIKE $' + params.length +
+					'		)';
+			}
+			
+			return query(sql, params, onSuccess, onFailure);
+		}catch(exc){
+			backend.error(exc);
 		}
-		if(keyActive !== undefined){
-			sql += '	AND "nfcID" IS ' + (keyActive ? 'NOT ': '') + 'NULL';
+	},
+	
+	getGroups: function(onSuccess, onFailure){
+		try{
+			var sql = 
+				'SELECT ' +
+				'	groups.*, ' +
+				'	"authorizationTags".name AS "tagName", ' +
+				'	"groupAuthorizationTags"."groupID" IS NOT NULL AS enrolled ' +
+				'FROM groups ' +
+				'	JOIN "authorizationTags" ON 1=1 ' +
+				'	LEFT JOIN "groupAuthorizationTags" ON "groups"."groupID" = "groupAuthorizationTags"."groupID" ' +
+				'		AND "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID" ' +
+				'ORDER BY groups.name, "authorizationTags".name';
+				
+			var process = function(data){
+				var groups = [];
+				for(var i=0; i<data.length; i++){
+					if(i == 0 || groups[groups.length-1].groupID != data[i].groupID){
+						groups.push({
+							'groupID': data[i].groupID,
+							'name': data[i].name,
+							'authorizations': []
+						});
+					}
+					groups[groups.length-1].authorizations.push({
+						'name': data[i].tagName,
+						'authorized': data[i].enrolled,
+					});
+				}
+				
+				onSuccess(groups);
+			};
+			return query(sql, [], process, onFailure);
+
+		}catch(exc){
+			backend.error(exc);
 		}
-		if(joinDate !== undefined){
-			params.push(joinDate);
-			sql += '	AND "joinDate" >= $' + params.length;
-		}
-		if(q !== undefined){
-			q = '%' + q.toLowerCase() + '%';
-			params.push(q);
-			sql += '	AND (LOWER("firstName") LIKE $' + params.length +
-				'			OR LOWER("lastName") LIKE $' + params.length +
-				'			OR LOWER("email") LIKE $' + params.length +
-				'			OR LOWER("nfcID") LIKE $' + params.length +
-				'		)';
-		}
-		
-		return query(sql, params, onSuccess, onFailure);
 	},
 	
 	// @TODO: gross. This only works in the context of WA sync'ing
@@ -563,11 +609,6 @@ module.exports = {
 		query(sql, [name, pluginID], onSuccess, onFailure);
 	},
 	
-	addAuthorization: function(who, what, onSuccess, onFailure){
-		var sql = 'INSERT INTO "userAuthorizationTags" ("userID", "tagID") VALUES ($1, (SELECT "tagID" FROM "authorizationTags" WHERE name = $2))';
-		query(sql, [who, what], onSuccess, onFailure);
-	},
-	
 	getUserAuthorizations: function(who, onSuccess, onFailure){
 		var sql =
 			'SELECT ' +
@@ -598,14 +639,40 @@ module.exports = {
 		return query(sql, [who, what], onSuccess, onFailure);
 	},
 	
+	setGroupAuthorization: function(who, what, authorized, onSuccess, onFailure){
+		var sql;
+		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
+		
+		if(authorized){
+			sql = 
+				'INSERT INTO "groupAuthorizationTags" ("groupID", "tagID") ' +
+				'VALUES ($1, (' + tagSQL + '))';
+		}else{
+			sql = 
+				'DELETE FROM "groupAuthorizationTags" WHERE "groupID" = $1 ' +
+				'AND "tagID" = (' + tagSQL + ')';
+		}
+		
+		return query(sql, [who, what], onSuccess, onFailure);
+	},
+	
 	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
 		var idField = idIsNFC ? 'nfcID' : 'userID';
 		var sql =
-			'SELECT COUNT(0) > 0 AS authorized ' +
-			'FROM "userAuthorizationTags" ' +
-			'	JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' +
-			'WHERE "' + idField + '" = $1 ' +
-			'	AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
+			'SELECT SUM(authorized) > 0 AS authorized FROM ( ' + 
+			'	SELECT COUNT(0) AS authorized ' + 
+			'	FROM "userAuthorizationTags" ' + 
+			'		JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' + 
+			'	WHERE users."' + idField + '" = $1 ' + 
+			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
+			'	UNION ' + 
+			'	SELECT COUNT(0) AS authorized ' + 
+			'	FROM "groupAuthorizationTags" ' + 
+			'		JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
+			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
+			'	WHERE users."' + idField + '" = $1 ' + 
+			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
+			') AS foo';
 		
 		var process = function(data){
 			if(data[0]['authorized']){
@@ -621,6 +688,36 @@ module.exports = {
 		return module.exports.checkAuthorization(nfcID, what, onAuthorized, onUnauthorized, true);
 	},
 	
+	getUserGroups: function(who, onSuccess, onFailure){
+		var sql =
+			'SELECT ' +
+			'	name, ' +
+			'	"userGroups"."userID" IS NOT NULL AS enrolled ' +
+			'FROM "groups" ' +
+			'	LEFT JOIN "userGroups" ON "groups"."groupID" = "userGroups"."groupID" ' +
+			'		AND "userID" = $1 ' +
+			'WHERE "userID" = $1 OR "userID" IS NULL ' +
+			'GROUP BY name, "userID" ' +
+			'ORDER BY name';
+		return query(sql, [who], onSuccess, onFailure);
+	},
+	
+	setGroupEnrollment: function(who, group, enrolled, onSuccess, onFailure){
+		var sql;
+		var groupSQL = 'SELECT "groupID" FROM "groups" WHERE name = $2';
+		
+		if(enrolled){
+			sql = 
+				'INSERT INTO "userGroups" ("userID", "groupID") ' +
+				'VALUES ($1, (' + groupSQL + '))';
+		}else{
+			sql = 
+				'DELETE FROM "userGroups" WHERE "userID" = $1 ' +
+				'AND "groupID" = (' + groupSQL + ')';
+		}
+		return query(sql, [who, group], onSuccess, onFailure);
+	},
+
 	log: function(message, userID, code, logType, skipBroadcast){
 		if(!logType) logType = 'message';
 		
@@ -667,5 +764,5 @@ module.exports = {
 		return query(sql, [nfcID, userID], onSuccess, onFailure);
 	},
 };
-
+var backend = module.exports;
 module.exports.reloadPlugins();

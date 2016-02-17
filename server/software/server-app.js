@@ -46,10 +46,27 @@ server.get('/users/:userID/authorizations', function (request, response, next) {
 });
 
 server.put('/users/:userID/authorizations/:authTag', function (request, response, next) {
-	backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body);
+	backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body, function(){response.send();});
+	return next();
 });
 
+server.get('/users/:userID/groups', function (request, response, next) {
+	backend.getUserGroups(request.params.userID, function(groups){
+		response.send(groups);
+	});
+	
+	return next();
+});
 
+server.put('/users/:userID/groups/:groupName', function (request, response, next) {
+	backend.setGroupEnrollment(request.context.userID, request.context.groupName, request.body, function(){response.send();});
+	return next();
+});
+
+server.put('/groups/:groupID/authorizations/:authTag', function (request, response, next) {
+	backend.setGroupAuthorization(request.context.groupID, request.context.authTag, request.body, function(){response.send();});
+	return next();
+});
 
 /**
  * Sends empty response on success
@@ -78,6 +95,14 @@ server.put('/users/:userID', function (request, response, next) {
 	}
 	
 	// @TODO: update other fields too...
+	
+	return next();
+});
+
+server.get('/groups', function(request, response, next){
+	backend.getGroups(function(groups){
+		response.send(groups);
+	});
 	
 	return next();
 });

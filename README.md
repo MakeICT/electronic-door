@@ -1,20 +1,14 @@
 # Master Control Program 
 * * *
 
-
-This program is used to secure spaces with an electronic door lock.
-
-
-
+This program is used to secure spaces with an electronic door latch.
 
 ### Dependencies:
 * [Node + NPM](Node.js)
 * [PostgreSQL](http://www.postgresql.org/)
 * [Arduino 1.6.5](https://www.arduino.cc/)
 
-
 * * *
-
 
 ###Hardware requirements: 
 * [Server protocol RS-485](https://en.wikipedia.org/wiki/RS-485) for the server/client communication.
@@ -35,7 +29,7 @@ This program is used to secure spaces with an electronic door lock.
 
 ## License 
 
-### Copyright (C) 2015 MakeICT
+### Copyright (C) 2014-2016 MakeICT
 
 This program is free software: you can redistribute it and/or modify it 
 under the terms of the GNU General Public License as published by the 
@@ -50,7 +44,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License along 
 with this program.  If not, see [The GNU licenses page](http://www.gnu.org/licenses)
     
-Any questions or comments should be directed towards Dom@MakeICT.com
+Any questions or comments should be directed towards dom@makeict.org
     
 * * *
 

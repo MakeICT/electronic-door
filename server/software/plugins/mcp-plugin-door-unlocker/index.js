@@ -30,8 +30,8 @@ module.exports = {
 				try{
 					// regroup the options by key/value pairs for easy lookup
 					var options = backend.regroup(client.plugins['Door Unlocker'].options, 'name', 'value');
-					if(options['unlockDuration'] == undefined) options['unlockDuration'] = 3;
-					superSerial.send(client.clientID, UNLOCK, options['unlockDuration']);
+					if(options['Unlock duration'] == undefined) options['Unlock duration'] = 3;
+					superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
 					
 					broadcaster.broadcast(module.exports, "door-unlocked", { client: client, user: null });
 					
@@ -106,7 +106,7 @@ module.exports = {
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 					
 					var unlock = function(){
-						superSerial.send(client.clientID, UNLOCK, options['unlockDuration']);
+						superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
 						// @TODO: add user
 						backend.log(client.name, null, data['data'], 'unlock');
 					};

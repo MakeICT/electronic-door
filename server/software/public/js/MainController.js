@@ -69,6 +69,10 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		$scope.clients = clients;
 	});
 
+	$http.get('/groups').success(function(groups){
+		$scope.groups = groups;
+	});
+
 	$scope.locals = {
 		'authenticated': true,
 	};
@@ -140,6 +144,24 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.setUserAuthorization = function(user, authTag, authorized){
 		$http.put('/users/' + user.userID + '/authorizations/' + authTag, authorized).success(function(response){
+			// @TODO: give feedback to user that this worked
+		});		
+	};
+	
+	$scope.getUserGroups = function(user){
+		$http.get('/users/' + user.userID + '/groups').success(function(response){
+			user.groups = response;
+		});
+	};
+	
+	$scope.setGroupEnrollment = function(user, groupName, enrolled){
+		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
+			// @TODO: give feedback to user that this worked
+		});		
+	};
+	
+	$scope.setGroupAuthorization = function(group, authTag, authorized){
+		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
 			// @TODO: give feedback to user that this worked
 		});		
 	};
@@ -233,7 +255,13 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		var durationInUnix = currentUnixTime - timestamp;
 		var durationInDays = Math.floor(durationInUnix / 86400);
 		
-		return durationInDays;
+		if(durationInDays > 365){
+			return Math.round(durationInDays / 365, 1) + ' years';
+		}else if(durationInDays > 90){
+			return Math.round(durationInDays / 7, 1) + ' weeks';
+		}else{
+			return durationInDays + ' days';
+		}
 	}
 });
 

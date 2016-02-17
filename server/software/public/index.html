@@ -59,11 +59,13 @@
 							</span>
 						</div>
 						<hr/>
-						<uib-accordion close-others="true">
-							<uib-accordion-group>
+<!--
+						<uib-accordion>
+							<uib-accordion-group heading="hi">
 								<uib-accordion-heading>
 									<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">Add new</h4>
 								</uib-accordion-heading>
+-->
 								<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
 								<form>
 									<table class="table table-striped user-details">
@@ -84,45 +86,30 @@
 									<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
 									<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
 								</form>
+<!--
 							</uib-accordion-group>
 						</uib-accordian>
+-->
 						<hr/>
 						<h3 ng-if="userSearchResults.length == 0">No search results</h3>
 						<div ng-if="userSearchResults.length > 0">
 							<h3>Search results</h3>
-
+<!--
 							<uib-accordion close-others="true">
 								<uib-accordion-group ng-repeat="user in userSearchResults">
 									<uib-accordion-heading>
 										<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">{{user.firstName}} {{user.lastName}}</h4>
 									</uib-accordion-heading>
+-->
+								<div ng-repeat="user in userSearchResults">
 									<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
 									<table class="table table-striped user-details">
 										<tr>
-											<th>Account type</th>
-											<td>
-												<form class="form-inline">
-													<div class="btn-group">
-														<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="false">User</label>
-														<label class="btn btn-sm btn-default" ng-model="user.isAdmin" btn-radio="true">Admin</label>
-													</div>
-
-													<span ng-if="user.isAdmin" class="btn-group">
-														&nbsp;
-														<input type="password" placeholder="New password" class="form-control input-sm btn"/>
-														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
-													</span>
-												</form>
-											</td>
-										</tr><tr>
 											<th>Member status</th>
 											<td>{{user.status}}</td>
 										</tr><tr>
 											<th>Member since</th>
-											<td>{{user.joinDate|timestampToHumanReadableDate}}</td>
-										</tr><tr>
-											<th>Member for</th>
-											<td>{{user.joinDate|timestampToHumanReadableDuration}} days</td>
+											<td>{{user.joinDate|timestampToHumanReadableDate}} ({{user.joinDate|timestampToHumanReadableDuration}})</td>
 										</tr><tr>
 											<th>Key status</th>
 											<td>
@@ -139,7 +126,22 @@
 												</div>
 											</td>
 										</tr><tr>
-											<th>Authorizations</th>
+											<th>Groups</th>
+											<td>
+												<button ng-if="!user.groups" ng-click="getUserGroups(user);" class="btn btn-sm btn-default">Load groups</button>
+												<button
+													ng-repeat="group in user.groups"
+													uib-btn-checkbox
+													ng-model="group.enrolled"
+													ng-click="setGroupEnrollment(user, group.name, group.enrolled)"
+													type="button"
+													class="btn btn-default btn-sm"
+												>
+													{{group.name}}
+												</button>
+											</td>
+										</tr><tr>
+											<th>Personal authorizations</th>
 											<td>
 												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);" class="btn btn-sm btn-default">Load authorizations</button>
 												<button
@@ -153,11 +155,52 @@
 													{{auth.name}}
 												</button>
 											</td>
+										</tr><tr>
+											<th>Password reset</th>
+											<td>
+												<form class="form-inline">
+													<input type="password" placeholder="New password" class="form-control input-sm"/>
+													<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
+												</form>
+											</td>
 										</tr>
 									</table>
+								</div>
+<!--
 								</uib-accordion-group>
-							</accordion>
+							</uib-accordion>
+-->
 						</div>
+					</uib-tab>
+					<uib-tab heading="Groups" active="tabs.groups.active" select="setLocation('groups');">
+						<h2>Groups</h2>
+						<table>
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Description</th>
+									<th>Authorizations</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="group in groups">
+									<td>{{group.name}}</td>
+									<td> - </td>
+									<td>
+										<button
+											ng-repeat="auth in group.authorizations"
+											uib-btn-checkbox
+											ng-model="auth.authorized"
+											ng-click="setGroupAuthorization(group, auth.name, auth.authorized)"
+											type="button"
+											class="btn btn-default btn-sm"
+										>
+											{{auth.name}}
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
 					</uib-tab>
 					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
 						<h2>Clients</h2>
@@ -254,11 +297,16 @@
 						</div>
 					</uib-tab>
 				</tabset>
-				<div id="message-log" ng-if="messages.length > 0">
-					<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '^' : 'v'}}</button>
-					<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
-					<div uib-collapse="logWindowDisplayed">
-						<div ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>
+				<div id="message-log" ng-if="messages.length > 0" style="min-height: 2.5em">
+					<div style="position: fixed; right: 2em; bottom: .25em">
+						<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
+						<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '^' : 'v'}}</button>
+					</div>
+					<div uib-collapse="!logWindowDisplayed" class="message-list">
+						<div class="message" ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>
+					</div>					
+					<div ng-if="!logWindowDisplayed">
+						<div class="message">[{{messages[messages.length-1].timestamp}}] <span ng-class="messages[messages.length-1].type">{{messages[messages.length-1].text}}</span></div>
 					</div>
 				</div>
 			</div>
