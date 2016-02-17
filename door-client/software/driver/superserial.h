@@ -17,20 +17,14 @@
 #define F_ALARM_BUTTON  0x07
 #define F_SET_LIGHTS    0x08
 #define F_GET_UPDATE    0x0A
-#define F_NOP           0x0B
 
+#define F_NOP           0x0B
 #define F_ACK           0xAA
 #define F_NAK           0xAB
 
 // Reserved Addresses
 #define ADDR_MASTER     0x00
 #define ADDR_BROADCAST  0xFF
-
-
-#define S_              0
-#define S_WAIT_SEND     1
-#define S_ESCAPING      2
-
 
 
 class SuperSerial 
@@ -57,7 +51,6 @@ class SuperSerial
     rs485* bus;
     byte deviceAddress;
     SoftwareSerial* debugPort;
-    void ReplyToQuery(byte);
     bool GetPacket();
     void QueuePacket(Packet*);
     void SendPacket(Packet*);

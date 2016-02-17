@@ -1,4 +1,5 @@
 /*-----( Include needed libraries )-----*/
+#include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <LiquidCrystal.h>
@@ -240,7 +241,7 @@ void ProcessMessage()  {
       break;
     }
     default:
-      LOG_WARNING(F("UNRECOGNIZED\r\n"));
+      LOG_WARNING(F("Unrecognized Command\r\n"));
   }
 }
 
