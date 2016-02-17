@@ -59,42 +59,36 @@
 							</span>
 						</div>
 						<hr/>
-						<uib-accordion>
-							<uib-accordion-group heading="hi">
-								<uib-accordion-heading>
-									<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">Add new</h4>
-								</uib-accordion-heading>
-								<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
-								<form>
-									<table class="table table-striped user-details">
-										<tr>
-											<th>Email</th>
-											<td><input type="email" ng-model="newUser.email"></td>
-										</tr><tr>
-											<th>First Name</th>
-											<td><input type="text" ng-model="newUser.firstName"></td>
-										</tr><tr>
-											<th>Last Name</th>
-											<td><input type="text" ng-model="newUser.lastName"></td>
-										</tr><tr>
-											<th>Join Date</th>
-											<td><input type="date" ng-model="newUser.joinDate"></td>
-										</tr>
-									</table>
-									<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
-									<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
-								</form>
-							</uib-accordion-group>
-						</uib-accordian>
+						<button class="btn btn-default btn-sm" ng-click="newUser.isExpanded = !newUser.isExpanded"><h4>Add new</h4></button>
+						<div uib-collapse="!newUser.isExpanded">
+							<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
+							<form>
+								<table class="table table-striped user-details">
+									<tr>
+										<th>Email</th>
+										<td><input type="email" ng-model="newUser.email"></td>
+									</tr><tr>
+										<th>First Name</th>
+										<td><input type="text" ng-model="newUser.firstName"></td>
+									</tr><tr>
+										<th>Last Name</th>
+										<td><input type="text" ng-model="newUser.lastName"></td>
+									</tr><tr>
+										<th>Join Date</th>
+										<td><input type="date" ng-model="newUser.joinDate"></td>
+									</tr>
+								</table>
+								<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
+								<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
+							</form>
+						</div>
 						<hr/>
 						<h3 ng-if="userSearchResults.length == 0">No search results</h3>
 						<div ng-if="userSearchResults.length > 0">
 							<h3>Search results</h3>
-							<uib-accordion close-others="true">
-								<uib-accordion-group ng-repeat="user in userSearchResults">
-									<uib-accordion-heading>
-										<h4 onclick="$('html, body').animate({ scrollTop: $(this).offset().top }, 1000);">{{user.firstName}} {{user.lastName}}</h4>
-									</uib-accordion-heading>
+							<div ng-repeat="user in userSearchResults">
+								<button class="btn btn-default btn-sm"><h4 ng-click="user.isExpanded = !user.isExpanded">{{user.firstName}} {{user.lastName}}</h4></button>
+								<div uib-collapse="!user.isExpanded">
 									<table class="table table-striped user-details">
 										<tr>
 											<th>Member status</th>
@@ -157,8 +151,8 @@
 											</td>
 										</tr>
 									</table>
-								</uib-accordion-group>
-							</uib-accordion>
+								</div>
+							</div>
 						</div>
 					</uib-tab>
 					<uib-tab heading="Groups" active="tabs.groups.active" select="setLocation('groups');">
