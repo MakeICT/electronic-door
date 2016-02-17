@@ -205,7 +205,13 @@ module.exports = {
 	addUser: function(user, onSuccess, onFailure){
 		var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
 		var params = [user.email, user.firstName, user.lastName, user.joinDate];
-		
+		var log = function(){
+			var sql = 'SELECT "userID" FROM users WHERE email = $1';
+			return query(sql, function(data){
+				module.exports.log('Create user', data[0].userID);
+				if(onSuccess) onSuccess(data[0].userID);
+			});
+		};
 		return query(sql, params, onSuccess, onFailure);
 	},
 		
@@ -234,7 +240,12 @@ module.exports = {
 			'WHERE "userID" = $5';
 		var params = [user.email, user.firstName, user.lastName, user.joinDate, user.userID];
 		
-		return query(sql, params, onSuccess, onFailure);
+		var log = function(){
+			module.exports.log('Update user', user.userID);
+			if(onSuccess) onSuccess();
+		}
+		
+		return query(sql, params, log, onFailure);
 	},
 
 	enablePlugin: function(pluginName, onSuccess, onFailure){
@@ -636,7 +647,12 @@ module.exports = {
 				'DELETE FROM "userAuthorizationTags" WHERE "userID" = $1 ' +
 				'AND "tagID" = (' + tagSQL + ')';
 		}
-		return query(sql, [who, what], onSuccess, onFailure);
+		
+		var log = function(){
+			module.exports.log((authorized ? 'Authorize ' : 'Forbid ') + ' user for ' + what, who);
+			if(onSuccess) onSuccess();
+		};
+		return query(sql, [who, what], log, onFailure);
 	},
 	
 	setGroupAuthorization: function(who, what, authorized, onSuccess, onFailure){
@@ -653,7 +669,11 @@ module.exports = {
 				'AND "tagID" = (' + tagSQL + ')';
 		}
 		
-		return query(sql, [who, what], onSuccess, onFailure);
+		var log = function(){
+			module.exports.log((authorized ? 'Authorize ' : 'Forbid ') + ' group(' + who + ') for ' + what);
+			if(onSuccess) onSuccess();
+		};
+		return query(sql, [who, what], log, onFailure);
 	},
 	
 	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
@@ -715,7 +735,12 @@ module.exports = {
 				'DELETE FROM "userGroups" WHERE "userID" = $1 ' +
 				'AND "groupID" = (' + groupSQL + ')';
 		}
-		return query(sql, [who, group], onSuccess, onFailure);
+		
+		var log = function(){
+			module.exports.log((enrolled ? 'Add ' : 'Remove ') + ' group(' + group + ') enrollment', who);
+			if(onSuccess) onSuccess();
+		};
+		return query(sql, [who, group], log, onFailure);
 	},
 
 	log: function(message, userID, code, logType, skipBroadcast){
@@ -754,14 +779,26 @@ module.exports = {
 				'WHERE code IS NOT NULL ' +
 				'	AND users."userID" IS NULL';
 		}else{
-			sql = 'SELECT * FROM logs ORDER BY timestamp DESC LIMIT 100';
+			sql = 
+				'SELECT ' +
+				'	logs.*, ' +
+				'	users.* ' +
+				'FROM logs ' +
+				'	LEFT JOIN users ON logs."userID" = users."userID" ' +
+				'ORDER BY timestamp DESC LIMIT 100';
 		}
 		return query(sql, [], onSuccess, onFailure);
 	},
 	
 	enrollUser: function(userID, nfcID, onSuccess, onFailure){
 		var sql = 'UPDATE users SET "nfcID" = $1 WHERE "userID" = $2';
-		return query(sql, [nfcID, userID], onSuccess, onFailure);
+		
+		var log = function(){
+			module.exports.log('', userID, nfcID, 'assign');
+			if(onSuccess) onSuccess();
+		};
+
+		return query(sql, [nfcID, userID], log, onFailure);
 	},
 };
 var backend = module.exports;

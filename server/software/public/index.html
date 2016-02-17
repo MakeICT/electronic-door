@@ -264,7 +264,7 @@
 									<td>{{row.timestamp|timestampToHumanReadableDate:true}}</td>
 									<td>{{row.logType}}</td>
 									<td>{{row.message}}</td>
-									<td>{{row.user}}</td>
+									<td><a href="mailto:{{row.email}}">{{row.firstName}} {{row.lastName}}</a></td>
 									<td>{{row.code}}</td>
 								</tr>
 							</tbody>
