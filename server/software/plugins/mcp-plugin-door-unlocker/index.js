@@ -105,17 +105,19 @@ module.exports = {
 					var client = backend.getClientByID(data['from']);
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 					
+					var nfc = data['data'].map(function(x) { return x.toString(16); }).join('');
+					
 					var unlock = function(){
 						superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
 						// @TODO: add user
-						backend.log(client.name, null, data['data'], 'unlock');
+						backend.log(client.name, null, nfc, 'unlock');
 					};
 					var deny = function(){
 						// @TODO: add user if there's a match
-						backend.log(client.name, null, data['data'], 'deny');
+						backend.log(client.name, null, nfc, 'deny');
 					};
 					
-					backend.checkAuthorizationByNFC(data['data'], options['Authorization tag'], unlock, deny);
+					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
 				}
 			}
 		}
