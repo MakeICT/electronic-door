@@ -79,6 +79,7 @@ bool SuperSerial::GetPacket() {
             this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
           LOG_DEBUG(F("Verifying new packet\r\n"));
           if (receivedPacket.VerifyCRC())  {    //verify CRC
+            LOG_DEBUG(F("CRC verified\r\n"));
             this->currentTransaction = receivedPacket.TransID();
             if (dataBuffer[3] == F_GET_UPDATE)   {
               if (this->DataQueued())  {
@@ -95,11 +96,11 @@ bool SuperSerial::GetPacket() {
             LOG_INFO(F("Got valid packet\r\n"));
             if ( this->receivedPacket.Msg().function == F_NAK)  {
               LOG_DEBUG(F("Received NAK"));
-              //TODO: resend last packet
+              this->SendPacket(&queuedPacket);
             }
             else if (this->receivedPacket.Msg().function == F_ACK)  {
               LOG_DEBUG(F("Received ACK"));
-              //this->dataQueued = false;   //TODO:  this should go here-ish
+              this->dataQueued = false;   //TODO:  this should go here-ish
             }
             else  {
               LOG_DEBUG(F("Sending ACK.\r\n"));
@@ -108,7 +109,7 @@ bool SuperSerial::GetPacket() {
             }
           }
           else  {
-            LOG_DEBUG(F("Received invalid packet.\r\n"));
+            LOG_ERROR(F("CRC does not match\r\n"));
             LOG_DEBUG(F("Sending NAK.\r\n"));
             SendNAK(0);
           }
@@ -145,7 +146,6 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
   this->dataQueued = true;
   if (!bus->QueueFull())  {
     this->SendPacket(&queuedPacket);
-    this->dataQueued = false;
   }
 }
 

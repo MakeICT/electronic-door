@@ -3,11 +3,11 @@
 
 #define LOG_LVL 4
 
-#define LOG_ERROR(t)         //t
-#define LOG_WARNING(t)       //t
-#define LOG_INFO(t)          //t
-#define LOG_DEBUG(t)         //t
-#define LOG_DUMP(t)          //t
+#define LOG_ERROR(t)         
+#define LOG_WARNING(t)       
+#define LOG_INFO(t)          
+#define LOG_DEBUG(t)         
+#define LOG_DUMP(t)          
 
 #if LOG_LVL > 0
   #undef LOG_ERROR
