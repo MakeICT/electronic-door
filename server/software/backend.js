@@ -569,9 +569,6 @@ module.exports = {
 						}
 						found = true;
 						
-						if(plugin.enabled){
-							plugin.onEnable();
-						}
 						break;
 					}
 				}
@@ -588,11 +585,18 @@ module.exports = {
 				plugins.push(plugin);
 			}
 			
-			module.exports.reloadClients();
+			module.exports.reloadClients(function(){
+				for(var i=0; i<plugins.length; i++){
+					if(plugins[i].enabled){
+						plugins[i].onEnable();
+					}
+				}
+			});
 		});
 	},
 	
 	reloadClients: function(callback){
+		backend.debug('Reloading clients...');
 		module.exports.getInstalledClients(function(clientList){
 			clients.length = 0;
 			
@@ -604,6 +608,7 @@ module.exports = {
 				}
 				clients.push(client);
 			}
+			backend.debug('done reloading clients');
 			if(callback) callback(clients);
 		});
 	},
