@@ -15,61 +15,140 @@ var NAK = 0xAB;
 var readWriteToggle;
 
 var dataBuffer = [];
-var lastPackets = {};
 var escapeFlag = false;
 var packetToValidate;
+var validationCallback;
 
-var responseTimeout;
 var retryDelay = 0;
 
-function sendPacket(packet, callback){
+function SerialClient(clientInfo){
+	this.info = clientInfo;
+	this.lastPacket = null;
+	this.waitingForAck = false;
+	this.responseTimeout;
+	this.queue = [];
+	this.retries = 0;
+	
+	this.queuePacket = function(packet, callback){
+		this.queue.push({
+			'packet': packet,
+			'callback': callback
+		});
+		if(!this.waitingForAck){
+			this.deque();
+		}
+	};
+	
+	this.ackReceived = function(){
+		backend.debug('ACK received for client(' + this.info.clientID + ') transaction(' + this.lastPacket.packet[1] + ') action(' + this.lastPacket.packet[4] + ')');
+		clearTimeout(this.responseTimeout);
+		this.waitingForAck = false;
+		this.lastPacket = null;
+		
+		if(this.queue.length > 0){
+			this.deque();
+		}
+	};
+	
+	this.deque = function(){
+		this.lastPacket = this.queue.shift();
+		this.waitingForAck = true;
+		
+		var self = this;
+		backend.getPluginOptions(module.exports.name, function(settings){
+			backend.debug(self.lastPacket);
+			
+			var doTimeoutAction = function(){
+				if(settings['Timeout']){
+					var packetTimeout = function(){
+						if(settings['Max retries'] == undefined || self.retries < settings['Max retries']){
+							backend.debug('resending');
+							_sendPacket(self.lastPacket.packet, doTimeoutAction);
+							self.retries++;
+							backend.debug('packet timeout ' + self.retries + ' / ' + settings['Max retries']);
+						}else{
+							self.retries = 0;
+							backend.debug('packet timeout but no retries left');
+						}
+					};
+					self.responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
+				}
+			};
+			
+			_sendPacket(self.lastPacket.packet, doTimeoutAction);
+		});
+	};
+}
+var clients = {};
+
+function _sendPacket(packet, callback, pauseBeforeRetry){
 	if(serialPort == null || !serialPort.isOpen()){
 		// @TODO: figure out auto-reconnect
 		backend.error('Failed to send packet - Super Serial not connected');
 	}else{
+		if(packetToValidate){
+			backend.debug('Woops! Tried to send a new packet before the last one validated');
+			if(!pauseBeforeRetry) pauseBeforeRetry = 100;
+			// trying to send a message before the last message was verified for errors...
+			setTimeout(pauseBeforeRetry, function(){ _sendPacket(packet, callback, pauseBeforeRetry+100) });
+			return;
+		}
+		
 		if(readWriteToggle) readWriteToggle.writeSync(0);
 		
-		if(packetToValidate){
-			backend.error('Packet validation out of order! :(');
-		}
+		validationCallback = callback;
 		packetToValidate = packet.slice(1, packet.length-1);
-		serialPort.write(packet, function(error, results){
+		serialPort.write(packet, function(error, results){			
 			if(error){
+				backend.error('Packet write error');
 				backend.error(error);
 			}else{
-				console.log("Wrote packet: " + packet.toString());
-				if(callback) callback();
+				backend.debug('Wrote packet: ' + packet.toString());
 				if(readWriteToggle){
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
 				}
-				backend.getPluginOptions(module.exports.name, function(settings){
-					if(settings['Timeout']){
-						var packetTimeout = function(){
-							console.log('packet timeout ' + retries + ' / ' + settings['Max retries']);
-							if(settings['Max retries'] == undefined || retries < settings['Max retries']){
-								sendPacket(packet);
-								retries++;
-							}else{
-								retries = 0;
-							}
-						};
-						responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
-					}
-				});
 			}
 		});
 	}
 }
 
+function buildPacket(clientID, command, payload){
+	if(!payload){
+		payload = [];
+	}else if(!(payload instanceof Array)){
+		payload = [payload];
+	}
+	// break up the payload early, so we can correctly calculate its size
+	payload = breakupBytes(payload);
+	
+	// assemble the packet
+	if(++transactionCount > 255) transactionCount = 0;
+	var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
+	packet.push(crc.crc16modbus(packet));
+	packet = [messageEndcap].concat(packet).concat([messageEndcap]);
+	
+	// break up multi-bytes. Not sure why it doesn't just work without :(
+	packet = breakupBytes(packet);
+	
+	// add escape characters where necessary
+	for(var i=1; i<packet.length-1; i++){
+		if(!packet[i]) packet[i] = 0;
+		if(packet[i] == 0x7D || packet[i] == messageEndcap){
+			packet.splice(i, 0, 0x7D);
+			i++;
+		}
+	}
+
+	return packet;
+}
 
 function onData(data){
-	console.log("RAW: " + data.toString('hex'));
+	backend.debug("RAW Serial: " + data.toString('hex'));
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
 			if(dataBuffer.length > 0){
-				clearTimeout(responseTimeout);
 				var unescapedPacket = [];
 				for(var i=0; i<dataBuffer.length; i++){
 					if(dataBuffer[i] == escapeChar && !escapeFlag){
@@ -79,8 +158,7 @@ function onData(data){
 						escapeFlag = false;
 					}
 				}
-				console.log("RECEIVED A FULL PACKET : " + dataBuffer);
-				console.log("             Unescaped : " + unescapedPacket);
+
 				// We have a full packet. Let's process it :)
 				packet = {
 					'transactionID': unescapedPacket[0],
@@ -94,24 +172,29 @@ function onData(data){
 				if(computedCRC == incomingCRC){
 					if(packetToValidate){
 						if(packetToValidate.toString() == dataBuffer.toString()){
+							if(validationCallback) validationCallback();
+							
 							packetToValidate = null;
 							retryDelay = 100;
+							backend.debug('Sent packet validated');
 						}else{
-							console.log('Packet failed validation');
-							console.log('Received: ');
-							console.log(dataBuffer);
-							console.log('Expected: ');
-							console.log(packetToValidate);
+							backend.debug.log('Packet failed validation');
+							backend.debug.log('Received: ');
+							backend.debug.log(dataBuffer);
+							backend.debug.log('Expected: ');
+							backend.debug.log(packetToValidate);
 							setTimeout(function(){sendPacket(packetToValidate);}, retryDelay * Math.random());
 							retryDelay *= 2;
 						}
 					}else if(packet.function == ACK){
-						// ignore the ack
-						console.log("ACK received");
+						clients[packet.from].ackReceived();
 					}else if(packet.function == NAK){
 						// resend last packet to this client
-						sendPacket(lastPackets[packet.from]);
+						sendPacket(clients[packet.from].lastPacket);
 					}else{
+						_sendPacket(buildPacket(packet.from, ACK));
+						backend.debug("RECEIVED A FULL PACKET : " + dataBuffer);
+						backend.debug("             Unescaped : " + unescapedPacket);
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 					}
 				}else{
@@ -125,10 +208,8 @@ function onData(data){
 			}
 		}else if(byte == escapeChar && !escapeFlag){
 			escapeFlag = true;
-			console.log("Escape flag set");
 			dataBuffer.push(byte);
 		}else{
-			if(escapeFlag) console.log("Escape flag cleared: " + byte);
 			escapeFlag = false;
 			dataBuffer.push(byte);
 		}
@@ -179,6 +260,7 @@ module.exports = {
 				true,
 				function(error){
 					if(error){
+						backend.error('Serial connection error');
 						backend.error(error);
 					}else{
 						backend.log('Super Serial connected');
@@ -195,6 +277,12 @@ module.exports = {
 				}
 			);
 		});
+		
+		var knownClients = backend.getClients();
+		for(var i=0; i<knownClients.length; i++){
+			var c = knownClients[i];
+			clients[c.clientID] = new SerialClient(c);
+		}
 	},
 	
 	onDisable: function(){
@@ -207,34 +295,6 @@ module.exports = {
 	},
 	
 	send: function(clientID, command, payload, callback){
-		if(!payload){
-			payload = [];
-		}else if(!(payload instanceof Array)){
-			payload = [payload];
-		}
-		// break up the payload early, so we can correctly calculate its size
-		payload = breakupBytes(payload);
-		
-		// assemble the packet
-		if(++transactionCount > 255) transactionCount = 0;
-		var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
-		packet.push(crc.crc16modbus(packet));
-		packet = [messageEndcap].concat(packet).concat([messageEndcap]);
-		
-		// break up multi-bytes. Not sure why it doesn't just work without :(
-		packet = breakupBytes(packet);
-		
-		// add escape characters where necessary
-		for(var i=1; i<packet.length-1; i++){
-			if(!packet[i]) packet[i] = 0;
-			if(packet[i] == 0x7D || packet[i] == messageEndcap){
-				packet.splice(i, 0, 0x7D);
-				i++;
-			}
-		}
-
-		lastPackets[clientID] = packet;
-		
-		sendPacket(packet, callback);
+		client.queuePacket(buildPacket(clientID, command, payload), callback);
 	}
 };
