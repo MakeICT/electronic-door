@@ -7,6 +7,7 @@ var backend = require('../../backend.js');
 var UNLOCK = 0x01;
 var LOCK = 0x02;
 var NFC = 0x03;
+var DENY = 0x0C;
 
 module.exports = {
 	name: 'Door Unlocker',
@@ -113,7 +114,7 @@ module.exports = {
 						backend.log(client.name, null, nfc, 'unlock');
 					};
 					var deny = function(){
-						// @TODO: add user if there's a match
+						superSerial.send(client.clientID, DENY, options['Unlock duration']);
 						backend.log(client.name, null, nfc, 'deny');
 					};
 					
