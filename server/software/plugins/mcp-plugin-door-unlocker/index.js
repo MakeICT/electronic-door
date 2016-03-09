@@ -32,7 +32,7 @@ module.exports = {
 					// regroup the options by key/value pairs for easy lookup
 					var options = backend.regroup(client.plugins['Door Unlocker'].options, 'name', 'value');
 					if(options['Unlock duration'] == undefined) options['Unlock duration'] = 3;
-					superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
+					superSerial.send(client.clientID, UNLOCK, parseInt(options['Unlock duration']));
 					
 					broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client, 'user': null });
 					

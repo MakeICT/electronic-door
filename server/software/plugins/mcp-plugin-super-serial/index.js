@@ -16,8 +16,10 @@ var readWriteToggle;
 
 var dataBuffer = [];
 var escapeFlag = false;
-var packetToValidate;
-var validationCallback;
+var packetToValidate = null;
+var validationCallback = null;
+var invalidPacketResendTimer = null;
+var packetValidationTimer = null;
 
 var retryDelay = 0;
 
@@ -52,6 +54,8 @@ function SerialClient(clientInfo){
 	
 	this.deque = function(){
 		this.lastPacket = this.queue.shift();
+		if(!this.lastPacket) return;
+		
 		this.waitingForAck = true;
 		
 		var self = this;
@@ -61,11 +65,15 @@ function SerialClient(clientInfo){
 					var packetTimeout = function(){
 						if(settings['Max retries'] == undefined || self.retries < settings['Max retries']){
 							backend.debug('resending');
+							if(!self.lastPacket) return;
 							_sendPacket(self.lastPacket.packet, doTimeoutAction);
 							self.retries++;
 							backend.debug('packet timeout ' + self.retries + ' / ' + settings['Max retries']);
 						}else{
 							self.retries = 0;
+							self.waitingForAck = false;
+							self.lastPacket = null;
+							self.deque();
 							backend.debug('packet timeout but no retries left');
 						}
 					};
@@ -79,29 +87,44 @@ function SerialClient(clientInfo){
 }
 var clients = {};
 
+// This packet should already have the endcaps
+// @callback isn't called until the packet is validated
 function _sendPacket(packet, callback, pauseBeforeRetry){
 	if(serialPort == null || !serialPort.isOpen()){
-		// @TODO: figure out auto-reconnect
-		backend.error('Failed to send packet - Super Serial not connected');
+		backend.error('Super Serial not connected. Attempting to reconnect...');
+		module.exports.reconnect();
+		setTimeout(function(){ _sendPacket(packet, callback, pauseBeforeRetry); }, 100);
 	}else{
-		if(packetToValidate){
+		if(packetToValidate && packet != packetToValidate){
 			backend.debug('Woops! Tried to send a new packet before the last one validated');
+			backend.debug(packet);
+			backend.debug(packetToValidate);
 			if(!pauseBeforeRetry) pauseBeforeRetry = 100;
 			// trying to send a message before the last message was verified for errors...
-			setTimeout(pauseBeforeRetry, function(){ _sendPacket(packet, callback, pauseBeforeRetry+100) });
+			setTimeout(
+				function(){
+					_sendPacket(packet, callback, pauseBeforeRetry+100);
+				},
+				pauseBeforeRetry
+			);
 			return;
 		}
 		
 		if(readWriteToggle) readWriteToggle.writeSync(0);
 		
 		validationCallback = callback;
-		packetToValidate = packet.slice(1, packet.length-1);
+		packetToValidate = packet;
 		serialPort.write(packet, function(error, results){			
 			if(error){
 				backend.error('Packet write error');
 				backend.error(error);
 			}else{
-				backend.debug('Wrote packet: ' + packet);
+				var validationFailure = function(){
+					backend.error('Packet write fail. Reconnecting super serial...');
+					module.exports.reconnect();
+				};
+				packetValidationTimer = setTimeout(validationFailure, 100);
+				backend.debug('Wrote packet   : ' + packet);
 				if(readWriteToggle){
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
 				}
@@ -122,7 +145,9 @@ function buildPacket(clientID, command, payload){
 	// assemble the packet
 	if(++transactionCount > 255) transactionCount = 0;
 	var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
-	packet.push(crc.crc16modbus(packet));
+	var computedCRC = crc.crc16modbus(packet);
+	if(computedCRC < 256) packet.push(0);
+	packet.push(computedCRC);
 	packet = [messageEndcap].concat(packet).concat([messageEndcap]);
 	
 	// break up multi-bytes. Not sure why it doesn't just work without :(
@@ -145,66 +170,95 @@ function onData(data){
 	for(var i=0; i<data.length; i++){
 		debugData.push(Number(data[i]));
 	}
-	backend.debug("RAW Serial  : " + debugData);
+	backend.debug("RAW Serial     : " + debugData);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
 		if(byte == messageEndcap && !escapeFlag){
-			if(dataBuffer.length > 0){
+			dataBuffer.push(byte);
+			
+			if(dataBuffer.length == 1){
+				// do nothing
+			}else if(dataBuffer.length == 2 && dataBuffer[0] == messageEndcap && dataBuffer[1] == messageEndcap){
+				// if we see two message endCap's in a row, we're probably off by one due to noise/garbage
+				dataBuffer.pop();
+			}else if(dataBuffer.length > 2){
 				var unescapedPacket = [];
-				for(var i=0; i<dataBuffer.length; i++){
-					if(dataBuffer[i] == escapeChar && !escapeFlag){
+				for(var j=0; j<dataBuffer.length; j++){
+					if(dataBuffer[j] == escapeChar && !escapeFlag){
 						escapeFlag = true;
 					}else{
-						unescapedPacket.push(dataBuffer[i]);
+						unescapedPacket.push(dataBuffer[j]);
 						escapeFlag = false;
 					}
 				}
 
 				// We have a full packet. Let's process it :)
-				packet = {
-					'transactionID': unescapedPacket[0],
-					'from': unescapedPacket[1],
-					'to': unescapedPacket[2],
-					'function': unescapedPacket[3],
-					'data': unescapedPacket.slice(5, 5+unescapedPacket[4]),
+				backend.debug('Incoming packet: ' + dataBuffer);
+				var packet = {
+					'transactionID': unescapedPacket[1],
+					'from': unescapedPacket[2],
+					'to': unescapedPacket[3],
+					'function': unescapedPacket[4],
+					'data': unescapedPacket.slice(6, 6+unescapedPacket[5]),
 				};
-				var computedCRC = crc.crc16modbus(unescapedPacket.slice(0, 5+unescapedPacket[4]));
-				var incomingCRC = (unescapedPacket[5+unescapedPacket[4]]<<8) + unescapedPacket[6+unescapedPacket[4]];
+				var computedCRC = crc.crc16modbus(unescapedPacket.slice(1, 6+unescapedPacket[5]));
+				var incomingCRC = (unescapedPacket[6+unescapedPacket[5]]<<8) + unescapedPacket[7+unescapedPacket[5]];
 				if(computedCRC == incomingCRC){
 					if(packetToValidate){
 						if(packetToValidate.toString() == dataBuffer.toString()){
+							clearTimeout(packetValidationTimer);
+							clearTimeout(invalidPacketResendTimer);
+							backend.debug('=============================');
+							backend.debug('Packet written cleanly');
+							backend.debug('=============================');
+							// the validation callback is the timer to start listening for an ack
 							if(validationCallback) validationCallback();
 							
 							packetToValidate = null;
 							retryDelay = 100;
-							backend.debug('Sent packet validated');
+							// start timeout for ack
 						}else{
-							backend.debug('Packet failed validation');
-							backend.debug('Received: ');
-							backend.debug(dataBuffer);
-							backend.debug('Expected: ');
-							backend.debug(packetToValidate);
-							setTimeout(function(){sendPacket(packetToValidate);}, retryDelay * Math.random());
+							backend.debug('=============================');
+							backend.debug('Packet did not send correctly. Probable collision occurred');
+							backend.debug('Expected: ' + packetToValidate);
+							backend.debug('But read: ' + dataBuffer);
+							backend.debug('=============================');
+							invalidPacketResendTimer = setTimeout(
+								function(){
+									backend.debug("Resending collision packet");
+									_sendPacket(packetToValidate);
+								},
+								retryDelay + Math.random() * 100
+							);
 							retryDelay *= 2;
 						}
 					}else if(packet.function == ACK){
+						backend.debug('=============================');
+						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
+						backend.debug('=============================');
 						clients[packet.from].ackReceived();
 					}else if(packet.function == NAK){
 						// resend last packet to this client
-						sendPacket(clients[packet.from].lastPacket);
+						_sendPacket(clients[packet.from].lastPacket.packet);
 					}else{
+						backend.debug('=============================');
+						backend.debug(" Received : " + dataBuffer);
+						backend.debug("Unescaped : " + unescapedPacket);
+						backend.debug("       ID : " + packet.transactionID);
+						backend.debug("     From : " + packet.from);
+						backend.debug("       To : " + packet.to);
+						backend.debug(" Function : " + packet.function);
+						backend.debug("     Data : " + packet.data);
+						backend.debug('=============================');
 						_sendPacket(buildPacket(packet.from, ACK));
-						backend.debug("RECEIVED A FULL PACKET : " + dataBuffer);
-						backend.debug("             Unescaped : " + unescapedPacket);
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 					}
 				}else{
-					backend.debug("Bad CRC");
-					backend.debug("\tComputed = " + computedCRC);
-					backend.debug("\tReceived = " + incomingCRC);
-					backend.debug("\tByte 1   = " + unescapedPacket[5+unescapedPacket[4]]);
-					backend.debug("\tByte 2   = " + unescapedPacket[6+unescapedPacket[4]]);
+					backend.debug('=============================');
+					backend.debug("Bad CRC " + incomingCRC + ", computed = " + computedCRC);
+					backend.debug(dataBuffer.toString());
+					backend.debug('=============================');
 				}
 				dataBuffer = [];
 			}
@@ -214,6 +268,9 @@ function onData(data){
 		}else{
 			escapeFlag = false;
 			dataBuffer.push(byte);
+		}
+		if(dataBuffer.length == 1 && dataBuffer[0] != messageEndcap){
+			dataBuffer.pop(); // garbage
 		}
 	}
 };
@@ -289,7 +346,7 @@ module.exports = {
 	
 	onDisable: function(){
 		if(serialPort){
-			clearTimeout(responseTimeout);
+			reset();
 			serialPort.close();
 			serialPort = null;
 			backend.log('Super Serial disconnected');
@@ -299,5 +356,29 @@ module.exports = {
 	send: function(clientID, command, payload, callback){
 		var client = clients[clientID];
 		client.queuePacket(buildPacket(clientID, command, payload), callback);
-	}
+	},
+	
+	reconnect: function(){
+		backend.debug("Super serial reconnecting");
+		module.exports.reset();
+		module.exports.onEnable();
+	},
+	
+	reset: function(){
+		clearTimeout(invalidPacketResendTimer);
+		clearTimeout(packetValidationTimer);
+
+		for(var id in clients){
+			clearTimeout(clients[id].responseTimeout);
+		}
+		
+		dataBuffer = [];
+		escapeFlag = false;
+		packetToValidate = null;
+		validationCallback = null;
+		invalidPacketResendTimer = null;
+		packetValidationTimer = null;
+
+		retryDelay = 0;
+	},
 };
