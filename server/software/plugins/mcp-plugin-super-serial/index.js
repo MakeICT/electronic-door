@@ -180,11 +180,11 @@ function onData(data){
 							retryDelay = 100;
 							backend.debug('Sent packet validated');
 						}else{
-							backend.debug.log('Packet failed validation');
-							backend.debug.log('Received: ');
-							backend.debug.log(dataBuffer);
-							backend.debug.log('Expected: ');
-							backend.debug.log(packetToValidate);
+							backend.debug('Packet failed validation');
+							backend.debug('Received: ');
+							backend.debug(dataBuffer);
+							backend.debug('Expected: ');
+							backend.debug(packetToValidate);
 							setTimeout(function(){sendPacket(packetToValidate);}, retryDelay * Math.random());
 							retryDelay *= 2;
 						}
@@ -254,7 +254,7 @@ module.exports = {
 	onInstall: function(){},
 	onUninstall: function(){},
 	
-	onEnable: function(){		
+	onEnable: function(){
 		backend.getPluginOptions(module.exports.name, function(settings){
 			serialPort = new SerialPort.SerialPort(
 				settings['Port'],

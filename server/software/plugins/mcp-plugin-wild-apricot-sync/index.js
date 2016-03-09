@@ -92,7 +92,7 @@ module.exports = {
 
 	actions: {
 		'Sync Now': function(){
-			console.log('Starting sync...');
+			backend.log('Starting WildApricot sync...');
 			backend.getPluginOptions(this.name, function(settings){
 				api.connect(function(token){
 					api.get('contacts?$async=false', null, function(data){
@@ -132,7 +132,6 @@ module.exports = {
 							};
 							backend.getUserByProxyID('WildApricot', contact.Id, transaction);
 						}
-						backend.log("WildApricot sync done (probably (I dunno, it's async...))");
 					});
 				});
 			});

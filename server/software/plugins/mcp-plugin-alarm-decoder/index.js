@@ -4,6 +4,8 @@ var ad2usb = require('./node_modules/ad2usb');
 
 var alarm;
 
+var ARM_ALARM = 0x06;
+
 module.exports = {
 	name: 'Alarm Decoder',
 	options: {
@@ -89,6 +91,14 @@ module.exports = {
 			backend.getPluginOptions(module.exports.name, function(settings){
 				alarm.disarm(settings['Code']);
 			});
+		}else if(message == 'serial-data-received'){
+			if(data['to'] == 0){
+				if(data['function'] == ARM_ALARM){
+					backend.getPluginOptions(module.exports.name, function(settings){
+						alarm.arm(settings['Code']);
+					});
+				}
+			}
 		}
 	},
 };

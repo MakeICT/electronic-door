@@ -175,7 +175,7 @@ module.exports = {
 		var sql =
 			'SELECT ' +
 			'   users."userID", ' + 
-			'	"isAdmin", "firstName", "lastName", "email", "joinDate", "status", ' +
+			'	"firstName", "lastName", "email", "joinDate", "status", ' +
 			'	"nfcID" IS NOT NULL AS "keyActive" ' +
 			'FROM users ' +
 			'	JOIN "proxyUsers" ON users."userID" = "proxyUsers"."userID" ' +
@@ -682,6 +682,7 @@ module.exports = {
 	},
 	
 	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
+		backend.debug("Checking authorization " + who + " for " + what);
 		var idField = idIsNFC ? 'nfcID' : 'userID';
 		var sql =
 			'SELECT SUM(authorized) > 0 AS authorized FROM ( ' + 
@@ -705,7 +706,8 @@ module.exports = {
 			}else{
 				onUnauthorized();
 			}
-		}
+		};
+		
 		return query(sql, [who, what], process, onUnauthorized);
 	},
 	
@@ -790,7 +792,7 @@ module.exports = {
 				'	users.* ' +
 				'FROM logs ' +
 				'	LEFT JOIN users ON logs."userID" = users."userID" ' +
-				'ORDER BY timestamp DESC LIMIT 100';
+				'ORDER BY timestamp DESC LIMIT 5';
 		}
 		return query(sql, [], onSuccess, onFailure);
 	},

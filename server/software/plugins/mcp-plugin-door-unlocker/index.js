@@ -103,6 +103,7 @@ module.exports = {
 		if(messageID == 'serial-data-received'){
 			if(data['to'] == 0){
 				if(data['function'] == NFC){
+					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 					
@@ -110,12 +111,11 @@ module.exports = {
 					
 					var unlock = function(){
 						superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
-						// @TODO: add user
 						backend.log(client.name, null, nfc, 'unlock');
 					};
 					var deny = function(){
-						superSerial.send(client.clientID, DENY, options['Unlock duration']);
 						backend.log(client.name, null, nfc, 'deny');
+						superSerial.send(client.clientID, DENY, options['Unlock duration']);
 					};
 					
 					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
