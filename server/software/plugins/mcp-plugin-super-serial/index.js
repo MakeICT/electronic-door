@@ -56,8 +56,6 @@ function SerialClient(clientInfo){
 		
 		var self = this;
 		backend.getPluginOptions(module.exports.name, function(settings){
-			backend.debug(self.lastPacket);
-			
 			var doTimeoutAction = function(){
 				if(settings['Timeout']){
 					var packetTimeout = function(){
@@ -295,6 +293,7 @@ module.exports = {
 	},
 	
 	send: function(clientID, command, payload, callback){
+		var client = clients[clientID];
 		client.queuePacket(buildPacket(clientID, command, payload), callback);
 	}
 };

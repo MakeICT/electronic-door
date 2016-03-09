@@ -34,7 +34,7 @@ module.exports = {
 					if(options['Unlock duration'] == undefined) options['Unlock duration'] = 3;
 					superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
 					
-					broadcaster.broadcast(module.exports, "door-unlocked", { client: client, user: null });
+					broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client, 'user': null });
 					
 					if(callback) callback();
 				}catch(exc){
