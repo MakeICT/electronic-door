@@ -95,11 +95,11 @@ bool SuperSerial::GetPacket() {
             this->newMessage = true;
             LOG_INFO(F("Got valid packet\r\n"));
             if ( this->receivedPacket.Msg().function == F_NAK)  {
-              LOG_DEBUG(F("Received NAK"));
+              LOG_DEBUG(F("Received NAK\r\n"));
               this->SendPacket(&queuedPacket);
             }
             else if (this->receivedPacket.Msg().function == F_ACK)  {
-              LOG_DEBUG(F("Received ACK"));
+              LOG_DEBUG(F("Received ACK\r\n"));
               this->dataQueued = false;   //TODO:  this should go here-ish
             }
             else  {
@@ -160,7 +160,6 @@ void SuperSerial::SendPacket(Packet* p)  {
   p->ToEscapedArray(array);
 
   bus->Queue(array, p->EscapedSize());
-  this->dataQueued = false;
 }
 
 inline void SuperSerial::SendControl(byte function, byte transID)  {

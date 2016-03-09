@@ -17,6 +17,7 @@
 #define F_ALARM_BUTTON  0x07
 #define F_SET_LIGHTS    0x08
 #define F_GET_UPDATE    0x0A
+#define F_DENY_CARD     0x0C
 
 #define F_NOP           0x0B
 #define F_ACK           0xAA
