@@ -95,7 +95,7 @@ module.exports = {
 			if(data['to'] == 0){
 				if(data['function'] == ARM_ALARM){
 					backend.getPluginOptions(module.exports.name, function(settings){
-						alarm.arm(settings['Code']);
+						alarm.armAway(settings['Code']);
 					});
 				}
 			}

@@ -40,7 +40,7 @@ function SerialClient(clientInfo){
 	};
 	
 	this.ackReceived = function(){
-		backend.debug('ACK received for client(' + this.info.clientID + ') transaction(' + this.lastPacket.packet[1] + ') action(' + this.lastPacket.packet[4] + ')');
+		//backend.debug('ACK received for client(' + this.info.clientID + ') transaction(' + this.lastPacket.packet[1] + ') action(' + this.lastPacket.packet[4] + ')');
 		clearTimeout(this.responseTimeout);
 		this.waitingForAck = false;
 		this.lastPacket = null;

@@ -110,6 +110,7 @@ module.exports = {
 					var nfc = data['data'].map(function(x) { return x.toString(16); }).join('');
 					
 					var unlock = function(){
+						broadcaster.broadcast(module.exports, "door-unlocked", { 'client': data.from });
 						superSerial.send(client.clientID, UNLOCK, options['Unlock duration']);
 						backend.log(client.name, null, nfc, 'unlock');
 					};
