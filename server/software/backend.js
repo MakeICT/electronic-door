@@ -21,7 +21,7 @@ var connectionParameters = {
 function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
-			return console.error('Failed to connect', err);
+			return backend.error('Failed to connect', err);
 		}
 		return client.query(sql, params, function(err, result) {
 			if(!keepOpen){
@@ -29,8 +29,8 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 			}
 			
 			if(err){
-				console.error('Error executing query', err);
-				console.error(sql);
+				backend.error('Error executing query', err);
+				backend.error(sql);
 				if(onFailure){
 					return onFailure(err);
 				}
@@ -282,7 +282,7 @@ module.exports = {
 	
 	installPlugin: function(plugin, onSuccess, onFailure){
 		var logAndFail = function(msg){
-			console.error("Failed to install plugin (" + plugin + "): " + msg);
+			backend.error("Failed to install plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
 		};
 
@@ -751,12 +751,12 @@ module.exports = {
 	log: function(message, userID, code, logType, skipBroadcast){
 		if(!logType) logType = 'message';
 		
+		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
+		
 		sql =
 			'INSERT INTO logs (timestamp, "message", "logType", "userID", "code") ' +
 			'VALUES (EXTRACT(\'epoch\' FROM current_timestamp), $1, $2, $3, $4)';
 		params = [message, logType, userID, code];
-		
-		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
 		
 		if(!skipBroadcast){
 			broadcaster.broadcast(module.exports, 'log', message);
@@ -766,7 +766,7 @@ module.exports = {
 	},
 	
 	error: function(message){
-		module.exports.log(message, null, null, 'error', true);
+		backend.log(message, null, null, 'error', true);
 		broadcaster.broadcast(module.exports, 'error', message);
 	},
 	
@@ -799,7 +799,7 @@ module.exports = {
 		var sql = 'UPDATE users SET "nfcID" = $1 WHERE "userID" = $2';
 		
 		var log = function(){
-			module.exports.log('', userID, nfcID, 'assign');
+			backend.log('', userID, nfcID, 'assign');
 			if(onSuccess) onSuccess();
 		};
 
