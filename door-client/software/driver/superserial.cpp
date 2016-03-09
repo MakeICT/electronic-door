@@ -37,7 +37,7 @@ bool SuperSerial::DataQueued()  {
 void SuperSerial::Update()  {
   LOG_DUMP(F("SuperSerial::Update()\r\n"));
   this->GetPacket();
-  if (this->dataQueued && this->lastPacketSend > this->retryTimeout)  {
+  if (this->dataQueued && millis() - this->lastPacketSend > this->retryTimeout)  {
     if (this->retryCount < this->maxRetries)  {  
       LOG_DEBUG(F("Timed out waiting for response: resending last packet\r\n"));
       this->retryCount++;
@@ -97,18 +97,6 @@ bool SuperSerial::GetPacket() {
           if (receivedPacket.VerifyCRC())  {    //verify CRC
             LOG_DEBUG(F("CRC verified\r\n"));
             this->currentTransaction = receivedPacket.TransID();
-            if (dataBuffer[3] == F_GET_UPDATE)   {
-              if (this->DataQueued())  {
-                LOG_INFO(F("Sending Update\r\n"));
-                this->SendPacket(&this->queuedPacket);
-              }
-              else  {
-                LOG_DEBUG(F("Sending NOP\r\n"));
-                this->SendNOP(this->receivedPacket.TransID());
-              }
-              return false;
-            }
-            this->newMessage = true;
             LOG_INFO(F("Got valid packet\r\n"));
             if ( this->receivedPacket.Msg().function == F_NAK)  {
               LOG_DEBUG(F("Received NAK\r\n"));
@@ -128,6 +116,8 @@ bool SuperSerial::GetPacket() {
             else  {
               LOG_DEBUG(F("Sending ACK.\r\n"));
               SendACK(this->receivedPacket.TransID());
+              
+              this->newMessage = true;
               return true;
             }
           }
