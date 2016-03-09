@@ -48,6 +48,10 @@ class SuperSerial
     Packet queuedPacket;
     Packet responsePacket;
     byte currentTransaction;
+    uint32_t lastPacketSend;
+    uint8_t retryTimeout;
+    uint8_t maxRetries;
+    uint8_t retryCount;
     
     rs485* bus;
     byte deviceAddress;

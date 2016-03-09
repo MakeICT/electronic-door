@@ -82,7 +82,7 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
       LOG_DEBUG(Serial.available());
       LOG_DEBUG(F(" bytes read is less than "));
       LOG_DEBUG(len + 2);
-      LOG_DEBUG(F("bytes written"));
+      LOG_DEBUG(F(" bytes written"));
       LOG_DEBUG(F("\r\n"));
       LOG_ERROR(F("ERROR: Lost Data\r\n"));
       return ERR_LOSTDATA;

@@ -10,6 +10,10 @@ SuperSerial::SuperSerial (rs485* b, byte addr) {
   this->responsePacket.SetDestAddr(ADDR_MASTER);
   this->responsePacket.SetSrcAddr(this->deviceAddress);
   this->currentTransaction = 124;
+  
+  //TODO: make this configurable
+  this->retryTimeout = 100;
+  this->maxRetries = 3;
 }
 
 void SuperSerial::SetDebugPort(SoftwareSerial* port)  {
@@ -33,6 +37,18 @@ bool SuperSerial::DataQueued()  {
 void SuperSerial::Update()  {
   LOG_DUMP(F("SuperSerial::Update()\r\n"));
   this->GetPacket();
+  if (this->dataQueued && this->lastPacketSend > this->retryTimeout)  {
+    if (this->retryCount < this->maxRetries)  {  
+      LOG_DEBUG(F("Timed out waiting for response: resending last packet\r\n"));
+      this->retryCount++;
+      this->SendPacket(&queuedPacket);
+    }
+    else  {
+      LOG_ERROR(F("Failed to receive response after max retries\r\n"));
+      this->retryCount = 0;
+      this->dataQueued = false;
+    }
+  }
   //TODO: check if any messages have failed to send
 }
 
@@ -100,7 +116,14 @@ bool SuperSerial::GetPacket() {
             }
             else if (this->receivedPacket.Msg().function == F_ACK)  {
               LOG_DEBUG(F("Received ACK\r\n"));
-              this->dataQueued = false;   //TODO:  this should go here-ish
+              if (this->receivedPacket.TransID() == currentTransaction)  {
+                this->dataQueued = false;   //TODO:  this should go here-ish
+                this->retryCount = 0;
+              }
+              else
+              {
+                LOG_ERROR(F("Received ack for non-current transaction"));
+              }
             }
             else  {
               LOG_DEBUG(F("Sending ACK.\r\n"));
@@ -160,6 +183,7 @@ void SuperSerial::SendPacket(Packet* p)  {
   p->ToEscapedArray(array);
 
   bus->Queue(array, p->EscapedSize());
+  this->lastPacketSend = millis();
 }
 
 inline void SuperSerial::SendControl(byte function, byte transID)  {
