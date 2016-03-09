@@ -101,7 +101,7 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 				backend.error('Packet write error');
 				backend.error(error);
 			}else{
-				backend.debug('Wrote packet: ' + packet.toString());
+				backend.debug('Wrote packet: ' + packet);
 				if(readWriteToggle){
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
 				}
@@ -141,7 +141,11 @@ function buildPacket(clientID, command, payload){
 }
 
 function onData(data){
-	backend.debug("RAW Serial: " + data.toString('hex'));
+	var debugData = [];
+	for(var i=0; i<data.length; i++){
+		debugData.push(Number(data[i]));
+	}
+	backend.debug("RAW Serial  : " + debugData);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
