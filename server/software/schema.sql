@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 	PRIMARY KEY("groupID", "tagID")
 );
 
-INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$6$2gxfvalXD6d5$QjJeuk3IRaiglzMWSEDlT1SNWOtuJLbwsVnaCKUNVlUXng/ptqNGXKO/.NZ71lImQQ3ec7hL.1.urB2pnceZ0.', EXTRACT('epoch' FROM current_timestamp));
+INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$2a$08$iV9ABq9Y9o87IKJVAWAa8OvWEU5KORp5b5SIgcfTvnCKlzK/5u28G', EXTRACT('epoch' FROM current_timestamp));
 INSERT INTO "groups" ("name") VALUES ('administrators');
 INSERT INTO "userGroups" ("userID", "groupID") ( SELECT "userID", "groupID"	FROM "users" JOIN "groups" ON 1=1);
 

@@ -8,6 +8,7 @@
 var fs = require('fs');
 var pg = require('pg');
 var path = require('path');
+var bcrypt = require('bcrypt');
 var broadcaster = require('./broadcast.js')
 
 var credentials = fs.readFileSync('DB_CREDENTIALS').toString().trim().split('\t');
@@ -246,6 +247,18 @@ module.exports = {
 		}
 		
 		return query(sql, params, log, onFailure);
+	},
+
+	updateUserPassword: function(user, password, onSuccess, onFailure){
+		var sql = 'UPDATE users SET "passwordHash" = $1 WHERE "userID" = $2';
+		var log = function(){
+			module.exports.log('Update user', user.userID);
+			if(onSuccess) onSuccess();
+		};
+		
+		bcrypt.hash(password, 8, function(err, hash){
+			return query(sql, [hash, user.userID], log, onFailure);
+		});
 	},
 
 	enablePlugin: function(pluginName, onSuccess, onFailure){
@@ -713,6 +726,20 @@ module.exports = {
 	
 	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
 		return module.exports.checkAuthorization(nfcID, what, onAuthorized, onUnauthorized, true);
+	},
+	
+	checkPassword: function(login, password, goodCallback, badCallback){
+		var sql = 'SELECT "userID", "passwordHash" FROM users WHERE email = $1';
+		
+		var process = function(data){
+			if(data.length > 0 && bcrypt.compareSync(password, data[0].passwordHash)){
+				goodCallback(data[0].userID);
+			}else{
+				badCallback();
+			}
+		};
+		
+		return query(sql, [login], process);
 	},
 	
 	getUserGroups: function(who, onSuccess, onFailure){

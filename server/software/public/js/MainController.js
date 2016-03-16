@@ -73,9 +73,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		$scope.groups = groups;
 	});
 
-	$scope.locals = {
-		'authenticated': true,
-	};
 	$scope.search = {
 		'admin': false,
 		'active': true,

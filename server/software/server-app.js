@@ -1,6 +1,7 @@
 var restify = require('restify');
 var backend = require('./backend.js');
 var broadcaster = require('./broadcast.js');
+var sessionManager = require('./simple-session.js');
 
 var doneLoading = false;
 
@@ -18,7 +19,6 @@ broadcaster.subscribe({
 		}
 	},
 });
-
 
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
@@ -222,6 +222,51 @@ server.get('/log', function(request, response, next) {
  * # Stuff
  * #############
  **/
+
+// Serve static files for the web client
+server.get('/', function(request, response, next){
+	var session = sessionManager.start(request, response);
+	var fs = require('fs');	
+
+	if(session.properties['authenticated']){
+		fs.readFile('public/index.html', function (err, data) {
+			if (err) return next(err);
+			response.end(data);
+		});
+	}else{
+		fs.readFile('public/login.html', function (err, data) {
+			if (err) return next(err);
+			response.end(data);
+		});
+	}
+	next();
+});
+
+server.post('/login', function(request, response, next){
+	var session = sessionManager.start(request, response);
+	var loginOK = function(userID){
+		backend.log('Successful login', userID);
+		session.properties['authenticated'] = true;
+		session.properties['userID'] = userID;
+		response.redirect('/', next);
+	};
+	
+	var loginBad = function(){
+		backend.log('Failed login: ' + request.params.email + ' / ' + request.params.password)
+		session.properties['message'] = 'Login failed';
+		response.redirect('/', next);
+	};
+	
+	backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);	
+});
+
+server.get('/logout', function(request, response, next){
+	var session = sessionManager.start(request, response);
+	session.properties['authenticated'] = false;
+	session.properties['userID'] = null;
+	response.redirect('/', next);
+});
+
 // Serve static files for the web client
 server.get(/.*/, restify.serveStatic({
 	directory: 'public/',
