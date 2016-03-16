@@ -68,6 +68,11 @@ server.put('/groups/:groupID/authorizations/:authTag', function (request, respon
 	return next();
 });
 
+server.put('/users/:userID/password', function (request, response, next) {
+	backend.updateUserPassword(request.context.userID, request.body, function(){response.send();});
+	return next();
+});
+
 /**
  * Sends empty response on success
  * Sends a message 

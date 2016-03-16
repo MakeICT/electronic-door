@@ -163,6 +163,15 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});		
 	};
 	
+	$scope.resetPassword = function(user){
+		user.passwordSaved = false;
+		var url = '/users/' + user.userID + '/password';
+		console.log(url);
+		$http.put(url, {'password': user.password}).success(function(response){
+			user.passwordSaved = true;
+		});
+	};
+	
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
 			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){

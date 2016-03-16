@@ -135,7 +135,7 @@
 										<th>Password reset</th>
 										<td>
 											<form class="form-inline">
-												<input type="password" placeholder="New password" class="form-control input-sm"/>
+												<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 500}" ng-model="user.password"/>
 												<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
 											</form>
 										</td>
