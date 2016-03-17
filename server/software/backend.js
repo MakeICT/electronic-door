@@ -11,7 +11,7 @@ var path = require('path');
 var bcrypt = require('bcrypt');
 var broadcaster = require('./broadcast.js')
 
-var credentials = fs.readFileSync('DB_CREDENTIALS').toString().trim().split('\t');
+var credentials = fs.readFileSync('credentials/DB_CREDENTIALS').toString().trim().split('\t');
 var connectionParameters = {
 	'user': credentials[0],
 	'password': credentials[1],

@@ -1,3 +1,4 @@
+var fs = require('fs');
 var restify = require('restify');
 var backend = require('./backend.js');
 var broadcaster = require('./broadcast.js');
@@ -6,8 +7,8 @@ var sessionManager = require('./simple-session.js');
 var doneLoading = false;
 
 var server = restify.createServer({
-//	certificate: fs.readFileSync('cert.pem'),
-//	key: fs.readFileSync('key.pem'),
+	certificate: fs.readFileSync('credentials/cert.pem'),
+	key: fs.readFileSync('credentials/key.pem'),
 	name: 'master-control-program',
 });
 
