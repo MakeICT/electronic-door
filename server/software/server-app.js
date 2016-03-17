@@ -279,14 +279,6 @@ server.get(/.*/, restify.serveStatic({
 	default: 'index.html'
 }));
 
-io.sockets.on('connection', function (socket) {
-	console.log("CONNECT: " + socket.id);
-	
-	socket.on('disconnect', function (reason) {
-		console.log("DISCONNECT (" + reason + "): " + socket.id);
-	});
-});
-
 server.listen(3000, function () {
 	backend.log(server.name + ' listening at ' + server.url);
 });
