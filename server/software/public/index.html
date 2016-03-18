@@ -31,8 +31,8 @@
 			<div ng-if="authenticated" id="status-header">
 				[ <a href="/logout">Logout</a> ]
 			</div>
-			<button ng-if="errorMessage" class="btn btn-sm btn-danger" ng-click="clearError()">
-				{{errorMessage}} | X
+			<button ng-if="error" class="btn btn-sm btn-danger" ng-click="clearError()" title="{{error.detail}}">
+				{{error.message}} &nbsp;|&nbsp; X
 			</button>
 			<div ng-if="!authenticated">
 				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>

@@ -614,7 +614,6 @@ module.exports = {
 	},
 	
 	reloadClients: function(callback){
-		backend.debug('Reloading clients...');
 		module.exports.getInstalledClients(function(clientList){
 			clients.length = 0;
 			
@@ -626,7 +625,6 @@ module.exports = {
 				}
 				clients.push(client);
 			}
-			backend.debug('done reloading clients');
 			if(callback) callback(clients);
 		});
 	},

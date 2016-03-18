@@ -11,14 +11,17 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.clientPlugins = [];
 	$scope.clients = {};
 	$scope.messages = [];
-	$scope.errorMessage = null;
+	$scope.error = null;
 
 	$scope.socket = io();
 
 	$scope.checkAjax = function(response, suppressError){
 		if(response.error){
 			if(!suppressError){
-				$scope.errorMessage = response.error;
+				$scope.error = {
+					'message': response.error,
+					'detail': response.detail,
+				};
 			}
 			return false;
 		}
@@ -102,13 +105,14 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	};
 	
 	$scope.clearError = function(){
-		$scope.errorMessage = false;
+		$scope.error = null;
 	};
 
-	$scope.loginForm = {'email': null, 'password': null};
+	$scope.loginForm = {'email': '', 'password': ''};
 	$scope.login = function(suppressError){
 		$http.post('/login', $scope.loginForm).success(function(response){
 			if($scope.checkAjax(response, suppressError)){
+				$scope.clearError();
 				$scope.authenticated = true;
 				$scope.doLoad();
 			}

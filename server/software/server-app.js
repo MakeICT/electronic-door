@@ -245,7 +245,12 @@ server.get('/clients', function(request, response, next) {
 server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.associateClientPlugin(request.params.clientID, request.params.pluginName, function(){ response.send(); });
+		backend.associateClientPlugin(
+			request.params.clientID,
+			request.params.pluginName,
+			function(){ response.send(); },
+			function(error){ response.send({'error': 'Failed to associate plugin to client', 'detail': error.detail}); }
+		);
 	}
 	return next();
 });
