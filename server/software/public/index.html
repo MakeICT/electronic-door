@@ -28,258 +28,269 @@
 	<body>
 		<div ng-controller="controller">
 			<h1 style="text-align:center"><img src="/images/logo-header.svg" alt="MakeICT" /></h1>
-			<div id="status-header">
+			<div ng-if="authenticated" id="status-header">
 				[ <a href="/logout">Logout</a> ]
 			</div>
-
-			<uib-tabset>
-				<uib-tab heading="Status" active="tabs.status.active" select="setLocation('status');">
-					<h2>Status</h2>
-					<p>System status, alarm controls</p>
-				</uib-tab>
-				<uib-tab heading="Users" active="tabs.users.active" select="setLocation('users');">
-					<h2>Users</h2>
-					Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 500}"/>
-					<div style="margin-top: 0.5em;">
-						<span class="btn-group">
-							<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
-							<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.active">Active</span>
-							<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.keyed">Keyed</span>
-							<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.thirtyDays">30+ days</span>
-						</span>
-					</div>
-					<hr/>
-					<button class="btn btn-default btn-sm" ng-click="newUser.isExpanded = !newUser.isExpanded"><h4>Add new</h4></button>
-					<div uib-collapse="!newUser.isExpanded">
-						<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
-						<form>
-							<table class="table table-striped user-details">
-								<tr>
-									<th>Email</th>
-									<td><input type="email" ng-model="newUser.email"></td>
-								</tr><tr>
-									<th>First Name</th>
-									<td><input type="text" ng-model="newUser.firstName"></td>
-								</tr><tr>
-									<th>Last Name</th>
-									<td><input type="text" ng-model="newUser.lastName"></td>
-								</tr><tr>
-									<th>Join Date</th>
-									<td><input type="date" ng-model="newUser.joinDate"></td>
-								</tr>
-							</table>
-							<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
-							<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
-						</form>
-					</div>
-					<hr/>
-					<h3 ng-if="userSearchResults.length == 0">No search results</h3>
-					<div ng-if="userSearchResults.length > 0">
-						<h3>Search results</h3>
-						<div ng-repeat="user in userSearchResults">
-							<button class="btn btn-default btn-sm"><h4 ng-click="user.isExpanded = !user.isExpanded">{{user.firstName}} {{user.lastName}}</h4></button>
-							<div uib-collapse="!user.isExpanded">
+			<button ng-if="errorMessage" class="btn btn-sm btn-danger" ng-click="clearError()">
+				{{errorMessage}} | X
+			</button>
+			<div ng-if="!authenticated">
+				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>
+				<input type="email" class="form-control input-sm" placeholder="Email" ng-model="loginForm.email" ng-keyup="$event.keyCode == 13 && login()">
+				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="loginForm.password" ng-keyup="$event.keyCode == 13 && login()">
+				{{loginEmail}}
+				<button class="btn btn-default" ng-click="login()">Sign in</button>
+			</div>
+			<div ng-if="authenticated">
+				<uib-tabset>
+					<uib-tab heading="Status" active="tabs.status.active" select="setLocation('status');">
+						<h2>Status</h2>
+						<p>System status, alarm controls</p>
+					</uib-tab>
+					<uib-tab heading="Users" active="tabs.users.active" select="setLocation('users');">
+						<h2>Users</h2>
+						Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 500}"/>
+						<div style="margin-top: 0.5em;">
+							<span class="btn-group">
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.active">Active</span>
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.keyed">Keyed</span>
+								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.thirtyDays">30+ days</span>
+							</span>
+						</div>
+						<hr/>
+						<button class="btn btn-default btn-sm" ng-click="newUser.isExpanded = !newUser.isExpanded"><h4>Add new</h4></button>
+						<div uib-collapse="!newUser.isExpanded">
+							<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
+							<form>
 								<table class="table table-striped user-details">
 									<tr>
-										<th>Member status</th>
-										<td>{{user.status}}</td>
+										<th>Email</th>
+										<td><input type="email" ng-model="newUser.email"></td>
 									</tr><tr>
-										<th>Member since</th>
-										<td>{{user.joinDate|timestampToHumanReadableDate}} ({{user.joinDate|timestampToHumanReadableDuration}})</td>
+										<th>First Name</th>
+										<td><input type="text" ng-model="newUser.firstName"></td>
 									</tr><tr>
-										<th>Key status</th>
-										<td>
-											{{user.keyActive?"Enrolled":"NOT Enrolled"}}
-											<button class="btn btn-sm btn-default" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"Unenroll":"Enroll now"}}</button>
-											<table ng-if="nfcLog && nfcLog.length > 0">
-												<tr ng-repeat="log in nfcLog">
-													<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
-													<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
-												</tr>
-											</table>
-											<div ng-if="nfcLog && nfcLog.length == 0">
-												Please scan an NFC card and try again.
-											</div>
-										</td>
+										<th>Last Name</th>
+										<td><input type="text" ng-model="newUser.lastName"></td>
 									</tr><tr>
-										<th>Groups</th>
-										<td>
-											<button ng-if="!user.groups" ng-click="getUserGroups(user);" class="btn btn-sm btn-default">Load groups</button>
-											<button
-												ng-repeat="group in user.groups"
-												uib-btn-checkbox
-												ng-model="group.enrolled"
-												ng-click="setGroupEnrollment(user, group.name, group.enrolled)"
-												type="button"
-												class="btn btn-default btn-sm"
-											>
-												{{group.name}}
-											</button>
-										</td>
-									</tr><tr>
-										<th>Personal authorizations</th>
-										<td>
-											<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);" class="btn btn-sm btn-default">Load authorizations</button>
-											<button
-												ng-repeat="auth in user.authorizations"
-												uib-btn-checkbox
-												ng-model="auth.authorized"
-												ng-click="setUserAuthorization(user, auth.name, auth.authorized)"
-												type="button"
-												class="btn btn-default btn-sm"
-											>
-												{{auth.name}}
-											</button>
-										</td>
-									</tr><tr>
-										<th>Password reset</th>
-										<td>
-											<form class="form-inline">
-												<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 500}" ng-model="user.password"/>
-												<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
-											</form>
-										</td>
+										<th>Join Date</th>
+										<td><input type="date" ng-model="newUser.joinDate"></td>
 									</tr>
+								</table>
+								<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
+								<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
+							</form>
+						</div>
+						<hr/>
+						<h3 ng-if="userSearchResults.length == 0">No search results</h3>
+						<div ng-if="userSearchResults.length > 0">
+							<h3>Search results</h3>
+							<div ng-repeat="user in userSearchResults">
+								<button class="btn btn-default btn-sm"><h4 ng-click="user.isExpanded = !user.isExpanded">{{user.firstName}} {{user.lastName}}</h4></button>
+								<div uib-collapse="!user.isExpanded">
+									<table class="table table-striped user-details">
+										<tr>
+											<th>Member status</th>
+											<td>{{user.status}}</td>
+										</tr><tr>
+											<th>Member since</th>
+											<td>{{user.joinDate|timestampToHumanReadableDate}} ({{user.joinDate|timestampToHumanReadableDuration}})</td>
+										</tr><tr>
+											<th>Key status</th>
+											<td>
+												{{user.keyActive?"Enrolled":"NOT Enrolled"}}
+												<button class="btn btn-sm btn-default" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"Unenroll":"Enroll now"}}</button>
+												<table ng-if="nfcLog && nfcLog.length > 0">
+													<tr ng-repeat="log in nfcLog">
+														<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
+														<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
+													</tr>
+												</table>
+												<div ng-if="nfcLog && nfcLog.length == 0">
+													Please scan an NFC card and try again.
+												</div>
+											</td>
+										</tr><tr>
+											<th>Groups</th>
+											<td>
+												<button ng-if="!user.groups" ng-click="getUserGroups(user);" class="btn btn-sm btn-default">Load groups</button>
+												<button
+													ng-repeat="group in user.groups"
+													uib-btn-checkbox
+													ng-model="group.enrolled"
+													ng-click="setGroupEnrollment(user, group.name, group.enrolled)"
+													type="button"
+													class="btn btn-default btn-sm"
+												>
+													{{group.name}}
+												</button>
+											</td>
+										</tr><tr>
+											<th>Personal authorizations</th>
+											<td>
+												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);" class="btn btn-sm btn-default">Load authorizations</button>
+												<button
+													ng-repeat="auth in user.authorizations"
+													uib-btn-checkbox
+													ng-model="auth.authorized"
+													ng-click="setUserAuthorization(user, auth.name, auth.authorized)"
+													type="button"
+													class="btn btn-default btn-sm"
+												>
+													{{auth.name}}
+												</button>
+											</td>
+										</tr><tr>
+											<th>Password reset</th>
+											<td>
+												<form class="form-inline">
+													<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 500}" ng-model="user.password"/>
+													<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
+												</form>
+											</td>
+										</tr>
+									</table>
+								</div>
+							</div>
+						</div>
+					</uib-tab>
+					<uib-tab heading="Groups" active="tabs.groups.active" select="setLocation('groups');">
+						<h2>Groups</h2>
+						<table>
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Description</th>
+									<th>Authorizations</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="group in groups">
+									<td>{{group.name}}</td>
+									<td> - </td>
+									<td>
+										<button
+											ng-repeat="auth in group.authorizations"
+											uib-btn-checkbox
+											ng-model="auth.authorized"
+											ng-click="setGroupAuthorization(group, auth.name, auth.authorized)"
+											type="button"
+											class="btn btn-default btn-sm"
+										>
+											{{auth.name}}
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</uib-tab>
+					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
+						<h2>Clients</h2>
+						<div masonry>
+							<div ng-repeat="client in clients" class="masonry-brick well">
+								<h3>{{client.name}}</h3>
+								<table>
+									<tbody>
+										<tr>
+											<td>ID:</td>
+											<td><input class="form-control input-sm" type="text" ng-model="client.clientID" /></td>
+										</tr>
+										<tr>
+											<td>Name:</td>
+											<td><input class="form-control input-sm" type="text" ng-model="client.name" /></td>
+										</tr>
+									</tbody>
+									<tbody>
+										<tr>
+											<td>Plugins:</td>
+											<td>
+												<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+													<option disabled selected hidden value=""> - Bind new plugin - </option>
+													<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
+												</select>
+											</td>
+										</tr>
+									</tbody>
+									<tbody ng-repeat="plugin in client.plugins">
+										<tr>
+											<th colspan="2" class="plugin-name">{{plugin.name}}</th>
+										</tr>
+										<tr ng-repeat="option in plugin.options">
+											<td>{{option.name}}</td>
+											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1000}"/></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="client-plugin-actions">
+												<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
+											</td>
+									</tbody>
 								</table>
 							</div>
 						</div>
-					</div>
-				</uib-tab>
-				<uib-tab heading="Groups" active="tabs.groups.active" select="setLocation('groups');">
-					<h2>Groups</h2>
-					<table>
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Description</th>
-								<th>Authorizations</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr ng-repeat="group in groups">
-								<td>{{group.name}}</td>
-								<td> - </td>
-								<td>
-									<button
-										ng-repeat="auth in group.authorizations"
-										uib-btn-checkbox
-										ng-model="auth.authorized"
-										ng-click="setGroupAuthorization(group, auth.name, auth.authorized)"
-										type="button"
-										class="btn btn-default btn-sm"
-									>
-										{{auth.name}}
-									</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</uib-tab>
-				<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
-					<h2>Clients</h2>
-					<div masonry>
-						<div ng-repeat="client in clients" class="masonry-brick well">
-							<h3>{{client.name}}</h3>
-							<table>
-								<tbody>
-									<tr>
-										<td>ID:</td>
-										<td><input class="form-control input-sm" type="text" ng-model="client.clientID" /></td>
-									</tr>
-									<tr>
-										<td>Name:</td>
-										<td><input class="form-control input-sm" type="text" ng-model="client.name" /></td>
-									</tr>
-								</tbody>
-								<tbody>
-									<tr>
-										<td>Plugins:</td>
-										<td>
-											<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
-												<option disabled selected hidden value=""> - Bind new plugin - </option>
-												<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
-											</select>
-										</td>
-									</tr>
-								</tbody>
-								<tbody ng-repeat="plugin in client.plugins">
-									<tr>
-										<th colspan="2" class="plugin-name">{{plugin.name}}</th>
-									</tr>
+					</uib-tab>
+					<uib-tab heading="Activity Log" active="tabs.log.active" select="setLocation('log');">
+						<h2>Activity Log</h2>
+						<button ng-click="loadLog()" class="btn btn-sm btn-primary">Load</button>
+						<table>
+							<thead>
+								<tr>
+									<th>Timestamp</th>
+									<th>Log Type</th>
+									<th>Message</th>
+									<th>User</th>
+									<th>NFC</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="row in log">
+									<td>{{row.timestamp|timestampToHumanReadableDate:true}}</td>
+									<td>{{row.logType}}</td>
+									<td>{{row.message}}</td>
+									<td><a href="mailto:{{row.email}}">{{row.firstName}} {{row.lastName}}</a></td>
+									<td>{{row.code}}</td>
+								</tr>
+							</tbody>
+						</table>
+					</uib-tab>
+					<uib-tab heading="Options" active="tabs.options.active" select="setLocation('options');">
+						<h2>System Options</h2>
+						<p>Yo</p>
+						<h2>Personal Options</h2>
+						<p>Yo</p>
+					</uib-tab>
+					<uib-tab heading="Plugins" active="tabs.plugins.active" select="setLocation('plugins');">
+						<h2>Plugins</h2>
+						<div masonry>
+							<div ng-repeat="plugin in plugins" class="masonry-brick well">
+								<h3>{{plugin.name}}</h3>
+								<div class="btn-group">
+									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
+									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+								</div>
+								<br/><br/>
+								<table>
 									<tr ng-repeat="option in plugin.options">
 										<td>{{option.name}}</td>
-										<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1000}"/></td>
+										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 500}"></td>
 									</tr>
-									<tr>
-										<td colspan="2" class="client-plugin-actions">
-											<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
-										</td>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</uib-tab>
-				<uib-tab heading="Activity Log" active="tabs.log.active" select="setLocation('log');">
-					<h2>Activity Log</h2>
-					<button ng-click="loadLog()" class="btn btn-sm btn-primary">Load</button>
-					<table>
-						<thead>
-							<tr>
-								<th>Timestamp</th>
-								<th>Log Type</th>
-								<th>Message</th>
-								<th>User</th>
-								<th>NFC</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr ng-repeat="row in log">
-								<td>{{row.timestamp|timestampToHumanReadableDate:true}}</td>
-								<td>{{row.logType}}</td>
-								<td>{{row.message}}</td>
-								<td><a href="mailto:{{row.email}}">{{row.firstName}} {{row.lastName}}</a></td>
-								<td>{{row.code}}</td>
-							</tr>
-						</tbody>
-					</table>
-				</uib-tab>
-				<uib-tab heading="Options" active="tabs.options.active" select="setLocation('options');">
-					<h2>System Options</h2>
-					<p>Yo</p>
-					<h2>Personal Options</h2>
-					<p>Yo</p>
-				</uib-tab>
-				<uib-tab heading="Plugins" active="tabs.plugins.active" select="setLocation('plugins');">
-					<h2>Plugins</h2>
-					<div masonry>
-						<div ng-repeat="plugin in plugins" class="masonry-brick well">
-							<h3>{{plugin.name}}</h3>
-							<div class="btn-group">
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
-								<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
+								</table><br/>
+								<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 							</div>
-							<br/><br/>
-							<table>
-								<tr ng-repeat="option in plugin.options">
-									<td>{{option.name}}</td>
-									<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 500}"></td>
-								</tr>
-							</table><br/>
-							<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
 						</div>
+					</uib-tab>
+				</tabset>
+				<div id="message-log" ng-if="messages.length > 0" style="min-height: 2.5em">
+					<div style="position: fixed; right: 2em; bottom: .25em">
+						<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
+						<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '^' : 'v'}}</button>
 					</div>
-				</uib-tab>
-			</tabset>
-			<div id="message-log" ng-if="messages.length > 0" style="min-height: 2.5em">
-				<div style="position: fixed; right: 2em; bottom: .25em">
-					<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
-					<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '^' : 'v'}}</button>
-				</div>
-				<div uib-collapse="!logWindowDisplayed" class="message-list">
-					<div class="message" ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>
-				</div>					
-				<div ng-if="!logWindowDisplayed">
-					<div class="message">[{{messages[messages.length-1].timestamp}}] <span ng-class="messages[messages.length-1].type">{{messages[messages.length-1].text}}</span></div>
+					<div uib-collapse="!logWindowDisplayed" class="message-list">
+						<div class="message" ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>
+					</div>					
+					<div ng-if="!logWindowDisplayed">
+						<div class="message">[{{messages[messages.length-1].timestamp}}] <span ng-class="messages[messages.length-1].type">{{messages[messages.length-1].text}}</span></div>
+					</div>
 				</div>
 			</div>
 		</div>
