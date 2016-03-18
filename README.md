@@ -1,29 +1,18 @@
 # Master Control Program 
-* * *
 
-This program is used to secure spaces with an electronic door latch.
+This system is used to secure spaces with an electronic door latch.
 
-### Dependencies:
+## Dependencies:
 * [Node + NPM](Node.js)
 * [PostgreSQL](http://www.postgresql.org/)
 * [Arduino 1.6.5](https://www.arduino.cc/)
 
-* * *
-
-###Hardware requirements: 
+## Hardware requirements: 
 * [Server protocol RS-485](https://en.wikipedia.org/wiki/RS-485) for the server/client communication.
 * [Arduino Nano](https://www.arduino.cc/) for the door client (This is required for the matching footprint).
 * [NFC reader](https://www.adafruit.com/products/364). This is the one that we are using for our version of the door lock. 
 
 ![Diagram of the door lock project](https://cdn.rawgit.com/MakeICT/electronic-door/v2.0/functional-overview.svg)
-
-## Authors and contributors:
-* Dominic Canare
-* Tom McGuire
-* Christian Kindel
-* Dustin Richey
-* Rye Kennedy
-* John Harrison
 
 * * *
 
@@ -39,7 +28,7 @@ This program is used to secure spaces with an electronic door latch.
 	* Create scheduling system
 	* Make plugins respect disabled mode
 * Client
-	* ...
+	* Switch to serial LCD support
 
 ## License 
 
