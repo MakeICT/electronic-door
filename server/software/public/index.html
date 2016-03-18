@@ -43,10 +43,6 @@
 			</div>
 			<div ng-if="authenticated">
 				<uib-tabset>
-					<uib-tab heading="Status" active="tabs.status.active" select="setLocation('status');">
-						<h2>Status</h2>
-						<p>System status, alarm controls</p>
-					</uib-tab>
 					<uib-tab heading="Users" active="tabs.users.active" select="setLocation('users');">
 						<h2>Users</h2>
 						Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 500}"/>
@@ -252,12 +248,6 @@
 								</tr>
 							</tbody>
 						</table>
-					</uib-tab>
-					<uib-tab heading="Options" active="tabs.options.active" select="setLocation('options');">
-						<h2>System Options</h2>
-						<p>Yo</p>
-						<h2>Personal Options</h2>
-						<p>Yo</p>
 					</uib-tab>
 					<uib-tab heading="Plugins" active="tabs.plugins.active" select="setLocation('plugins');">
 						<h2>Plugins</h2>
