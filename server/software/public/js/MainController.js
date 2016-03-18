@@ -1,3 +1,4 @@
+
 function pad(n, width, z) {
 	z = z || '0';
 	n = n + '';
@@ -10,74 +11,108 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.clientPlugins = [];
 	$scope.clients = {};
 	$scope.messages = [];
+	$scope.errorMessage = null;
 
 	$scope.socket = io();
 
-	var addMessage = function(type, message){
-		var date = new Date();
-		var time = pad(date.getHours(), 2) + ':' + pad(date.getMinutes(), 2) + ':' + pad(date.getSeconds(), 2);
-		$scope.messages.push({type:type, text: message, timestamp: time});
-		$scope.$apply();
+	$scope.checkAjax = function(response, suppressError){
+		if(response.error){
+			if(!suppressError){
+				$scope.errorMessage = response.error;
+			}
+			return false;
+		}
+		return true;
 	};
+	
+	$scope.doLoad = function(){
+		var addMessage = function(type, message){
+			var date = new Date();
+			var time = pad(date.getHours(), 2) + ':' + pad(date.getMinutes(), 2) + ':' + pad(date.getSeconds(), 2);
+			$scope.messages.push({type:type, text: message, timestamp: time});
+			$scope.$apply();
+		};
 
-	$scope.socket.on('debug', function(message){
-		addMessage('debug', message);
-	});
-	$scope.socket.on('error', function(message){
-		addMessage('error', message);
-	});
-	$scope.socket.on('log', function(message){
-		addMessage('log', message);
-	});
-	
-	$scope.clearMessages = function(){
-		$scope.messages.length = 0;
-	};
+		$scope.socket.on('debug', function(message){
+			addMessage('debug', message);
+		});
+		$scope.socket.on('error', function(message){
+			addMessage('error', message);
+		});
+		$scope.socket.on('log', function(message){
+			addMessage('log', message);
+		});
 		
-	
-	$scope.tabs = {};
-	var path = $location.path().substring(1).split('/');
-	if(path != ''){
-		$scope.tabs[path] = { active: true };
-	}
-	
-	$scope.setLocation = function(path){
-		$location.path(path);
-	}
-	
-	$http.get('/plugins').success(function(plugins){
-		for(var i=0; i<plugins.length; i++){
-			var plugin = plugins[i];
-			$scope.plugins[plugin.name] = plugin;
-			var attachOptions = function(response){
-				$scope.plugins[response.plugin].options = {};
-				for(var i in response.options){
-					if(response.options[i].type != 'hidden'){
-						$scope.plugins[response.plugin].options[i] = response.options[i];
+		$scope.clearMessages = function(){
+			$scope.messages.length = 0;
+		};
+			
+		
+		$scope.tabs = {};
+		var path = $location.path().substring(1).split('/');
+		if(path != ''){
+			$scope.tabs[path] = { active: true };
+		}
+		
+		$scope.setLocation = function(path){
+			$location.path(path);
+		}
+		
+		$http.get('/plugins').success(function(response){
+			if($scope.checkAjax(response)){
+				var plugins = response;
+				for(var i=0; i<plugins.length; i++){
+					var plugin = plugins[i];
+					$scope.plugins[plugin.name] = plugin;
+					var attachOptions = function(response){
+						$scope.plugins[response.plugin].options = {};
+						for(var i in response.options){
+							if(response.options[i].type != 'hidden'){
+								$scope.plugins[response.plugin].options[i] = response.options[i];
+							}
+						}
+					};
+					$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
+					
+					if(plugin.clientDetails){
+						$scope.clientPlugins.push(plugin);
 					}
 				}
-			};
-			$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
-			
-			if(plugin.clientDetails){
-				$scope.clientPlugins.push(plugin);
 			}
-		}
-	});
+		});
 
-	$http.get('/clients').success(function(clients){
-		$scope.clients = clients;
-	});
+		$http.get('/clients').success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.clients = response;
+			}
+		});
 
-	$http.get('/groups').success(function(groups){
-		$scope.groups = groups;
-	});
-
+		$http.get('/groups').success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.groups = response;
+			}
+		});
+	};
+	
 	$scope.search = {
 		'admin': false,
 		'active': true,
 		'keyed': false,
 		'thirtyDays': false,
+	};
+	
+	$scope.clearError = function(){
+		$scope.errorMessage = false;
+	};
+
+	$scope.loginForm = {'email': null, 'password': null};
+	$scope.login = function(suppressError){
+		$http.post('/login', $scope.loginForm).success(function(response){
+			if($scope.checkAjax(response, suppressError)){
+				$scope.authenticated = true;
+				$scope.doLoad();
+			}
+		});
 	};
 
 	$scope.searchForUser = function(){
@@ -97,8 +132,10 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		for(var p in params){
 			url += p + '=' + params[p] + '&';
 		}
-		$http.get(url).success(function(users){
-			$scope.userSearchResults = users;
+		$http.get(url).success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.userSearchResults = response;
+			}
 		});
 	};
 
@@ -124,10 +161,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 
 	$scope.saveNewUser = function(){
 		$http.post('/users', $scope.newUser).success(function(response){
-			if(response != ''){
-				alert('Failed to add user:\n' + response);
-			}else{
-				alert('Added!');
+			if($scope.checkAjax(response)){
 				$scope.resetNewUser();
 			}
 		});
@@ -135,102 +169,123 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.getUserAuthorizations = function(user){
 		$http.get('/users/' + user.userID + '/authorizations').success(function(response){
-			user.authorizations = response;
+			if($scope.checkAjax(response)){
+				user.authorizations = response;
+			}
 		});
 	};
 	
 	$scope.setUserAuthorization = function(user, authTag, authorized){
 		$http.put('/users/' + user.userID + '/authorizations/' + authTag, authorized).success(function(response){
-			// @TODO: give feedback to user that this worked
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback to user that this worked
+			}
 		});		
 	};
 	
 	$scope.getUserGroups = function(user){
 		$http.get('/users/' + user.userID + '/groups').success(function(response){
-			user.groups = response;
+			if($scope.checkAjax(response)){
+				user.groups = response;
+			}
 		});
 	};
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
 		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
-			// @TODO: give feedback to user that this worked
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback to user that this worked
+			}
 		});		
 	};
 	
 	$scope.setGroupAuthorization = function(group, authTag, authorized){
 		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
-			// @TODO: give feedback to user that this worked
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback to user that this worked
+			}
 		});		
 	};
 	
 	$scope.resetPassword = function(user){
 		user.passwordSaved = false;
 		var url = '/users/' + user.userID + '/password';
-		console.log(url);
 		$http.put(url, {'password': user.password}).success(function(response){
-			user.passwordSaved = true;
+			if($scope.checkAjax(response)){
+				user.passwordSaved = true;
+			}
 		});
 	};
 	
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
 			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){
-				user.keyActive = false;
+				if($scope.checkAjax(response)){
+					user.keyActive = false;
+				}
 			});
 		}else{
-			$http.get('/log?type=nfc').success(function(log){
-				$scope.nfcLog = log;
+			$http.get('/log?type=nfc').success(function(response){
+				if($scope.checkAjax(response)){
+					$scope.nfcLog = response;
+				}
 			});
 		}
 	};
 	
 	$scope.enrollUser = function(user, nfcID){
 		$http.put('/users/' + user.userID, { nfcID: nfcID }).success(function(response){
-			$scope.nfcLog = null;
-			user.keyActive = true;
+			if($scope.checkAjax(response)){
+				$scope.nfcLog = null;
+				user.keyActive = true;
+			}
 		});
 	};
 	
 	$scope.loadLog = function(){
-		$http.get('/log').success(function(log){
-			$scope.log = log;
+		$http.get('/log').success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.log = response;
+			}
 		});
 	};
 	
 	$scope.togglePlugin = function(plugin, enabled){
 		$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
-			if(response != ''){
-				alert('Failed to toggle plugin:\n' + response);
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback
 			}
 		});
 	};
 
 	$scope.savePluginOption = function(plugin, option){
 		$http.put('/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
-			if(response != ''){
-				alert('Failed to save option:\n' + response);
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback
 			}
 		});
 	};
 
 	$scope.doPluginAction = function(plugin, action){
 		$http.post('/plugins/' + plugin.name + '/actions/' + action).success(function(response){
-			if(response != ''){
-				alert('Failed to perform plugin action:\n' + response);
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback
 			}
 		});
 	};
 	
 	$scope.createClientPluginAssociation = function(client, pluginName){
 		$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
-			window.location.reload();
+			if($scope.checkAjax(response)){
+				window.location.reload();
+			}
 		});
 	};
 	
 	$scope.doClientPluginAction = function(client, plugin, action){
 		$http.post('/clients/' + client.clientID + '/plugins/' + plugin.name + '/actions/' + action).success(function(response){
-			if(response != ''){
-				alert('Failed to perform client action:\n' + response);
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback
 			}
 		});
 	};
@@ -239,9 +294,14 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		var params = {'option': option.name, 'value': option.value};
 		
 		$http.put('/clients/' + client.clientID + '/plugins/' + plugin.name, params).success(function(response){
+			if($scope.checkAjax(response)){
+				// @TODO: give feedback
+			}
 		});
 	};
 
+
+	$scope.login(true);
 })
 .filter('timestampToHumanReadableDate', function(){
 	var monthList = ["January" , "February" , "March" , "April" , "May" , "June" , "July" , "August" , "September" , "October" , "November" , "December"]

@@ -249,15 +249,20 @@ module.exports = {
 		return query(sql, params, log, onFailure);
 	},
 
-	updateUserPassword: function(user, password, onSuccess, onFailure){
+	updateUserPassword: function(userID, password, onSuccess, onFailure){
 		var sql = 'UPDATE users SET "passwordHash" = $1 WHERE "userID" = $2';
 		var log = function(){
-			module.exports.log('Update user', user.userID);
+			module.exports.log('Update user', userID);
 			if(onSuccess) onSuccess();
 		};
 		
 		bcrypt.hash(password, 8, function(err, hash){
-			return query(sql, [hash, user.userID], log, onFailure);
+			if(err){
+				backend.error('Password hashing error');
+				onFailure(err);
+			}else{
+				return query(sql, [hash, userID], log, onFailure);
+			}
 		});
 	},
 
