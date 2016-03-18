@@ -70,7 +70,7 @@ server.put('/groups/:groupID/authorizations/:authTag', function (request, respon
 });
 
 server.put('/users/:userID/password', function (request, response, next) {
-	backend.updateUserPassword(request.context.userID, request.body, function(){response.send();});
+	backend.updateUserPassword(request.params.userID, request.body.password, function(){response.send();});
 	return next();
 });
 
