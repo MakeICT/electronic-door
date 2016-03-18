@@ -47,5 +47,9 @@ fi
 read -p "Generate new SSL cert and key [y/N]: " response
 if [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	mkdir credentials >/dev/null 2>&1
-	openssl req -x509 -newkey rsa:2048 -keyout credentials/key.pem -out credentials/cert.pem -days XXX -nodes
+	subj="/CN=mcp.makeict.org/O=MakeICT/C=US/ST=Kansas/L=Wichita/OU=IT"
+
+	openssl req -x509 -newkey rsa:2048 -keyout credentials/key.pem -out credentials/cert.pem -days XXX -nodes -subj $subj
 fi
+echo ""
+echo "Done! Use 'node ./server-app.js' to run"
