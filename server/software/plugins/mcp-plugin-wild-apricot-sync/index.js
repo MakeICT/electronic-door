@@ -118,19 +118,19 @@ module.exports = {
 									
 									var updateGroups = function(){
 										backend.getUserByEmail(user.email, function(user){
-											backend.getGroups(function(groups){
+											var newGroupName = "WA-Level: " + level;
+											backend.getUserGroups(user.userID, function(groups){
 												for(var i=0; i<groups.length; i++){
+													if(!groups.enrolled) continue;
 													var groupName = groups[i].name;
-													if(groupName.indexOf("WA-Level: ") == 0){
-														// @TODO: only call this if they're actually in this group?
+													if(groupName.indexOf("WA-Level: ") == 0 && groupName != newGroupName){
 														backend.setGroupEnrollment(user.userID, groupName, false);
 													}
 												}
 											});
 											if(level){
-												var groupName = "WA-Level: " + level;
-												var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, groupName, true); };
-												backend.addGroup(groupName, doEnrollment, doEnrollment);
+												var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
+												backend.addGroup(newGroupName, doEnrollment, doEnrollment);
 											}
 										});
 									};

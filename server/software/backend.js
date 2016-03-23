@@ -22,7 +22,6 @@ var connectionParameters = {
 // @TODO: use this one every query that is looking for just one row or value
 function getOneOrNone(callback){
 	return function(data){
-		backend.debug("Got " + data);
 		if(data && data.length > 0){
 			data = data[0];
 		}else{
