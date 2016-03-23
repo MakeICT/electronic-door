@@ -19,6 +19,20 @@ var connectionParameters = {
 	'database': 'master_control_program',
 };
 
+// @TODO: use this one every query that is looking for just one row or value
+function getOneOrNone(callback){
+	return function(data){
+		backend.debug("Got " + data);
+		if(data && data.length > 0){
+			data = data[0];
+		}else{
+			data = null;
+		}
+		if(callback) return callback(data);
+		return data;
+	}
+}
+
 function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
@@ -30,8 +44,6 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 			}
 			
 			if(err){
-				backend.error('Error executing query', err);
-				backend.error(sql);
 				if(onFailure){
 					return onFailure(err);
 				}
@@ -141,7 +153,7 @@ module.exports = {
 				'	"authorizationTags".name AS "tagName", ' +
 				'	"groupAuthorizationTags"."groupID" IS NOT NULL AS enrolled ' +
 				'FROM groups ' +
-				'	JOIN "authorizationTags" ON 1=1 ' +
+				'	CROSS JOIN "authorizationTags" ' +
 				'	LEFT JOIN "groupAuthorizationTags" ON "groups"."groupID" = "groupAuthorizationTags"."groupID" ' +
 				'		AND "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID" ' +
 				'ORDER BY groups.name, "authorizationTags".name';
@@ -171,7 +183,29 @@ module.exports = {
 		}
 	},
 	
-	// @TODO: gross. This only works in the context of WA sync'ing
+	// sends the groupID to the success callback
+	addGroup: function(groupName, onSuccess, onFailure){
+		try{
+			var sql = 'SELECT * FROM groups WHERE name = $1';
+			var process = function(data){
+				if(data.length < 1){
+					var tryAgain = function(){
+						return this.addGroup(groupName);
+					};
+					query('INSERT INTO GROUPS (name) VALUES ($1)', [groupName], tryAgain, onFailure);
+				}else{
+					onSuccess(data[0]['groupID']);
+				}
+			};
+			
+			return query(sql, [groupName], process, onFailure);
+
+		}catch(exc){
+			backend.error(exc);
+		}
+	},
+	
+	// @TODO: Grrrrroooooooossssss - the callback has to be wrapped in an object because of the calling function (WildApricot plugin)
 	getUserByProxyID: function(proxySystem, proxyUserID, transaction) {
 		var sql =
 			'SELECT ' +
@@ -183,16 +217,17 @@ module.exports = {
 			'	JOIN "proxySystems" ON "proxyUsers"."systemID" = "proxySystems"."systemID" ' +
 			'WHERE "proxySystems".name = $1 ' +
 			'	AND "proxyUsers"."proxyUserID" = $2';
+
+		var huh = function(data){
+			transaction.callback(getOneOrNone()(data));
+		}
 			
-		var extract = function(results){
-			if(results.length == 1){
-				transaction.updateUser(results[0]);
-			}else{
-				transaction.addUser();
-			}
-		};
-		
-		return query(sql, [proxySystem, proxyUserID], extract);
+		return query(sql, [proxySystem, proxyUserID], huh);
+	},
+	
+	getUserByEmail: function(email, onSuccess, onFailure) {
+		var sql = 'SELECT * FROM users WHERE email = $1';
+		return query(sql, [email], getOneOrNone(onSuccess), onFailure);
 	},
 	
 	getUserByNFC: function(nfcID, onSuccess, onFailure) {
@@ -217,23 +252,31 @@ module.exports = {
 	},
 		
 	addProxyUser: function(proxySystem, proxyUserID, user, onSuccess, onFailure){
-		var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
-		var params = [user.email, user.firstName, user.lastName, user.joinDate];
-		
-		return query(
-			sql, params,
-			function(){
-				var systemSQL = 'SELECT "systemID" FROM "proxySystems" WHERE name = $1 LIMIT 1';
-				var userSQL = 'SELECT "userID" FROM "users" WHERE "email" = $2 LIMIT 1';
-				var sql = 'INSERT INTO "proxyUsers" ("systemID", "userID", "proxyUserID") ' +
-					'VALUES ((' + systemSQL + '), (' + userSQL + '), $3)';
-					
-				var params = [proxySystem, user.email, proxyUserID];
+		var attachProxyUser = function(){
+			backend.debug('attaching proxy user!');
+			var systemSQL = 'SELECT "systemID" FROM "proxySystems" WHERE name = $1 LIMIT 1';
+			var userSQL = 'SELECT "userID" FROM "users" WHERE "email" = $2 LIMIT 1';
+			var sql = 'INSERT INTO "proxyUsers" ("systemID", "userID", "proxyUserID") ' +
+				'VALUES ((' + systemSQL + '), (' + userSQL + '), $3)';
 				
-				return query(sql, params, onSuccess, onFailure);
-			},
-			onFailure
-		);
+			var params = [proxySystem, user.email, proxyUserID];
+			
+			return query(sql, params, onSuccess, onFailure);
+		};
+
+		this.getUserByEmail(user.email, function(existingUser){
+			if(existingUser){
+				backend.debug('user exists!');
+				attachProxyUser();
+			}else{
+				backend.debug('creating user!');
+				var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
+				backend.debug(user);
+				var params = [user.email, user.firstName, user.lastName, user.joinDate];
+				backend.debug('flag b');
+				return query(sql, params, attachProxyUser, onFailure);
+			}
+		});
 	},
 		
 	updateUser: function(user, onSuccess, onFailure){
@@ -780,7 +823,7 @@ module.exports = {
 		}
 		
 		var log = function(){
-			module.exports.log((enrolled ? 'Add ' : 'Remove ') + ' group(' + group + ') enrollment', who);
+			module.exports.log((enrolled ? 'Add ' : 'Remove ') + 'group(' + group + ') enrollment', who);
 			if(onSuccess) onSuccess();
 		};
 		return query(sql, [who, group], log, onFailure);
