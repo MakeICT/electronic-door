@@ -13,8 +13,8 @@
 #define F_LOCK_DOOR     0x02
 #define F_SEND_ID       0x03
 #define F_PLAY_TUNE     0x05
-#define F_DOOR_STATE    0x06
-#define F_ALARM_BUTTON  0x07
+#define F_DOOR_STATE    0x07
+#define F_ALARM_BUTTON  0x06
 #define F_SET_LIGHTS    0x08
 #define F_GET_UPDATE    0x0A
 #define F_DENY_CARD     0x0C

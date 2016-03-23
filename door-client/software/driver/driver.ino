@@ -213,6 +213,7 @@ void ProcessMessage()  {
     case F_DENY_CARD:
       LOG_INFO(F("Card Denied\r\n"));
       status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE), 200, 3000);
+      break;
       
     case F_UNLOCK_DOOR:
       LOG_INFO(F("Unlock Door\r\n"));

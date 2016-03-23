@@ -118,6 +118,16 @@ bool SuperSerial::GetPacket() {
               SendACK(this->receivedPacket.TransID());
               
               this->newMessage = true;
+              
+              #if LOG_LEVEL > 3
+              LOG_DEBUG(F("Received: "));
+              for (int i = 0; i < bufferIndex; i++)  {
+                LOG_DEBUG(dataBuffer[i]);
+                LOG_DEBUG(F(" "));
+              }
+              LOG_DEBUG(F("\r\n"));
+              #endif
+              
               return true;
             }
           }
@@ -146,6 +156,14 @@ bool SuperSerial::GetPacket() {
       escaping = false;
     }
   }
+  #if LOG_LEVEL > 3
+  LOG_DEBUG(F("Received: "));
+  for (int i = 0; i < bufferIndex; i++)  {
+    LOG_DEBUG(dataBuffer[i]);
+    LOG_DEBUG(F(" "));
+  }
+  LOG_DEBUG(F("\r\n"));
+  #endif
   return false;
 }
 

@@ -22,7 +22,7 @@ byte rs485::Queue(uint8_t* data, uint8_t len)  {
   for(int i = 0; i < len; i++)
     this->queuedPacket[i] = data[i];
   this->queueLength +=1; 
-  this->Send(queuedPacket, len);
+  return this->Send(queuedPacket, len);
 }
 
 byte rs485::Send(uint8_t* data, uint8_t len) {
