@@ -45,11 +45,13 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 			if(err){
 				if(onFailure){
 					return onFailure(err);
+				}else{
+					backend.debug('SQL ERROR');
+					backend.debug(err);
+					backend.debug(params);
 				}
-			}else{
-				if(onSuccess){
-					return onSuccess(result.rows, done);
-				}
+			}else if(onSuccess){
+				return onSuccess(result.rows, done);
 			}
 		});
 	});
@@ -279,16 +281,26 @@ module.exports = {
 	},
 		
 	updateUser: function(user, onSuccess, onFailure){
-		var sql = 'UPDATE users SET email=$1, "firstName"=$2, "lastName"=$3, "joinDate"=$4 ' +
-			'WHERE "userID" = $5';
-		var params = [user.email, user.firstName, user.lastName, user.joinDate, user.userID];
-		
-		var log = function(){
-			module.exports.log('Update user', user.userID);
-			if(onSuccess) onSuccess();
+		var sql = 'UPDATE users SET ';
+		var counter = 0;
+		var params = [];
+		for(var key in user){
+			if(key != 'userID' && key != 'keyActive'){
+				counter++;
+				sql += '"' + key + '"=$' + counter + ',';
+				params.push(user[key]);
+			}
 		}
-		
-		return query(sql, params, log, onFailure);
+		if(counter > 0){
+			sql = sql.substring(0, sql.length-1);
+			sql += ' WHERE "userID" = $' + (counter+1);
+			params.push(user.userID);
+			var log = function(){
+				module.exports.log('Update user', user.userID);
+				if(onSuccess) onSuccess();
+			}
+			return query(sql, params, log, onFailure);
+		}
 	},
 
 	updateUserPassword: function(userID, password, onSuccess, onFailure){
@@ -761,6 +773,7 @@ module.exports = {
 			'		JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
 			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
 			'	WHERE users."' + idField + '" = $1 ' + 
+			'		AND users.status = \'active\'' +
 			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
 			') AS foo';
 		
