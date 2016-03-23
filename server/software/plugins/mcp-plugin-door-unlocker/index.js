@@ -48,8 +48,6 @@ module.exports = {
 			},
 		},
 		optionUpdated: function(client, option, newValue, oldValue, callback){
-			// if no other clients are using the same authorization token, delete it from the database
-			// if the tag doesn't exist, add it to the database
 			if(option == 'Authorization tag'){
 				var findDuplicateTag = function(tag){
 					var clientList = backend.getClients();
@@ -76,11 +74,17 @@ module.exports = {
 					return false;
 				};
 				
-				if(!findDuplicateTag(oldValue)){
-					backend.deleteAuthorizationTag(oldValue, module.exports.name);
-				}
 				if(!findDuplicateTag(newValue)){
-					backend.registerAuthorizationTag(newValue, '', module.exports.name);
+					if(oldValue && oldValue != ''){
+						backend.debug('updating tag');
+						backend.updateAuthorizationTag(oldValue, newValue, module.exports.name);
+					}else{
+						backend.debug('adding tag');
+						backend.registerAuthorizationTag(newValue, '', module.exports.name);
+					}
+					return true;
+				}else{
+					return false;
 				}
 			}
 		},

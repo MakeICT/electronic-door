@@ -635,6 +635,12 @@ module.exports = {
 		query(sql, [name, description, pluginID], onSuccess, onFailure);
 	},
 	
+	updateAuthorizationTag: function(oldTag, newTag, sourcePluginName, onSuccess, onFailure){
+		var pluginID = module.exports.getPluginByName(sourcePluginName).pluginID;
+		var sql = 'UPDATE "authorizationTags" SET name = $2 WHERE name = $1 AND "sourcePluginID" = $3';
+		query(sql, [oldTag, newTag, pluginID], onSuccess, onFailure);
+	},
+	
 	deleteAuthorizationTag: function(name, sourcePluginName, onSuccess, onFailure){
 		var pluginID = module.exports.getPluginByName(sourcePluginName).pluginID;
 		var sql = 'DELETE FROM "authorizationTags" WHERE name = $1 AND "sourcePluginID" = $2';
