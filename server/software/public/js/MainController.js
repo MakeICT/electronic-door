@@ -99,7 +99,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	
 	$scope.search = {
 		'admin': false,
-		'active': true,
+		'active': false,
 		'keyed': false,
 		'thirtyDays': false,
 	};
@@ -122,7 +122,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.searchForUser = function(){
 		// @TODO: encode search string
 		var params = {}
-		if($scope.search.query && $scope.search.query != '') params['q'] = $scope.search.query;
+		if($scope.search.query && $scope.search.query.length > 2) params['q'] = $scope.search.query;
 		if($scope.search.admin) params['isAdmin'] = 1;
 		if($scope.search.active) params['status'] = 'active';
 		if($scope.search.keyed) params['keyActive'] = 1;
@@ -131,6 +131,12 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			var thirtyDaysAgo = (new Date()).setDate(today.getDate()-30);
 			params['joinDate'] = Math.floor(thirtyDaysAgo / 1000);
 		}
+		var noTerms = true;
+		for(var k in params){
+			noTerms = false;
+			break;
+		}
+		if(noTerms) return;
 
 		var url = '/users?';
 		for(var p in params){
