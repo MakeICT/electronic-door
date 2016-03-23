@@ -862,7 +862,8 @@ module.exports = {
 			sql = 
 				'SELECT * FROM logs LEFT JOIN users ON logs.code = users."nfcID" ' +
 				'WHERE code IS NOT NULL ' +
-				'	AND users."userID" IS NULL';
+				'	AND users."userID" IS NULL ' +
+				'ORDER BY timestamp DESC LIMIT 5';
 		}else{
 			sql = 
 				'SELECT ' +
@@ -870,7 +871,7 @@ module.exports = {
 				'	users.* ' +
 				'FROM logs ' +
 				'	LEFT JOIN users ON logs."userID" = users."userID" ' +
-				'ORDER BY timestamp DESC LIMIT 5';
+				'ORDER BY timestamp DESC';
 		}
 		return query(sql, [], onSuccess, onFailure);
 	},
