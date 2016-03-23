@@ -47,6 +47,8 @@
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
 #define COLOR_IDLE          0,100,120
 #define COLOR_SUCCESS       0,60,20
+#define COLOR_FAILURE       60,20,0
+#define COLOR_WAITING       120,120,20
 #define COLOR_ERROR         50,20,0
 #define COLOR_BACKGROUND    0,20,50
 #define COLOR               Adafruit_NeoPixel::Color
@@ -188,11 +190,7 @@ void CheckReader()  {
     }
     LOG_INFO(F("\r\n"));
     #endif
-    
-    //TEMPORARY TEST CODE
-    status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
-    //door_latch.Unlock(3000);
-    speaker.Play(startTune, startTuneDurations, 8);
+    status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), 0, 3000);
   }
 }
 
@@ -211,9 +209,19 @@ void ProcessMessage()  {
       conf.SaveAddress(msg.payload[0]);
       state = S_READY;
       break;
+      
+    case F_DENY_CARD:
+      LOG_INFO(F("Card Denied\r\n"));
+      status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE), 200, 3000);
+      break;
+      
     case F_UNLOCK_DOOR:
       LOG_INFO(F("Unlock Door\r\n"));
       door_latch.Unlock(msg.payload[0] * 1000);
+          
+      //TEMPORARY TEST CODE
+      status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
+      speaker.Play(startTune, startTuneDurations, 8);
       break;
     case F_LOCK_DOOR:
       LOG_INFO(F("Lock Door\r\n"));

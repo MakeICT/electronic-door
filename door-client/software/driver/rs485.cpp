@@ -21,8 +21,8 @@ void rs485::SetDebugPort(SoftwareSerial* port)  {
 byte rs485::Queue(uint8_t* data, uint8_t len)  {
   for(int i = 0; i < len; i++)
     this->queuedPacket[i] = data[i];
-  this->queueLength +=1;
-  this->Send(queuedPacket, len);
+  this->queueLength +=1; 
+  return this->Send(queuedPacket, len);
 }
 
 byte rs485::Send(uint8_t* data, uint8_t len) {
@@ -82,7 +82,7 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
       LOG_DEBUG(Serial.available());
       LOG_DEBUG(F(" bytes read is less than "));
       LOG_DEBUG(len + 2);
-      LOG_DEBUG(F("bytes written"));
+      LOG_DEBUG(F(" bytes written"));
       LOG_DEBUG(F("\r\n"));
       LOG_ERROR(F("ERROR: Lost Data\r\n"));
       return ERR_LOSTDATA;

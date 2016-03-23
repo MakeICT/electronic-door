@@ -13,10 +13,11 @@
 #define F_LOCK_DOOR     0x02
 #define F_SEND_ID       0x03
 #define F_PLAY_TUNE     0x05
-#define F_DOOR_STATE    0x06
-#define F_ALARM_BUTTON  0x07
+#define F_DOOR_STATE    0x07
+#define F_ALARM_BUTTON  0x06
 #define F_SET_LIGHTS    0x08
 #define F_GET_UPDATE    0x0A
+#define F_DENY_CARD     0x0C
 
 #define F_NOP           0x0B
 #define F_ACK           0xAA
@@ -47,6 +48,10 @@ class SuperSerial
     Packet queuedPacket;
     Packet responsePacket;
     byte currentTransaction;
+    uint32_t lastPacketSend;
+    uint8_t retryTimeout;
+    uint8_t maxRetries;
+    uint8_t retryCount;
     
     rs485* bus;
     byte deviceAddress;
