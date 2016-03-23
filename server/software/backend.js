@@ -107,16 +107,17 @@ module.exports = {
 	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
 		try{
 			var sql =
-				'SELECT ' +
-				'	users."userID", ' +
-				'	"firstName", "lastName", "email", "joinDate", "status", ' +
+				'SELECT DISTINCT  ' +
+				'	users."userID",   ' +
+				'	"firstName", "lastName", "email", "joinDate", "status",   ' +
 				'	"nfcID" IS NOT NULL AS "keyActive", ' +
-				'	"groups"."groupID" IS NOT NULL AS "isAdmin" ' +
+				'	( ' +
+				'		SELECT 0 < COUNT(0) FROM "userGroups" JOIN "groups" ON "userGroups"."groupID" = groups."groupID"  ' +
+				'		WHERE groups.name = \'administrators\' ' +
+				'			AND "userGroups"."userID" = users."userID" ' +
+				'	) AS "isAdmin" ' +
 				'FROM users ' +
-				'	LEFT JOIN "userGroups" ON "users"."userID" = "userGroups"."userID" ' +
-				'	LEFT JOIN "groups" ON "userGroups"."groupID" = groups."groupID" ' +
-				'		AND groups.name = \'administrators\' ' +
-				'WHERE 1=1 ';
+				'WHERE TRUE ';	
 
 			var params = [];
 			if(isAdmin !== undefined){
