@@ -804,7 +804,7 @@ module.exports = {
 	
 	debug: function(message){
 		console.log(message);
-		broadcaster.broadcast(module.exports, 'debug', message);
+		//broadcaster.broadcast(module.exports, 'debug', message);
 	},
 	
 	getLog: function(type, onSuccess, onFailure){
