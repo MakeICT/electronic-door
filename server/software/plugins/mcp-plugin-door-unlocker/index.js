@@ -110,6 +110,7 @@ module.exports = {
 					var nfc = data['data'].map(function(x) {
 						var hex = x.toString(16);
 						if(hex.length < 2) hex = '0' + hex;
+						return hex;
 					}).join('');
 					
 					var unlock = function(){
