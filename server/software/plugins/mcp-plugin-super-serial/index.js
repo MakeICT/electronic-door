@@ -123,7 +123,7 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 					backend.error('Packet write fail. Reconnecting super serial...');
 					module.exports.reconnect();
 				};
-				packetValidationTimer = setTimeout(validationFailure, 100);
+				packetValidationTimer = setTimeout(validationFailure, 200);
 				backend.debug('Wrote packet   : ' + packet);
 				if(readWriteToggle){
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
