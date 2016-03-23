@@ -17,22 +17,28 @@ var start = function(req, res) {
     
     var SESSID = cookies.SESSID;//Get current SESSID
     
+    var session;
     if(typeof sessions[SESSID] !== "undefined") {
         session = sessions[SESSID];
         
         if(session.expires < Date()) {//If session is expired
             delete sessions[SESSID];
-            return newSession(conn.res);
+            session = newSession(conn.res);
         } else {
             var dt = new Date();
             dt.setMinutes(dt.getMinutes() + 30);
             
-            return sessions[SESSID];
+            session = sessions[SESSID];
             session.expires = dt;//Reset session expiration
         }
     } else {
-        return newSession(conn.res);
+        session = newSession(conn.res);
     }
+    
+	session.properties['authenticated'] = true;
+	session.properties['userID'] = 1;
+
+	return session;
 };
 
 function newSession(res) {
