@@ -34,9 +34,6 @@ var start = function(req, res) {
     } else {
         session = newSession(conn.res);
     }
-    
-	session.properties['authenticated'] = true;
-	session.properties['userID'] = 1;
 
 	return session;
 };
