@@ -34,8 +34,8 @@
 			<button ng-if="error" class="btn btn-sm btn-danger" ng-click="clearError()" title="{{error.detail}}">
 				{{error.message}} &nbsp;|&nbsp; X
 			</button>
-			<div ng-if="!authenticated">
-				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>
+			<div ng-if="!authenticated" class="login-form">
+				<p><em>You're in trouble, program. Why don't you make it easy on yourself?<br/>Who's your user?</em></p>
 				<input type="email" class="form-control input-sm" placeholder="Email" ng-model="loginForm.email" ng-keyup="$event.keyCode == 13 && login()">
 				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="loginForm.password" ng-keyup="$event.keyCode == 13 && login()">
 				{{loginEmail}}

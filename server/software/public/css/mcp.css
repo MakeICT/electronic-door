@@ -24,14 +24,10 @@ h1 img {
 	top: 0;
 }
 
-#login-form {
+.login-form {
 	margin: auto;
-	width: 20em;
+	max-width: 500px;
 	text-align: center;
-}
-
-#login-form input {
-	max-width: 540px;
 }
 
 th, td {
