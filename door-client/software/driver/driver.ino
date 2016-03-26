@@ -178,7 +178,7 @@ void loop(void) {
 void CheckReader()  {
   LOG_DUMP(F("Checking NFC Reader\r\n"));
   //check for NFC card
-  uint8_t uid[7];
+  uint8_t uid[7] = {0};
   uint8_t id_length;
   if(card_reader.poll(uid, &id_length))  {
     superSerial.QueueMessage(F_SEND_ID, uid, 7);
