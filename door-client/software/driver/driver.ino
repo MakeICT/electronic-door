@@ -155,6 +155,9 @@ void loop(void) {
     {
       speaker.Update();
       status_ring.Update();
+      if (!doorState && !door_latch.HoldingOpen() )  {
+        door_latch.Lock();
+      }
       door_latch.Update();
     }
 

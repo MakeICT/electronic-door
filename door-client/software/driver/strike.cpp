@@ -9,13 +9,21 @@ Strike::Strike(byte sPin)  {
 void Strike::Lock()  {
   analogWrite(strikePin, 0);
   this->locked = true;
+  this->holdingOpen = false;
 }
 
 void Strike::Unlock(uint16_t duration)  {
+  if (duration == 0)  {
+    this->holdingOpen = true;
+  }
   unlockTime = millis();
   unlockDuration = duration;
   analogWrite(strikePin, 1023);
   this->locked = false;
+}
+
+bool Strike::HoldingOpen()  {
+  return this->holdingOpen;
 }
 
 void Strike::Update()  {
