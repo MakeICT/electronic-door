@@ -42,7 +42,6 @@ function SerialClient(clientInfo){
 	};
 	
 	this.ackReceived = function(){
-		//backend.debug('ACK received for client(' + this.info.clientID + ') transaction(' + this.lastPacket.packet[1] + ') action(' + this.lastPacket.packet[4] + ')');
 		clearTimeout(this.responseTimeout);
 		this.waitingForAck = false;
 		this.lastPacket = null;
@@ -60,28 +59,33 @@ function SerialClient(clientInfo){
 		
 		var self = this;
 		backend.getPluginOptions(module.exports.name, function(settings){
-			var doTimeoutAction = function(){
-				if(settings['Timeout']){
-					var packetTimeout = function(){
-						if(settings['Max retries'] == undefined || self.retries < settings['Max retries']){
-							backend.debug('resending');
-							if(!self.lastPacket) return;
-							_sendPacket(self.lastPacket.packet, doTimeoutAction);
-							self.retries++;
-							backend.debug('packet timeout ' + self.retries + ' / ' + settings['Max retries']);
-						}else{
-							self.retries = 0;
-							self.waitingForAck = false;
-							self.lastPacket = null;
-							self.deque();
-							backend.debug('packet timeout but no retries left');
-						}
-					};
-					self.responseTimeout = setTimeout(packetTimeout, settings['Timeout']);
-				}
+			var timeout = 0+settings['Timeout'];
+			var clearTimeoutAction = function(){
+				clearTimeout(self.responseTimeout);
 			};
 			
-			_sendPacket(self.lastPacket.packet, doTimeoutAction);
+			var doTimeoutAction = function(){
+				var packetTimeout = function(){
+					if(settings['Max retries'] == undefined || self.retries < settings['Max retries']){
+						backend.debug('resending');
+						if(!self.lastPacket) return;
+						_sendPacket(self.lastPacket.packet, clearTimeoutAction);
+						doTimeoutAction();
+						self.retries++;
+						backend.debug('packet timeout ' + self.retries + ' / ' + settings['Max retries']);
+					}else{
+						self.retries = 0;
+						self.waitingForAck = false;
+						self.lastPacket = null;
+						packetToValidate = null;
+						backend.debug('packet timeout but no retries left');
+						self.deque();
+					}
+				};
+				self.responseTimeout = setTimeout(packetTimeout, timeout);
+			};
+			_sendPacket(self.lastPacket.packet, clearTimeoutAction);
+			doTimeoutAction();
 		});
 	};
 }
@@ -114,16 +118,11 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 		
 		validationCallback = callback;
 		packetToValidate = packet;
-		serialPort.write(packet, function(error, results){			
+		serialPort.write(packet, function(error, results){
 			if(error){
 				backend.error('Packet write error');
 				backend.error(error);
 			}else{
-				var validationFailure = function(){
-					backend.error('Packet write fail. Reconnecting super serial...');
-					module.exports.reconnect();
-				};
-				packetValidationTimer = setTimeout(validationFailure, 200);
 				backend.debug('Wrote packet   : ' + packet);
 				if(readWriteToggle){
 					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
@@ -195,70 +194,70 @@ function onData(data){
 
 				// We have a full packet. Let's process it :)
 				backend.debug('Incoming packet: ' + dataBuffer);
-				var packet = {
-					'transactionID': unescapedPacket[1],
-					'from': unescapedPacket[2],
-					'to': unescapedPacket[3],
-					'function': unescapedPacket[4],
-					'data': unescapedPacket.slice(6, 6+unescapedPacket[5]),
-				};
-				var computedCRC = crc.crc16modbus(unescapedPacket.slice(1, 6+unescapedPacket[5]));
-				var incomingCRC = (unescapedPacket[6+unescapedPacket[5]]<<8) + unescapedPacket[7+unescapedPacket[5]];
-				if(computedCRC == incomingCRC){
-					if(packetToValidate){
-						if(packetToValidate.toString() == dataBuffer.toString()){
-							clearTimeout(packetValidationTimer);
-							clearTimeout(invalidPacketResendTimer);
-							backend.debug('=============================');
-							backend.debug('Packet written cleanly');
-							backend.debug('=============================');
-							// the validation callback is the timer to start listening for an ack
-							if(validationCallback) validationCallback();
-							
-							packetToValidate = null;
-							retryDelay = 100;
-							// start timeout for ack
-						}else{
-							backend.debug('=============================');
-							backend.debug('Packet did not send correctly. Probable collision occurred');
-							backend.debug('Expected: ' + packetToValidate);
-							backend.debug('But read: ' + dataBuffer);
-							backend.debug('=============================');
-							invalidPacketResendTimer = setTimeout(
-								function(){
-									backend.debug("Resending collision packet");
-									_sendPacket(packetToValidate);
-								},
-								retryDelay + Math.random() * 100
-							);
-							retryDelay *= 2;
-						}
-					}else if(packet.function == ACK){
+				if(packetToValidate){
+					clearTimeout(packetValidationTimer);
+					clearTimeout(invalidPacketResendTimer);
+					if(packetToValidate.toString() == dataBuffer.toString() || false){
 						backend.debug('=============================');
-						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
+						backend.debug('Packet written cleanly');
 						backend.debug('=============================');
-						clients[packet.from].ackReceived();
-					}else if(packet.function == NAK){
-						// resend last packet to this client
-						_sendPacket(clients[packet.from].lastPacket.packet);
+						// the validation callback is the timer to start listening for an ack
+						if(validationCallback) validationCallback();
+						
+						packetToValidate = null;
+						retryDelay = 100;
+						// start timeout for ack
 					}else{
 						backend.debug('=============================');
-						backend.debug(" Received : " + dataBuffer);
-						backend.debug("Unescaped : " + unescapedPacket);
-						backend.debug("       ID : " + packet.transactionID);
-						backend.debug("     From : " + packet.from);
-						backend.debug("       To : " + packet.to);
-						backend.debug(" Function : " + packet.function);
-						backend.debug("     Data : " + packet.data);
+						backend.debug('Packet did not send correctly. Probable collision occurred');
+						backend.debug('Expected: ' + packetToValidate);
+						backend.debug('But read: ' + dataBuffer);
 						backend.debug('=============================');
-						_sendPacket(buildPacket(packet.from, ACK));
-						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+						invalidPacketResendTimer = setTimeout(
+							function(){
+								backend.debug("Not resending collisinon packet");
+//								backend.debug("Resending collision packet");
+//								_sendPacket(packetToValidate);
+							},
+							retryDelay + Math.random() * 100
+						);
+						retryDelay *= 2;
 					}
 				}else{
-					backend.debug('=============================');
-					backend.debug("Bad CRC " + incomingCRC + ", computed = " + computedCRC);
-					backend.debug(dataBuffer.toString());
-					backend.debug('=============================');
+					var packet = {
+						'transactionID': unescapedPacket[1],
+						'from': unescapedPacket[2],
+						'to': unescapedPacket[3],
+						'function': unescapedPacket[4],
+						'data': unescapedPacket.slice(6, 6+unescapedPacket[5]),
+					};
+					var computedCRC = crc.crc16modbus(unescapedPacket.slice(1, 6+unescapedPacket[5]));
+					var incomingCRC = (unescapedPacket[6+unescapedPacket[5]]<<8) + unescapedPacket[7+unescapedPacket[5]];
+					if(computedCRC == incomingCRC){
+						if(packet.function == ACK){
+							backend.debug('=============================');
+							backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
+							backend.debug('=============================');
+							clients[packet.from].ackReceived();
+						}else{
+							backend.debug('=============================');
+							backend.debug(" Received : " + dataBuffer);
+							backend.debug("Unescaped : " + unescapedPacket);
+							backend.debug("       ID : " + packet.transactionID);
+							backend.debug("     From : " + packet.from);
+							backend.debug("       To : " + packet.to);
+							backend.debug(" Function : " + packet.function);
+							backend.debug("     Data : " + packet.data);
+							backend.debug('=============================');
+							_sendPacket(buildPacket(packet.from, ACK));
+							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+						}
+					}else{
+						backend.debug('=============================');
+						backend.debug("Bad CRC " + incomingCRC + ", computed = " + computedCRC);
+						backend.debug(dataBuffer.toString());
+						backend.debug('=============================');
+					}
 				}
 				dataBuffer = [];
 			}
