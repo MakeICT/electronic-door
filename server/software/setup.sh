@@ -60,23 +60,29 @@ read -p "Install and enable service [Y/n]: " response
 if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	f=master-control-program.service
 	sudo systemctl disable 'master-control-program' > /dev/null 2>&1
-	echo "" > $f
-	echo "[Unit]" >> $f
-	echo "Description=Master Control Program" >> $f
-    echo "" >> $f
-	echo "[Service]" >> $f
-	echo "Type=oneshot" >> $f
-	echo "ExecStart=/usr/local/bin/node /home/pi/code/elecronicdoor/server/software/server-app.js" >> $f
-	echo "WorkingDirectory=`pwd`"
-    echo "" >> $f
-	echo "[Install]" >> $f
-	echo "WantedBy=multi-user.target" >> $f
-    echo "" >> $f
+	echo "
+		[Unit]
+		Description=Master Control Program
+		
+		[Service]
+		ExecStart=`which node` `pwd`/server-app.js
+		WorkingDirectory=`pwd`
+		Restart=always
+		StandardInput=tty
+		StandardOutput=tty
+		TTYPath=/dev/tty1
+		TTYReset=yes
 
-	sudo systemctl enable `pwd`/$f
+		[Install]
+		WantedBy=multi-user.target
+	" | awk '{$1=$1};1' > $f
+
+	sudo systemctl enable $f
+	echo ""
+	echo "    To start the service, use"
+	echo "        sudo systemctl start $f"
+	echo "    or reboot"
+	echo "    To run manually, use"
+	echo "        sudo node ./server-app.js"
 fi
-
-echo ""
 echo "Done!"
-echo "    To start the service, use 'sudo systemctl start master-control-program"
-echo "    To run manually,      use 'sudo node ./server-app.js'"
