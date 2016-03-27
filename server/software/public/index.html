@@ -27,15 +27,16 @@
 
 	<body>
 		<div ng-controller="controller">
-			<h1 style="text-align:center"><img src="/images/logo-header.svg" alt="MakeICT" /></h1>
+			<div class="header"></div>
+			
 			<div ng-if="authenticated" id="status-header">
 				[ <a href="/logout">Logout</a> ]
 			</div>
 			<button ng-if="error" class="btn btn-sm btn-danger" ng-click="clearError()" title="{{error.detail}}">
 				{{error.message}} &nbsp;|&nbsp; X
 			</button>
-			<div ng-if="!authenticated">
-				<p><em></em>You're in trouble, program. Why don't you make it easy on yourself? Who's your user?</em></p>
+			<div ng-if="!authenticated" class="login-form">
+				<p><em>You're in trouble, program. Why don't you make it easy on yourself?<br/>Who's your user?</em></p>
 				<input type="email" class="form-control input-sm" placeholder="Email" ng-model="loginForm.email" ng-keyup="$event.keyCode == 13 && login()">
 				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="loginForm.password" ng-keyup="$event.keyCode == 13 && login()">
 				{{loginEmail}}
@@ -45,7 +46,7 @@
 				<uib-tabset>
 					<uib-tab heading="Users" active="tabs.users.active" select="setLocation('users');">
 						<h2>Users</h2>
-						Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 500}"/>
+						Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 1500}"/>
 						<div style="margin-top: 0.5em;">
 							<span class="btn-group">
 								<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
@@ -141,7 +142,7 @@
 											<th>Password reset</th>
 											<td>
 												<form class="form-inline">
-													<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 500}" ng-model="user.password"/>
+													<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password"/>
 													<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
 												</form>
 											</td>
@@ -214,7 +215,7 @@
 										</tr>
 										<tr ng-repeat="option in plugin.options">
 											<td>{{option.name}}</td>
-											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1000}"/></td>
+											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}"/></td>
 										</tr>
 										<tr>
 											<td colspan="2" class="client-plugin-actions">
@@ -262,7 +263,7 @@
 								<table>
 									<tr ng-repeat="option in plugin.options">
 										<td>{{option.name}}</td>
-										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 500}"></td>
+										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}"></td>
 									</tr>
 								</table><br/>
 								<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
