@@ -68,16 +68,12 @@ if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 		ExecStart=`which node` `pwd`/server-app.js
 		WorkingDirectory=`pwd`
 		Restart=always
-		StandardInput=tty
-		StandardOutput=tty
-		TTYPath=/dev/tty1
-		TTYReset=yes
 
 		[Install]
 		WantedBy=multi-user.target
 	" | awk '{$1=$1};1' > $f
 
-	sudo systemctl enable $f
+	sudo systemctl enable `pwd`/$f
 	echo ""
 	echo "    To start the service, use"
 	echo "        sudo systemctl start $f"
