@@ -135,11 +135,10 @@ module.exports = {
 										});
 									};
 									
-									if(user.userID){
-										backend.updateUser(user, updateGroups);
-									}else{
+									if(!user.userID){
 										backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
 									}
+									backend.updateUser(user, updateGroups);
 								},
 							};
 							backend.getUserByProxyID('WildApricot', contact.Id, transaction);
