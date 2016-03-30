@@ -8,6 +8,18 @@ var child_process = require('child_process');
 var readline = require('readline');
 var google = require('googleapis');
 
+
+function buildAuthClient(callback){
+	backend.getPluginOptions(module.exports.name, function(settings){
+		var redirectURI = 'https://localhost/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
+		var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
+		if(settings['Token']){
+			oauth2Client.setCredentials(JSON.parse(settings['Token']));
+		}
+		callback(oauth2Client);
+	});
+}
+
 module.exports = {
 	name: 'Google Drive Backup',
 	
@@ -32,38 +44,31 @@ module.exports = {
 	actions: {
 		'Authorize': function(session){
 			backend.debug('Authorizing with Google');
-			
-			backend.getPluginOptions(module.exports.name, function(settings){
-				var redirectURI = 'https://localhost/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
-				var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
-				
+
+			buildAuthClient(function(oauth2Client){
 				var url = oauth2Client.generateAuthUrl({
-					access_type: 'online',
+					access_type: 'offline',
 					scope: 'https://www.googleapis.com/auth/drive',
 				});
 				
 				if(session){
 					session.response.send({'url' : url});
-				}else{
-					console.log('no session');
 				}
 			});
 		},
+		'De-authorize': function(session){
+			backend.debug('De-authorizing Google Drive Backup plugin from Google API');
+			backend.setPluginOption(module.exports.name, 'Token', null);
+		},
 		
 		'Backup Now': function(){
-			backend.getPluginOptions('Google Drive Backup', function(settings){
-				backend.debug('Backing up...');
-				var redirectURI = 'https://localhost/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
-				var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
-				var token = oauth2Client.getToken(settings['Token'], function(err, tokens){
-					if(err){
-						backend.error('Google auth error');
-						backend.error(err);
+			buildAuthClient(function(oauth2Client){				
+				backend.getPluginOptions(module.exports.name, function(settings){
+					if(!settings['Token']){
+						backend.error('Not authorized with Google yet');
 						return;
 					}
-					
-					backend.debug('credentials received' + tokens);
-					oauth2Client.setCredentials(tokens);
+					backend.log('Backup started');
 				
 					tmp.file(function(err, tmpFilePath, fd, cleanupCallback){
 						var options = {
@@ -85,7 +90,9 @@ module.exports = {
 								zipProc.stdin.end();
 								
 								var drive = google.drive({ version: 'v2'});
-								var filename = (new Date()).toISOString().replace(/T/, '_').replace(/:/g, '').substring(0,17);
+								var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+								var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0,-1);
+								var filename = localISOTime.replace(/T/, '_').replace(/:/g, '-').substring(0,19);
 								
 								backend.debug('Uploading...');
 								drive.files.insert({
@@ -125,7 +132,19 @@ module.exports = {
 	
 	handleRequest: function(request, response){
 		backend.debug('Received google authorization token');
-		backend.setPluginOption('Google Drive Backup', 'Token', request.params.code);
+		backend.getPluginOptions(module.exports.name, function(settings){
+			buildAuthClient(function(oauth2Client){
+				oauth2Client.getToken(request.params.code, function(err, tokens){
+					if(err){
+						backend.error('Google auth error');
+						backend.error(err);
+						return;
+					}
+					backend.setPluginOption(module.exports.name, 'Token', tokens);
+				});
+			});
+		});
+		
 		response.write('<html><script>window.close();</script><html>');
 	}
 };
