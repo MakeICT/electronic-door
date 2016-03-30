@@ -24,6 +24,8 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				};
 			}
 			return false;
+		}else if(response.url){
+			window.open(response.url);
 		}
 		return true;
 	};
