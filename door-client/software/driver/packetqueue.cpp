@@ -83,16 +83,19 @@ uint16_t Packet::ComputeCRC()  {
   return crc;
 }
 
-void Packet::SetCRC(uint16_t crc)  {
-  this->crc = crc;
-}
-
 bool Packet::VerifyCRC()  {
-  return true;
-  if (this->CRC() == this->ComputeCRC())
+  LOG_DUMP(F("Checking CRC\r\n"));
+  LOG_DUMP(F("Packet CRC: "));
+  LOG_DUMP(this->CRC());
+  LOG_DUMP(F("\r\n"));
+  if (this->CRC() == this->ComputeCRC())  {
+    //LOG_DEBUG(F("CRC verified\r\n"));   //THIS CODE CAUSES CRASH??!!??
     return true;
-  else
+  }
+  else {
+    //LOG_ERROR(F("CRC incorrect!\r\n"));
     return false;
+  }
 }
 
 //Calculate number of bytes in the packet that need escaping
@@ -173,6 +176,11 @@ void Packet::SetDestAddr(byte addr)  {
 void Packet::SetTransID(byte transID)  {
   this->transactionID = transID;
 }
+
+void Packet::SetCRC(uint16_t crc)  {
+  this->crc = crc;
+}
+
 /*==========( Get Functions )==========*/
 Message Packet::Msg()  {
   return this->message;
@@ -191,7 +199,7 @@ byte Packet::TransID()  {
 }
 
 uint16_t Packet::CRC()  {
-  return crc;
+  return this->crc;
 }
 
 byte Packet::Size()  {

@@ -10,6 +10,10 @@ SuperSerial::SuperSerial (rs485* b, byte addr) {
   this->responsePacket.SetDestAddr(ADDR_MASTER);
   this->responsePacket.SetSrcAddr(this->deviceAddress);
   this->currentTransaction = 124;
+  
+  //TODO: make this configurable
+  this->retryTimeout = 100;
+  this->maxRetries = 3;
 }
 
 void SuperSerial::SetDebugPort(SoftwareSerial* port)  {
@@ -33,6 +37,18 @@ bool SuperSerial::DataQueued()  {
 void SuperSerial::Update()  {
   LOG_DUMP(F("SuperSerial::Update()\r\n"));
   this->GetPacket();
+  if (this->dataQueued && millis() - this->lastPacketSend > this->retryTimeout)  {
+    if (this->retryCount < this->maxRetries)  {  
+      LOG_DEBUG(F("Timed out waiting for response: resending last packet\r\n"));
+      this->retryCount++;
+      this->SendPacket(&queuedPacket);
+    }
+    else  {
+      LOG_ERROR(F("Failed to receive response after max retries\r\n"));
+      this->retryCount = 0;
+      this->dataQueued = false;
+    }
+  }
   //TODO: check if any messages have failed to send
 }
 
@@ -79,36 +95,44 @@ bool SuperSerial::GetPacket() {
             this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
           LOG_DEBUG(F("Verifying new packet\r\n"));
           if (receivedPacket.VerifyCRC())  {    //verify CRC
+            LOG_DEBUG(F("CRC verified\r\n"));
             this->currentTransaction = receivedPacket.TransID();
-            if (dataBuffer[3] == F_GET_UPDATE)   {
-              if (this->DataQueued())  {
-                LOG_INFO(F("Sending Update\r\n"));
-                this->SendPacket(&this->queuedPacket);
-              }
-              else  {
-                LOG_DEBUG(F("Sending NOP\r\n"));
-                this->SendNOP(this->receivedPacket.TransID());
-              }
-              return false;
-            }
-            this->newMessage = true;
             LOG_INFO(F("Got valid packet\r\n"));
             if ( this->receivedPacket.Msg().function == F_NAK)  {
-              LOG_DEBUG(F("Received NAK"));
-              //TODO: resend last packet
+              LOG_DEBUG(F("Received NAK\r\n"));
+              this->SendPacket(&queuedPacket);
             }
             else if (this->receivedPacket.Msg().function == F_ACK)  {
-              LOG_DEBUG(F("Received ACK"));
-              //this->dataQueued = false;   //TODO:  this should go here-ish
+              LOG_DEBUG(F("Received ACK\r\n"));
+              if (this->receivedPacket.TransID() == currentTransaction)  {
+                this->dataQueued = false;   //TODO:  this should go here-ish
+                this->retryCount = 0;
+              }
+              else
+              {
+                LOG_ERROR(F("Received ack for non-current transaction"));
+              }
             }
             else  {
               LOG_DEBUG(F("Sending ACK.\r\n"));
               SendACK(this->receivedPacket.TransID());
+              
+              this->newMessage = true;
+              
+              #if LOG_LEVEL > 3
+              LOG_DEBUG(F("Received: "));
+              for (int i = 0; i < bufferIndex; i++)  {
+                LOG_DEBUG(dataBuffer[i]);
+                LOG_DEBUG(F(" "));
+              }
+              LOG_DEBUG(F("\r\n"));
+              #endif
+              
               return true;
             }
           }
           else  {
-            LOG_DEBUG(F("Received invalid packet.\r\n"));
+            LOG_ERROR(F("CRC does not match\r\n"));
             LOG_DEBUG(F("Sending NAK.\r\n"));
             SendNAK(0);
           }
@@ -132,6 +156,14 @@ bool SuperSerial::GetPacket() {
       escaping = false;
     }
   }
+  #if LOG_LEVEL > 3
+  LOG_DEBUG(F("Received: "));
+  for (int i = 0; i < bufferIndex; i++)  {
+    LOG_DEBUG(dataBuffer[i]);
+    LOG_DEBUG(F(" "));
+  }
+  LOG_DEBUG(F("\r\n"));
+  #endif
   return false;
 }
 
@@ -145,7 +177,6 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
   this->dataQueued = true;
   if (!bus->QueueFull())  {
     this->SendPacket(&queuedPacket);
-    this->dataQueued = false;
   }
 }
 
@@ -160,7 +191,7 @@ void SuperSerial::SendPacket(Packet* p)  {
   p->ToEscapedArray(array);
 
   bus->Queue(array, p->EscapedSize());
-  this->dataQueued = false;
+  this->lastPacketSend = millis();
 }
 
 inline void SuperSerial::SendControl(byte function, byte transID)  {

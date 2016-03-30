@@ -75,8 +75,10 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
 {
   // Look for new cards
   if (mfrc522.PICC_IsNewCardPresent())  {
+    LOG_DEBUG(F("New NFC card detected\r\n"));
     // Select one of the cards
     if (mfrc522.PICC_ReadCardSerial())  {
+      LOG_DEBUG(F("Successfully read card serial\r\n"));
       // Show some details of the PICC (that is: the tag/card)
       for (byte i = 0; i < mfrc522.uid.size; i++) {
         uid[i] = mfrc522.uid.uidByte[i];
@@ -85,7 +87,20 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
       //byte piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
       return 1;
     }
+    else  {
+      LOG_ERROR(F("Failed to read card UID!\r\n"));
+    }
   }
+  else  {
+    //~ LOG_DEBUG(F("No card detected, trying alternate read code\r\n"));
+    //~ byte bufferATQA[2];
+    //~ byte bufferSize = sizeof(bufferATQA);
+    //~ byte result = mfrc522.PICC_RequestA(bufferATQA, &bufferSize);
+    //~ LOG_DEBUG(F("Read returned status code: "));
+    //~ LOG_DEBUG(result);
+    //~ LOG_DEBUG(F("\r\n"));
+  }
+  return 0;
 }
 #endif
  

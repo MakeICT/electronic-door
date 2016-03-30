@@ -2,7 +2,7 @@
 #define DISPLAY_H
 
 #include <Arduino.h>
-#include <LiquidCrystal.h>
+#include <SoftwareSerial.h>
 
 //Pin definitions
 
@@ -10,7 +10,17 @@ class LCD
 {
   public:
     LCD();
-    void print(uint8_t, uint8_t, char[]);
+    void SendCommand(uint8_t command);
+    void Print(char* text);
+    void Home();
+    void On();
+    void Off();
+    void Clear();
+    void SetCursor(uint8_t pos);
+    void SetBAUD(uint8_t baud);
+    void SetContrast(uint8_t contrast);
+    void SetBacklight(uint8_t brightness);
 };
+
 
 #endif

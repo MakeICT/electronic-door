@@ -26,15 +26,21 @@
 
 // Pin assignments
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
-#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module-
+#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
+#define LCD_SERIAL_TX     4       // Serial data for LCD
 #define LATCH_PIN         5       // Digital pin to trigger door strike circuit
-#define SSerialRX         6       // Serial Receive pin
-#define SSerialTX         7       // Serial Transmit pin
+#define SSerialRX         6       // Debug Serial Receive pin
+#define SSerialTX         7       // Debug Serial Transmit pin
 #define SSerialTxControl  8       // RS485 Direction control
 #define SPEAKER_PIN       9       // Tone generation pin
 #define PN532_SS_PIN      10      // SPI Slave Select pin
-#define DOOR_SWITCH_PIN   A0      // Magnetic switch on door
-#define ALARM_BUTTON_PIN  A1      // Big button to arm the alarm
+#define NFC_SPI_1         11      // Reserved for hardware SPI for NFC reader
+#define NFC_SPI_2         12      // Reserved for hardware SPI for NFC reader
+#define NFC_SPI_3         13      // Reserved for hardware SPI for NFC reader
+#define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
+#define DOOR_SWITCH_PIN   15      // Magnetic switch on door
+#define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
+
 
 // Constants for audio playback
 #define USER_TUNE_LENGTH    30      // Max number of notes in entry melody
@@ -47,6 +53,8 @@
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
 #define COLOR_IDLE          0,100,120
 #define COLOR_SUCCESS       0,60,20
+#define COLOR_FAILURE       60,20,0
+#define COLOR_WAITING       120,120,20
 #define COLOR_ERROR         50,20,0
 #define COLOR_BACKGROUND    0,20,50
 #define COLOR               Adafruit_NeoPixel::Color
@@ -66,7 +74,7 @@ rs485 bus(SSerialTxControl);
 SuperSerial superSerial(&bus, 0x01);
 
 Ring status_ring(RING_PIN, NUMPIXELS);
-//LCD readout;
+LCD readout;
 Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
 Config conf;
@@ -109,7 +117,7 @@ void setup(void) {
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
-  //readout.print(0,0, "Initializing...");
+  readout.Print("Try Me! :)");
   if(!card_reader.start())  {
     //readout.print(0,1,"ERROR: NFC");
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
@@ -153,6 +161,9 @@ void loop(void) {
     {
       speaker.Update();
       status_ring.Update();
+      if (!doorState && !door_latch.HoldingOpen() )  {
+        door_latch.Lock();
+      }
       door_latch.Update();
     }
 
@@ -173,7 +184,7 @@ void loop(void) {
 void CheckReader()  {
   LOG_DUMP(F("Checking NFC Reader\r\n"));
   //check for NFC card
-  uint8_t uid[7];
+  uint8_t uid[7] = {0};
   uint8_t id_length;
   if(card_reader.poll(uid, &id_length))  {
     superSerial.QueueMessage(F_SEND_ID, uid, 7);
@@ -188,11 +199,7 @@ void CheckReader()  {
     }
     LOG_INFO(F("\r\n"));
     #endif
-    
-    //TEMPORARY TEST CODE
-    status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
-    //door_latch.Unlock(3000);
-    speaker.Play(startTune, startTuneDurations, 8);
+    status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), 0, 3000);
   }
 }
 
@@ -211,9 +218,19 @@ void ProcessMessage()  {
       conf.SaveAddress(msg.payload[0]);
       state = S_READY;
       break;
+      
+    case F_DENY_CARD:
+      LOG_INFO(F("Card Denied\r\n"));
+      status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE), 200, 3000);
+      break;
+      
     case F_UNLOCK_DOOR:
       LOG_INFO(F("Unlock Door\r\n"));
       door_latch.Unlock(msg.payload[0] * 1000);
+          
+      //TEMPORARY TEST CODE
+      status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
+      speaker.Play(startTune, startTuneDurations, 8);
       break;
     case F_LOCK_DOOR:
       LOG_INFO(F("Lock Door\r\n"));
