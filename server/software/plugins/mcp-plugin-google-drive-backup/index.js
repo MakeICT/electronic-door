@@ -8,13 +8,12 @@ var child_process = require('child_process');
 var readline = require('readline');
 var google = require('googleapis');
 
-
 function buildAuthClient(callback){
 	backend.getPluginOptions(module.exports.name, function(settings){
-		var redirectURI = 'https://localhost/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
+		var redirectURI = 'https://' + settings['hostname'] + '/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
 		var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
-		if(settings['Token']){
-			oauth2Client.setCredentials(JSON.parse(settings['Token']));
+		if(settings['token']){
+			oauth2Client.setCredentials(JSON.parse(settings['token']));
 		}
 		callback(oauth2Client);
 	});
@@ -29,12 +28,13 @@ module.exports = {
 		'Client ID': 'text',
 		'Client secret': 'password',
 		'Folder ID': 'text',
-		'Token': 'hidden',
+		'token': 'hidden',
+		'hostname': 'hidden',
 	},
 
 	onEnable: function(session){
 		backend.getPluginOptions(module.exports.name, function(settings){
-			if(!settings['Token']){
+			if(!settings['token'] && session){
 				module.exports.actions.Authorize(session);
 			}
 		});
@@ -44,7 +44,9 @@ module.exports = {
 	actions: {
 		'Authorize': function(session){
 			backend.debug('Authorizing with Google');
-
+			if(session){
+				backend.setPluginOption(module.exports.name, 'hostname', session.request.headers.host);
+			}
 			buildAuthClient(function(oauth2Client){
 				var url = oauth2Client.generateAuthUrl({
 					access_type: 'offline',
@@ -58,13 +60,13 @@ module.exports = {
 		},
 		'De-authorize': function(session){
 			backend.debug('De-authorizing Google Drive Backup plugin from Google API');
-			backend.setPluginOption(module.exports.name, 'Token', null);
+			backend.setPluginOption(module.exports.name, 'token', null);
 		},
 		
 		'Backup Now': function(){
 			buildAuthClient(function(oauth2Client){				
 				backend.getPluginOptions(module.exports.name, function(settings){
-					if(!settings['Token']){
+					if(!settings['token']){
 						backend.error('Not authorized with Google yet');
 						return;
 					}
@@ -140,7 +142,7 @@ module.exports = {
 						backend.error(err);
 						return;
 					}
-					backend.setPluginOption(module.exports.name, 'Token', tokens);
+					backend.setPluginOption(module.exports.name, 'token', tokens);
 				});
 			});
 		});
