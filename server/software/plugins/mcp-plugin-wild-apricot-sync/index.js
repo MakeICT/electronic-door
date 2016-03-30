@@ -69,17 +69,9 @@ var api = {
 	},
 
 
-	get: function(url, data, next){
-		return this.send(url, 'GET', data, next);
-	},
-
-	put: function(url, data, next){
-		return this.send(url, 'PUT', data, next);
-	},
-
-	post: function(url, data, next){
-		return this.send(url, 'POST', data, next);
-	}
+	get: function(url, data, next){ return this.send(url, 'GET', data, next); },
+	put: function(url, data, next){ return this.send(url, 'PUT', data, next); },
+	post: function(url, data, next){ return this.send(url, 'POST', data, next); }
 };
 
 
@@ -94,40 +86,59 @@ module.exports = {
 		'Sync Now': function(){
 			backend.log('Starting WildApricot sync...');
 			backend.getPluginOptions(this.name, function(settings){
+				backend.log('Connecting to WildApricot...');
 				api.connect(function(token){
+					backend.log('Downloading contacts...');
 					api.get('contacts?$async=false', null, function(data){
-						var contacts = JSON.parse(data)['Contacts'];
-
-						var contacts = JSON.parse(data)['Contacts'];
+						data = JSON.parse(data);
+						if(!data || !data['Contacts'] || data['reason']){
+							data = doThatThing();
+						}
+						var contacts = data['Contacts'];
+						
 						for(var i=0; i<contacts.length; i++){
 							var contact = contacts[i];
 							
 							var transaction = {
-								newContact: contact,
-								
-								applyNewDetails: function(user){
+								data: contact,
+								callback: function(user){
 									if(!user) user = {};
-									
-									user.firstName = this.newContact.FirstName;
-									user.lastName = this.newContact.LastName;
-									user.email = this.newContact.Email;
-									user.status = (this.newContact.Status == 'Active') ? 'active' : 'inactive'
-									for(var j=0; j<this.newContact.FieldValues; j++){
-										if(this.newContact.FieldValues[j].FieldName == 'Member since'){
-											user.joinDate = this.newContact.FieldValues[j].Value;
-											break;
-										}
+									user.firstName = this.data.FirstName;
+									user.lastName = this.data.LastName;
+									user.email = this.data.Email;
+									user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
+
+									for(var j=0; j<this.data.FieldValues.length; j++){
+										this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
 									}
+									user.joinDate = this.data['Member since'];
+									user.joinDate = 0;
 									
-									return user;
-								},
-								
-								addUser: function(){
-									backend.addProxyUser('WildApricot', this.newContact.Id, this.applyNewDetails());
-								},
-								
-								updateUser: function(user){
-									backend.updateUser(this.applyNewDetails(user));
+									var level = this.data['MembershipLevel']['Name'];
+									
+									var updateGroups = function(){
+										backend.getUserByEmail(user.email, function(user){
+											var newGroupName = "WA-Level: " + level;
+											backend.getUserGroups(user.userID, function(groups){
+												for(var i=0; i<groups.length; i++){
+													if(!groups.enrolled) continue;
+													var groupName = groups[i].name;
+													if(groupName.indexOf("WA-Level: ") == 0 && groupName != newGroupName){
+														backend.setGroupEnrollment(user.userID, groupName, false);
+													}
+												}
+											});
+											if(level){
+												var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
+												backend.addGroup(newGroupName, doEnrollment, doEnrollment);
+											}
+										});
+									};
+									
+									if(!user.userID){
+										backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
+									}
+									backend.updateUser(user, updateGroups);
 								},
 							};
 							backend.getUserByProxyID('WildApricot', contact.Id, transaction);

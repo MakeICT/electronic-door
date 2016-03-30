@@ -140,6 +140,8 @@ CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$2a$08$iV9ABq9Y9o87IKJVAWAa8OvWEU5KORp5b5SIgcfTvnCKlzK/5u28G', EXTRACT('epoch' FROM current_timestamp));
 INSERT INTO "groups" ("name") VALUES ('administrators');
 INSERT INTO "userGroups" ("userID", "groupID") ( SELECT "userID", "groupID"	FROM "users" JOIN "groups" ON 1=1);
+INSERT INTO "authorizationTags" ("name") VALUES ('mcp-web-admin');
+INSERT INTO "groupAuthorizationTags" ("groupID", "tagID") (SELECT "groupID", "tagID" FROM "authorizationTags" JOIN "groups" ON "authorizationTags".name = 'mcp-web-admin' AND groups.name = 'administrators');
 
 INSERT INTO users ("firstName", "lastName", "email", "status", "joinDate") VALUES 
 	('User 1', 'Test', 'test1@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp)),

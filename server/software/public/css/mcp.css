@@ -1,10 +1,20 @@
 body{
 	padding: 0.5em;
 	text-align: center;
+	overflow-y: scroll;
 }
 
-h1 img {
-	max-width: 100%;
+.header {
+	height: 200px;
+	background:url(/images/logo-header.svg);
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+#status-header {
+	position: absolute;
+	top: 0;
+	right: 0.5em;
 }
 
 .user-details th, .user-details td  {
@@ -19,19 +29,10 @@ h1 img {
 	text-align: left;
 }
 
-#status-header {
-	position: absolute;
-	top: 0;
-}
-
-#login-form {
+.login-form {
 	margin: auto;
-	width: 20em;
+	max-width: 500px;
 	text-align: center;
-}
-
-#login-form input {
-	max-width: 540px;
 }
 
 th, td {

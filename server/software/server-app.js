@@ -337,6 +337,6 @@ server.get(/.*/, restify.serveStatic({
 	default: 'index.html'
 }));
 
-server.listen(3000, function () {
+server.listen(443, function () {
 	backend.log(server.name + ' listening at ' + server.url);
 });

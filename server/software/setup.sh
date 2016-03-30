@@ -44,12 +44,41 @@ fi
 #############################
 # HTTPS cert and key
 #############################
-read -p "Generate new SSL cert and key [y/N]: " response
-if [ "Y" = "$response" ] || [ "y" = "$response" ]; then
+read -p "Generate new SSL cert and key [Y/n]: " response
+if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
 	mkdir credentials >/dev/null 2>&1
 	subj="/CN=mcp.makeict.org/O=MakeICT/C=US/ST=Kansas/L=Wichita/OU=IT"
 
 	openssl req -x509 -newkey rsa:2048 -keyout credentials/key.pem -out credentials/cert.pem -days XXX -nodes -subj $subj
+	openssl req -x509 -newkey rsa:2048 -keyout credentials/key.pem -out credentials/cert.pem -days XXX -nodes -subj $subj
 fi
-echo ""
-echo "Done! Use 'node ./server-app.js' to run"
+
+#############################
+# Enable service
+#############################
+read -p "Install and enable service [Y/n]: " response
+if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
+	f=master-control-program.service
+	sudo systemctl disable 'master-control-program' > /dev/null 2>&1
+	echo "
+		[Unit]
+		Description=Master Control Program
+		
+		[Service]
+		ExecStart=`which node` `pwd`/server-app.js
+		WorkingDirectory=`pwd`
+		Restart=always
+
+		[Install]
+		WantedBy=multi-user.target
+	" | awk '{$1=$1};1' > $f
+
+	sudo systemctl enable `pwd`/$f
+	echo ""
+	echo "    To start the service, use"
+	echo "        sudo systemctl start $f"
+	echo "    or reboot"
+	echo "    To run manually, use"
+	echo "        sudo node ./server-app.js"
+fi
+echo "Done!"
