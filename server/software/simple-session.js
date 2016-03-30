@@ -1,11 +1,11 @@
 // https://github.com/josephwegner/node-session
+var DEBUG = false;
 
 var sessions = {};
 
 var start = function(req, res) {
     var conn = { res: res, req: req };
     var cookies = {};
-    
     if(typeof conn.req.headers.cookie !== "undefined") {
         conn.req.headers.cookie.split(';').forEach(function( cookie ) {
             var parts = cookie.split('=');
@@ -15,8 +15,7 @@ var start = function(req, res) {
         cookies.SESSID = 0;
     }
     
-    var SESSID = cookies.SESSID;//Get current SESSID
-    
+    var SESSID = cookies.SESSID;
     var session;
     if(typeof sessions[SESSID] !== "undefined") {
         session = sessions[SESSID];
@@ -31,10 +30,20 @@ var start = function(req, res) {
             session = sessions[SESSID];
             session.expires = dt;//Reset session expiration
         }
-    } else {
+    } else if(conn.res){
         session = newSession(conn.res);
     }
-
+    
+    if(session){
+		session.request = req;
+		session.response = res;
+		session.properties['ioSocketID'] = cookies.io;
+	}
+	
+	if(DEBUG){
+		session.properties['authenticated'] = true;
+		session.properties['userID'] = 1;
+	}
 	return session;
 };
 

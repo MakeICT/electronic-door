@@ -86,9 +86,9 @@ module.exports = {
 		'Sync Now': function(){
 			backend.log('Starting WildApricot sync...');
 			backend.getPluginOptions(this.name, function(settings){
-				backend.log('Connecting to WildApricot...');
+				backend.debug('Connecting to WildApricot...');
 				api.connect(function(token){
-					backend.log('Downloading contacts...');
+					backend.debug('Downloading contacts...');
 					api.get('contacts?$async=false', null, function(data){
 						data = JSON.parse(data);
 						if(!data || !data['Contacts'] || data['reason']){

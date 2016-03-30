@@ -173,11 +173,11 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 			plugin.name,
 			function(){
 				if(request.params.value){
-					plugin.onEnable();
+					plugin.onEnable(session);
 				}else{
-					plugin.onDisable();
+					plugin.onDisable(session);
 				}
-				response.send();
+//				response.send();
 			},
 			function(error){
 				response.send(error.detail);
@@ -203,7 +203,35 @@ server.get('/plugins/:name/options', function (request, response, next) {
 	return next();
 });
 
+server.get('/plugins/:plugin/handler', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		var plugin = backend.getPluginByName(request.params.plugin);
+		plugin.handleRequest(request, response);
+		next();
+	}
+		
+	return next();
+});
+
 server.put('/plugins/:plugin/options/:option', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.setPluginOption(
+			request.params.plugin, request.params.option, request.params.value,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send(error.detail);
+			}
+		);
+	}
+			
+	return next();
+});
+
+server.get('/plugins/:plugin/options/:option', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setPluginOption(
@@ -223,7 +251,7 @@ server.put('/plugins/:plugin/options/:option', function (request, response, next
 server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getPluginByName(request.params.plugin).actions[request.params.action]();
+		backend.getPluginByName(request.params.plugin).actions[request.params.action](session);
 	}
 	
 	return next();
