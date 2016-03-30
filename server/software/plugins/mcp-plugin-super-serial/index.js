@@ -167,6 +167,9 @@ function buildPacket(clientID, command, payload){
 function onData(data){
 	var debugData = [];
 	for(var i=0; i<data.length; i++){
+		if(dataBuffer.length == 0 && data[i] != messageEndcap){
+			continue; // garbage
+		}
 		debugData.push(Number(data[i]));
 	}
 	backend.debug("RAW Serial     : " + debugData);
@@ -267,9 +270,6 @@ function onData(data){
 		}else{
 			escapeFlag = false;
 			dataBuffer.push(byte);
-		}
-		if(dataBuffer.length == 1 && dataBuffer[0] != messageEndcap){
-			dataBuffer.pop(); // garbage
 		}
 	}
 };
