@@ -26,15 +26,21 @@
 
 // Pin assignments
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
-#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module-
+#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
+#define LCD_SERIAL_TX     4       // Serial data for LCD
 #define LATCH_PIN         5       // Digital pin to trigger door strike circuit
-#define SSerialRX         6       // Serial Receive pin
-#define SSerialTX         7       // Serial Transmit pin
+#define SSerialRX         6       // Debug Serial Receive pin
+#define SSerialTX         7       // Debug Serial Transmit pin
 #define SSerialTxControl  8       // RS485 Direction control
 #define SPEAKER_PIN       9       // Tone generation pin
 #define PN532_SS_PIN      10      // SPI Slave Select pin
-#define DOOR_SWITCH_PIN   A0      // Magnetic switch on door
-#define ALARM_BUTTON_PIN  A1      // Big button to arm the alarm
+#define NFC_SPI_1         11      // Reserved for hardware SPI for NFC reader
+#define NFC_SPI_2         12      // Reserved for hardware SPI for NFC reader
+#define NFC_SPI_3         13      // Reserved for hardware SPI for NFC reader
+#define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
+#define DOOR_SWITCH_PIN   15      // Magnetic switch on door
+#define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
+
 
 // Constants for audio playback
 #define USER_TUNE_LENGTH    30      // Max number of notes in entry melody
@@ -68,7 +74,7 @@ rs485 bus(SSerialTxControl);
 SuperSerial superSerial(&bus, 0x01);
 
 Ring status_ring(RING_PIN, NUMPIXELS);
-//LCD readout;
+LCD readout;
 Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
 Config conf;
@@ -111,7 +117,7 @@ void setup(void) {
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
-  //readout.print(0,0, "Initializing...");
+  readout.Print("Try Me! :)");
   if(!card_reader.start())  {
     //readout.print(0,1,"ERROR: NFC");
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
