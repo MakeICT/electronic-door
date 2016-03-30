@@ -257,6 +257,15 @@ void ProcessMessage()  {
                          (msg.payload[4]<<8) + msg.payload[5], (msg.payload[6]<<8)+msg.payload[7]);
       break;
     }
+    case F_SET_LCD:
+    {
+      char printString[msg.length + 1];
+      arrayCopy(msg.payload, (byte*) printString, msg.length);
+      printString[msg.length+1] = '\0';
+      readout.Print(printString);
+      break;
+    }
+    
     default:
       LOG_WARNING(F("Unrecognized Command\r\n"));
   }

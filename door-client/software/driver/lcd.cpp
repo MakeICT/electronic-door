@@ -18,7 +18,15 @@ void LCD::SendCommand(uint8_t command) {
 }
 
 void LCD::Print(char* text) {
-  lcd.write(text);
+  this->Clear();
+  this->Home();
+  byte p = 0;
+  while(text[p] != '\0' && p < 32)
+  {
+    if (p==16)
+      this->SetCursor(0x40);
+    lcd.write(text[p++]);
+  }
 }
 
 void LCD::Home() {

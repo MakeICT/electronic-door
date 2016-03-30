@@ -12,6 +12,7 @@
 #define F_UNLOCK_DOOR   0x01
 #define F_LOCK_DOOR     0x02
 #define F_SEND_ID       0x03
+#define F_SET_LCD       0x04
 #define F_PLAY_TUNE     0x05
 #define F_DOOR_STATE    0x07
 #define F_ALARM_BUTTON  0x06
