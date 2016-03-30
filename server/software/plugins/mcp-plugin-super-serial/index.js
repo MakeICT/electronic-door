@@ -166,12 +166,15 @@ function buildPacket(clientID, command, payload){
 
 function onData(data){
 	var debugData = [];
+	var foundSomethingUseful = false;
 	for(var i=0; i<data.length; i++){
 		if(dataBuffer.length == 0 && data[i] != messageEndcap){
 			continue; // garbage
 		}
+		foundSomethingUseful = true;
 		debugData.push(Number(data[i]));
 	}
+	if(!foundSomethingUseful) return;
 	backend.debug("RAW Serial     : " + debugData);
 
 	for(var i=0; i<data.length; i++){
