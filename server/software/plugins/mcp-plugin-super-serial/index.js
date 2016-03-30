@@ -119,14 +119,14 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 		validationCallback = callback;
 		packetToValidate = packet;
 		serialPort.write(packet, function(error, results){
+			if(readWriteToggle){
+				setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
+			}
 			if(error){
 				backend.error('Packet write error');
 				backend.error(error);
 			}else{
 				backend.debug('Wrote packet   : ' + packet);
-				if(readWriteToggle){
-					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
-				}
 			}
 		});
 	}
