@@ -105,7 +105,7 @@ byte Packet::Escapes()  {
   this->ToArray(unescapedArray);
   
   for (int i = 0; i < this->Size(); i++)  {
-    if (unescapedArray[i] == ESCAPE || unescapedArray[i] == FLAG)  {
+    if (unescapedArray[i] == B_ESCAPE || unescapedArray[i] == B_START || unescapedArray[i] == B_STOP)  {
       escapes +=1; 
     }
   }
@@ -129,8 +129,8 @@ byte Packet::ToEscapedArray(byte* array)  {
     LOG_DUMP(F("\r\n"));
     byte escapedArray[this->EscapedSize()];
     for (int i=0 ,j = 0; i < this->Size(); i++, j++)  {
-      if (unescapedArray[i] == ESCAPE || unescapedArray[i] == FLAG)  {
-        escapedArray[j++] =  ESCAPE;
+      if (unescapedArray[i] == B_START || unescapedArray[i] == B_STOP || unescapedArray[i] == B_ESCAPE)  {
+        escapedArray[j++] =  B_ESCAPE;
       }
       escapedArray[j] = unescapedArray[i];
     }

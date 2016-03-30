@@ -38,24 +38,24 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
     //delay(1500);
     digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
     delay(20);
-    Serial.write(FLAG);
+    Serial.write(B_START);
     LOG_DEBUG(F("Sending: "));
-    LOG_DEBUG(FLAG);
+    LOG_DEBUG(B_START);
     LOG_DEBUG(' ');
     for (uint8_t sByte = 0; sByte < len; sByte ++)  {
         Serial.write(data[sByte]);          // Send byte to bus
         LOG_DEBUG(data[sByte]);
         LOG_DEBUG(' ');
     }
-    Serial.write(FLAG);
-    LOG_DEBUG(FLAG);
+    Serial.write(B_STOP);
+    LOG_DEBUG(B_STOP);
     LOG_DEBUG(F("\r\n"));
     delay(20);
     digitalWrite(serDir, RS485Receive);  // Disable RS485 Transmit 
     
     //Check for collisions
     if(Serial.available() == len + 2)  {
-      if (this->Receive() != FLAG)  {
+      if (this->Receive() != B_START)  {
           LOG_ERROR(F("ERROR: Collision1\r\n"));
           return ERR_COLLISION;
       }
@@ -65,7 +65,7 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
           return ERR_COLLISION;
         }
       }
-      if (this->Receive() != FLAG)  {
+      if (this->Receive() != B_STOP)  {
           LOG_ERROR(F("ERROR: Collision3\r\n"));
           return ERR_COLLISION;
       }

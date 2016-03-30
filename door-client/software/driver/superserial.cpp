@@ -65,10 +65,17 @@ bool SuperSerial::GetPacket() {
   static boolean escaping = false;
   for (int i = this->bus->Available(); i > 0; i--)  {
     byte byteReceived = this->bus->Receive();    // Read received byte
-    if (byteReceived == ESCAPE && !escaping) {
+    if (byteReceived == B_ESCAPE && !escaping) {
       escaping = true;
     }
-    else if (byteReceived == FLAG && !escaping)  {
+    else if (byteReceived == B_START && !escaping)  {
+      LOG_DEBUG(F("Received start byte\r\n"));
+      LOG_DEBUG(F("Ignoring "));
+      LOG_DEBUG(bufferIndex);
+      LOG_DEBUG(F(" bytes left in buffer"));
+      bufferIndex = 0;
+    }
+    else if (byteReceived == B_STOP && !escaping)  {
       LOG_DEBUG(F("==============================\r\n"));
       byte receivedBytes = bufferIndex;
       bufferIndex = 0;

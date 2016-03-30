@@ -6,13 +6,14 @@
 #include "utils.h"
 
 
-#define FLAG        0x7E
-#define ESCAPE      0x7D
-#define MAX_PACKET_SIZE   64
+#define B_START           0xFA
+#define B_STOP            0xFB
+#define B_ESCAPE          0xFE
 
-#define P_H_LENGTH      5
-#define P_F_LENGTH      2
-#define P_H_F_LENGTH    P_H_LENGTH + P_F_LENGTH
+#define MAX_PACKET_SIZE   64
+#define P_H_LENGTH        5
+#define P_F_LENGTH        2
+#define P_H_F_LENGTH      P_H_LENGTH + P_F_LENGTH
 
 class Message { 
   public:
