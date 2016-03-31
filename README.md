@@ -18,17 +18,16 @@ This system is used to secure spaces with an electronic door latch.
 
 ## Todo
 * Server
+	* Log STDOUT to a file
+	* Better logging on denial
 	* Edit users
 	* Fix user accordian
-	* Don't allow blanket search
 	* Pull groups and authentication on exapnd
 	* Load groups when tab is selected
 	* Load activity log when tab is selected
 	* Force layout on Plugins and Clients tabs when selected
 	* Create scheduling system
 	* Make plugins respect disabled mode
-* Client
-	* Switch to serial LCD support
 
 ## License 
 
