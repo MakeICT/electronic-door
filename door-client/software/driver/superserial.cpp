@@ -9,7 +9,7 @@ SuperSerial::SuperSerial (rs485* b, byte addr) {
   this->newMessage = false;
   this->responsePacket.SetDestAddr(ADDR_MASTER);
   this->responsePacket.SetSrcAddr(this->deviceAddress);
-  this->currentTransaction = 124;
+  this->currentTransaction = 0;
   
   //TODO: make this configurable
   this->retryTimeout = 100;
@@ -49,7 +49,6 @@ void SuperSerial::Update()  {
       this->dataQueued = false;
     }
   }
-  //TODO: check if any messages have failed to send
 }
 
 Message SuperSerial::GetMessage()  {
@@ -70,10 +69,12 @@ bool SuperSerial::GetPacket() {
     }
     else if (byteReceived == B_START && !escaping)  {
       LOG_DEBUG(F("Received start byte\r\n"));
-      LOG_DEBUG(F("Ignoring "));
-      LOG_DEBUG(bufferIndex);
-      LOG_DEBUG(F(" bytes left in buffer"));
-      bufferIndex = 0;
+      if (bufferIndex)  {
+        LOG_DEBUG(F("Ignoring "));
+        LOG_DEBUG(bufferIndex);
+        LOG_DEBUG(F(" bytes left in buffer\r\n"));
+        bufferIndex = 0;
+      }
     }
     else if (byteReceived == B_STOP && !escaping)  {
       LOG_DEBUG(F("==============================\r\n"));
@@ -112,7 +113,7 @@ bool SuperSerial::GetPacket() {
             else if (this->receivedPacket.Msg().function == F_ACK)  {
               LOG_DEBUG(F("Received ACK\r\n"));
               if (this->receivedPacket.TransID() == currentTransaction)  {
-                this->dataQueued = false;   //TODO:  this should go here-ish
+                this->dataQueued = false;
                 this->retryCount = 0;
               }
               else
@@ -182,22 +183,22 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
   this->queuedPacket.SetDestAddr(ADDR_MASTER);
   this->queuedPacket.SetSrcAddr(this->deviceAddress);
   this->dataQueued = true;
-  if (!bus->QueueFull())  {
-    this->SendPacket(&queuedPacket);
-  }
+  this->SendPacket(&queuedPacket);
 }
 
 void SuperSerial::SendPacket(Packet* p)  {
   LOG_DUMP(F("SuperSerial::SendPacket()\r\n"));
   
-  currentTransaction = (currentTransaction + 1) % 255;
+  if (!dataQueued)  {
+    currentTransaction = (currentTransaction + 1) % 255;
+  }
   p->SetTransID(currentTransaction);
   p->SetCRC(p->ComputeCRC());
   byte array[p->EscapedSize()];
 
   p->ToEscapedArray(array);
 
-  bus->Queue(array, p->EscapedSize());
+  bus->Send(array, p->EscapedSize());
   this->lastPacketSend = millis();
 }
 

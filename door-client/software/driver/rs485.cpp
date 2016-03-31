@@ -9,20 +9,11 @@ rs485::rs485 (uint8_t serial_dir) {
   pinMode(serial_dir, OUTPUT);    
   digitalWrite(serial_dir, RS485Receive);  // Init Transceiver   
   Serial.begin(RS485_BAUD);   // set the data rate 
-  this->queueLength = 0;
-  this->queueMax =1;
 }
 
 void rs485::SetDebugPort(SoftwareSerial* port)  {
   LOG_DUMP(F("rs485::SetDebugPort()\r\n"));
   debugPort = port;
-}
-
-byte rs485::Queue(uint8_t* data, uint8_t len)  {
-  for(int i = 0; i < len; i++)
-    this->queuedPacket[i] = data[i];
-  this->queueLength +=1; 
-  return this->Send(queuedPacket, len);
 }
 
 byte rs485::Send(uint8_t* data, uint8_t len) {
@@ -34,8 +25,6 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
   //      finished when send is successful
   LOG_DUMP(F("rs485::Send()\r\n"));
   if (this->lastRcv - millis() > T_MIN_WAIT && !this->Available())  {
-    //TEST
-    //delay(1500);
     digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
     delay(20);
     Serial.write(B_START);
@@ -69,7 +58,6 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
           LOG_ERROR(F("ERROR: Collision3\r\n"));
           return ERR_COLLISION;
       }
-      this->queueLength -= 1;
       LOG_INFO(F("Successfully sent packet\r\n"));
       return 0;
     }
@@ -107,11 +95,4 @@ byte rs485::Receive() {
 int rs485::Available() {
   LOG_DUMP(F("rs485::Available()\r\n"));
   return Serial.available();
-}
-
-bool rs485::QueueFull()  {
-  if (this->queueLength < this->queueMax)
-    return false;
-  else
-    return true;
 }
