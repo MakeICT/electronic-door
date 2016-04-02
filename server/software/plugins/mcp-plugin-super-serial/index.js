@@ -146,7 +146,8 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 	}
 }
 function sendACK(packet){
-	buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
+	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
+	_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
 }
 
 /**
