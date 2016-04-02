@@ -205,7 +205,7 @@ function onData(data){
 			continue; // garbage
 		}
 		
-		if(byte == SERIAL_FLAGS['START']){
+		if(byte == SERIAL_FLAGS['START'] && !escapeFlag){
 			dataBuffer = [];
 		}
 		

@@ -88,6 +88,19 @@ function sendKey(){
 		}
 	});
 }
+function sendTest(){
+	console.log("Sending test");
+	var test = [250,4,0,1,170,0,160,254,250,251];
+	
+	serialPort.write(test, function(error, results){
+		if(error){
+			console.error('Packet write error');
+			console.error(error);
+		}else{
+			console.log("\tWrote packet: " + test.toString('hex'));
+		}
+	});
+}
 
 function armAlarm(){
 	console.log("Arming alarm");
@@ -115,7 +128,7 @@ serialPort = new SerialPort.SerialPort(
 		}else{
 			console.log('Super Serial connected');
 			serialPort.on('data', onData);
-			setTimeout(sendKey, 1000);
+			setTimeout(sendTest, 1000);
 		}
 	}
 );
