@@ -94,3 +94,7 @@ tbody>tr:last-child>td {
 	font-family: monospace;
 	white-space: pre;
 }
+
+table#activity-log td{
+	text-align: left;
+}
