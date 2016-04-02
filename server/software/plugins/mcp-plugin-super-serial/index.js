@@ -145,7 +145,13 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 		
 	}
 }
+function sendACK(packet){
+	buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
+}
 
+/**
+ * If command is an ACK, payload should be the transactionID
+ **/
 function buildPacket(clientID, command, payload){
 	if(!payload){
 		payload = [];
@@ -155,9 +161,16 @@ function buildPacket(clientID, command, payload){
 	// break up the payload early, so we can correctly calculate its size
 	payload = breakupBytes(payload);
 	
-	// assemble the packet
-	if(++transactionCount > 255) transactionCount = 0;
-	var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
+	if(command == SERIAL_COMMANDS['ACK']){
+		var transactionID = payload[0];
+		payload = [];
+	}else{
+		// assemble the packet
+		if(++transactionCount > 255) transactionCount = 0;
+		var transactionID = transactionCount;
+	}
+	
+	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
 	var computedCRC = crc.crc16modbus(packet);
 	if(computedCRC < 256) packet.push(0);
 	packet.push(computedCRC);
@@ -241,7 +254,7 @@ function onData(data){
 						backend.debug(" Function : " + packet.function);
 						backend.debug("     Data : " + packet.data);
 						backend.debug('=============================');
-						_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK']));
+						sendACK(packet);
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 					}
 				}else{
