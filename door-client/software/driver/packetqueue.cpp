@@ -50,12 +50,7 @@ byte Packet::ToArray(byte* array)  {
 
 //Compute MODBUS CRC16 for the packet
 uint16_t Packet::ComputeCRC()  {
-  //this part is borrowed from somewhere....
-  //TODO: implement 16 bit CRC
-  //return 0xFFFF;
-  
-  // Compute the MODBUS RTU CRC
-  
+  //this part is borrowed from somewhere....  
   byte data[this->Size()-2];
   this->ToArray(data);
   uint16_t crc = 0xFFFF;

@@ -81,7 +81,7 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
 
 inline int rs485::Send(uint8_t data) {
   LOG_DUMP(F("rs485::Send()\r\n"));
-  Send(&data);
+  this->Send(&data);
 }
 
 byte rs485::Receive() {

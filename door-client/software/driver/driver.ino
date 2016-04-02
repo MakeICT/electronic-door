@@ -101,16 +101,27 @@ SoftwareSerial dbgPort(6,7);
 SoftwareSerial* debugPort = &dbgPort;
 
 void setup(void) {
+  LOG_INFO(F("########################################\r\n"));
+  LOG_INFO(F("#            Start Program             #\r\n"));
+  LOG_INFO(F("########################################\r\n"));
+  
+  // Initialize serial ports
+  Serial.begin(9600);   //TODO:  What is this doing here?
+
+  // Initialize debug port and pass references
   dbgPort.begin(57600);
-  Serial.begin(9600);
   superSerial.SetDebugPort(debugPort);
   bus.SetDebugPort(debugPort);
   card_reader.SetDebugPort(debugPort);
-  LOG_DEBUG(F("Start Program\r\n"));
-  
+
+  // Set input pins
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  conf.SaveAddress(0x01);
+  
+  
+  conf.SaveAddress(0x01);             //TODO: this is temporary; needs to be configurable
+  
+  // Load config info saved in EEPROM
   uint8_t address = conf.GetAddress();
   //superSerial = new SuperSerial(&bus, address);
 
@@ -119,11 +130,9 @@ void setup(void) {
   LOG_INFO(F("\r\n"));
   readout.Print("Try Me! :)");
   if(!card_reader.start())  {
-    //readout.print(0,1,"ERROR: NFC");
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
   }
   else  {
-    //readout.print(0,1, "Ready!");
   }
   status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
   status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), 1000 , 0);
@@ -201,6 +210,7 @@ void CheckReader()  {
     #endif
     status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), 0, 3000);
   }
+  //TODO: Detect unrecoverable reader error
 }
 
 void ProcessMessage()  {

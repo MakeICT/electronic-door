@@ -38,6 +38,9 @@ void SuperSerial::Update()  {
   LOG_DUMP(F("SuperSerial::Update()\r\n"));
   this->GetPacket();
   if (this->dataQueued && millis() - this->lastPacketSend > this->retryTimeout)  {
+    LOG_DEBUG(F("Current transaction: "));
+    LOG_DEBUG(currentTransaction);
+    LOG_DEBUG(F("\r\n"));
     if (this->retryCount < this->maxRetries)  {  
       LOG_DEBUG(F("Timed out waiting for response: resending last packet\r\n"));
       this->retryCount++;
@@ -70,6 +73,14 @@ bool SuperSerial::GetPacket() {
     else if (byteReceived == B_START && !escaping)  {
       LOG_DEBUG(F("Received start byte\r\n"));
       if (bufferIndex)  {
+        //Log bytes from buffer             //
+        LOG_DEBUG(F("Received: "));
+        for (int i = 0; i < bufferIndex; i++)  {
+        LOG_DEBUG(dataBuffer[i]);
+        LOG_DEBUG(F(" "));
+        }
+        LOG_DEBUG(F("\r\n"));
+        //
         LOG_DEBUG(F("Ignoring "));
         LOG_DEBUG(bufferIndex);
         LOG_DEBUG(F(" bytes left in buffer\r\n"));
@@ -77,8 +88,16 @@ bool SuperSerial::GetPacket() {
       }
     }
     else if (byteReceived == B_STOP && !escaping)  {
-      LOG_DEBUG(F("==============================\r\n"));
+      LOG_DUMP(F("==============================\r\n"));
       byte receivedBytes = bufferIndex;
+      //Log bytes from buffer
+      LOG_DEBUG(F("Received: "));
+      for (int i = 0; i < bufferIndex; i++)  {
+      LOG_DEBUG(dataBuffer[i]);
+      LOG_DEBUG(F(" "));
+      }
+      LOG_DEBUG(F("\r\n"));
+      //
       bufferIndex = 0;
       LOG_DEBUG(F("Received bytes: "));
       LOG_DEBUG(receivedBytes);
@@ -124,18 +143,7 @@ bool SuperSerial::GetPacket() {
             else  {
               LOG_DEBUG(F("Sending ACK.\r\n"));
               SendACK(this->receivedPacket.TransID());
-              
               this->newMessage = true;
-              
-              #if LOG_LEVEL > 3
-              LOG_DEBUG(F("Received: "));
-              for (int i = 0; i < bufferIndex; i++)  {
-                LOG_DEBUG(dataBuffer[i]);
-                LOG_DEBUG(F(" "));
-              }
-              LOG_DEBUG(F("\r\n"));
-              #endif
-              
               return true;
             }
           }
@@ -158,19 +166,14 @@ bool SuperSerial::GetPacket() {
     else  {
       // add received byte to data buffer
       dataBuffer[bufferIndex++] = byteReceived;
-      LOG_DEBUG(F("rcv: "));
-      LOG_DEBUG(byteReceived);
-      LOG_DEBUG(F("\r\n"));
+      LOG_DUMP(F("rcv: "));
+      LOG_DUMP(byteReceived);
+      LOG_DUMP(F("\r\n"));
       escaping = false;
     }
   }
   #if LOG_LEVEL > 3
-  LOG_DEBUG(F("Received: "));
-  for (int i = 0; i < bufferIndex; i++)  {
-    LOG_DEBUG(dataBuffer[i]);
-    LOG_DEBUG(F(" "));
-  }
-  LOG_DEBUG(F("\r\n"));
+
   #endif
   return false;
 }
