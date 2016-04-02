@@ -16,8 +16,13 @@ module.exports = {
 				tmp.file(function(err, tmpFilePath, fd, cleanupCallback){
 					var filename = encodeURIComponent(tmpFilePath.substring(tmpFilePath.lastIndexOf('/')+1));
 					session.response.send({ 'url': '/plugins/' + encodeURIComponent(module.exports.name) + '/handler?f=' + filename });
-
-					var proc = child_process.spawn('journalctl -u master-control-program --no-pager > ' + tmpFilePath);
+					
+					var args = '-u master-control-program --no-pager'.split(' ');
+					if(settings['Line limit']){
+						args.push('-n');
+						args.push(settings['Line limit']);
+					}
+					var proc = child_process.spawn('journalctl', args);
 					runningProcs[filename] = {
 						'proc' : proc,
 						'running': true,
