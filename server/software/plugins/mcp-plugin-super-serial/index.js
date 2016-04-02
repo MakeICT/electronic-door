@@ -77,10 +77,13 @@ function SerialClient(clientInfo){
 		}
 	};
 	
-	this.nextTransactionID = function(){
-		if(++this.transactionCount > 255){
+	this.nextTransactionID = function(minimumTransactionID){
+		if(minimumTransactionID > this.transactionCount){
+			this.transactionCount = minimumTransactionID;
+		}else if(++this.transactionCount > 255){
 			this.transactionCount = 0;
 		}
+
 		return this.transactionCount;
 	};
 	
@@ -170,10 +173,12 @@ function buildPacket(clientID, command, payload){
 
 	// call nextTransactionID no matter what
 	// (received packets increment the ID too, but that's not the ID that's sent
-	var transactionID = clients[clientID].nextTransactionID();
+	var transactionID = -1;
 	if(command == SERIAL_COMMANDS['ACK']){
-		var transactionID = payload[0];
+		var transactionID = clients[clientID].nextTransactionID(payload[0]);
 		payload = [];
+	}else{
+		var transactionID = clients[clientID].nextTransactionID();
 	}
 	
 	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
