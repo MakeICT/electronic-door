@@ -5,8 +5,6 @@ var GPIO = require('onoff').Gpio;
 var crc = require('crc');
 
 var serialPort;
-var transactionCount = 0;
-
 var readWriteToggle;
 
 var dataBuffer = [];
@@ -57,6 +55,7 @@ function SerialClient(clientInfo){
 	this.responseTimeout;
 	this.queue = [];
 	this.retries = 0;
+	this.transactionCount = 0;
 	
 	this.queuePacket = function(packet, callback){
 		this.queue.push({
@@ -76,6 +75,13 @@ function SerialClient(clientInfo){
 		if(this.queue.length > 0){
 			this.deque();
 		}
+	};
+	
+	this.nextTransactionID = function(){
+		if(++this.transactionCount > 255){
+			this.transactionCount = 0;
+		}
+		return this.transactionCount;
 	};
 	
 	this.deque = function(){
@@ -161,14 +167,13 @@ function buildPacket(clientID, command, payload){
 	}
 	// break up the payload early, so we can correctly calculate its size
 	payload = breakupBytes(payload);
-	
+
+	// call nextTransactionID no matter what
+	// (received packets increment the ID too, but that's not the ID that's sent
+	var transactionID = clients[clientID].nextTransactionID();
 	if(command == SERIAL_COMMANDS['ACK']){
 		var transactionID = payload[0];
 		payload = [];
-	}else{
-		// assemble the packet
-		if(++transactionCount > 255) transactionCount = 0;
-		var transactionID = transactionCount;
 	}
 	
 	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
