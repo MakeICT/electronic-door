@@ -1,0 +1,14 @@
+{
+  "name": "mcp-plugin-journalctl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dominic Canare <dom@makeict.org>",
+  "license": "GPL",
+  "dependencies": {
+    "tmp": "0.0.28"
+  }
+}
