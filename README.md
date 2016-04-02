@@ -19,15 +19,20 @@ This system is used to secure spaces with an electronic door latch.
 ## Todo
 * Server
 	* Log STDOUT to a file
+	* Super admins vs group admins
+	* Ability to create groups
 	* Better logging on denial
-	* Edit users
 	* Fix user accordian
+	* Create scheduling system
 	* Pull groups and authentication on exapnd
 	* Load groups when tab is selected
 	* Load activity log when tab is selected
 	* Force layout on Plugins and Clients tabs when selected
-	* Create scheduling system
 	* Make plugins respect disabled mode
+	* Add / edit users
+* Client
+	* Blink red-only on denial
+	* Blink green-only on unlock
 
 ## License 
 
