@@ -52,11 +52,13 @@
 // Constants for NeoPixel ring
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
 #define COLOR_IDLE          0,100,120
-#define COLOR_SUCCESS       0,60,20
-#define COLOR_FAILURE       60,20,0
+#define COLOR_SUCCESS1      0,60,20
+#define COLOR_SUCCESS2      0,30,10
+#define COLOR_FAILURE1      60,20,0
+#define COLOR_FAILURE2      30,10,0
 #define COLOR_WAITING       120,120,20
-#define COLOR_ERROR         50,20,0
-#define COLOR_BACKGROUND    0,20,50
+#define COLOR_ERROR1        25,10,0
+#define COLOR_ERROR2        25,10,0
 #define COLOR               Adafruit_NeoPixel::Color
 
 // Constants for machine states
@@ -130,12 +132,11 @@ void setup(void) {
   LOG_INFO(F("\r\n"));
   readout.Print("Try Me! :)");
   if(!card_reader.start())  {
-    status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR), 100, 0);
+    status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
   else  {
   }
-  status_ring.SetBackground(COLOR(COLOR_BACKGROUND));
-  status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), 1000 , 0);
+  status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
   speaker.Play(startTune, startTuneDurations, 8);
   state = S_READY;
 }
@@ -208,7 +209,7 @@ void CheckReader()  {
     }
     LOG_INFO(F("\r\n"));
     #endif
-    status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), 0, 3000);
+    status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
   }
   //TODO: Detect unrecoverable reader error
 }
@@ -231,7 +232,7 @@ void ProcessMessage()  {
       
     case F_DENY_CARD:
       LOG_INFO(F("Card Denied\r\n"));
-      status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE), 200, 3000);
+      status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000);
       break;
       
     case F_UNLOCK_DOOR:
@@ -239,7 +240,7 @@ void ProcessMessage()  {
       door_latch.Unlock(msg.payload[0] * 1000);
           
       //TEMPORARY TEST CODE
-      status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS), 200, 3000);
+      status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
       speaker.Play(startTune, startTuneDurations, 8);
       break;
     case F_LOCK_DOOR:
@@ -263,8 +264,9 @@ void ProcessMessage()  {
     {
       LOG_INFO(F("Set Lights\r\n"));
       status_ring.SetMode(msg.payload[0], 
-                          COLOR(msg.payload[1],msg.payload[2],msg.payload[3]), 
-                         (msg.payload[4]<<8) + msg.payload[5], (msg.payload[6]<<8)+msg.payload[7]);
+                          COLOR(msg.payload[1],msg.payload[2],msg.payload[3]),
+                          COLOR(msg.payload[4],msg.payload[5],msg.payload[6]),
+                         (msg.payload[7]<<8) + msg.payload[8], (msg.payload[9]<<8)+msg.payload[10]);
       break;
     }
     case F_SET_LCD:
