@@ -27,6 +27,7 @@ module.exports = {
 	},
 	
 	broadcast: function(source, message, data){
+		backend.debug('Broadcast message from ' + source + ' (' + message + ')' + JSON.stringify(data));
 		for(var i=0; i<module.exports.listeners.length; i++){
 			module.exports.listeners[i].receiveMessage(source, message, data);
 		}

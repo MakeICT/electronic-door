@@ -370,4 +370,6 @@ module.exports = {
 		escapeFlag = false;
 		retryDelay = 0;
 	},
+	
+	SERIAL_COMMANDS: SERIAL_COMMANDS,
 };
