@@ -10,7 +10,12 @@ function pad(str){
 
 function sendMessage(clientID, line1, line2){
 	var msg = pad(line1) + pad(line2);
-	return superSerial.send(client.clientID, SuperSerial.SERIAL_COMMANDS['LCD'], msg);
+	backend.debug('Sending message: ' + msg);
+	try{
+		return superSerial.send(clientID, superSerial.SERIAL_COMMANDS['LCD'], msg);
+	}catch(exc){
+		console.log(exc);
+	}
 }
 
 module.exports = {
@@ -22,7 +27,7 @@ module.exports = {
 	actions: {
 		'Send to all': function(){
 			// @TODO: implement LCD Send all
-		}
+		},
 		'Clear all': function(){
 			// @TODO: implement LCD Clear all
 		}
