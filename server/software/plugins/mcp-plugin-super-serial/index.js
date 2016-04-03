@@ -5,23 +5,48 @@ var GPIO = require('onoff').Gpio;
 var crc = require('crc');
 
 var serialPort;
-var transactionCount = 0;
-
-var escapeChar = 0x7D;
-var messageEndcap = 0x7E;
-var ACK = 0xAA;
-var NAK = 0xAB;
-
 var readWriteToggle;
 
 var dataBuffer = [];
 var escapeFlag = false;
-var packetToValidate = null;
-var validationCallback = null;
-var invalidPacketResendTimer = null;
-var packetValidationTimer = null;
 
 var retryDelay = 0;
+
+var SERIAL_FLAGS = {
+	'ESCAPE':	0xFE,
+	'START':	0xFA,
+	'END':		0xFB,
+};
+var SERIAL_COMMANDS = {
+	'UNLOCK':	0x01,
+	'LOCK':	 	0x02,
+	'KEY':		0x03,
+	'TEXT':		0x04,
+	'TONE':		0x05,
+	'ARM':		0x06,
+	'DOOR':		0x07,
+	'LIGHTS':	0x08,
+	'DENY':		0x0C,
+	         
+	'ACK':		0xAA,
+	'ERROR':	0xFA,
+};
+
+function lookupCommand(byte){
+	for(var command in SERIAL_COMMANDS){
+		if(SERIAL_COMMANDS[command] == byte){
+			return command;
+		}
+	}
+}
+
+function lookupSerialFlag(byte){
+	for(var flag in SERIAL_FLAGS){
+		if(SERIAL_FLAGS[flag] == byte){
+			return flag;
+		}
+	}
+}
 
 function SerialClient(clientInfo){
 	this.info = clientInfo;
@@ -30,6 +55,7 @@ function SerialClient(clientInfo){
 	this.responseTimeout;
 	this.queue = [];
 	this.retries = 0;
+	this.transactionCount = 0;
 	
 	this.queuePacket = function(packet, callback){
 		this.queue.push({
@@ -49,6 +75,16 @@ function SerialClient(clientInfo){
 		if(this.queue.length > 0){
 			this.deque();
 		}
+	};
+	
+	this.nextTransactionID = function(minimumTransactionID){
+		if(minimumTransactionID > this.transactionCount){
+			this.transactionCount = minimumTransactionID;
+		}else if(++this.transactionCount > 255){
+			this.transactionCount = 0;
+		}
+
+		return this.transactionCount;
 	};
 	
 	this.deque = function(){
@@ -77,7 +113,6 @@ function SerialClient(clientInfo){
 						self.retries = 0;
 						self.waitingForAck = false;
 						self.lastPacket = null;
-						packetToValidate = null;
 						backend.debug('packet timeout but no retries left');
 						self.deque();
 					}
@@ -92,46 +127,41 @@ function SerialClient(clientInfo){
 var clients = {};
 
 // This packet should already have the endcaps
-// @callback isn't called until the packet is validated
 function _sendPacket(packet, callback, pauseBeforeRetry){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
 		module.exports.reconnect();
 		setTimeout(function(){ _sendPacket(packet, callback, pauseBeforeRetry); }, 100);
 	}else{
-		if(packetToValidate && packet != packetToValidate){
-			backend.debug('Woops! Tried to send a new packet before the last one validated');
-			backend.debug(packet);
-			backend.debug(packetToValidate);
-			if(!pauseBeforeRetry) pauseBeforeRetry = 100;
-			// trying to send a message before the last message was verified for errors...
-			setTimeout(
-				function(){
-					_sendPacket(packet, callback, pauseBeforeRetry+100);
-				},
-				pauseBeforeRetry
-			);
-			return;
+		var doWrite = function(){
+			serialPort.write(packet, function(error, results){
+				if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
+				if(callback) callback();
+				if(error){
+					backend.error('Packet write error');
+					backend.error(error);
+				}else{
+					backend.debug('Wrote packet   : ' + packet);
+				}
+			});
+		};
+		if(readWriteToggle){
+			readWriteToggle.writeSync(0);
+			setTimeout(doWrite, 20);
+		}else{
+			doWrite();
 		}
 		
-		if(readWriteToggle) readWriteToggle.writeSync(0);
-		
-		validationCallback = callback;
-		packetToValidate = packet;
-		serialPort.write(packet, function(error, results){
-			if(error){
-				backend.error('Packet write error');
-				backend.error(error);
-			}else{
-				backend.debug('Wrote packet   : ' + packet);
-				if(readWriteToggle){
-					setTimeout(function(){readWriteToggle.writeSync(1);}, 20);
-				}
-			}
-		});
 	}
 }
+function sendACK(packet){
+	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
+	_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
+}
 
+/**
+ * If command is an ACK, payload should be the transactionID
+ **/
 function buildPacket(clientID, command, payload){
 	if(!payload){
 		payload = [];
@@ -140,14 +170,22 @@ function buildPacket(clientID, command, payload){
 	}
 	// break up the payload early, so we can correctly calculate its size
 	payload = breakupBytes(payload);
+
+	// call nextTransactionID no matter what
+	// (received packets increment the ID too, but that's not the ID that's sent
+	var transactionID = -1;
+	if(command == SERIAL_COMMANDS['ACK']){
+		var transactionID = clients[clientID].nextTransactionID(payload[0]);
+		payload = [];
+	}else{
+		var transactionID = clients[clientID].nextTransactionID();
+	}
 	
-	// assemble the packet
-	if(++transactionCount > 255) transactionCount = 0;
-	var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
+	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
 	var computedCRC = crc.crc16modbus(packet);
 	if(computedCRC < 256) packet.push(0);
 	packet.push(computedCRC);
-	packet = [messageEndcap].concat(packet).concat([messageEndcap]);
+	packet = [SERIAL_FLAGS['START']].concat(packet).concat([SERIAL_FLAGS['END']]);
 	
 	// break up multi-bytes. Not sure why it doesn't just work without :(
 	packet = breakupBytes(packet);
@@ -155,8 +193,8 @@ function buildPacket(clientID, command, payload){
 	// add escape characters where necessary
 	for(var i=1; i<packet.length-1; i++){
 		if(!packet[i]) packet[i] = 0;
-		if(packet[i] == 0x7D || packet[i] == messageEndcap){
-			packet.splice(i, 0, 0x7D);
+		if(lookupSerialFlag(packet[i])){
+			packet.splice(i, 0, SERIAL_FLAGS['ESCAPE']);
 			i++;
 		}
 	}
@@ -169,107 +207,75 @@ function onData(data){
 	for(var i=0; i<data.length; i++){
 		debugData.push(Number(data[i]));
 	}
-	backend.debug("RAW Serial     : " + debugData);
+	//backend.debug("RAW Serial     : " + debugData);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
-		if(byte == messageEndcap && !escapeFlag){
-			dataBuffer.push(byte);
-			
-			if(dataBuffer.length == 1){
-				// do nothing
-			}else if(dataBuffer.length == 2 && dataBuffer[0] == messageEndcap && dataBuffer[1] == messageEndcap){
-				// if we see two message endCap's in a row, we're probably off by one due to noise/garbage
-				dataBuffer.pop();
-			}else if(dataBuffer.length > 2){
-				var unescapedPacket = [];
-				for(var j=0; j<dataBuffer.length; j++){
-					if(dataBuffer[j] == escapeChar && !escapeFlag){
-						escapeFlag = true;
-					}else{
-						unescapedPacket.push(dataBuffer[j]);
-						escapeFlag = false;
-					}
-				}
-
-				// We have a full packet. Let's process it :)
-				backend.debug('Incoming packet: ' + dataBuffer);
-				if(packetToValidate){
-					clearTimeout(packetValidationTimer);
-					clearTimeout(invalidPacketResendTimer);
-					if(packetToValidate.toString() == dataBuffer.toString() || false){
-						backend.debug('=============================');
-						backend.debug('Packet written cleanly');
-						backend.debug('=============================');
-						// the validation callback is the timer to start listening for an ack
-						if(validationCallback) validationCallback();
-						
-						packetToValidate = null;
-						retryDelay = 100;
-						// start timeout for ack
-					}else{
-						backend.debug('=============================');
-						backend.debug('Packet did not send correctly. Probable collision occurred');
-						backend.debug('Expected: ' + packetToValidate);
-						backend.debug('But read: ' + dataBuffer);
-						backend.debug('=============================');
-						invalidPacketResendTimer = setTimeout(
-							function(){
-								backend.debug("Not resending collisinon packet");
-//								backend.debug("Resending collision packet");
-//								_sendPacket(packetToValidate);
-							},
-							retryDelay + Math.random() * 100
-						);
-						retryDelay *= 2;
-					}
-				}else{
-					var packet = {
-						'transactionID': unescapedPacket[1],
-						'from': unescapedPacket[2],
-						'to': unescapedPacket[3],
-						'function': unescapedPacket[4],
-						'data': unescapedPacket.slice(6, 6+unescapedPacket[5]),
-					};
-					var computedCRC = crc.crc16modbus(unescapedPacket.slice(1, 6+unescapedPacket[5]));
-					var incomingCRC = (unescapedPacket[6+unescapedPacket[5]]<<8) + unescapedPacket[7+unescapedPacket[5]];
-					if(computedCRC == incomingCRC){
-						if(packet.function == ACK){
-							backend.debug('=============================');
-							backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
-							backend.debug('=============================');
-							clients[packet.from].ackReceived();
-						}else{
-							backend.debug('=============================');
-							backend.debug(" Received : " + dataBuffer);
-							backend.debug("Unescaped : " + unescapedPacket);
-							backend.debug("       ID : " + packet.transactionID);
-							backend.debug("     From : " + packet.from);
-							backend.debug("       To : " + packet.to);
-							backend.debug(" Function : " + packet.function);
-							backend.debug("     Data : " + packet.data);
-							backend.debug('=============================');
-							_sendPacket(buildPacket(packet.from, ACK));
-							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
-						}
-					}else{
-						backend.debug('=============================');
-						backend.debug("Bad CRC " + incomingCRC + ", computed = " + computedCRC);
-						backend.debug(dataBuffer.toString());
-						backend.debug('=============================');
-					}
-				}
-				dataBuffer = [];
-			}
-		}else if(byte == escapeChar && !escapeFlag){
+		if(dataBuffer.length == 0 && byte != SERIAL_FLAGS['START']){
+			continue; // garbage
+		}
+		
+		if(byte == SERIAL_FLAGS['START'] && !escapeFlag){
+			dataBuffer = [];
+		}
+		
+		dataBuffer.push(byte);
+		var wasEscaped = escapeFlag;
+		if(byte == SERIAL_FLAGS['ESCAPE'] && !escapeFlag){
 			escapeFlag = true;
-			dataBuffer.push(byte);
 		}else{
 			escapeFlag = false;
-			dataBuffer.push(byte);
 		}
-		if(dataBuffer.length == 1 && dataBuffer[0] != messageEndcap){
-			dataBuffer.pop(); // garbage
+		
+		if(byte == SERIAL_FLAGS['END'] && !wasEscaped){
+			var unescapedPacket = [];
+			for(var j=0; j<dataBuffer.length; j++){
+				if(dataBuffer[j] == SERIAL_FLAGS['ESCAPE'] && !escapeFlag){
+					escapeFlag = true;
+				}else{
+					unescapedPacket.push(dataBuffer[j]);
+					escapeFlag = false;
+				}
+			}
+			// We have a full packet. Let's process it :)
+			backend.debug('Incoming packet: ' + dataBuffer);
+			var packet = {
+				'transactionID': unescapedPacket[1],
+				'from': unescapedPacket[2],
+				'to': unescapedPacket[3],
+				'function': unescapedPacket[4],
+				'data': unescapedPacket.slice(6, 6+unescapedPacket[5]),
+			};
+			if(packet.from != 0){
+				var computedCRC = crc.crc16modbus(unescapedPacket.slice(1, 6+unescapedPacket[5]));
+				var incomingCRC = (unescapedPacket[6+unescapedPacket[5]]<<8) + unescapedPacket[7+unescapedPacket[5]];
+				if(computedCRC == incomingCRC){
+					if(packet.function == SERIAL_COMMANDS['ACK']){
+						backend.debug('=============================');
+						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
+						backend.debug('=============================');
+						if(packet.from != 0) clients[packet.from].ackReceived();
+					}else{
+						backend.debug('=============================');
+						backend.debug(" Received : " + dataBuffer);
+						backend.debug("Unescaped : " + unescapedPacket);
+						backend.debug("       ID : " + packet.transactionID);
+						backend.debug("     From : " + packet.from);
+						backend.debug("       To : " + packet.to);
+						backend.debug(" Function : " + packet.function);
+						backend.debug("     Data : " + packet.data);
+						backend.debug('=============================');
+						sendACK(packet);
+						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+					}
+				}else{
+					backend.debug('=============================');
+					backend.debug("Bad CRC " + incomingCRC + ", computed = " + computedCRC);
+					backend.debug(dataBuffer.toString());
+					backend.debug('=============================');
+				}
+			}
+			dataBuffer = [];
 		}
 	}
 };
@@ -296,14 +302,6 @@ module.exports = {
 		'Timeout': 'number',
 		'Max retries': 'number',
 		'RW Toggle Pin': 'number',
-		//'Data bits': 'number',
-		//'Stop bits': 'number',
-		//'Parity': 'selection list',
-		//'xon': 'boolean',
-		//'xoff': 'boolean',
-		//'xany': 'boolean',
-		//'flowControl': 'boolean',
-		//'bufferSize': 'number',
 	},
 	
 	actions: {},
@@ -364,20 +362,12 @@ module.exports = {
 	},
 	
 	reset: function(){
-		clearTimeout(invalidPacketResendTimer);
-		clearTimeout(packetValidationTimer);
-
 		for(var id in clients){
 			clearTimeout(clients[id].responseTimeout);
 		}
 		
 		dataBuffer = [];
 		escapeFlag = false;
-		packetToValidate = null;
-		validationCallback = null;
-		invalidPacketResendTimer = null;
-		packetValidationTimer = null;
-
 		retryDelay = 0;
 	},
 };

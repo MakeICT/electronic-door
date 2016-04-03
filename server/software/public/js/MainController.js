@@ -61,6 +61,9 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		
 		$scope.setLocation = function(path){
 			$location.path(path);
+			if(path == 'log'){
+				$scope.loadLog();
+			}
 		}
 		
 		$http.get('/plugins').success(function(response){
