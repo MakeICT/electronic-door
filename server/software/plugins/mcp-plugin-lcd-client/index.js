@@ -12,7 +12,7 @@ function sendMessage(clientID, line1, line2){
 	var msg = pad(line1) + pad(line2);
 	backend.debug('Sending message: ' + msg);
 	try{
-		return superSerial.send(clientID, superSerial.SERIAL_COMMANDS['LCD'], msg);
+		return superSerial.send(clientID, superSerial.SERIAL_COMMANDS['TEXT'], msg);
 	}catch(exc){
 		console.log(exc);
 	}

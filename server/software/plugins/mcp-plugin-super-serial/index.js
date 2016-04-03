@@ -135,14 +135,19 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 	}else{
 		var doWrite = function(){
 			serialPort.write(packet, function(error, results){
-				if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
-				if(callback) callback();
+				if(error){
+					backend.error('Packet write error');
+					backend.error(error);
+				}
+			}).drain(function(error){
 				if(error){
 					backend.error('Packet write error');
 					backend.error(error);
 				}else{
 					backend.debug('Wrote packet   : ' + packet);
 				}
+				if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
+				if(callback) callback();
 			});
 		};
 		if(readWriteToggle){
@@ -165,6 +170,12 @@ function sendACK(packet){
 function buildPacket(clientID, command, payload){
 	if(!payload){
 		payload = [];
+	}else if(typeof(payload) === "string"){
+		var stringData = payload;
+		payload = [];
+		for(var i=0; i<stringData.length; i++){
+			payload.push(stringData.charCodeAt(i));
+		}
 	}else if(!(payload instanceof Array)){
 		payload = [payload];
 	}
