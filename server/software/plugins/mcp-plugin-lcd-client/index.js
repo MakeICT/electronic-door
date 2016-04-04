@@ -51,25 +51,17 @@ module.exports = {
 		},
 	},
 	
-	onInstall: function(){
-	},
-
-	onUninstall: function(){
-	},
+	onInstall: function(){},
+	onUninstall: function(){},
 	
 	onEnable: function(){
 		broadcaster.subscribe(module.exports);
 	},
 	
 	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
 	},
 	
 	receiveMessage: function(source, messageID, data){
-		if(messageID == 'serial-data-received'){
-			if(data['to'] == 0){
-				if(data['function'] == NFC){
-				}
-			}
-		}
 	},
 };
