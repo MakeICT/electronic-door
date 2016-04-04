@@ -9,6 +9,7 @@ body{
 	background:url(/images/logo-header.svg);
 	background-position: center;
 	background-repeat: no-repeat;
+	margin-bottom: 1em;
 }
 
 #status-header {
