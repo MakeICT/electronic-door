@@ -6,21 +6,21 @@ var fs = require('fs');
 var runningProcs = {};
 
 module.exports = {
-	name: 'Systemd Journal Viewer',
+	name: 'System Tools',
 	options: {
-		'Line limit': 'number'
+		'Log line limit': 'number'
 	},
 	actions: {
-		'Download': function(session){
+		'Download log': function(session){
 			backend.getPluginOptions(module.exports.name, function(settings){
 				tmp.file(function(err, tmpFilePath, fd, cleanupCallback){
 					var filename = encodeURIComponent(tmpFilePath.substring(tmpFilePath.lastIndexOf('/')+1));
 					session.response.send({ 'url': '/plugins/' + encodeURIComponent(module.exports.name) + '/handler?f=' + filename });
 					
 					var args = '-u master-control-program --no-pager'.split(' ');
-					if(settings['Line limit']){
+					if(settings['Log line limit']){
 						args.push('-n');
-						args.push(settings['Line limit']);
+						args.push(settings['Log line limit']);
 					}
 					var proc = child_process.spawn('journalctl', args);
 					runningProcs[filename] = {
@@ -40,7 +40,19 @@ module.exports = {
 					proc.stdin.end();
 				});
 			});
-		}
+		},
+		'Restart MCP': function(session){
+			backend.log('Server will now restart');
+			child_process.exec('systemctl restart master-control-program');
+		},
+		'Reboot server': function(session){
+			backend.log('System will now reboot');
+			child_process.exec('reboot');
+		},
+		'Shutdown server': function(session){
+			backend.log('System will now power off');
+			child_process.exec('poweroff');
+		},
 	},
 
 	onInstall: function(){},
