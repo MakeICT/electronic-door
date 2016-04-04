@@ -18,6 +18,9 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.checkAjax = function(response, suppressError){
 		if(response.error){
 			if(!suppressError){
+				if(response.error == 'Not logged in'){
+					$scope.authenticated = false;
+				}
 				$scope.error = {
 					'message': response.error,
 					'detail': response.detail,
@@ -61,6 +64,9 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		
 		$scope.setLocation = function(path){
 			$location.path(path);
+			if(path == 'log'){
+				$scope.loadLog();
+			}
 		}
 		
 		$http.get('/plugins').success(function(response){

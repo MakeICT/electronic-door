@@ -5,8 +5,6 @@ var GPIO = require('onoff').Gpio;
 var crc = require('crc');
 
 var serialPort;
-var transactionCount = 0;
-
 var readWriteToggle;
 
 var dataBuffer = [];
@@ -57,6 +55,7 @@ function SerialClient(clientInfo){
 	this.responseTimeout;
 	this.queue = [];
 	this.retries = 0;
+	this.transactionCount = 0;
 	
 	this.queuePacket = function(packet, callback){
 		this.queue.push({
@@ -76,6 +75,16 @@ function SerialClient(clientInfo){
 		if(this.queue.length > 0){
 			this.deque();
 		}
+	};
+	
+	this.nextTransactionID = function(minimumTransactionID){
+		if(minimumTransactionID > this.transactionCount){
+			this.transactionCount = minimumTransactionID;
+		}else if(++this.transactionCount > 255){
+			this.transactionCount = 0;
+		}
+
+		return this.transactionCount;
 	};
 	
 	this.deque = function(){
@@ -126,14 +135,20 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 	}else{
 		var doWrite = function(){
 			serialPort.write(packet, function(error, results){
-				if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
-				if(callback) callback();
+				if(error){
+					backend.error('Packet write error');
+					backend.error(error);
+				}
+			});
+			serialPort.drain(function(error){
 				if(error){
 					backend.error('Packet write error');
 					backend.error(error);
 				}else{
 					backend.debug('Wrote packet   : ' + packet);
 				}
+				if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
+				if(callback) callback();
 			});
 		};
 		if(readWriteToggle){
@@ -145,19 +160,40 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 		
 	}
 }
+function sendACK(packet){
+	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
+	_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
+}
 
+/**
+ * If command is an ACK, payload should be the transactionID
+ **/
 function buildPacket(clientID, command, payload){
 	if(!payload){
 		payload = [];
+	}else if(typeof(payload) === "string"){
+		var stringData = payload;
+		payload = [];
+		for(var i=0; i<stringData.length; i++){
+			payload.push(stringData.charCodeAt(i));
+		}
 	}else if(!(payload instanceof Array)){
 		payload = [payload];
 	}
 	// break up the payload early, so we can correctly calculate its size
 	payload = breakupBytes(payload);
+
+	// call nextTransactionID no matter what
+	// (received packets increment the ID too, but that's not the ID that's sent
+	var transactionID = -1;
+	if(command == SERIAL_COMMANDS['ACK']){
+		var transactionID = clients[clientID].nextTransactionID(payload[0]);
+		payload = [];
+	}else{
+		var transactionID = clients[clientID].nextTransactionID();
+	}
 	
-	// assemble the packet
-	if(++transactionCount > 255) transactionCount = 0;
-	var packet = [transactionCount, 0, clientID, command, payload.length].concat(payload);
+	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
 	var computedCRC = crc.crc16modbus(packet);
 	if(computedCRC < 256) packet.push(0);
 	packet.push(computedCRC);
@@ -191,7 +227,7 @@ function onData(data){
 			continue; // garbage
 		}
 		
-		if(byte == SERIAL_FLAGS['START']){
+		if(byte == SERIAL_FLAGS['START'] && !escapeFlag){
 			dataBuffer = [];
 		}
 		
@@ -241,7 +277,7 @@ function onData(data){
 						backend.debug(" Function : " + packet.function);
 						backend.debug("     Data : " + packet.data);
 						backend.debug('=============================');
-						_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK']));
+						sendACK(packet);
 						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 					}
 				}else{
@@ -346,4 +382,6 @@ module.exports = {
 		escapeFlag = false;
 		retryDelay = 0;
 	},
+	
+	SERIAL_COMMANDS: SERIAL_COMMANDS,
 };

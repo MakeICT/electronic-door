@@ -9,20 +9,11 @@ rs485::rs485 (uint8_t serial_dir) {
   pinMode(serial_dir, OUTPUT);    
   digitalWrite(serial_dir, RS485Receive);  // Init Transceiver   
   Serial.begin(RS485_BAUD);   // set the data rate 
-  this->queueLength = 0;
-  this->queueMax =1;
 }
 
 void rs485::SetDebugPort(SoftwareSerial* port)  {
   LOG_DUMP(F("rs485::SetDebugPort()\r\n"));
   debugPort = port;
-}
-
-byte rs485::Queue(uint8_t* data, uint8_t len)  {
-  for(int i = 0; i < len; i++)
-    this->queuedPacket[i] = data[i];
-  this->queueLength +=1; 
-  return this->Send(queuedPacket, len);
 }
 
 byte rs485::Send(uint8_t* data, uint8_t len) {
@@ -34,28 +25,26 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
   //      finished when send is successful
   LOG_DUMP(F("rs485::Send()\r\n"));
   if (this->lastRcv - millis() > T_MIN_WAIT && !this->Available())  {
-    //TEST
-    //delay(1500);
     digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
     delay(20);
-    Serial.write(FLAG);
+    Serial.write(B_START);
     LOG_DEBUG(F("Sending: "));
-    LOG_DEBUG(FLAG);
+    LOG_DEBUG(B_START);
     LOG_DEBUG(' ');
     for (uint8_t sByte = 0; sByte < len; sByte ++)  {
         Serial.write(data[sByte]);          // Send byte to bus
         LOG_DEBUG(data[sByte]);
         LOG_DEBUG(' ');
     }
-    Serial.write(FLAG);
-    LOG_DEBUG(FLAG);
+    Serial.write(B_STOP);
+    LOG_DEBUG(B_STOP);
     LOG_DEBUG(F("\r\n"));
     delay(20);
     digitalWrite(serDir, RS485Receive);  // Disable RS485 Transmit 
     
     //Check for collisions
     if(Serial.available() == len + 2)  {
-      if (this->Receive() != FLAG)  {
+      if (this->Receive() != B_START)  {
           LOG_ERROR(F("ERROR: Collision1\r\n"));
           return ERR_COLLISION;
       }
@@ -65,11 +54,10 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
           return ERR_COLLISION;
         }
       }
-      if (this->Receive() != FLAG)  {
+      if (this->Receive() != B_STOP)  {
           LOG_ERROR(F("ERROR: Collision3\r\n"));
           return ERR_COLLISION;
       }
-      this->queueLength -= 1;
       LOG_INFO(F("Successfully sent packet\r\n"));
       return 0;
     }
@@ -93,7 +81,7 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
 
 inline int rs485::Send(uint8_t data) {
   LOG_DUMP(F("rs485::Send()\r\n"));
-  Send(&data);
+  this->Send(&data);
 }
 
 byte rs485::Receive() {
@@ -107,11 +95,4 @@ byte rs485::Receive() {
 int rs485::Available() {
   LOG_DUMP(F("rs485::Available()\r\n"));
   return Serial.available();
-}
-
-bool rs485::QueueFull()  {
-  if (this->queueLength < this->queueMax)
-    return false;
-  else
-    return true;
 }

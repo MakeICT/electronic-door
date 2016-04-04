@@ -110,18 +110,17 @@ module.exports = {
 				'SELECT DISTINCT  ' +
 				'	users."userID",   ' +
 				'	"firstName", "lastName", "email", "joinDate", "status",   ' +
-				'	"nfcID" IS NOT NULL AS "keyActive", ' +
-				'	( ' +
-				'		SELECT 0 < COUNT(0) FROM "userGroups" JOIN "groups" ON "userGroups"."groupID" = groups."groupID"  ' +
-				'		WHERE groups.name = \'administrators\' ' +
-				'			AND "userGroups"."userID" = users."userID" ' +
-				'	) AS "isAdmin" ' +
+				'	"nfcID" IS NOT NULL AS "keyActive" ' +
 				'FROM users ' +
 				'WHERE TRUE ';	
 
 			var params = [];
 			if(isAdmin !== undefined){
-				sql += '	AND "groups"."groupID" IS ' + (isAdmin ? 'NOT ' : '') + 'NULL ';
+				sql +=
+					'	AND (SELECT 0 < COUNT(0) FROM "userGroups" JOIN "groups" ON "userGroups"."groupID" = groups."groupID"  ' +
+					'		WHERE groups.name = \'administrators\' ' +
+					'			AND "userGroups"."userID" = users."userID" ' +
+					'	)';
 			}
 			if(keyActive !== undefined){
 				sql += '	AND "nfcID" IS ' + (keyActive ? 'NOT ': '') + 'NULL';

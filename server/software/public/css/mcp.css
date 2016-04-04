@@ -9,6 +9,7 @@ body{
 	background:url(/images/logo-header.svg);
 	background-position: center;
 	background-repeat: no-repeat;
+	margin-bottom: 1em;
 }
 
 #status-header {
@@ -93,4 +94,8 @@ tbody>tr:last-child>td {
 #message-log .message {
 	font-family: monospace;
 	white-space: pre;
+}
+
+table#activity-log td{
+	text-align: left;
 }

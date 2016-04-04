@@ -26,9 +26,11 @@ module.exports = {
 					runningProcs[filename] = {
 						'proc' : proc,
 						'running': true,
+						'size': 0,
 						'cleanup': cleanupCallback,
 					};
 					proc.stdout.on('data', function(data) {
+						runningProcs[filename].size += data.length;
 						fs.appendFile(tmpFilePath, data);
 					});
 					proc.stdout.on('end', function(data){
@@ -66,7 +68,8 @@ module.exports = {
 			response.send(404, 'File not found :(');
 			response.end();
 		}else if(runningProcs[f].running){
-			response.write('<html><head><meta http-equiv="refresh" content="10" /></head><body><pre><h1>[' + (new Date()) + '] Retreiving log...</h1></pre></body></html>');
+			var size = runningProcs[f].size;
+			response.write('<html><head><meta http-equiv="refresh" content="3" /></head><body><pre>[' + (new Date()) + '] Retreiving log... (' + size + ' bytes)</pre></body></html>');
 			response.end();
 		}else{
 			fs.readFile('/tmp/' + f, 'utf8', function(err, file) {
