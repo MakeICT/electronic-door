@@ -24,18 +24,13 @@ class rs485 {
     rs485(uint8_t);
     byte Receive();
     byte Send(uint8_t* data, uint8_t len = 1);  //TODO: deprecated
-    byte Queue(uint8_t* data, uint8_t len = 1);
     inline int Send(uint8_t data);
     int Available();
     void SetDebugPort(SoftwareSerial*);
-    boolean QueueFull();
     
   private:
     uint8_t serDir;
     SoftwareSerial* debugPort;
-    byte queuedPacket[MAX_PACKET_SIZE];
-    byte queueLength;
-    byte queueMax;
     unsigned long lastRcv;
 };
 

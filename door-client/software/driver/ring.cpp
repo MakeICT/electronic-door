@@ -17,30 +17,32 @@ void Ring::lightAll(uint32_t c) {
   }
 }
 
-void Ring::SetMode(byte m, uint32_t c, int p, int d)  {
+void Ring::SetMode(byte m, uint32_t c1, uint32_t c2, int p, int d)  {
    if (d > 0)  {
      tempMode = m;
      tempDuration = d;
      tempStarted = millis();
-     tempColor = c;
+     tempColor1 = c1;
+     tempColor2 = c2;
      tempPeriod = p;
    }
    else {
      mode = m;
-     SetColor(c);
+     SetColor1(c1);
+     SetColor2(c2);
      SetPeriod(p);
    }
    if (m == M_SOLID)  {
-      lightAll(c);
+      lightAll(c1);
       pixels.show();
    }
 }
 
-void Ring::SetColor(uint32_t c)  {
-  color = c;
+void Ring::SetColor1(uint32_t c)  {
+  color1 = c;
 }
 
-void Ring::SetBackground(uint32_t c)  {
+void Ring::SetColor2(uint32_t c)  {
   color2 = c;
 }
 
@@ -52,21 +54,21 @@ void Ring::SetPeriod(int p)  {
 void Ring::Update()  {
   uint32_t currentMillis = millis();
   uint8_t currentMode;
-  uint32_t currentColor;
-  uint32_t currentBackground;
+  uint32_t currentColor1;
+  uint32_t currentColor2;
   int currentPeriod;
   if (currentMillis - tempStarted > tempDuration)
     tempMode = false;
   if (tempMode)  {
     currentMode = tempMode;
-    currentColor = tempColor;
-    currentBackground = color2;
+    currentColor1= tempColor1;
+    currentColor2 = tempColor2;
     currentPeriod = tempPeriod;
   }    
   else  {
     currentMode = mode;
-    currentColor = color;
-    currentBackground = color2;
+    currentColor1= color1;
+    currentColor2 = color2;
     currentPeriod = period;
   }
     
@@ -77,9 +79,9 @@ void Ring::Update()  {
         pixels.setBrightness(255);
         last_change = currentMillis;
         if (state == 1)
-          lightAll(currentBackground);
+          lightAll(currentColor2);
         else
-          lightAll(currentColor);
+          lightAll(currentColor1);
         state = !state;
         pixels.show();
       }
@@ -87,7 +89,7 @@ void Ring::Update()  {
     
     case M_PULSE:
       if (currentMillis - last_change > currentPeriod / 200) {
-        lightAll(currentColor);
+        lightAll(currentColor1);
         last_change = currentMillis;
         int test = (dim[0]) - (2* (dim[0]%100) * (dim[0] /100));
         pixels.setBrightness(test*2 +55);
@@ -102,11 +104,24 @@ void Ring::Update()  {
         byte length = 3;    //TODO: make this configurable
         last_change = currentMillis;
         index = (index + 1)%num_LEDs;
-        pixels.setPixelColor(num_LEDs-1 -(((index + num_LEDs)-length)%num_LEDs), currentBackground);
-        pixels.setPixelColor(num_LEDs-1 -(index), currentColor);
+        pixels.setPixelColor(num_LEDs-1 -(((index + num_LEDs)-length)%num_LEDs), currentColor2);
+        pixels.setPixelColor(num_LEDs-1 -(index), currentColor1);
         pixels.show();
       }
       break;  
+      
+    case M_HEART:
+      if (currentMillis - last_change > currentPeriod) {
+        pixels.setBrightness(255);
+        last_change = currentMillis;
+        if (state == 1)
+          lightAll(currentColor2);
+        else
+          lightAll(currentColor1);
+        state = !state;
+        pixels.show();
+      }
+      break; 
   }
 }
 

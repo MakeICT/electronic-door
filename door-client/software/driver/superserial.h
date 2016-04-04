@@ -42,12 +42,14 @@ class SuperSerial
     Message GetMessage();
     
   private:
-    //Message/Packet Buffers
     bool newMessage;
-    Packet receivedPacket;
     bool dataQueued;
+    
+    //Message/Packet Buffers
+    Packet receivedPacket;
     Packet queuedPacket;
     Packet responsePacket;
+    
     byte currentTransaction;
     uint32_t lastPacketSend;
     uint8_t retryTimeout;
@@ -58,7 +60,6 @@ class SuperSerial
     byte deviceAddress;
     SoftwareSerial* debugPort;
     bool GetPacket();
-    void QueuePacket(Packet*);
     void SendPacket(Packet*);
     void SendControl(byte function, byte transactionID);
     void SendNAK(byte transID);

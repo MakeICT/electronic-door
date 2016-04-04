@@ -12,16 +12,22 @@
 #define M_FLASH  2
 #define M_PULSE  3
 #define M_CHASE  4
+#define M_HEART  5
 
 class Ring {
   public:
     Ring(uint8_t, uint8_t);
     void lightAll(uint32_t);
     
-    void SetMode(byte m, uint32_t c, int p, int d);
-    void SetColor(uint32_t c);
+    void SetMode(byte m, uint32_t c1, uint32_t c2, int p, int d);
+    void Solid(uint32_t c, int d);
+    void Flash(uint32_t c1, uint32_t c2, int p, int d); 
+    void Pulse(uint32_t c, int p, int d);
+    void Chase(uint32_t c1, uint32_t c2, int p, int d);
+    void Heart(uint32_t c, int p, int d);
+    void SetColor1(uint32_t c);
+    void SetColor2(uint32_t c);
     void SetPeriod(int period);
-    void SetBackground(uint32_t c);
     void Update();
     
   private:
@@ -30,7 +36,7 @@ class Ring {
     uint8_t mode;
     Adafruit_NeoPixel pixels;
     uint32_t last_change;
-    uint32_t color;
+    uint32_t color1;
     uint32_t color2;
     byte dim[3];
     
@@ -41,7 +47,7 @@ class Ring {
     uint8_t tempMode;
     uint16_t tempDuration;
     uint32_t tempStarted;
-    uint32_t tempColor;
+    uint32_t tempColor1;
     uint32_t tempColor2;
     byte tempPeriod;
     byte tempIndex;

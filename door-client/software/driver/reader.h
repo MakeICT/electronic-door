@@ -19,6 +19,8 @@ class Reader {
     Reader();
     uint8_t poll(uint8_t*, uint8_t*);
     boolean start();
+    bool Initialize();
+    bool IsAlive();
     void SetDebugPort(SoftwareSerial* dbgPort);
 
   private:

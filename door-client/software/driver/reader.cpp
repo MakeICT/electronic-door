@@ -25,6 +25,7 @@ boolean Reader::start() {
 
 uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
 {
+  //TODO: detect if reader is still functioning correctly; if not, reset
   uint8_t success;
   for (byte i = 0; i <8; i++)
     uid[i] = 0;  // Buffer to store the returned UID
@@ -63,16 +64,51 @@ boolean Reader::start() {
   //TODO: add reader detection
 
   SPI.begin();        // Init SPI bus
-  mfrc522.PCD_Init(); // Init MFRC522 reader
-  byte versiondata = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-  if (!versiondata) {
+  this->Initialize();
+}
+
+bool Reader::Initialize()  {
+  LOG_DEBUG(F("Initializing MFRC522 NFC reader\r\n"));
+  for (int i=0; i<3; i++)  {
+    mfrc522.PCD_Init();
+    if (this->IsAlive())  {
+      //break;
+      LOG_DEBUG(F("Reader initialized successfully\r\n"));
+      return true;
+    }
+  }
+  LOG_ERROR(F("Could not initialize reader\r\n"));
+  return false;
+  // Self-test always fails.  Possibly due to counterfeit chips
+  //~ if (!mfrc522.PCD_PerformSelfTest())  {
+    //~ LOG_ERROR("MFRC522 self-test failed!");      //Failure should produce user-visible output
+    //~ return false;
+  //~ }
+  //~ else  {
+    //~ LOG_DEBUG("MFRC522 self-test passed");
+    //~ return true;
+  //~ }
+}
+
+bool Reader::IsAlive()  {
+  byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+  if ((v == 0x00) || (v == 0xFF)) {
     return false;
   }
-  return true;
+  else  {
+    return true;
+  }
 }
 
 uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
 {
+  // Check if reader is still working
+  if (!this->IsAlive())  {
+    LOG_ERROR(F("NFC Reader has stopped responding\r\n"));
+    if (!this->Initialize())  {
+      return false;
+    }
+  }
   // Look for new cards
   if (mfrc522.PICC_IsNewCardPresent())  {
     LOG_DEBUG(F("New NFC card detected\r\n"));
@@ -85,22 +121,13 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
       }
       //identify picctype
       //byte piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-      return 1;
+      return true;
     }
     else  {
       LOG_ERROR(F("Failed to read card UID!\r\n"));
     }
   }
-  else  {
-    //~ LOG_DEBUG(F("No card detected, trying alternate read code\r\n"));
-    //~ byte bufferATQA[2];
-    //~ byte bufferSize = sizeof(bufferATQA);
-    //~ byte result = mfrc522.PICC_RequestA(bufferATQA, &bufferSize);
-    //~ LOG_DEBUG(F("Read returned status code: "));
-    //~ LOG_DEBUG(result);
-    //~ LOG_DEBUG(F("\r\n"));
-  }
-  return 0;
+  return false;
 }
 #endif
  
