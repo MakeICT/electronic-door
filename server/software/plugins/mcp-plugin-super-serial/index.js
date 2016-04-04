@@ -139,7 +139,8 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 					backend.error('Packet write error');
 					backend.error(error);
 				}
-			}).drain(function(error){
+			});
+			serialPort.drain(function(error){
 				if(error){
 					backend.error('Packet write error');
 					backend.error(error);
