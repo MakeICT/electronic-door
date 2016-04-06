@@ -5,7 +5,7 @@ function pad(n, width, z) {
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var app = angular.module('electronic-door', ['ui.bootstrap', 'wu.masonry']);
+var app = angular.module('electronic-door', ['ui.bootstrap']);
 angular.module('electronic-door').controller('controller', function($scope, $http, $location){
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
@@ -76,7 +76,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 					var plugin = plugins[i];
 					$scope.plugins[plugin.name] = plugin;
 					var attachOptions = function(response){
-						$scope.plugins[response.plugin].options = {};
+						$scope.plugins[response.plugin].options = [];
 						for(var i in response.options){
 							if(response.options[i].type != 'hidden'){
 								$scope.plugins[response.plugin].options[i] = response.options[i];

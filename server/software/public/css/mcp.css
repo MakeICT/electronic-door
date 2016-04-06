@@ -49,10 +49,6 @@ tbody>tr:last-child>td {
 	padding-bottom: 1em;
 }
 
-.client-plugin-actions {
-	padding-top: 1em;
-}
-
 .masonry-brick {
 	text-align: center;
 	width: 25em;
@@ -98,4 +94,19 @@ tbody>tr:last-child>td {
 
 table#activity-log td{
 	text-align: left;
+}
+
+.card {
+	width: 25em;
+	float: left;
+	margin: 0.5em;
+}
+
+.actions {
+	padding: 0.5em !important;
+}
+
+.actions button {
+	width: 45%;
+	margin: 2%;
 }
