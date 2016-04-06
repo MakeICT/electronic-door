@@ -4,10 +4,37 @@ var superSerial = require('../mcp-plugin-super-serial');
 // this is only needed for backend.regroup convenience
 var backend = require('../../backend.js');
 
-var UNLOCK = 0x01;
-var LOCK = 0x02;
-var NFC = 0x03;
-var DENY = 0x0C;
+
+function fixUnlockDuration(duration){
+	if(duration === undefined || duration === null){
+		duration = 3;
+	}else{
+		duration = parseInt(duration);
+	}
+	
+	if(duration < 255){
+		return [0, duration];
+	}else if(duration > (1 << 16)){
+		return (1<<16)-1;
+	}else{
+		return duration;
+	}
+}
+
+// @param client can be client object or clientID
+function doUnlock(client, userID, nfc){
+	try{
+		// regroup the options by key/value pairs for easy lookup
+		var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+
+		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(options['Unlock duration']));
+		broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client.clientID });
+		backend.log(client.name, userID, nfc, 'unlock');
+	}catch(exc){
+		backend.error('Exception during unlock');
+		backend.error(exc);
+	}
+}
 
 module.exports = {
 	name: 'Door Unlocker',
@@ -28,21 +55,12 @@ module.exports = {
 		},
 		actions: {
 			'Unlock': function(client, callback){
-				try{
-					// regroup the options by key/value pairs for easy lookup
-					var options = backend.regroup(client.plugins['Door Unlocker'].options, 'name', 'value');
-					if(options['Unlock duration'] == undefined) options['Unlock duration'] = 3;
-					superSerial.send(client.clientID, UNLOCK, parseInt(options['Unlock duration']));
-					
-					broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client, 'user': null });
-					
-					if(callback) callback();
-				}catch(exc){
-					backend.error(exc);
-				}
+				// @TODO get client from session
+				doUnlock(client);
+				if(callback) callback();
 			},
 			'Lock': function(client, callback){
-				superSerial.send(client.clientID, LOCK);
+				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LOCK']);
 				
 				if(callback) callback();
 			},
@@ -86,6 +104,11 @@ module.exports = {
 				}else{
 					return false;
 				}
+			}else if(option == 'Unlock duration'){
+				// if they enter something negative, just set it to zero
+				if(parseInt(newValue) < 0){
+					backend.setClientPluginOption(client.clientID, module.exports.name, option, 0);
+				}
 			}
 		},
 	},
@@ -106,7 +129,7 @@ module.exports = {
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'serial-data-received'){
 			if(data['to'] == 0){
-				if(data['function'] == NFC){
+				if(data['function'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
@@ -117,16 +140,15 @@ module.exports = {
 						return hex;
 					}).join('');
 					
-					var unlock = function(){
-						broadcaster.broadcast(module.exports, "door-unlocked", { 'client': data.from });
-						superSerial.send(client.clientID, UNLOCK, parseInt(options['Unlock duration']));
-						backend.log(client.name, null, nfc, 'unlock');
+					var unlock = function(user){
+						// @TODO add user to log
+						doUnlock(client, user.userID, nfc);
 					};
-					var deny = function(){
-						backend.log(client.name, null, nfc, 'deny');
-						superSerial.send(client.clientID, DENY);
+					var deny = function(user){
+						var userID = (user == null) ? null : user.userID;
+						backend.log(client.name, userID, nfc, 'deny');
+						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
-					
 					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
 				}
 			}

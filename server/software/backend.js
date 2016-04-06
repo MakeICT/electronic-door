@@ -233,7 +233,7 @@ module.exports = {
 	
 	getUserByNFC: function(nfcID, onSuccess, onFailure) {
 		var sql = 'SELECT * FROM users WHERE "nfcID" = $1';
-		return query(sql, [nfcID], onSuccess, onFailure);
+		return query(sql, [nfcID], getOneOrNone(onSuccess), onFailure);
 	},
 	
 	/**
@@ -762,22 +762,21 @@ module.exports = {
 		return query(sql, [who, what], log, onFailure);
 	},
 	
-	checkAuthorization: function(who, what, onAuthorized, onUnauthorized, idIsNFC){
-		backend.debug("Checking authorization " + who + " for " + what);
-		var idField = idIsNFC ? 'nfcID' : 'userID';
+	checkAuthorization: function(userID, what, onAuthorized, onUnauthorized, idIsNFC){
+		backend.debug("Checking authorization " + userID + " for " + what);
 		var sql =
 			'SELECT SUM(authorized) > 0 AS authorized FROM ( ' + 
 			'	SELECT COUNT(0) AS authorized ' + 
 			'	FROM "userAuthorizationTags" ' + 
 			'		JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' + 
-			'	WHERE users."' + idField + '" = $1 ' + 
+			'	WHERE users."userID" = $1 ' + 
 			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
 			'	UNION ' + 
 			'	SELECT COUNT(0) AS authorized ' + 
 			'	FROM "groupAuthorizationTags" ' + 
 			'		JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
 			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
-			'	WHERE users."' + idField + '" = $1 ' + 
+			'	WHERE users."userID" = $1 ' + 
 			'		AND users.status = \'active\'' +
 			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
 			') AS foo';
@@ -790,11 +789,25 @@ module.exports = {
 			}
 		};
 		
-		return query(sql, [who, what], process, onUnauthorized);
+		return query(sql, [userID, what], process, onUnauthorized);
 	},
 	
 	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
-		return module.exports.checkAuthorization(nfcID, what, onAuthorized, onUnauthorized, true);
+		backend.debug("checking NFC ID " + nfcID + " for authorization on " + what);
+
+		module.exports.getUserByNFC(nfcID, function(user){
+			if(!user){
+				onUnauthorized();
+			}else{
+				var authed = function(){
+					onAuthorized(user);
+				};
+				var unauthed = function(){
+					onUnauthorized(user);
+				};
+				module.exports.checkAuthorization(user.userID, what, authed, unauthed, true);
+			}
+		}, onUnauthorized);
 	},
 	
 	checkPassword: function(login, password, goodCallback, badCallback){

@@ -17,10 +17,6 @@
 		<script src="/js/angular/angular.js"></script>
 		<script src="/js/bootstrap/bootstrap.min.js"></script>
 		<script src="/js/ui-bootstrap-tpls.js"></script>
-		<script src="/js/imagesloaded.pkgd.min.js"></script>
-		<script src="/js/jquery-bridget.js"></script>
-		<script src="/js/masonry.pkgd.min.js"></script>
-		<script src="/js/angular-masonry.min.js"></script>
 
 		<script src="/js/MainController.js"></script>
 	</head>
@@ -38,7 +34,7 @@
 			<div ng-if="!authenticated" class="login-form">
 				<p><em>You're in trouble, program. Why don't you make it easy on yourself?<br/>Who's your user?</em></p>
 				<input type="email" class="form-control input-sm" placeholder="Email" ng-model="loginForm.email" ng-keyup="$event.keyCode == 13 && login()">
-				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="loginForm.password" ng-keyup="$event.keyCode == 13 && login()">
+				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="loginForm.password" ng-keyup="$event.keyCode == 13 && login()" ng-trim="false">
 				{{loginEmail}}
 				<button class="btn btn-default" ng-click="login()">Sign in</button>
 			</div>
@@ -98,7 +94,7 @@
 											<td>
 												{{user.keyActive?"Enrolled":"NOT Enrolled"}}
 												<button class="btn btn-sm btn-default" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"Unenroll":"Enroll now"}}</button>
-												<table ng-if="nfcLog && nfcLog.length > 0">
+												<table class="table" ng-if="nfcLog && nfcLog.length > 0">
 													<tr ng-repeat="log in nfcLog">
 														<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
 														<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
@@ -142,7 +138,7 @@
 											<th>Password reset</th>
 											<td>
 												<form class="form-inline">
-													<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password"/>
+													<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password" ng-trim="false"/>
 													<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
 												</form>
 											</td>
@@ -185,42 +181,43 @@
 					</uib-tab>
 					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
 						<h2>Clients</h2>
-						<div masonry>
-							<div ng-repeat="client in clients" class="masonry-brick well">
-								<h3>{{client.name}}</h3>
+						<div ng-repeat="client in clients" class="card well">
+							<h3>{{client.name}}</h3>
+							<table class="table table-bordered table-condensed">
+								<tr>
+									<td>ID:</td>
+									<td><input class="form-control input-sm" type="text" ng-model="client.clientID" /></td>
+								</tr><tr>
+									<td>Name:</td>
+									<td><input class="form-control input-sm" type="text" ng-model="client.name" /></td>
+								</tr><tr>
+									<td colspan="2">
+										<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+											<option disabled selected hidden value=""> - Bind new plugin - </option>
+											<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
+										</select>
+									</td>
+								</tr>
+							</table>
+							<div ng-repeat="plugin in client.plugins">
 								<table class="table table-bordered table-condensed">
-									<tbody>
+									<thead>
 										<tr>
-											<td>ID:</td>
-											<td><input class="form-control input-sm" type="text" ng-model="client.clientID" /></td>
+											<th colspan="2" class="active">
+												<span toggle class="btn btn-default btn-sm" style="float: right" ng-model="isOpened">⚙</span>
+												<h5>{{plugin.name}}</h5>
+											</th>
 										</tr>
-										<tr>
-											<td>Name:</td>
-											<td><input class="form-control input-sm" type="text" ng-model="client.name" /></td>
-										</tr>
-									</tbody>
-									<tbody>
-										<tr>
-											<td colspan="2">
-												<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
-													<option disabled selected hidden value=""> - Bind new plugin - </option>
-													<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
-												</select>
-											</td>
-										</tr>
-									</tbody>
-									<tbody ng-repeat="plugin in client.plugins">
-										<tr>
-											<th colspan="2" class="active plugin-name">{{plugin.name}}</th>
-										</tr>
+									</thead>
+									<tbody uib-collapse="!isOpened" >
 										<tr ng-repeat="option in plugin.options">
 											<td>{{option.name}}</td>
-											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}"/></td>
-										</tr>
-										<tr>
-											<td colspan="2" class="client-plugin-actions">
+											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/></td>
+										</tr><tr>
+											<td colspan="2" class="actions">
 												<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
 											</td>
+										</tr>
 									</tbody>
 								</table>
 							</div>
@@ -251,21 +248,25 @@
 					</uib-tab>
 					<uib-tab heading="Plugins" active="tabs.plugins.active" select="setLocation('plugins');">
 						<h2>Plugins</h2>
-						<div masonry="{'transitionDuration':0}">
-							<div ng-repeat="plugin in plugins" class="masonry-brick well">
-								<h3>{{plugin.name}}</h3>
+						<div ng-repeat="plugin in plugins" class="card well">
+							<div class="card-header">
+								<h3 class="card-title">{{plugin.name}}</h3>
 								<div class="btn-group">
 									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
 									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
 								</div>
-								<br/><br/>
-								<table>
+								<span toggle class="btn btn-default btn-sm" style="float: right" ng-model="isOpened">⚙</span>
+							</div>
+							<div uib-collapse="!isOpened" class="card-block" style="margin-top: 0.5em">
+								<table class="table table-striped table-bordered table-hover table-condensed" ng-if="plugin.options.length > 0">
 									<tr ng-repeat="option in plugin.options">
 										<td>{{option.name}}</td>
-										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}"></td>
+										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}" ng-trim="false"></td>
 									</tr>
-								</table><br/>
-								<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
+								</table>
+								<div class="actions">
+									<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
+								</div>
 							</div>
 						</div>
 					</uib-tab>
