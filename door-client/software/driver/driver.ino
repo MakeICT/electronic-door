@@ -172,6 +172,7 @@ void loop(void) {
       speaker.Update();
       status_ring.Update();
       if (!doorState && !door_latch.HoldingOpen() )  {
+        //LOG_DEBUG(F("Door opened, re-latching\r\n"));
         door_latch.Lock();
       }
       door_latch.Update();
@@ -237,16 +238,25 @@ void ProcessMessage()  {
       
     case F_UNLOCK_DOOR:
       LOG_INFO(F("Unlock Door\r\n"));
-      door_latch.Unlock(msg.payload[0] * 1000);
-          
-      //TEMPORARY TEST CODE
+      if (doorState)  {
+        LOG_DEBUG(F("Unlocking for "));
+        LOG_DEBUG((msg.payload[0] << 8) + msg.payload[1]);
+        //LOG_DEBUG((msg.payload[0] << 8) + msg.payload[1]);
+        LOG_DEBUG(F(" seconds.\r\n"));
+        //door_latch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
+        door_latch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
+      }
+      else
+        LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
       status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
       speaker.Play(startTune, startTuneDurations, 8);
       break;
+      
     case F_LOCK_DOOR:
       LOG_INFO(F("Lock Door\r\n"));
       door_latch.Lock();
       break;
+      
     case F_PLAY_TUNE:
     {
       LOG_INFO(F("Play Tune\r\n"));
@@ -271,6 +281,7 @@ void ProcessMessage()  {
     }
     case F_SET_LCD:
     {
+      LOG_INFO(F("Set LCD\r\n"));
       char printString[msg.length + 1];
       arrayCopy(msg.payload, (byte*) printString, msg.length);
       printString[msg.length+1] = '\0';

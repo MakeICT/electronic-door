@@ -23,7 +23,7 @@ void Strike::Unlock(uint16_t duration)  {
 }
 
 bool Strike::HoldingOpen()  {
-  return this->holdingOpen;
+  return this->holdingOpen; 
 }
 
 void Strike::Update()  {
@@ -34,7 +34,7 @@ void Strike::Update()  {
         analogWrite(strikePin, HOLD_DUTY_CYCLE);
       }
     if (unlockDuration > 0)  {
-      if (currentTime - unlockTime > unlockDuration)  {
+      if ((currentTime - unlockTime)/1000 > unlockDuration)  {
         Lock();
         unlockDuration = 0;
       }
