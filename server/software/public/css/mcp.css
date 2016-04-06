@@ -26,7 +26,7 @@ body{
 	text-align: right;
 }
 
-.user-details td {
+table td {
 	text-align: left;
 }
 
@@ -43,20 +43,6 @@ th, td {
 
 tbody>tr:first-child>td {
 	padding-top: 1em;
-}
-
-tbody>tr:last-child>td {
-	padding-bottom: 1em;
-}
-
-.masonry-brick {
-	text-align: center;
-	width: 25em;
-	margin: 1em;
-}
-
-.masonry-brick>table{
-	width: 100%;
 }
 
 #message-log {
@@ -103,7 +89,6 @@ table#activity-log td{
 }
 
 .actions {
-	padding: 0.5em !important;
 }
 
 .actions button {
