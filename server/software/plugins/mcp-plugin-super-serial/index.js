@@ -78,7 +78,7 @@ function SerialClient(clientInfo){
 	};
 	
 	this.getNextTransactionID = function(resetID){
-		if(resetID !== undefined)){
+		if(resetID !== undefined){
 			this.nextTransactionID = resetID;
 		}
 		var idToReturn = this.nextTransactionID;
@@ -193,10 +193,10 @@ function buildPacket(clientID, command, payload){
 	// (received packets increment the ID too, but that's not the ID that's sent
 	var transactionID = -1;
 	if(command == SERIAL_COMMANDS['ACK']){
-		var transactionID = clients[clientID].nextTransactionID(payload[0]);
+		var transactionID = clients[clientID].getNextTransactionID(payload[0]);
 		payload = [];
 	}else{
-		var transactionID = clients[clientID].nextTransactionID();
+		var transactionID = clients[clientID].getNextTransactionID();
 	}
 	
 	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
