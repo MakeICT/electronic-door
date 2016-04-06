@@ -249,13 +249,13 @@
 					<uib-tab heading="Plugins" active="tabs.plugins.active" select="setLocation('plugins');">
 						<h2>Plugins</h2>
 						<div ng-repeat="plugin in plugins" class="card well">
-							<div class="card-header">
+							<div class="card-header" style="position: relative;">
 								<h3 class="card-title">{{plugin.name}}</h3>
+								<span toggle class="btn btn-default btn-sm" style="position: absolute; right: 0;" ng-model="isOpened">⚙</span>
 								<div class="btn-group">
 									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
 									<label class="btn btn-sm btn-default" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
 								</div>
-								<span toggle class="btn btn-default btn-sm" style="float: right" ng-model="isOpened">⚙</span>
 							</div>
 							<div uib-collapse="!isOpened" class="card-block" style="margin-top: 0.5em">
 								<table class="table table-striped table-bordered table-hover table-condensed" ng-if="plugin.options.length > 0">
