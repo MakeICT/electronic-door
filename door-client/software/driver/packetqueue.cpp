@@ -201,6 +201,10 @@ byte Packet::Size()  {
   return this->size;
 }
 
+byte Packet::MsgLength()  {
+  return this->message.length;
+}
+
 byte Packet::EscapedSize()  {
   this->escapedSize = this->Size() + this->Escapes();
   return this->escapedSize;

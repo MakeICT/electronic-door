@@ -23,7 +23,7 @@ class rs485 {
   public:
     rs485(uint8_t);
     byte Receive();
-    byte Send(uint8_t* data, uint8_t len = 1);  //TODO: deprecated
+    byte Send(uint8_t* data, uint8_t len = 1);
     inline int Send(uint8_t data);
     int Available();
     void SetDebugPort(SoftwareSerial*);
