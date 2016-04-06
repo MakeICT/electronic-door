@@ -796,13 +796,17 @@ module.exports = {
 		backend.debug("checking NFC ID " + nfcID + " for authorization on " + what);
 
 		module.exports.getUserByNFC(nfcID, function(user){
-			var authed = function(){
-				onAuthorized(user);
-			};
-			var unauthed = function(){
-				onUnauthorized(user);
-			};
-			module.exports.checkAuthorization(user.userID, what, authed, unauthed, true);
+			if(!user){
+				onUnauthorized();
+			}else{
+				var authed = function(){
+					onAuthorized(user);
+				};
+				var unauthed = function(){
+					onUnauthorized(user);
+				};
+				module.exports.checkAuthorization(user.userID, what, authed, unauthed, true);
+			}
 		}, onUnauthorized);
 	},
 	

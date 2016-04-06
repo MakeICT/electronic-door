@@ -145,7 +145,8 @@ module.exports = {
 						doUnlock(client, user, nfc);
 					};
 					var deny = function(user){
-						backend.log(client.name, user.userID, nfc, 'deny');
+						var userID = user ? null : user.userID;
+						backend.log(client.name, userID, nfc, 'deny');
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
 					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
