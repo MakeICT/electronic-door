@@ -129,7 +129,7 @@ module.exports = {
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'serial-data-received'){
 			if(data['to'] == 0){
-				if(data['function'] == superSerial.SERIAL_COMMANDS['NFC']){
+				if(data['function'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
