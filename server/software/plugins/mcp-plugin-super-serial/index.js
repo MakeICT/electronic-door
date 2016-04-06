@@ -55,7 +55,7 @@ function SerialClient(clientInfo){
 	this.responseTimeout;
 	this.queue = [];
 	this.retries = 0;
-	this.transactionCount = 0;
+	this.nextTransactionID = 0;
 	
 	this.queuePacket = function(packet, callback){
 		this.queue.push({
@@ -77,15 +77,21 @@ function SerialClient(clientInfo){
 		}
 	};
 	
-	this.nextTransactionID = function(minimumTransactionID){
-		if(minimumTransactionID > this.transactionCount){
-			this.transactionCount = minimumTransactionID;
-		}else if(++this.transactionCount > 255){
-			this.transactionCount = 0;
+	this.getNextTransactionID = function(resetID){
+		if(resetID !== undefined)){
+			this.nextTransactionID = resetID;
+		}
+		var idToReturn = this.nextTransactionID;
+		
+		if(++this.nextTransactionID > 255){
+			this.nextTransactionID = 0;
 		}
 
-		return this.transactionCount;
+		return idToReturn;
 	};
+	
+	this.hasReceivedPacket = function(packet){
+	}
 	
 	this.deque = function(){
 		this.lastPacket = this.queue.shift();
@@ -268,21 +274,28 @@ function onData(data){
 						backend.debug('=============================');
 						if(packet.from != 0) clients[packet.from].ackReceived();
 					}else{
-						backend.debug('=============================');
-						backend.debug(" Received : " + dataBuffer);
-						backend.debug("Unescaped : " + unescapedPacket);
-						backend.debug("       ID : " + packet.transactionID);
-						backend.debug("     From : " + packet.from);
-						backend.debug("       To : " + packet.to);
-						backend.debug(" Function : " + packet.function);
-						backend.debug("     Data : " + packet.data);
-						backend.debug('=============================');
-						sendACK(packet);
-						broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+						var client = clients[packet.from];
+						if(client.hasReceivedPacket(packet)){
+							backend.debug('=============================');
+							backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
+							backend.debug('=============================');
+						}else{
+							backend.debug('=============================');
+							backend.debug(' Received : ' + dataBuffer);
+							backend.debug('Unescaped : ' + unescapedPacket);
+							backend.debug('       ID : ' + packet.transactionID);
+							backend.debug('     From : ' + packet.from);
+							backend.debug('       To : ' + packet.to);
+							backend.debug(' Function : ' + packet.function);
+							backend.debug('     Data : ' + packet.data);
+							backend.debug('=============================');
+							sendACK(packet);
+							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+						}
 					}
 				}else{
 					backend.debug('=============================');
-					backend.debug("Bad CRC " + incomingCRC + ", computed = " + computedCRC);
+					backend.debug('Bad CRC ' + incomingCRC + ', computed = ' + computedCRC);
 					backend.debug(dataBuffer.toString());
 					backend.debug('=============================');
 				}
