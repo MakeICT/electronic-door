@@ -140,15 +140,14 @@ module.exports = {
 						return hex;
 					}).join('');
 					
-					var unlock = function(){
+					var unlock = function(user){
 						// @TODO add user to log
-						doUnlock(client);
+						doUnlock(client, user, nfc);
 					};
-					var deny = function(){
-						backend.log(client.name, null, nfc, 'deny');
+					var deny = function(user){
+						backend.log(client.name, user, nfc, 'deny');
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
-					
 					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
 				}
 			}
