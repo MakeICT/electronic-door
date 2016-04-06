@@ -115,23 +115,30 @@ module.exports = {
 									user.joinDate = 0;
 									
 									var level = this.data['MembershipLevel']['Name'];
+									var alreadyEnrolledInCorrectGroup = false;
 									
 									var updateGroups = function(){
 										backend.getUserByEmail(user.email, function(user){
 											var newGroupName = "WA-Level: " + level;
 											backend.getUserGroups(user.userID, function(groups){
 												for(var i=0; i<groups.length; i++){
-													if(!groups.enrolled) continue;
+													if(!groups[i].enrolled) continue;
 													var groupName = groups[i].name;
-													if(groupName.indexOf("WA-Level: ") == 0 && groupName != newGroupName){
-														backend.setGroupEnrollment(user.userID, groupName, false);
+
+													// remove user from all of the WA groups they are in if they are not the current group
+													if(groupName.indexOf("WA-Level: ") == 0){
+														if(groupName != newGroupName){
+															backend.setGroupEnrollment(user.userID, groupName, false);
+														}else{
+															alreadyEnrolledInCorrectGroup = true;
+														}
 													}
 												}
+												if(level && !alreadyEnrolledInCorrectGroup){
+													var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
+													backend.addGroup(newGroupName, doEnrollment, doEnrollment);
+												}
 											});
-											if(level){
-												var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
-												backend.addGroup(newGroupName, doEnrollment, doEnrollment);
-											}
 										});
 									};
 									

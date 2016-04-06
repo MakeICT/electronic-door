@@ -236,6 +236,11 @@ module.exports = {
 		return query(sql, [nfcID], getOneOrNone(onSuccess), onFailure);
 	},
 	
+	getUserByID: function(id, onSuccess, onFailure) {
+		var sql = 'SELECT * FROM users WHERE "userID" = $1';
+		return query(sql, [id], getOneOrNone(onSuccess), onFailure);
+	},
+	
 	/**
 	 * Requires: { firstName, lastName, email, joinDate }
 	 **/
@@ -853,7 +858,7 @@ module.exports = {
 		}
 		
 		var log = function(){
-			module.exports.log((enrolled ? 'Add ' : 'Remove ') + 'group(' + group + ') enrollment', who);
+			module.exports.log((enrolled ? 'Add user to' : 'Remove user from') + ' group: ' + group, who);
 			if(onSuccess) onSuccess();
 		};
 		return query(sql, [who, group], log, onFailure);
@@ -870,10 +875,26 @@ module.exports = {
 		params = [message, logType, userID, code];
 		
 		if(!skipBroadcast){
-			broadcaster.broadcast(module.exports, 'log', message);
+			var lookupFunction, lookupValue;
+			if(userID){
+				lookupFunction = module.exports.getUserByID;
+				lookupValue = userID;
+			}else if(code){
+				lookupFunction = module.exports.getUserByNFC;
+				lookupValue = code;
+			}else{
+				lookupFunction = function(callback){
+					if(callback) return callback();
+				};
+			}
+			lookupFunction(lookupValue, function(user){
+				if(user) message += ' (' + user.firstName + ' ' + user.lastName + ')';
+				if(code) message += ' (' + code + ')';
+				broadcaster.broadcast(module.exports, 'log', message);
+			});
 		}
 		
-		return query(sql,  params);
+		return query(sql, params);
 	},
 	
 	error: function(message){
