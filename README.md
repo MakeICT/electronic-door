@@ -18,21 +18,16 @@ This system is used to secure spaces with an electronic door latch.
 
 ## Todo
 * Server
-	* Change plugins and clients to tiles and hide/expand settings
 	* Super admins vs group admins
 	* Ability to create groups
 	* Better logging on denial
 	* Fix user accordian
 	* Create scheduling system
-	* Pull groups and authentication on exapnd
-	* Load groups when tab is selected
+	* Pull groups and authentication on expand
 	* Force layout on Plugins and Clients tabs when selected
 	* Make plugins respect disabled mode
 	* Add / edit users
 	* Fix user search (first + last name = no results)
-* Client
-	* Blink red-only on denial
-	* Blink green-only on unlock
 
 ## License 
 
