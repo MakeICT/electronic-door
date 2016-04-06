@@ -18,6 +18,9 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.checkAjax = function(response, suppressError){
 		if(response.error){
 			if(!suppressError){
+				if(response.error == 'Not logged in'){
+					$scope.authenticated = false;
+				}
 				$scope.error = {
 					'message': response.error,
 					'detail': response.detail,

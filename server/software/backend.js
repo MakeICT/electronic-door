@@ -675,7 +675,12 @@ module.exports = {
 				var client = clientList[i];
 				
 				for(var pluginName in client.plugins){
-					client.plugins[pluginName].actions = Object.keys(module.exports.getPluginByName(pluginName).clientDetails.actions);
+					try{
+						client.plugins[pluginName].actions = Object.keys(module.exports.getPluginByName(pluginName).clientDetails.actions);
+					}catch(exc){
+						backend.error('Failed to load plugin (' + pluginName + ') for client (' + client.clientID + ')');
+						backend.error(exc);
+					}
 				}
 				clients.push(client);
 			}
