@@ -264,7 +264,9 @@
 										<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}"></td>
 									</tr>
 								</table>
-								<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
+								<div class="actions">
+									<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
+								</div>
 							</div>
 						</div>
 					</uib-tab>
