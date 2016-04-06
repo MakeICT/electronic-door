@@ -119,7 +119,11 @@ module.exports = {
 					
 					var unlock = function(){
 						broadcaster.broadcast(module.exports, "door-unlocked", { 'client': data.from });
-						superSerial.send(client.clientID, UNLOCK, parseInt(options['Unlock duration']));
+						var unlockDuration = parseInt(options['Unlock duration']);
+						if(unlockDuration < 255){
+							unlockDuration = [0, unluckDuration];
+						}
+						superSerial.send(client.clientID, UNLOCK, unlockDuration);
 						backend.log(client.name, null, nfc, 'unlock');
 					};
 					var deny = function(){
