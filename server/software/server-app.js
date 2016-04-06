@@ -177,12 +177,12 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 				}else{
 					plugin.onDisable(session);
 				}
-//				response.send();
 			},
 			function(error){
 				response.send(error.detail);
 			}
 		);
+		response.send();
 	}
 		
 	return next();

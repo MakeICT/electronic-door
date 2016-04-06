@@ -326,11 +326,19 @@ module.exports = {
 	},
 
 	enablePlugin: function(pluginName, onSuccess, onFailure){
-		return query('UPDATE plugins SET enabled = TRUE WHERE name = $1', [pluginName], onSuccess, onFailure);
+		var updateRAM = function(){
+			module.exports.reloadPlugins();
+			if(onSuccess) onSuccess();
+		};
+		return query('UPDATE plugins SET enabled = TRUE WHERE name = $1', [pluginName], updateRAM, onFailure);
 	},
 	
-	disablePlugin: function(pluginName, onSuccess, onFailure){			
-		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], onSuccess, onFailure);
+	disablePlugin: function(pluginName, onSuccess, onFailure){
+		var updateRAM = function(){
+			module.exports.reloadPlugins();
+			if(onSuccess) onSuccess();
+		};
+		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], updateRAM, onFailure);
 	},
 	
 	addPluginOption: function(pluginName, optionName, type, onSuccess, onFailure){
@@ -867,7 +875,7 @@ module.exports = {
 	log: function(message, userID, code, logType, skipBroadcast){
 		if(!logType) logType = 'message';
 		
-		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
+		console.log(logType, message, userID ? userID : '', ',', code ? code : '');
 		
 		sql =
 			'INSERT INTO logs (timestamp, "message", "logType", "userID", "code") ' +

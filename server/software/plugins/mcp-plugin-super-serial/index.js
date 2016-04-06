@@ -333,7 +333,7 @@ module.exports = {
 	onInstall: function(){},
 	onUninstall: function(){},
 	
-	onEnable: function(){
+	onEnable: function(session){
 		backend.getPluginOptions(module.exports.name, function(settings){
 			serialPort = new SerialPort.SerialPort(
 				settings['Port'],
@@ -341,8 +341,7 @@ module.exports = {
 				true,
 				function(error){
 					if(error){
-						backend.error('Serial connection error');
-						backend.error(error);
+						backend.error('Serial connection error: ' + error);
 					}else{
 						backend.log('Super Serial connected');
 						if(settings['RW Toggle Pin']){
@@ -354,6 +353,7 @@ module.exports = {
 						}catch(exc){
 							backend.error(exc);
 						}
+						if(session) session.response.send();
 					}
 				}
 			);
@@ -366,10 +366,13 @@ module.exports = {
 		}
 	},
 	
-	onDisable: function(){
+	onDisable: function(session){
 		if(serialPort){
-			reset();
-			serialPort.close();
+			try{
+				module.exports.reset();
+				serialPort.close();
+			}catch(exc){}
+			
 			serialPort = null;
 			backend.log('Super Serial disconnected');
 		}
