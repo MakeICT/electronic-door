@@ -29,7 +29,7 @@ function doUnlock(client, user, nfc){
 
 		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(options['Unlock duration']));
 		broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client.clientID });
-		backend.log(client.name, user, nfc, 'unlock');
+		backend.log(client.name, user.userID, nfc, 'unlock');
 	}catch(exc){
 		backend.error('Exception during unlock');
 		backend.error(exc);
@@ -145,7 +145,7 @@ module.exports = {
 						doUnlock(client, user, nfc);
 					};
 					var deny = function(user){
-						backend.log(client.name, user, nfc, 'deny');
+						backend.log(client.name, user.userID, nfc, 'deny');
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
 					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
