@@ -819,13 +819,13 @@ module.exports = {
 		var sql = 'SELECT "userID", "passwordHash" FROM users WHERE email = $1';
 		
 		var process = function(data){
-			if(data.length > 0 && bcrypt.compareSync(password, data[0].passwordHash)){
+			if(data.length > 0 && bcrypt.compareSync(password, data[0].passwordHash || '')){
 				goodCallback(data[0].userID);
 			}else{
 				badCallback();
 			}
 		};
-		
+
 		return query(sql, [login], process);
 	},
 	

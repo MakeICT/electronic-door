@@ -330,7 +330,6 @@ server.get('/log', function(request, response, next) {
 
 server.post('/login', function(request, response, next){
 	var session = sessionManager.start(request, response);
-	
 	if(session.properties['authenticated'] && !request.params.email && !request.params.password){
 		response.send();
 	}else{
@@ -347,7 +346,11 @@ server.post('/login', function(request, response, next){
 			response.send({'error': 'Login failed'});
 		};
 		
-		backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);
+		if(request.params.email == '' || request.params.password == ''){
+			response.send({'error': 'Login failed'});
+		}else{
+			backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);
+		}
 	}
 	next();
 });
