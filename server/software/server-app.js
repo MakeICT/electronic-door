@@ -173,9 +173,9 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 			plugin.name,
 			function(){
 				if(request.params.value){
-					plugin.onEnable(session);
+					plugin.onEnable();
 				}else{
-					plugin.onDisable(session);
+					plugin.onDisable();
 				}
 			},
 			function(error){

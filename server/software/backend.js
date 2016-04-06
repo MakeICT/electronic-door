@@ -327,7 +327,7 @@ module.exports = {
 
 	enablePlugin: function(pluginName, onSuccess, onFailure){
 		var updateRAM = function(){
-			module.exports.reloadPlugins();
+			module.exports.getPluginByName(pluginName).enabled = true;
 			if(onSuccess) onSuccess();
 		};
 		return query('UPDATE plugins SET enabled = TRUE WHERE name = $1', [pluginName], updateRAM, onFailure);
@@ -335,7 +335,7 @@ module.exports = {
 	
 	disablePlugin: function(pluginName, onSuccess, onFailure){
 		var updateRAM = function(){
-			module.exports.reloadPlugins();
+			module.exports.getPluginByName(pluginName).enabled = false;
 			if(onSuccess) onSuccess();
 		};
 		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], updateRAM, onFailure);
@@ -673,7 +673,7 @@ module.exports = {
 			module.exports.reloadClients(function(){
 				for(var i=0; i<plugins.length; i++){
 					if(plugins[i].enabled){
-						plugins[i].onEnable();
+						plugins[i].onEnable(1);
 					}
 				}
 			});

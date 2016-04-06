@@ -333,8 +333,11 @@ module.exports = {
 	onInstall: function(){},
 	onUninstall: function(){},
 	
-	onEnable: function(session){
+	onEnable: function(){
 		backend.getPluginOptions(module.exports.name, function(settings){
+			if(serialPort){
+				module.exports.onDisable();
+			}
 			serialPort = new SerialPort.SerialPort(
 				settings['Port'],
 				{ baudrate: settings['Baud'], },
@@ -343,7 +346,7 @@ module.exports = {
 					if(error){
 						backend.error('Serial connection error: ' + error);
 					}else{
-						backend.log('Super Serial connected');
+						backend.log('Super Serial connected!');
 						if(settings['RW Toggle Pin']){
 							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
 							readWriteToggle.writeSync(1);
@@ -353,7 +356,6 @@ module.exports = {
 						}catch(exc){
 							backend.error(exc);
 						}
-						if(session) session.response.send();
 					}
 				}
 			);
@@ -366,10 +368,12 @@ module.exports = {
 		}
 	},
 	
-	onDisable: function(session){
+	onDisable: function(){
 		if(serialPort){
 			try{
 				module.exports.reset();
+			}catch(exc){}
+			try{
 				serialPort.close();
 			}catch(exc){}
 			
