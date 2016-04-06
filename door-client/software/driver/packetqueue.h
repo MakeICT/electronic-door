@@ -13,7 +13,7 @@
 #define MAX_PACKET_SIZE   64
 #define P_H_LENGTH        5
 #define P_F_LENGTH        2
-#define P_H_F_LENGTH      P_H_LENGTH + P_F_LENGTH
+#define P_H_F_LENGTH      7
 
 class Message { 
   public:

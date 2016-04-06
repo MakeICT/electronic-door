@@ -62,9 +62,7 @@ class SuperSerial
     bool GetPacket();
     void SendPacket(Packet*);
     void SendControl(byte function, byte transactionID);
-    void SendNAK(byte transID);
     void SendACK(byte transID);
-    void SendNOP(byte transID);
 };
 
 #endif
