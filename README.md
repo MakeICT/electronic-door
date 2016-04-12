@@ -18,16 +18,23 @@ This system is used to secure spaces with an electronic door latch.
 
 ## Todo
 * Server
+	* Send alarm status on LCD
+	* Send chimes
+	* Fix user accordian
+	* Pull groups and authentication on expand
 	* Super admins vs group admins
 	* Ability to create groups
-	* Better logging on denial
-	* Fix user accordian
 	* Create scheduling system
-	* Pull groups and authentication on expand
 	* Force layout on Plugins and Clients tabs when selected
 	* Make plugins respect disabled mode
 	* Add / edit users
 	* Fix user search (first + last name = no results)
+	
+* Client
+	* New NFC reader
+	* Add doorbell input (capacitive?)
+	* Design/build case for front
+	* Build 2nd client for testing & back door
 
 ## License 
 
