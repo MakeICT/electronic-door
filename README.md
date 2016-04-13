@@ -1,5 +1,6 @@
 # Master Control Program 
 
+
 This system is used to secure spaces with an electronic door latch.
 
 ## Dependencies:
@@ -18,7 +19,6 @@ This system is used to secure spaces with an electronic door latch.
 
 ## Todo
 * Server
-	* Send alarm status on LCD
 	* Send chimes
 	* Fix user accordian
 	* Pull groups and authentication on expand
