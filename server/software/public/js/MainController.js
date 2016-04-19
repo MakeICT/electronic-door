@@ -201,14 +201,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});		
 	};
 	
-	$scope.getUserGroups = function(user){
-		$http.get('/users/' + user.userID + '/groups').success(function(response){
-			if($scope.checkAjax(response)){
-				user.groups = response;
-			}
-		});
-	};
-	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
 		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
 			if($scope.checkAjax(response)){
@@ -317,6 +309,17 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				// @TODO: give feedback
 			}
 		});
+	};
+	
+	$scope.toggleUserDisplay = function(user){
+		user.isExpanded = !user.isExpanded;
+		if(!user.groups){
+			$http.get('/users/' + user.userID + '/groups').success(function(response){
+				if($scope.checkAjax(response)){
+					user.groups = response;
+				}
+			});
+		}
 	};
 
 

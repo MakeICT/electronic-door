@@ -80,8 +80,8 @@
 						<div ng-if="userSearchResults.length > 0">
 							<h3>Search results</h3>
 							<div ng-repeat="user in userSearchResults" class="card well">
-								<button class="btn btn-default btn-block" ng-click="isExpanded=!isExpanded">{{user.firstName}} {{user.lastName}}</button>
-								<div uib-collapse="!isExpanded">
+								<button class="btn btn-default btn-block" ng-click="toggleUserDisplay(user)">{{user.firstName}} {{user.lastName}}</button>
+								<div uib-collapse="!user.isExpanded">
 									<table class="table table-striped user-details">
 										<tr>
 											<th>Member status</th>
