@@ -26,7 +26,7 @@ module.exports = {
 				var options = getClientOptions(client);
 				var tone = superSerial.hexStringToByteArray(options['Default tone sequence']);
 				if(tone.length == 0){
-					tone = superSerial.hexStringToByteArray('3032343537393b3c151515151515150c');
+					tone = superSerial.hexStringToByteArray('3032343504040410');
 				}
 				console.log('Sending tone: ' + tone);
 				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], tone);
@@ -51,10 +51,16 @@ module.exports = {
 	},
 	
 	receiveMessage: function(source, messageID, data){
-		if(messageID == "door-unlocked"){
+		if(messageID == 'door-unlocked'){
 			var clients = backend.getClients();
 			for(var i=0; i<clients.length; i++){
 				module.exports.clientDetails.actions['Test sound'](clients[i]);
+			}
+		}else if(messageID == 'alarm-armed-away' || messageID == 'alarm-armed-stay'){
+			var clients = backend.getClients();
+			for(var i=0; i<clients.length; i++){
+				tone = superSerial.hexStringToByteArray('35003500350404040410');
+				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], tone);
 			}
 		}
 	},
