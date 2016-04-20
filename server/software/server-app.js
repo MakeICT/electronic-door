@@ -136,6 +136,27 @@ server.get('/groups', function(request, response, next){
 	return next();
 });
 
+server.post('/groups', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.addGroup(
+			request.params.name, request.params.description,
+			function(result){
+				response.send(result);
+			},
+			function(error){
+				if(error.detail){
+					response.send(error.detail);
+				}else{
+					response.send(error);
+				}
+			}
+		);
+	}
+	
+	return next();
+});
+
 /**
  * Plugins
  **/

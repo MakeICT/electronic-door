@@ -20,15 +20,13 @@ This system is used to secure spaces with an electronic door latch.
 ## Todo
 * Server
 	* Send chimes
-	* Fix user accordian
-	* Pull groups and authentication on expand
 	* Super admins vs group admins
 	* Ability to create groups
 	* Create scheduling system
-	* Force layout on Plugins and Clients tabs when selected
 	* Make plugins respect disabled mode
 	* Add / edit users
 	* Fix user search (first + last name = no results)
+	* When unlocking from web ui, display user in log
 	
 * Client
 	* New NFC reader

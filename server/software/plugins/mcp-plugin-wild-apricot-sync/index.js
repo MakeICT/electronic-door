@@ -136,7 +136,7 @@ module.exports = {
 												}
 												if(level && !alreadyEnrolledInCorrectGroup){
 													var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
-													backend.addGroup(newGroupName, doEnrollment, doEnrollment);
+													backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
 												}
 											});
 										});
