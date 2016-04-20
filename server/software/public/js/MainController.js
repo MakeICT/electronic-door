@@ -165,6 +165,11 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		'lastName': '',
 		'joinDate': new Date(),
 	};
+	
+	$scope.newGroup = {
+		'name': '',
+		'description': '',
+	};
 
 	$scope.setCurrentUser = function(user){
 		$scope.currentUser = user;
@@ -199,6 +204,32 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				// @TODO: give feedback to user that this worked
 			}
 		});		
+	};
+	
+	$scope.saveNewGroup = function(){
+		console.log($scope.newGroup);
+		if(!$scope.newGroup || $scope.newGroup.name == ''){
+			$scope.error = {
+				'message': 'Group name must be specified',
+				'detail': '...so type something in.',
+			};
+		}else{
+			$http.post('/groups', $scope.newGroup).success(function(response){
+				if($scope.checkAjax(response)){
+					$scope.newGroup = {'name': null, 'description': null };
+					$http.get('/groups').success(function(response){
+						if($scope.checkAjax(response)){
+							$scope.groups = response;
+						}
+					});
+				}
+			}).error(function(error){
+				$scope.error = {
+					'message': 'Failed to add group',
+					'detail': error.code + ": " + error.message,
+				};
+			});
+		}
 	};
 	
 	$scope.resetPassword = function(user){

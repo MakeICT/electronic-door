@@ -27,8 +27,12 @@ function getOneOrNone(callback){
 		}else{
 			data = null;
 		}
-		if(callback) return callback(data);
-		return data;
+		
+		if(callback){
+			return callback(data);
+		}else{
+			return data;
+		}
 	}
 }
 
@@ -166,6 +170,7 @@ module.exports = {
 						groups.push({
 							'groupID': data[i].groupID,
 							'name': data[i].name,
+							'description': data[i].description,
 							'authorizations': []
 						});
 					}
@@ -184,25 +189,23 @@ module.exports = {
 		}
 	},
 	
+	getGroupByName: function(name, onSuccess, onFailure){
+		var sql = 'SELECT * FROM groups WHERE name = $1';
+		return query(sql, [name], getOneOrNone(onSuccess), onFailure);
+	},
+	
 	// sends the groupID to the success callback
-	addGroup: function(groupName, onSuccess, onFailure){
+	addGroup: function(groupName, description, onSuccess, onFailure){
 		try{
-			var sql = 'SELECT * FROM groups WHERE name = $1';
-			var process = function(data){
-				if(data.length < 1){
-					var tryAgain = function(){
-						return this.addGroup(groupName);
-					};
-					query('INSERT INTO GROUPS (name) VALUES ($1)', [groupName], tryAgain, onFailure);
-				}else{
-					onSuccess(data[0]['groupID']);
-				}
+			var sql = 'INSERT INTO GROUPS (name, description) VALUES ($1, $2)';
+			var findGroupID = function(){
+				backend.log('Group added (' + groupName + ')');
+				sql = 'SELECT "groupID" FROM groups WHERE name = $1';
+				return query(sql, [groupName], getOneOrNone(onSuccess), onFailure);
 			};
-			
-			return query(sql, [groupName], process, onFailure);
-
+			return query(sql, [groupName, description], findGroupID, onFailure);
 		}catch(exc){
-			backend.error(exc);
+			onFailure(exc);
 		}
 	},
 	
