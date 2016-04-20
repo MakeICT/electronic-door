@@ -4,6 +4,7 @@ var backend = require('./backend.js');
 var broadcaster = require('./broadcast.js');
 var sessionManager = require('./simple-session.js');
 
+broadcaster.broadcast('hi');
 var doneLoading = false;
 
 var server = restify.createServer({

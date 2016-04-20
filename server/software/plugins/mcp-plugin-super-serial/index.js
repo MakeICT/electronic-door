@@ -403,5 +403,28 @@ module.exports = {
 		retryDelay = 0;
 	},
 	
+	hexStringToByteArray: function(str){
+		var result = [];
+		while (str.length >= 2) { 
+			result.push(parseInt(str.substring(0, 2), 16));
+			str = str.substring(2, str.length);
+		}
+
+		return result;
+	},
+	
+	byteArrayToHexString: function(data){
+		var result = '';
+		var z;
+
+		for (var i=0; i<data.length; i++) {
+			var str = data[i].toString(16);
+			str = Array(2 - str.length + 1).join("0") + str;
+			result += str;
+		}
+
+		return result;
+	},
+	
 	SERIAL_COMMANDS: SERIAL_COMMANDS,
 };
