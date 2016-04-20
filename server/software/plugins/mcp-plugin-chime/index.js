@@ -23,16 +23,17 @@ module.exports = {
 		},
 		actions: {
 			'Test sound': function(client, callback){
-				var options = getClientOptions();
+				var options = getClientOptions(client);
 				var tone = superSerial.hexStringToByteArray(options['Default tone sequence']);
 				if(tone.length == 0){
 					tone = superSerial.hexStringToByteArray('3032343537393b3c151515151515150c');
 				}
-				backend.debug('tone = ' + tone);
+				console.log('Sending tone: ' + tone);
 				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], tone);
 				if(callback) callback();
 			},
 			'Test lights': function(client, callback){
+				var options = getClientOptions(client);
 				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(options['Default light sequence']));
 			},
 		},
@@ -50,10 +51,11 @@ module.exports = {
 	},
 	
 	receiveMessage: function(source, messageID, data){
-		if(message == "door-unlocked"){
-			backend.debug('door unlock data received...');
-			backend.debug(messageID);
-			backend.debug(data);
+		if(messageID == "door-unlocked"){
+			var clients = backend.getClients();
+			for(var i=0; i<clients.length; i++){
+				module.exports.clientDetails.actions['Test sound'](clients[i]);
+			}
 		}
 	},
 };

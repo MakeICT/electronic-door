@@ -26,10 +26,9 @@ function doUnlock(client, userID, nfc){
 	try{
 		// regroup the options by key/value pairs for easy lookup
 		var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
-
 		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(options['Unlock duration']));
-		broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client.clientID });
 		backend.log(client.name, userID, nfc, 'unlock');
+		broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
 	}catch(exc){
 		backend.error('Exception during unlock');
 		backend.error(exc);
