@@ -124,6 +124,7 @@ module.exports = {
 	},
 	
 	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
 	},
 	
 	receiveMessage: function(source, messageID, data){
