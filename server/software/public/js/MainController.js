@@ -50,7 +50,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		$scope.socket.on('log', function(message){
 			addMessage('log', message);
 		});
-		
+
 		$scope.clearMessages = function(){
 			$scope.messages.length = 0;
 		};
@@ -183,22 +183,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				$scope.resetNewUser();
 			}
 		});
-	};
-	
-	$scope.getUserAuthorizations = function(user){
-		$http.get('/users/' + user.userID + '/authorizations').success(function(response){
-			if($scope.checkAjax(response)){
-				user.authorizations = response;
-			}
-		});
-	};
-	
-	$scope.setUserAuthorization = function(user, authTag, authorized){
-		$http.put('/users/' + user.userID + '/authorizations/' + authTag, authorized).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback to user that this worked
-			}
-		});		
 	};
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){

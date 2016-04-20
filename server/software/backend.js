@@ -718,42 +718,7 @@ module.exports = {
 		var sql = 'DELETE FROM "authorizationTags" WHERE name = $1 AND "sourcePluginID" = $2';
 		query(sql, [name, pluginID], onSuccess, onFailure);
 	},
-	
-	getUserAuthorizations: function(who, onSuccess, onFailure){
-		var sql =
-			'SELECT ' +
-			'	name, ' +
-			'	"userAuthorizationTags"."userID" IS NOT NULL AS authorized ' +
-			'FROM "authorizationTags" ' +
-			'	LEFT JOIN "userAuthorizationTags" ON "authorizationTags"."tagID" = "userAuthorizationTags"."tagID" ' +
-			'		AND "userID" = $1 ' +
-			'WHERE "userID" = $1 OR "userID" IS NULL ' +
-			'GROUP BY name, "userID" ' +
-			'ORDER BY name';
-		return query(sql, [who], onSuccess, onFailure);
-	},
-	
-	setUserAuthorization: function(who, what, authorized, onSuccess, onFailure){
-		var sql;
-		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
 		
-		if(authorized){
-			sql = 
-				'INSERT INTO "userAuthorizationTags" ("userID", "tagID") ' +
-				'VALUES ($1, (' + tagSQL + '))';
-		}else{
-			sql = 
-				'DELETE FROM "userAuthorizationTags" WHERE "userID" = $1 ' +
-				'AND "tagID" = (' + tagSQL + ')';
-		}
-		
-		var log = function(){
-			module.exports.log((authorized ? 'Authorize ' : 'Forbid ') + ' user for ' + what, who);
-			if(onSuccess) onSuccess();
-		};
-		return query(sql, [who, what], log, onFailure);
-	},
-	
 	setGroupAuthorization: function(who, what, authorized, onSuccess, onFailure){
 		var sql;
 		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
@@ -778,21 +743,13 @@ module.exports = {
 	checkAuthorization: function(userID, what, onAuthorized, onUnauthorized, idIsNFC){
 		backend.debug("Checking authorization " + userID + " for " + what);
 		var sql =
-			'SELECT SUM(authorized) > 0 AS authorized FROM ( ' + 
-			'	SELECT COUNT(0) AS authorized ' + 
-			'	FROM "userAuthorizationTags" ' + 
-			'		JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' + 
-			'	WHERE users."userID" = $1 ' + 
-			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
-			'	UNION ' + 
-			'	SELECT COUNT(0) AS authorized ' + 
-			'	FROM "groupAuthorizationTags" ' + 
-			'		JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
-			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
-			'	WHERE users."userID" = $1 ' + 
-			'		AND users.status = \'active\'' +
-			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
-			') AS foo';
+			'SELECT COUNT(0) > 0 AS authorized ' + 
+			'FROM "groupAuthorizationTags" ' + 
+			'	JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
+			'	JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
+			'WHERE users."userID" = $1 ' + 
+			'	AND users.status = \'active\'' +
+			'	AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
 		
 		var process = function(data){
 			if(data[0]['authorized']){
@@ -805,22 +762,31 @@ module.exports = {
 		return query(sql, [userID, what], process, onUnauthorized);
 	},
 	
+	/**
+	 * onAuthorized(user)
+	 * onUnauthorized(user, reason)
+	 **/
 	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
 		backend.debug("checking NFC ID " + nfcID + " for authorization on " + what);
-
+		var unauthed = function(){
+			onUnauthorized(null, 'System error');
+		};
+		
 		module.exports.getUserByNFC(nfcID, function(user){
 			if(!user){
-				onUnauthorized();
+				onUnauthorized(null, 'Could not find user');
+			}else if(user.status != 'active'){
+				onUnauthorized(user, 'User not active');
 			}else{
 				var authed = function(){
 					onAuthorized(user);
 				};
 				var unauthed = function(){
-					onUnauthorized(user);
+					onUnauthorized(user, 'Not authorized');
 				};
 				module.exports.checkAuthorization(user.userID, what, authed, unauthed, true);
 			}
-		}, onUnauthorized);
+		}, unauthed);
 	},
 	
 	checkPassword: function(login, password, goodCallback, badCallback){

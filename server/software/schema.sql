@@ -121,14 +121,6 @@ CREATE TABLE IF NOT EXISTS "authorizationTags" (
 	FOREIGN KEY("sourcePluginID") REFERENCES "plugins"("pluginID")
 );
 
-CREATE TABLE IF NOT EXISTS "userAuthorizationTags" (
-	"userID" INT NOT NULL,
-	"tagID" INT NOT NULL,
-	UNIQUE("userID", "tagID"),
-	FOREIGN KEY("userID") REFERENCES "users"("userID"),
-	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID")
-);
-
 CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 	"groupID" INT NOT NULL,
 	"tagID" INT NOT NULL,

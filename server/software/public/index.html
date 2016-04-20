@@ -120,21 +120,6 @@
 												</button>
 											</td>
 										</tr><tr>
-											<th>Personal authorizations</th>
-											<td>
-												<button ng-if="!user.authorizations" ng-click="getUserAuthorizations(user);" class="btn btn-sm btn-default">Load authorizations</button>
-												<button
-													ng-repeat="auth in user.authorizations"
-													uib-btn-checkbox
-													ng-model="auth.authorized"
-													ng-click="setUserAuthorization(user, auth.name, auth.authorized)"
-													type="button"
-													class="btn btn-default btn-sm"
-												>
-													{{auth.name}}
-												</button>
-											</td>
-										</tr><tr>
 											<th>Password reset</th>
 											<td>
 												<form class="form-inline">
