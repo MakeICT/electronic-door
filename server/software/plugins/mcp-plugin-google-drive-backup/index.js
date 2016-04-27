@@ -24,13 +24,29 @@ module.exports = {
 	
 	// @TODO: hide fields that should be hidden (like Token)
 	// @TODO: add read-only field for displaying authorized account name
-	options: {
-		'Client ID': 'text',
-		'Client secret': 'password',
-		'Folder ID': 'text',
-		'token': 'hidden',
-		'hostname': 'hidden',
-	},
+	options: [
+		{
+			'name': 'Client ID',
+			'type': 'text',
+			'value': null,
+		},{
+			'name': 'Client secret',
+			'type': 'password',
+			'value': null,
+		},{
+			'name': 'Folder ID',
+			'type': 'text',
+			'value': null,
+		},{
+			'name': 'token',
+			'type': 'hidden',
+			'value': null,
+		},{
+			'name': 'hostname',
+			'type': 'hidden',
+			'value': null,
+		}
+	],
 
 	onEnable: function(session){
 		backend.getPluginOptions(module.exports.name, function(settings){

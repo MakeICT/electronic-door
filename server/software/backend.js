@@ -383,18 +383,16 @@ module.exports = {
 					[plugin.name],
 					function(rows){
 						plugin.pluginID = rows[0].pluginID;
-						if(Object.keys(plugin.options).length > 0){
+						if(plugin.options.length > 0){
 							var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ';
-							var ordinal = 0;
 							var params = [];
-							for(var key in plugin.options){
+							for(var i=0; i<plugin.options.length; i++){
+								var option = plugin.options[i];
 								sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
-								params.push(key);
-								params.push(plugin.options[key]);
-								params.push(ordinal);
+								params.push(option.name);
+								params.push(option.value);
+								params.push(i);
 								params.push(plugin.pluginID);
-								
-								ordinal++;
 							}
 							sql = sql.substring(0, sql.length-2);
 							return query(sql, params, function(){onSuccess(plugin);}, logAndFail);
@@ -480,6 +478,16 @@ module.exports = {
 	
 	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
 		// @TODO: collapse into a single query or find a better sequential execution method (async module?)
+		var sendUpdateToPlugin = function(){
+			var plugin = module.exports.getPluginByName(pluginName);
+			for(var i=0; i<plugin.options; i++){
+				if(plugin.options[i].name == option){
+					plugin.options[i].value = newValue;
+					break;
+				}
+			}
+			onSuccess();
+		};
 		return query(
 			'SELECT "pluginID" FROM plugins WHERE name = $1',
 			[pluginName],
@@ -500,7 +508,7 @@ module.exports = {
 									[optionID],
 									function(){
 										var sql = 'INSERT INTO "pluginOptionValues" ("pluginOptionID", value) VALUES ($1, $2)';
-										return query(sql, [optionID, value], onSuccess, onFailure);
+										return query(sql, [optionID, value], sendUpdateToPlugin, onFailure);
 									},
 									onFailure
 								);
@@ -915,6 +923,7 @@ module.exports = {
 
 		return query(sql, [nfcID, userID], log, onFailure);
 	},
+
 };
 var backend = module.exports;
 module.exports.reloadPlugins();

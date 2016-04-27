@@ -45,11 +45,21 @@ function sendToAll(line1, line2){
 
 module.exports = {
 	name: 'LCD Client',
-	options: {
-		'Send line 1': 'text',
-		'Send line 2': 'text',
-		'Idle message delay': 'number',
-	},
+	options: [
+		{
+			'name': 'Send line 1',
+			'type': 'text',
+			'value': null,
+		},{
+			'name': 'Send line 2',
+			'type': 'text',
+			'value': null,
+		},{
+			'name': 'Idle message delay',
+			'type': 'number',
+			'value': null,
+		},
+	],
 	actions: {
 		'Send to all': function(){
 			backend.getPluginOptions(module.exports.name, function(settings){
@@ -71,11 +81,21 @@ module.exports = {
 		},
 	},
 	clientDetails: {
-		options: {
-			'Send line 1': 'text',
-			'Send line 2': 'text',
-			'Idle message delay': 'number',
-		},
+		options: [
+			{
+				'name': 'Send line 1',
+				'type': 'text',
+				'value': null,
+			},{
+				'name': 'Send line 2',
+				'type': 'text',
+				'value': null,
+			},{
+				'name': 'Idle message delay',
+				'type': 'number',
+				'value': null,
+			},
+		],
 		actions: {
 			'Send text': function(client, callback){
 				var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');				

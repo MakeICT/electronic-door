@@ -1,5 +1,5 @@
-var broadcaster = require('../../broadcast.js');
 var backend = require('../../backend.js');
+var broadcaster = require('../../broadcast.js');
 var SerialPort = require('serialport');
 var GPIO = require('onoff').Gpio;
 var crc = require('crc');
@@ -67,32 +67,6 @@ function SerialClient(clientInfo){
 		}
 	};
 	
-	this.ackReceived = function(){
-		clearTimeout(this.responseTimeout);
-		this.waitingForAck = false;
-		this.lastPacket = null;
-		
-		if(this.queue.length > 0){
-			this.deque();
-		}
-	};
-	
-	this.getNextTransactionID = function(resetID){
-		if(resetID !== undefined){
-			this.nextTransactionID = resetID;
-		}
-		var idToReturn = this.nextTransactionID;
-		
-		if(++this.nextTransactionID > 255){
-			this.nextTransactionID = 0;
-		}
-
-		return idToReturn;
-	};
-	
-	this.hasReceivedPacket = function(packet){
-	}
-	
 	this.deque = function(){
 		this.lastPacket = this.queue.shift();
 		if(!this.lastPacket) return;
@@ -129,6 +103,33 @@ function SerialClient(clientInfo){
 			doTimeoutAction();
 		});
 	};
+	
+	this.ackReceived = function(){
+		clearTimeout(this.responseTimeout);
+		this.waitingForAck = false;
+		this.lastPacket = null;
+		
+		if(this.queue.length > 0){
+			this.deque();
+		}
+	};
+	
+	this.getNextTransactionID = function(resetID){
+		if(resetID !== undefined){
+			this.nextTransactionID = resetID;
+		}
+		var idToReturn = this.nextTransactionID;
+		
+		if(++this.nextTransactionID > 255){
+			this.nextTransactionID = 0;
+		}
+
+		return idToReturn;
+	};
+	
+	this.hasReceivedPacket = function(packet){
+	}
+
 }
 var clients = {};
 
@@ -166,6 +167,7 @@ function _sendPacket(packet, callback, pauseBeforeRetry){
 		
 	}
 }
+
 function sendACK(packet){
 	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
 	_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
@@ -319,15 +321,32 @@ function breakupBytes(byteArray){
 	return output;
 }
 
+
 module.exports = {
 	name: 'Super Serial',
-	options: {
-		'Port': 'text',
-		'Baud': 'number',
-		'Timeout': 'number',
-		'Max retries': 'number',
-		'RW Toggle Pin': 'number',
-	},
+	options: [
+		{
+			'name': 'Port',
+			'type': 'text',
+			'value': '/dev/ttyUSB0',
+		}, {
+			'name': 'Baud',
+			'type': 'number',
+			'value': 9600,
+		}, {
+			'name': 'Timeout',
+			'type': 'number',
+			'value': null,
+		}, {
+			'name': 'Max retries',
+			'type': 'number',
+			'value': null,
+		}, {
+			'name': 'RW Toggle Pin',
+			'type': 'number',
+			'value': 18,
+		},
+	],
 	
 	actions: {},
 	onInstall: function(){},

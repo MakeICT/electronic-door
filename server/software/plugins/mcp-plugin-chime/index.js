@@ -12,15 +12,21 @@ module.exports = {
 	name: 'Chime',
 	options: {},
 	actions: {
-		'Chime all': function(){
-		},
-		
+		'Chime all': function(){},
 	},
 	clientDetails: {
-		options: {
-			'Default tone sequence': 'text',
-			'Default light sequence': 'text',
-		},
+		options: [
+			{
+				'name': 'Default tone sequence',
+				'type': 'text',
+				'value': '3032343537393b3c151515151515150c',
+			},{
+				'name': 'Default light sequence',
+				'type': 'text',
+				'value': '',
+			}
+		],
+		
 		actions: {
 			'Test sound': function(client, callback){
 				var options = getClientOptions(client);

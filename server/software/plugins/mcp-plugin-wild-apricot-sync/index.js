@@ -74,13 +74,19 @@ var api = {
 	post: function(url, data, next){ return this.send(url, 'POST', data, next); }
 };
 
-
 module.exports = {
 	name: 'Wild Apricot Sync',
-	options: {
-		'API key': 'password',
-		'Account ID': 'text',
-	},
+	options: [
+		{
+			'name': 'API key',
+			'type': 'password',
+			'value': null,
+		},{
+			'name': 'Account ID',
+			'type': 'text',
+			'value': null,
+		},
+	],
 
 	actions: {
 		'Sync Now': function(){

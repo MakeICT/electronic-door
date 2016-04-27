@@ -48,10 +48,17 @@ module.exports = {
 		
 	},
 	clientDetails: {
-		options: {
-			'Unlock duration': 'number',
-			'Authorization tag': 'text',
-		},
+		options: [
+			{
+				'name': 'Unlock duration',
+				'type': 'number',
+				'value': 3,
+			},{
+				'name': 'Authorization tag',
+				'type': 'text',
+				'value': null,
+			},
+		],
 		actions: {
 			'Unlock': function(client, callback){
 				// @TODO get client from session

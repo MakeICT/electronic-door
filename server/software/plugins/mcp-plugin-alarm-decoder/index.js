@@ -8,11 +8,21 @@ var ARM_ALARM = 0x06;
 
 module.exports = {
 	name: 'Alarm Decoder',
-	options: {
-		'IP': 'number',
-		'Port': 'number',
-		'Code': 'password',
-	},
+	options: [
+		{
+			'name': 'IP',
+			'type': 'number',
+			'value': null,
+		},{	
+			'name': 'Port',
+			'type': 'number',
+			'value': 10000,
+		},{	
+			'name': 'Code',
+			'type': 'password',
+			'value': null,
+		},
+	],
 	
 	actions: {
 		'Arm away': function(callback){
