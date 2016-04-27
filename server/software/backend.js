@@ -654,6 +654,7 @@ module.exports = {
 			return fs.statSync(path.join('./plugins', file)).isDirectory();
 		});
 		module.exports.getInstalledPlugins(function(pluginList){
+			var loadedPluginCount = 0;
 			// load plugins
 			for(var i=0; i<pluginFolders.length; i++){
 				var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
@@ -691,17 +692,22 @@ module.exports = {
 							}
 						}
 					}
+						
+					if(++loadedPluginCount >= pluginFolders.length){
+						module.exports.reloadClients(function(){
+							for(var i=0; i<plugins.length; i++){
+								if(plugins[i].enabled){
+									plugins[i].onEnable();
+								}
+							}
+						});
+					}else{
+						backend.debug('Loaded plugin ' + this.name);
+					}
 				};
 				
 				module.exports.getPluginOptions(plugin.name, setOptions.bind(plugin));
 			}
-			module.exports.reloadClients(function(){
-				for(var i=0; i<plugins.length; i++){
-					if(plugins[i].enabled){
-						plugins[i].onEnable();
-					}
-				}
-			});
 		});
 	},
 	
