@@ -56,7 +56,6 @@ function Packet(rawBytesOrTransactionID, from, to, command, payload){
 	this.bytes = [];
 	this.unescapedPacket = [];
 	if(from === undefined){
-		console.log('constructing packet from bytes');
 		if(typeof(rawBytesOrTransactionID) === "string"){
 			var bytes = module.exports.stringToByteArray(rawBytesOrTransactionID);
 		}else{
@@ -70,7 +69,6 @@ function Packet(rawBytesOrTransactionID, from, to, command, payload){
 				escapeFlag = false;
 			}
 		}
-		console.log('escapes are done');
 		this.transactionID = this.unescapedPacket[1];
 		this.from = this.unescapedPacket[2];
 		this.to = this.unescapedPacket[3];
@@ -78,7 +76,6 @@ function Packet(rawBytesOrTransactionID, from, to, command, payload){
 		this.payload = this.unescapedPacket.slice(6, 6+this.unescapedPacket[5]);
 		console
 	}else{
-		console.log('constructing packet from data');
 		if(!payload){
 			payload = [];
 		}else if(typeof(payload) === "string"){
@@ -131,8 +128,6 @@ function Packet(rawBytesOrTransactionID, from, to, command, payload){
 	this.toString = function(){
 		return module.exports.byteArrayToHexString(this.bytes);
 	};
-	
-	console.log('packet object created!');
 }
 
 var packetQueue = {
@@ -150,7 +145,6 @@ var packetQueue = {
 	},
 	
 	'dequeue': function(){
-		console.log('dequeueing');
 		if(this.waitingForACK){
 			backend.error('Super Serial CANNOT DEQUEUE RIGHT NOW!');
 			return;
@@ -195,11 +189,7 @@ var packetQueue = {
 	},
 	
 	'onACKReceived': function(packet){
-		// @TODO: test if it's the right packet
-		console.log('ack received...');
-		
 		if(this.lastPacketInfo && packet.from == this.lastPacketInfo.to && packet.transactionID == this.lastPacketInfo.transactionID){
-			console.log('Ive been waiting for this ack!');
 			this._doneWaiting();
 		}
 	},
@@ -277,12 +267,10 @@ function sendACK(packet){
 function buildPacket(clientID, command, payload){
 	// call nextTransactionID no matter what
 	// (received packets increment the ID too, but that's not the ID that's sent
-	console.log('building packet for ' + clientID);
 	var transactionID = -1;
 	if(command == SERIAL_COMMANDS['ACK']){
 		var transactionID = clients[clientID].getNextTransactionID(payload[0]);
 	}else{
-		console.log('Client = ' + clients[clientID]);
 		var transactionID = clients[clientID].getNextTransactionID();
 	}
 
@@ -319,9 +307,7 @@ function onData(data){
 			backend.debug('Incoming packet: ' + dataBuffer);
 			var packet = new Packet(dataBuffer);
 			if(packet.from != 0){
-				console.log('checking crc');
 				if(packet.checkCRC()){
-					console.log('crc ok');
 					if(packet.command == SERIAL_COMMANDS['ACK']){
 						backend.debug('=============================');
 						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
@@ -347,8 +333,6 @@ function onData(data){
 							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 						}
 					}
-				}else{
-					console.log('CRC BAD');
 				}
 			}
 			dataBuffer = [];
