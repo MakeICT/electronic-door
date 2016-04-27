@@ -691,15 +691,17 @@ module.exports = {
 							}
 						}
 					}
-					if(this.enabled){
-						this.onEnable(1);
-					}
 				};
 				
 				module.exports.getPluginOptions(plugin.name, setOptions.bind(plugin));
 			}
-			
-			module.exports.reloadClients();
+			module.exports.reloadClients(function(){
+				for(var i=0; i<plugins.length; i++){
+					if(plugins[i].enabled){
+						plugins[i].onEnable();
+					}
+				}
+			});
 		});
 	},
 	

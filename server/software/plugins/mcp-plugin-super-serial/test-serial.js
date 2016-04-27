@@ -1,4 +1,7 @@
-var SERIAL_BYTES = {
+var SerialPort = require("serialport");
+var crc = require('crc');
+
+var SERIAL_FLAGS = {
 	'ESCAPE':	0xFE,
 	'START':	0xFA,
 	'END':		0xFB,
@@ -17,6 +20,9 @@ var SERIAL_COMMANDS = {
 	'ACK':		0xAA,
 	'ERROR':	0xFA,
 };
+var serialPort;
+
+
 
 function lookupCommand(b){
 	for(var command in SERIAL_COMMANDS){
@@ -41,11 +47,126 @@ function breakupBytes(byteArray){
 }
 //console.log(breakupBytes([39963])); return;
 
-var SerialPort = require("serialport");
-var serialPort;
+function lookupCommand(byte){
+	for(var command in SERIAL_COMMANDS){
+		if(SERIAL_COMMANDS[command] == byte){
+			return command;
+		}
+	}
+}
+
+function lookupSerialFlag(byte){
+	for(var flag in SERIAL_FLAGS){
+		if(SERIAL_FLAGS[flag] == byte){
+			return flag;
+		}
+	}
+}
+
+
+
+
+
+
+function Packet(rawBytesOrTransactionID, from, to, command, payload){
+	this.bytes = [];
+	this.unescapedPacket = [];
+	if(from === undefined){
+		console.log('constructing packet from bytes');
+		if(typeof(rawBytesOrTransactionID) === "string"){
+			var stringData = rawBytesOrTransactionID;
+			rawBytesOrTransactionID = [];
+			for(var i=0; i<stringData.length; i++){
+				rawBytesOrTransactionID.push(stringData.charCodeAt(i));
+			}
+		}
+
+		var bytes = rawBytesOrTransactionID;
+		for(var j=0; j<bytes.length; j++){
+			if(bytes[j] == SERIAL_FLAGS['ESCAPE'] && !escapeFlag){
+				escapeFlag = true;
+			}else{
+				this.unescapedPacket.push(bytes[j]);
+				escapeFlag = false;
+			}
+		}
+		console.log('escapes are done');
+		this.transactionID = this.unescapedPacket[1];
+		this.from = this.unescapedPacket[2];
+		this.to = this.unescapedPacket[3];
+		this.command = this.unescapedPacket[4];
+		this.payload = this.unescapedPacket.slice(6, 6+this.unescapedPacket[5]);
+		console
+	}else{
+		console.log('constructing packet from data ' + rawBytesOrTransactionID);
+		if(!payload){
+			payload = [];
+		}else if(typeof(payload) === "string"){
+			var stringData = payload;
+			payload = [];
+			for(var i=0; i<stringData.length; i++){
+				payload.push(stringData.charCodeAt(i));
+			}
+		}else if(!(payload instanceof Array)){
+			payload = [payload];
+		}
+		// break up the payload early, so we can correctly calculate its size
+		this.transactionID = rawBytesOrTransactionID;
+		this.from = from;
+		this.to = to;
+		this.command = command;
+		this.payload = breakupBytes(payload);
+		
+		this.bytes = [this.transactionID, this.from, this.to, this.command, this.payload.length].concat(this.payload);
+		var computedCRC = crc.crc16modbus(this.bytes);
+		if(computedCRC < 256) this.bytes.push(0);
+		this.bytes.push(computedCRC);
+		this.bytes = [SERIAL_FLAGS['START']].concat(this.bytes).concat([SERIAL_FLAGS['END']]);
+		
+		// break up multi-bytes. Not sure why it doesn't just work without :(
+		this.bytes = breakupBytes(this.bytes);
+		// add escape characters where necessary
+		for(var i=1; i<this.bytes.length-1; i++){
+			if(!this.bytes[i]) this.bytes[i] = 0;
+			if(lookupSerialFlag(this.bytes[i])){
+				this.bytes.splice(i, 0, SERIAL_FLAGS['ESCAPE']);
+				i++;
+			}
+		}
+	}
+	
+	this.checkCRC = function(){
+		var computedCRC = crc.crc16modbus(this.unescapedPacket.slice(1, 6+this.unescapedPacket[5]));
+		var incomingCRC = (this.unescapedPacket[6+this.unescapedPacket[5]]<<8) + this.unescapedPacket[7+this.unescapedPacket[5]];
+		if(computedCRC == incomingCRC){
+			return true;
+		}else{
+			backend.debug('=============================');
+			backend.debug('Bad CRC ' + computedCRC + ' vs ' + incomingCRC);
+			backend.debug('=============================');
+			return false;
+		}
+	};
+	
+	this.toString = function(){
+		return this.bytes;
+	};
+	
+	console.log('packet object created!');
+}
 
 function onData(data){
-	console.log("RAW: " + data.toString('hex'));
+	var packet = new Packet(data);
+
+	console.log('=============================');
+	console.log(' Received : ' + data.toString('hex'));
+	console.log('Unescaped : ' + packet.unescapedPacket);
+	console.log('       ID : ' + packet.transactionID);
+	console.log('     From : ' + packet.from);
+	console.log('       To : ' + packet.to);
+	console.log('  Command : ' + packet.command);
+	console.log('  Payload : ' + packet.payload);
+	console.log('=============================');
 	
 	var sendEcho = function(){
 		console.log("Echo-ing");
@@ -58,17 +179,15 @@ function onData(data){
 			}
 		});
 	};
-
+	
 	var sendAck = function(){
-		console.log("Sending ack");
-		//var ack = [0x7e, data[1], data[3], data[2], 0xAA, 0, 156, 102, 0x7e];
-		var ack = [SERIAL_BYTES['START'], data[1], data[3], data[2], SERIAL_COMMANDS['ACK'], 0, 156, 102, 0x7e, 0x7e, 3, 1, 0, 3, 3, 1, 2, 3, 226, 197, SERIAL_BYTES['END']];
-		serialPort.write(ack, function(error, results){
+		var ack = new Packet(packet.transactionID, packet.to, packet.from, SERIAL_COMMANDS['ACK']);
+		serialPort.write(ack.bytes, function(error, results){
 			if(error){
 				console.error('Packet write error');
 				console.error(error);
 			}else{
-				console.log("\tWrote packet: " + ack.toString('hex'));
+				console.log("\tWrote packet: " + ack.bytes.toString('hex'));
 			}
 		});
 	};
@@ -128,7 +247,7 @@ serialPort = new SerialPort.SerialPort(
 		}else{
 			console.log('Super Serial connected');
 			serialPort.on('data', onData);
-			setTimeout(sendTest, 1000);
+//			setTimeout(sendTest, 1000);
 		}
 	}
 );

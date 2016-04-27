@@ -1,5 +1,5 @@
 // https://github.com/josephwegner/node-session
-var DEBUG = false;
+var DEBUG = true;
 
 var sessions = {};
 

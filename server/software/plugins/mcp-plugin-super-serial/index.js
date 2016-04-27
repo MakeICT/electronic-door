@@ -32,6 +32,10 @@ var SERIAL_COMMANDS = {
 	'ERROR':	0xFA,
 };
 
+function getSettings(){
+	return backend.regroup(module.exports.options, 'name', 'value');
+}
+
 function lookupCommand(byte){
 	for(var command in SERIAL_COMMANDS){
 		if(SERIAL_COMMANDS[command] == byte){
@@ -48,71 +52,162 @@ function lookupSerialFlag(byte){
 	}
 }
 
-function SerialClient(clientInfo){
-	this.info = clientInfo;
-	this.lastPacket = null;
-	this.waitingForAck = false;
-	this.responseTimeout;
-	this.queue = [];
-	this.retries = 0;
-	this.nextTransactionID = 0;
+function Packet(rawBytesOrTransactionID, from, to, command, payload){
+	this.bytes = [];
+	this.unescapedPacket = [];
+	if(from === undefined){
+		console.log('constructing packet from bytes');
+		if(typeof(rawBytesOrTransactionID) === "string"){
+			var bytes = module.exports.stringToByteArray(rawBytesOrTransactionID);
+		}else{
+			var bytes = rawBytesOrTransactionID;
+		}
+		for(var j=0; j<bytes.length; j++){
+			if(bytes[j] == SERIAL_FLAGS['ESCAPE'] && !escapeFlag){
+				escapeFlag = true;
+			}else{
+				this.unescapedPacket.push(bytes[j]);
+				escapeFlag = false;
+			}
+		}
+		console.log('escapes are done');
+		this.transactionID = this.unescapedPacket[1];
+		this.from = this.unescapedPacket[2];
+		this.to = this.unescapedPacket[3];
+		this.command = this.unescapedPacket[4];
+		this.payload = this.unescapedPacket.slice(6, 6+this.unescapedPacket[5]);
+		console
+	}else{
+		console.log('constructing packet from data');
+		if(!payload){
+			payload = [];
+		}else if(typeof(payload) === "string"){
+			var stringData = payload;
+			payload = [];
+			for(var i=0; i<stringData.length; i++){
+				payload.push(stringData.charCodeAt(i));
+			}
+		}else if(!(payload instanceof Array)){
+			payload = [payload];
+		}
+		// break up the payload early, so we can correctly calculate its size
+		this.transactionID = rawBytesOrTransactionID;
+		this.from = from;
+		this.to = to;
+		this.command = command;
+		this.payload = breakupBytes(payload);
+		
+		this.bytes = [this.transactionID, this.from, this.to, this.command, this.payload.length].concat(this.payload);
+		var computedCRC = crc.crc16modbus(this.bytes);
+		if(computedCRC < 256) this.bytes.push(0);
+		this.bytes.push(computedCRC);
+		this.bytes = [SERIAL_FLAGS['START']].concat(this.bytes).concat([SERIAL_FLAGS['END']]);
+		
+		// break up multi-bytes. Not sure why it doesn't just work without :(
+		this.bytes = breakupBytes(this.bytes);
+		// add escape characters where necessary
+		for(var i=1; i<this.bytes.length-1; i++){
+			if(!this.bytes[i]) this.bytes[i] = 0;
+			if(lookupSerialFlag(this.bytes[i])){
+				this.bytes.splice(i, 0, SERIAL_FLAGS['ESCAPE']);
+				i++;
+			}
+		}
+	}
 	
-	this.queuePacket = function(packet, callback){
-		this.queue.push({
-			'packet': packet,
-			'callback': callback
-		});
-		if(!this.waitingForAck){
-			this.deque();
+	this.checkCRC = function(){
+		var computedCRC = crc.crc16modbus(this.unescapedPacket.slice(1, 6+this.unescapedPacket[5]));
+		var incomingCRC = (this.unescapedPacket[6+this.unescapedPacket[5]]<<8) + this.unescapedPacket[7+this.unescapedPacket[5]];
+		if(computedCRC == incomingCRC){
+			return true;
+		}else{
+			backend.debug('=============================');
+			backend.debug('Bad CRC ' + computedCRC + ' vs ' + incomingCRC);
+			backend.debug('=============================');
+			return false;
 		}
 	};
 	
-	this.deque = function(){
-		this.lastPacket = this.queue.shift();
-		if(!this.lastPacket) return;
+	this.toString = function(){
+		return module.exports.byteArrayToHexString(this.bytes);
+	};
+	
+	console.log('packet object created!');
+}
+
+var packetQueue = {
+	'_queue': [],
+	'waitingForACK': false,
+	'retries': 0,
+	'lastPacketInfo': null,
+	'ackTimeout': null,
+	
+	'queue': function(packetDetails, client){
+		this._queue.push(packetDetails);
+		if(!this.waitingForACK){
+			this.dequeue();
+		}
+	},
+	
+	'dequeue': function(){
+		console.log('dequeueing');
+		if(this.waitingForACK){
+			backend.error('Super Serial CANNOT DEQUEUE RIGHT NOW!');
+			return;
+		}
+		
+		this.lastPacketInfo = this._queue.shift();
+		if(!this.lastPacketInfo) return;
 		
 		this.waitingForAck = true;
 		
-		var self = this;
-		backend.getPluginOptions(module.exports.name, function(settings){
-			var timeout = 0+settings['Timeout'];
-			var clearTimeoutAction = function(){
-				clearTimeout(self.responseTimeout);
-			};
-			
-			var doTimeoutAction = function(){
-				var packetTimeout = function(){
-					if(settings['Max retries'] == undefined || self.retries < settings['Max retries']){
-						backend.debug('resending');
-						if(!self.lastPacket) return;
-						_sendPacket(self.lastPacket.packet, clearTimeoutAction);
-						doTimeoutAction();
-						self.retries++;
-						backend.debug('packet timeout ' + self.retries + ' / ' + settings['Max retries']);
-					}else{
-						self.retries = 0;
-						self.waitingForAck = false;
-						self.lastPacket = null;
-						backend.debug('packet timeout but no retries left');
-						self.deque();
-					}
-				};
-				self.responseTimeout = setTimeout(packetTimeout, timeout);
-			};
-			_sendPacket(self.lastPacket.packet, clearTimeoutAction);
-			doTimeoutAction();
-		});
-	};
+		this._doSend();
+	},
 	
-	this.ackReceived = function(){
-		clearTimeout(this.responseTimeout);
-		this.waitingForAck = false;
-		this.lastPacket = null;
-		
-		if(this.queue.length > 0){
-			this.deque();
+	'_doSend': function(){
+		var settings = getSettings();
+		var timeoutPeriod = 0+settings['Timeout'];
+		_sendPacket(this.lastPacketInfo.bytes);
+
+		if(timeoutPeriod){
+			this.ackTimeout = setTimeout(this.onACKTimeout.bind(this), timeoutPeriod);
 		}
-	};
+	},
+	
+	'_doneWaiting': function(){
+		clearTimeout(this.ackTimeout);
+		this.retries = 0;
+		this.waitingForACK = false;
+		this.dequeue();
+	},
+	
+	'onACKTimeout': function(){
+		var settings = getSettings();
+		var maxRetries = 0+settings['Max retries'];
+		
+		if(++this.retries > maxRetries){
+			backend.error('Packet failed :( ' + this.lastPacketInfo.toString());
+			this._doneWaiting();
+		}else{
+			backend.debug('Resending packet ' + this.lastPacketInfo.toString());
+			this._doSend();
+		}
+	},
+	
+	'onACKReceived': function(packet){
+		// @TODO: test if it's the right packet
+		console.log('ack received...');
+		
+		if(this.lastPacketInfo && packet.from == this.lastPacketInfo.to && packet.transactionID == this.lastPacketInfo.transactionID){
+			console.log('Ive been waiting for this ack!');
+			this._doneWaiting();
+		}
+	},
+};
+
+function SerialClient(clientInfo){
+	this.info = clientInfo;
+	this.nextTransactionID = 0;
 	
 	this.getNextTransactionID = function(resetID){
 		if(resetID !== undefined){
@@ -128,43 +223,46 @@ function SerialClient(clientInfo){
 	};
 	
 	this.hasReceivedPacket = function(packet){
+		return false; // @TODO: make this work so it doesn't re-process already seen packets
 	}
 
 }
 var clients = {};
 
 // This packet should already have the endcaps
-function _sendPacket(packet, callback, pauseBeforeRetry){
+function _sendPacket(packet){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
 		module.exports.reconnect();
-		setTimeout(function(){ _sendPacket(packet, callback, pauseBeforeRetry); }, 100);
+		setTimeout(function(){ _sendPacket(packet); }, 100);
 	}else{
-		var doWrite = function(){
-			serialPort.write(packet, function(error, results){
-				if(error){
-					backend.error('Packet write error');
-					backend.error(error);
-				}
-			});
-			serialPort.drain(function(error){
-				if(error){
-					backend.error('Packet write error');
-					backend.error(error);
-				}else{
-					backend.debug('Wrote packet   : ' + packet);
-				}
-				if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
-				if(callback) callback();
-			});
+		var packetWriter = {
+			'packet': packet,
+			'go': function(){
+				serialPort.write(this.packet, function(error, results){
+					if(error){
+						backend.error('Packet write error');
+						backend.error(error);
+					}
+				});
+				var packet = this.packet;
+				serialPort.drain(function(error){
+					if(error){
+						backend.error('Packet write error');
+						backend.error(error);
+					}else{
+						backend.debug('Wrote packet   : ' + module.exports.byteArrayToHexString(packet));
+					}
+					if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
+				});
+			},
 		};
 		if(readWriteToggle){
 			readWriteToggle.writeSync(0);
-			setTimeout(doWrite, 20);
+			setTimeout(packetWriter.go.bind(packetWriter), 20);
 		}else{
-			doWrite();
+			packetWriter.go();
 		}
-		
 	}
 }
 
@@ -177,49 +275,18 @@ function sendACK(packet){
  * If command is an ACK, payload should be the transactionID
  **/
 function buildPacket(clientID, command, payload){
-	if(!payload){
-		payload = [];
-	}else if(typeof(payload) === "string"){
-		var stringData = payload;
-		payload = [];
-		for(var i=0; i<stringData.length; i++){
-			payload.push(stringData.charCodeAt(i));
-		}
-	}else if(!(payload instanceof Array)){
-		payload = [payload];
-	}
-	// break up the payload early, so we can correctly calculate its size
-	payload = breakupBytes(payload);
-
 	// call nextTransactionID no matter what
 	// (received packets increment the ID too, but that's not the ID that's sent
+	console.log('building packet for ' + clientID);
 	var transactionID = -1;
 	if(command == SERIAL_COMMANDS['ACK']){
 		var transactionID = clients[clientID].getNextTransactionID(payload[0]);
-		payload = [];
 	}else{
+		console.log('Client = ' + clients[clientID]);
 		var transactionID = clients[clientID].getNextTransactionID();
 	}
-	
-	var packet = [transactionID, 0, clientID, command, payload.length].concat(payload);
-	var computedCRC = crc.crc16modbus(packet);
-	if(computedCRC < 256) packet.push(0);
-	packet.push(computedCRC);
-	packet = [SERIAL_FLAGS['START']].concat(packet).concat([SERIAL_FLAGS['END']]);
-	
-	// break up multi-bytes. Not sure why it doesn't just work without :(
-	packet = breakupBytes(packet);
-	
-	// add escape characters where necessary
-	for(var i=1; i<packet.length-1; i++){
-		if(!packet[i]) packet[i] = 0;
-		if(lookupSerialFlag(packet[i])){
-			packet.splice(i, 0, SERIAL_FLAGS['ESCAPE']);
-			i++;
-		}
-	}
 
-	return packet;
+	return new Packet(transactionID, 0, clientID, command, payload);
 }
 
 function onData(data){
@@ -248,35 +315,20 @@ function onData(data){
 		}
 		
 		if(byte == SERIAL_FLAGS['END'] && !wasEscaped){
-			var unescapedPacket = [];
-			for(var j=0; j<dataBuffer.length; j++){
-				if(dataBuffer[j] == SERIAL_FLAGS['ESCAPE'] && !escapeFlag){
-					escapeFlag = true;
-				}else{
-					unescapedPacket.push(dataBuffer[j]);
-					escapeFlag = false;
-				}
-			}
 			// We have a full packet. Let's process it :)
 			backend.debug('Incoming packet: ' + dataBuffer);
-			var packet = {
-				'transactionID': unescapedPacket[1],
-				'from': unescapedPacket[2],
-				'to': unescapedPacket[3],
-				'function': unescapedPacket[4],
-				'data': unescapedPacket.slice(6, 6+unescapedPacket[5]),
-			};
+			var packet = new Packet(dataBuffer);
 			if(packet.from != 0){
-				var computedCRC = crc.crc16modbus(unescapedPacket.slice(1, 6+unescapedPacket[5]));
-				var incomingCRC = (unescapedPacket[6+unescapedPacket[5]]<<8) + unescapedPacket[7+unescapedPacket[5]];
-				if(computedCRC == incomingCRC){
-					if(packet.function == SERIAL_COMMANDS['ACK']){
+				console.log('checking crc');
+				if(packet.checkCRC()){
+					console.log('crc ok');
+					if(packet.command == SERIAL_COMMANDS['ACK']){
 						backend.debug('=============================');
 						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
 						backend.debug('=============================');
-						if(packet.from != 0) clients[packet.from].ackReceived();
+						// blah blah blah
+						if(packet.from != 0) packetQueue.onACKReceived(packet);
 					}else{
-						var client = clients[packet.from];
 						if(client.hasReceivedPacket(packet)){
 							backend.debug('=============================');
 							backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
@@ -284,22 +336,19 @@ function onData(data){
 						}else{
 							backend.debug('=============================');
 							backend.debug(' Received : ' + dataBuffer);
-							backend.debug('Unescaped : ' + unescapedPacket);
+							backend.debug('Unescaped : ' + packet.unescapedPacket);
 							backend.debug('       ID : ' + packet.transactionID);
 							backend.debug('     From : ' + packet.from);
 							backend.debug('       To : ' + packet.to);
-							backend.debug(' Function : ' + packet.function);
-							backend.debug('     Data : ' + packet.data);
+							backend.debug('  Command : ' + packet.command);
+							backend.debug('  Payload : ' + packet.payload);
 							backend.debug('=============================');
 							sendACK(packet);
 							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 						}
 					}
 				}else{
-					backend.debug('=============================');
-					backend.debug('Bad CRC ' + incomingCRC + ', computed = ' + computedCRC);
-					backend.debug(dataBuffer.toString());
-					backend.debug('=============================');
+					console.log('CRC BAD');
 				}
 			}
 			dataBuffer = [];
@@ -320,7 +369,6 @@ function breakupBytes(byteArray){
 	
 	return output;
 }
-
 
 module.exports = {
 	name: 'Super Serial',
@@ -367,8 +415,12 @@ module.exports = {
 					}else{
 						backend.log('Super Serial connected!');
 						if(settings['RW Toggle Pin']){
-							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
-							readWriteToggle.writeSync(1);
+							try{
+								readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
+								readWriteToggle.writeSync(1);
+							}catch(exc){
+								backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
+							}
 						}
 						try{
 							serialPort.on('data', onData);
@@ -400,9 +452,10 @@ module.exports = {
 		}
 	},
 	
-	send: function(clientID, command, payload, callback){
+	send: function(clientID, command, payload){
 		var client = clients[clientID];
-		client.queuePacket(buildPacket(clientID, command, payload), callback);
+		var packet = buildPacket(clientID, command, payload);
+		packetQueue.queue(packet);
 	},
 	
 	reconnect: function(){
@@ -420,6 +473,15 @@ module.exports = {
 		escapeFlag = false;
 		retryDelay = 0;
 	},
+	
+	stringToByteArray: function(str){
+		var bytes = []
+		for(var i=0; i<str.length; i++){
+			bytes.push(str.charCodeAt(i));
+		}
+		return bytes;
+	},
+
 	
 	hexStringToByteArray: function(str){
 		var result = [];
