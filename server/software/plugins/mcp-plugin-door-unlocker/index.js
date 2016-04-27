@@ -136,12 +136,12 @@ module.exports = {
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'serial-data-received'){
 			if(data['to'] == 0){
-				if(data['function'] == superSerial.SERIAL_COMMANDS['KEY']){
+				if(data['command'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
-					var options = backend.regroup(module.exports.options, 'name', 'value');
+					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 					
-					var nfc = data['data'].map(function(x) {
+					var nfc = data['payload'].map(function(x) {
 						var hex = x.toString(16);
 						if(hex.length < 2) hex = '0' + hex;
 						return hex;

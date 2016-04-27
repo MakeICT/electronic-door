@@ -36,10 +36,10 @@ module.exports = {
 				module.exports.listeners[i].receiveMessage(source, message, data);
 			}catch(exc){
 				if(backend && backend.error){
-					backend.error('Broadcast listener did something bad :(');
+					backend.error(module.exports.listeners[i].name + ' did something bad :(');
 					backend.error(exc);
 				}else{
-					console.log('Broadcast listener did something bad :(');
+					console.log(module.exports.listeners[i].name + ' did something bad :(');
 					console.log(exc);
 				}
 			}

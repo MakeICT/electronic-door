@@ -5,7 +5,7 @@ var superSerial = require('../mcp-plugin-super-serial');
 var backend = require('../../backend.js');
 
 function getClientOptions(client){
-	return backend.regroup(module.exports.options, 'name', 'value');
+	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 }
 
 module.exports = {
@@ -34,13 +34,13 @@ module.exports = {
 				if(tone.length == 0){
 					tone = superSerial.hexStringToByteArray('3032343537393b3c151515151515150c');
 				}
-				console.log('Sending tone: ' + tone);
 				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], tone);
 				if(callback) callback();
 			},
 			'Test lights': function(client, callback){
 				var options = getClientOptions(client);
 				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(options['Default light sequence']));
+				if(callback) callback();
 			},
 		},
 		optionUpdated: function(client, option, newValue, oldValue, callback){},
@@ -60,7 +60,8 @@ module.exports = {
 		if(messageID == "door-unlocked"){
 			var clients = backend.getClients();
 			for(var i=0; i<clients.length; i++){
-				module.exports.clientDetails.actions['Test sound'](clients[i]);
+				sendTone = module.exports.clientDetails.actions['Test sound'];
+				setTimeout(sendTone.bind(module.exports, clients[i]), 500);
 			}
 		}
 	},

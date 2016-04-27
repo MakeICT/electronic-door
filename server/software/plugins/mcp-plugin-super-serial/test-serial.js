@@ -191,14 +191,14 @@ function onData(data){
 			}
 		});
 	};
-	setTimeout(sendEcho, 0);
+	//setTimeout(sendEcho, 0);
 	setTimeout(sendAck, 2000);
 }
 
 function sendKey(){
 	console.log("Sending key");
-	var unlock = [SERIAL_BYTES['START'], 1, 1, 0, SERIAL_COMMANDS['KEY'], 3, 1, 2, 3, 226, 197, SERIAL_BYTES['END']];
-	serialPort.write(unlock, function(error, results){
+	var unlock = new Packet([250, 42, 1, 0, 3, 7, 4, 27, 120, 122, 140, 51, 128, 205, 135, 251]);
+	serialPort.write(unlock.bytes, function(error, results){
 		if(error){
 			console.error('Packet write error');
 			console.error(error);
@@ -209,9 +209,9 @@ function sendKey(){
 }
 function sendTest(){
 	console.log("Sending test");
-	var test = [250,4,0,1,170,0,160,254,250,251];
+	var test = new Packet(32, 1, 0, 04);
 	
-	serialPort.write(test, function(error, results){
+	serialPort.write(test.bytes, function(error, results){
 		if(error){
 			console.error('Packet write error');
 			console.error(error);
@@ -247,7 +247,7 @@ serialPort = new SerialPort.SerialPort(
 		}else{
 			console.log('Super Serial connected');
 			serialPort.on('data', onData);
-//			setTimeout(sendTest, 1000);
+			setTimeout(sendKey, 1000);
 		}
 	}
 );

@@ -101,6 +101,7 @@ module.exports = {
 			'Send text': function(client, callback){
 				var options = backend.regroup(module.exports.options, 'name', 'value');				
 				sendMessage(client.clientID, options['Send line 1'], options['Send line 2']);
+				if(callback) callback();
 			},
 			'Clear': function(client, callback){
 				sendMessage(client.clientID, '', '');

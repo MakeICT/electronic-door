@@ -153,18 +153,26 @@ var packetQueue = {
 		this.lastPacketInfo = this._queue.shift();
 		if(!this.lastPacketInfo) return;
 		
-		this.waitingForAck = true;
-		
+		this.waitingForACK = true;		
 		this._doSend();
+	},
+	
+	'clear': function(){
+		this._queue = [];
+		this._doneWaiting();
 	},
 	
 	'_doSend': function(){
 		var settings = getSettings();
 		var timeoutPeriod = 0+settings['Timeout'];
+		var maxRetries = 0+settings['Max retries'];
+
 		_sendPacket(this.lastPacketInfo.bytes);
 
-		if(timeoutPeriod){
+		if(timeoutPeriod > 0 && maxRetries > 0 && this.lastPacketInfo.command != SERIAL_COMMANDS['ACK']){
 			this.ackTimeout = setTimeout(this.onACKTimeout.bind(this), timeoutPeriod);
+		}else{
+			this._doneWaiting();
 		}
 	},
 	
@@ -180,7 +188,7 @@ var packetQueue = {
 		var maxRetries = 0+settings['Max retries'];
 		
 		if(++this.retries > maxRetries){
-			backend.error('Packet failed :( ' + this.lastPacketInfo.toString());
+			backend.debug('Packet failed after ' + maxRetries + ' retries: ' + this.lastPacketInfo.toString());
 			this._doneWaiting();
 		}else{
 			backend.debug('Resending packet ' + this.lastPacketInfo.toString());
@@ -233,6 +241,8 @@ function _sendPacket(packet){
 					if(error){
 						backend.error('Packet write error');
 						backend.error(error);
+					}else{
+						backend.debug('Writing packet : ' + module.exports.byteArrayToHexString(packet));
 					}
 				});
 				var packet = this.packet;
@@ -240,10 +250,11 @@ function _sendPacket(packet){
 					if(error){
 						backend.error('Packet write error');
 						backend.error(error);
-					}else{
-						backend.debug('Wrote packet   : ' + module.exports.byteArrayToHexString(packet));
 					}
-					if(readWriteToggle) setTimeout(function(){readWriteToggle.writeSync(1);}, 10);
+					if(readWriteToggle){
+						var doToggle = readWriteToggle.writeSync.bind(readWriteToggle, 1)
+						setTimeout(doToggle, 10);
+					}
 				});
 			},
 		};
@@ -258,7 +269,7 @@ function _sendPacket(packet){
 
 function sendACK(packet){
 	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
-	_sendPacket(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
+	packetQueue.queue(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
 }
 
 /**
@@ -269,7 +280,8 @@ function buildPacket(clientID, command, payload){
 	// (received packets increment the ID too, but that's not the ID that's sent
 	var transactionID = -1;
 	if(command == SERIAL_COMMANDS['ACK']){
-		var transactionID = clients[clientID].getNextTransactionID(payload[0]);
+		var transactionID = clients[clientID].getNextTransactionID(payload);
+		payload = [];
 	}else{
 		var transactionID = clients[clientID].getNextTransactionID();
 	}
@@ -280,9 +292,9 @@ function buildPacket(clientID, command, payload){
 function onData(data){
 	var debugData = [];
 	for(var i=0; i<data.length; i++){
-		debugData.push(Number(data[i]));
+		debugData.push(Number(data[i]).toString(16));
 	}
-	//backend.debug("RAW Serial     : " + debugData);
+	backend.debug("RAW Serial     : " + debugData);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
@@ -295,6 +307,7 @@ function onData(data){
 		}
 		
 		dataBuffer.push(byte);
+		
 		var wasEscaped = escapeFlag;
 		if(byte == SERIAL_FLAGS['ESCAPE'] && !escapeFlag){
 			escapeFlag = true;
@@ -304,7 +317,7 @@ function onData(data){
 		
 		if(byte == SERIAL_FLAGS['END'] && !wasEscaped){
 			// We have a full packet. Let's process it :)
-			backend.debug('Incoming packet: ' + dataBuffer);
+			backend.debug('Incoming packet: ' + module.exports.byteArrayToHexString(dataBuffer));
 			var packet = new Packet(dataBuffer);
 			if(packet.from != 0){
 				if(packet.checkCRC()){
@@ -315,6 +328,7 @@ function onData(data){
 						// blah blah blah
 						if(packet.from != 0) packetQueue.onACKReceived(packet);
 					}else{
+						var client = clients[packet.from];
 						if(client.hasReceivedPacket(packet)){
 							backend.debug('=============================');
 							backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
@@ -385,35 +399,36 @@ module.exports = {
 	onUninstall: function(){},
 	
 	onEnable: function(){
-		var settings = backend.regroup(module.exports.options, 'name', 'value');
-			if(serialPort){
-				module.exports.onDisable();
-			}
-			serialPort = new SerialPort.SerialPort(
-				settings['Port'],
-				{ baudrate: settings['Baud'], },
-				true,
-				function(error){
-					if(error){
-						backend.error('Serial connection error: ' + error);
-					}else{
-						backend.log('Super Serial connected!');
-						if(settings['RW Toggle Pin']){
-							try{
-								readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
-								readWriteToggle.writeSync(1);
-							}catch(exc){
-								backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
-							}
-						}
+		packetQueue.clear();
+		var settings = getSettings();
+		if(serialPort){
+			module.exports.onDisable();
+		}
+		serialPort = new SerialPort.SerialPort(
+			settings['Port'],
+			{ baudrate: settings['Baud'], },
+			true,
+			function(error){
+				if(error){
+					backend.error('Serial connection error: ' + error);
+				}else{
+					backend.log('Super Serial connected!');
+					if(settings['RW Toggle Pin']){
 						try{
-							serialPort.on('data', onData);
+							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
+							readWriteToggle.writeSync(1);
 						}catch(exc){
-							backend.error(exc);
+							backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
 						}
 					}
+					try{
+						serialPort.on('data', onData);
+					}catch(exc){
+						backend.error(exc);
+					}
 				}
-			);
+			}
+		);
 		
 		var knownClients = backend.getClients();
 		for(var i=0; i<knownClients.length; i++){

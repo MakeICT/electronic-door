@@ -103,7 +103,7 @@ module.exports = {
 			});
 		}else if(message == 'serial-data-received'){
 			if(data['to'] == 0){
-				if(data['function'] == ARM_ALARM){
+				if(data['command'] == ARM_ALARM){
 					backend.getPluginOptions(module.exports.name, function(settings){
 						alarm.armAway(settings['Code']);
 					});
