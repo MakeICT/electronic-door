@@ -1,8 +1,9 @@
+// this is only needed for backend.regroup convenience
+var backend = require('../../backend.js');
+
 var broadcaster = require('../../broadcast.js');
 var superSerial = require('../mcp-plugin-super-serial');
 
-// this is only needed for backend.regroup convenience
-var backend = require('../../backend.js');
 var lcdResetTimers = {};
 
 function center(text, lineLength){
@@ -25,7 +26,7 @@ function sendMessage(clientID, line1, line2){
 	if(lcdResetTimers[clientID]) clearTimeout(lcdResetTimers[clientID]);
 	
 	var client = backend.getClientByID(clientID);
-	var clientOptions = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	var clientOptions = backend.regroup(module.exports.options, 'name', 'value');
 	
 	if(clientOptions['Idle message delay']){
 		var sendIdleMessage = function(){
@@ -98,7 +99,7 @@ module.exports = {
 		],
 		actions: {
 			'Send text': function(client, callback){
-				var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');				
+				var options = backend.regroup(module.exports.options, 'name', 'value');				
 				sendMessage(client.clientID, options['Send line 1'], options['Send line 2']);
 			},
 			'Clear': function(client, callback){

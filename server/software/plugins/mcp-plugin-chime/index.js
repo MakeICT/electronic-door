@@ -5,7 +5,7 @@ var superSerial = require('../mcp-plugin-super-serial');
 var backend = require('../../backend.js');
 
 function getClientOptions(client){
-	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	return backend.regroup(module.exports.options, 'name', 'value');
 }
 
 module.exports = {
