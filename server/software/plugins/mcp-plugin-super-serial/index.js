@@ -353,7 +353,7 @@ module.exports = {
 	onUninstall: function(){},
 	
 	onEnable: function(){
-		backend.getPluginOptions(module.exports.name, function(settings){
+		var settings = backend.regroup(module.exports.options, 'name', 'value');
 			if(serialPort){
 				module.exports.onDisable();
 			}
@@ -378,7 +378,6 @@ module.exports = {
 					}
 				}
 			);
-		});
 		
 		var knownClients = backend.getClients();
 		for(var i=0; i<knownClients.length; i++){

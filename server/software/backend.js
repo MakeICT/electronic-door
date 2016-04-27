@@ -478,11 +478,12 @@ module.exports = {
 	
 	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
 		// @TODO: collapse into a single query or find a better sequential execution method (async module?)
+		console.log('setting plugin option');
 		var sendUpdateToPlugin = function(){
 			var plugin = module.exports.getPluginByName(pluginName);
-			for(var i=0; i<plugin.options; i++){
-				if(plugin.options[i].name == option){
-					plugin.options[i].value = newValue;
+			for(var i=0; i<plugin.options.length; i++){
+				if(plugin.options[i].name == optionName){
+					plugin.options[i].value = value;
 					break;
 				}
 			}
@@ -679,15 +680,26 @@ module.exports = {
 					}
 				}
 				plugins.push(plugin);
+				
+				var setOptions = function(options){
+					for(var optionName in options){
+						var value = options[optionName];
+						for(var i=0; i<this.options.length; i++){
+							if(this.options[i].name == optionName){
+								this.options[i].value = value;
+								break;
+							}
+						}
+					}
+					if(this.enabled){
+						this.onEnable(1);
+					}
+				};
+				
+				module.exports.getPluginOptions(plugin.name, setOptions.bind(plugin));
 			}
 			
-			module.exports.reloadClients(function(){
-				for(var i=0; i<plugins.length; i++){
-					if(plugins[i].enabled){
-						plugins[i].onEnable(1);
-					}
-				}
-			});
+			module.exports.reloadClients();
 		});
 	},
 	
