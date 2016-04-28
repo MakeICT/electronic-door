@@ -388,7 +388,7 @@ module.exports = {
 							var params = [];
 							for(var i=0; i<plugin.options.length; i++){
 								var option = plugin.options[i];
-								sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
+								sql += '($' + (i*4+1) + ', $' + (i*4+2) + ', $' + (i*4+3) + ', $' + (i*4+4) + '), ';
 								params.push(option.name);
 								params.push(option.value);
 								params.push(i);
