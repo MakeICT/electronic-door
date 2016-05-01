@@ -103,18 +103,18 @@ SoftwareSerial dbgPort(6,7);
 SoftwareSerial* debugPort = &dbgPort;
 
 void setup(void) {
-  LOG_INFO(F("########################################\r\n"));
-  LOG_INFO(F("#            Start Program             #\r\n"));
-  LOG_INFO(F("########################################\r\n"));
-  
-  // Initialize serial ports
-  Serial.begin(9600);   //TODO:  What is this doing here?
-
   // Initialize debug port and pass references
   dbgPort.begin(57600);
   superSerial.SetDebugPort(debugPort);
   bus.SetDebugPort(debugPort);
   card_reader.SetDebugPort(debugPort);
+  
+  Serial.begin(9600);   //TODO:  What is this doing here?
+  
+  LOG_INFO(F("########################################\r\n"));
+  LOG_INFO(F("#            Start Program             #\r\n"));
+  LOG_INFO(F("########################################\r\n"));
+
 
   // Set input pins
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
@@ -249,7 +249,7 @@ void ProcessMessage()  {
       else
         LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
       status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
-      speaker.Play(startTune, startTuneDurations, 8);
+      //speaker.Play(startTune, startTuneDurations, 8);
       break;
       
     case F_LOCK_DOOR:
@@ -263,8 +263,6 @@ void ProcessMessage()  {
       byte tune_length = (msg.length)/2;
       for(byte i = 0; i < tune_length; i++)  {
         userTune[i] = msg.payload[i];
-      }
-      for(byte i = 0; i < tune_length; i++)  {
         userTuneDurations[i] = msg.payload[i + tune_length];
       }
       speaker.Play(userTune, userTuneDurations, tune_length);   

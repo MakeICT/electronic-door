@@ -190,7 +190,6 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
   this->queuedPacket.SetMsg(function, payload, length);
   this->queuedPacket.SetDestAddr(ADDR_MASTER);
   this->queuedPacket.SetSrcAddr(this->deviceAddress);
-  this->dataQueued = true;
   this->SendPacket(&queuedPacket);
 }
 
@@ -199,6 +198,7 @@ void SuperSerial::SendPacket(Packet* p)  {
   
   if (!dataQueued)  {
     currentTransaction = (currentTransaction + 1) % 255;
+    this->dataQueued = true;
   }
   p->SetTransID(currentTransaction);
   p->SetCRC(p->ComputeCRC());
@@ -214,7 +214,12 @@ inline void SuperSerial::SendControl(byte function, byte transID)  {
   LOG_DUMP(F("SuperSerial::SendACK()\r\n"));
   responsePacket.SetMsg(function, NULL, 0);
   responsePacket.SetTransID(transID);
-  return SendPacket(&responsePacket);
+  responsePacket.SetCRC(responsePacket.ComputeCRC());
+  
+  byte array[responsePacket.EscapedSize()];
+  
+  responsePacket.ToEscapedArray(array);
+  bus->Send(array, responsePacket.EscapedSize());
 }
 
 inline void SuperSerial::SendACK(byte transID)  {
