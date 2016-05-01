@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS groups (
 	"groupID" SERIAL PRIMARY KEY,
-	"name" VARCHAR(64) NOT NULL UNIQUE
+	"name" VARCHAR(64) NOT NULL UNIQUE,
+	"description" VARCHAR(1024)
 );
 
 CREATE TABLE IF NOT EXISTS "userGroups" (
@@ -119,14 +120,6 @@ CREATE TABLE IF NOT EXISTS "authorizationTags" (
 	"description" VARCHAR(1024),
 	UNIQUE("name", "sourcePluginID"),
 	FOREIGN KEY("sourcePluginID") REFERENCES "plugins"("pluginID")
-);
-
-CREATE TABLE IF NOT EXISTS "userAuthorizationTags" (
-	"userID" INT NOT NULL,
-	"tagID" INT NOT NULL,
-	UNIQUE("userID", "tagID"),
-	FOREIGN KEY("userID") REFERENCES "users"("userID"),
-	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID")
 );
 
 CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (

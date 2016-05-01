@@ -27,8 +27,12 @@ function getOneOrNone(callback){
 		}else{
 			data = null;
 		}
-		if(callback) return callback(data);
-		return data;
+		
+		if(callback){
+			return callback(data);
+		}else{
+			return data;
+		}
 	}
 }
 
@@ -166,6 +170,7 @@ module.exports = {
 						groups.push({
 							'groupID': data[i].groupID,
 							'name': data[i].name,
+							'description': data[i].description,
 							'authorizations': []
 						});
 					}
@@ -184,25 +189,23 @@ module.exports = {
 		}
 	},
 	
+	getGroupByName: function(name, onSuccess, onFailure){
+		var sql = 'SELECT * FROM groups WHERE name = $1';
+		return query(sql, [name], getOneOrNone(onSuccess), onFailure);
+	},
+	
 	// sends the groupID to the success callback
-	addGroup: function(groupName, onSuccess, onFailure){
+	addGroup: function(groupName, description, onSuccess, onFailure){
 		try{
-			var sql = 'SELECT * FROM groups WHERE name = $1';
-			var process = function(data){
-				if(data.length < 1){
-					var tryAgain = function(){
-						return this.addGroup(groupName);
-					};
-					query('INSERT INTO GROUPS (name) VALUES ($1)', [groupName], tryAgain, onFailure);
-				}else{
-					onSuccess(data[0]['groupID']);
-				}
+			var sql = 'INSERT INTO GROUPS (name, description) VALUES ($1, $2)';
+			var findGroupID = function(){
+				backend.log('Group added (' + groupName + ')');
+				sql = 'SELECT "groupID" FROM groups WHERE name = $1';
+				return query(sql, [groupName], getOneOrNone(onSuccess), onFailure);
 			};
-			
-			return query(sql, [groupName], process, onFailure);
-
+			return query(sql, [groupName, description], findGroupID, onFailure);
 		}catch(exc){
-			backend.error(exc);
+			onFailure(exc);
 		}
 	},
 	
@@ -234,6 +237,11 @@ module.exports = {
 	getUserByNFC: function(nfcID, onSuccess, onFailure) {
 		var sql = 'SELECT * FROM users WHERE "nfcID" = $1';
 		return query(sql, [nfcID], getOneOrNone(onSuccess), onFailure);
+	},
+	
+	getUserByID: function(id, onSuccess, onFailure) {
+		var sql = 'SELECT * FROM users WHERE "userID" = $1';
+		return query(sql, [id], getOneOrNone(onSuccess), onFailure);
 	},
 	
 	/**
@@ -321,11 +329,19 @@ module.exports = {
 	},
 
 	enablePlugin: function(pluginName, onSuccess, onFailure){
-		return query('UPDATE plugins SET enabled = TRUE WHERE name = $1', [pluginName], onSuccess, onFailure);
+		var updateRAM = function(){
+			module.exports.getPluginByName(pluginName).enabled = true;
+			if(onSuccess) onSuccess();
+		};
+		return query('UPDATE plugins SET enabled = TRUE WHERE name = $1', [pluginName], updateRAM, onFailure);
 	},
 	
-	disablePlugin: function(pluginName, onSuccess, onFailure){			
-		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], onSuccess, onFailure);
+	disablePlugin: function(pluginName, onSuccess, onFailure){
+		var updateRAM = function(){
+			module.exports.getPluginByName(pluginName).enabled = false;
+			if(onSuccess) onSuccess();
+		};
+		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], updateRAM, onFailure);
 	},
 	
 	addPluginOption: function(pluginName, optionName, type, onSuccess, onFailure){
@@ -367,18 +383,16 @@ module.exports = {
 					[plugin.name],
 					function(rows){
 						plugin.pluginID = rows[0].pluginID;
-						if(Object.keys(plugin.options).length > 0){
+						if(plugin.options.length > 0){
 							var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ';
-							var ordinal = 0;
 							var params = [];
-							for(var key in plugin.options){
-								sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
-								params.push(key);
-								params.push(plugin.options[key]);
-								params.push(ordinal);
+							for(var i=0; i<plugin.options.length; i++){
+								var option = plugin.options[i];
+								sql += '($' + (i*4+1) + ', $' + (i*4+2) + ', $' + (i*4+3) + ', $' + (i*4+4) + '), ';
+								params.push(option.name);
+								params.push(option.value);
+								params.push(i);
 								params.push(plugin.pluginID);
-								
-								ordinal++;
 							}
 							sql = sql.substring(0, sql.length-2);
 							return query(sql, params, function(){onSuccess(plugin);}, logAndFail);
@@ -464,6 +478,17 @@ module.exports = {
 	
 	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
 		// @TODO: collapse into a single query or find a better sequential execution method (async module?)
+		console.log('setting plugin option');
+		var sendUpdateToPlugin = function(){
+			var plugin = module.exports.getPluginByName(pluginName);
+			for(var i=0; i<plugin.options.length; i++){
+				if(plugin.options[i].name == optionName){
+					plugin.options[i].value = value;
+					break;
+				}
+			}
+			onSuccess();
+		};
 		return query(
 			'SELECT "pluginID" FROM plugins WHERE name = $1',
 			[pluginName],
@@ -484,7 +509,7 @@ module.exports = {
 									[optionID],
 									function(){
 										var sql = 'INSERT INTO "pluginOptionValues" ("pluginOptionID", value) VALUES ($1, $2)';
-										return query(sql, [optionID, value], onSuccess, onFailure);
+										return query(sql, [optionID, value], sendUpdateToPlugin, onFailure);
 									},
 									onFailure
 								);
@@ -629,6 +654,7 @@ module.exports = {
 			return fs.statSync(path.join('./plugins', file)).isDirectory();
 		});
 		module.exports.getInstalledPlugins(function(pluginList){
+			var loadedPluginCount = 0;
 			// load plugins
 			for(var i=0; i<pluginFolders.length; i++){
 				var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
@@ -655,15 +681,33 @@ module.exports = {
 					}
 				}
 				plugins.push(plugin);
-			}
-			
-			module.exports.reloadClients(function(){
-				for(var i=0; i<plugins.length; i++){
-					if(plugins[i].enabled){
-						plugins[i].onEnable();
+				
+				var setOptions = function(options){
+					for(var optionName in options){
+						var value = options[optionName];
+						for(var i=0; i<this.options.length; i++){
+							if(this.options[i].name == optionName){
+								this.options[i].value = value;
+								break;
+							}
+						}
 					}
-				}
-			});
+						
+					if(++loadedPluginCount >= pluginFolders.length){
+						module.exports.reloadClients(function(){
+							for(var i=0; i<plugins.length; i++){
+								if(plugins[i].enabled){
+									plugins[i].onEnable();
+								}
+							}
+						});
+					}else{
+						backend.debug('Loaded plugin ' + this.name);
+					}
+				};
+				
+				module.exports.getPluginOptions(plugin.name, setOptions.bind(plugin));
+			}
 		});
 	},
 	
@@ -705,42 +749,7 @@ module.exports = {
 		var sql = 'DELETE FROM "authorizationTags" WHERE name = $1 AND "sourcePluginID" = $2';
 		query(sql, [name, pluginID], onSuccess, onFailure);
 	},
-	
-	getUserAuthorizations: function(who, onSuccess, onFailure){
-		var sql =
-			'SELECT ' +
-			'	name, ' +
-			'	"userAuthorizationTags"."userID" IS NOT NULL AS authorized ' +
-			'FROM "authorizationTags" ' +
-			'	LEFT JOIN "userAuthorizationTags" ON "authorizationTags"."tagID" = "userAuthorizationTags"."tagID" ' +
-			'		AND "userID" = $1 ' +
-			'WHERE "userID" = $1 OR "userID" IS NULL ' +
-			'GROUP BY name, "userID" ' +
-			'ORDER BY name';
-		return query(sql, [who], onSuccess, onFailure);
-	},
-	
-	setUserAuthorization: function(who, what, authorized, onSuccess, onFailure){
-		var sql;
-		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
 		
-		if(authorized){
-			sql = 
-				'INSERT INTO "userAuthorizationTags" ("userID", "tagID") ' +
-				'VALUES ($1, (' + tagSQL + '))';
-		}else{
-			sql = 
-				'DELETE FROM "userAuthorizationTags" WHERE "userID" = $1 ' +
-				'AND "tagID" = (' + tagSQL + ')';
-		}
-		
-		var log = function(){
-			module.exports.log((authorized ? 'Authorize ' : 'Forbid ') + ' user for ' + what, who);
-			if(onSuccess) onSuccess();
-		};
-		return query(sql, [who, what], log, onFailure);
-	},
-	
 	setGroupAuthorization: function(who, what, authorized, onSuccess, onFailure){
 		var sql;
 		var tagSQL = 'SELECT "tagID" FROM "authorizationTags" WHERE name = $2';
@@ -765,21 +774,13 @@ module.exports = {
 	checkAuthorization: function(userID, what, onAuthorized, onUnauthorized, idIsNFC){
 		backend.debug("Checking authorization " + userID + " for " + what);
 		var sql =
-			'SELECT SUM(authorized) > 0 AS authorized FROM ( ' + 
-			'	SELECT COUNT(0) AS authorized ' + 
-			'	FROM "userAuthorizationTags" ' + 
-			'		JOIN users ON users."userID" = "userAuthorizationTags"."userID" ' + 
-			'	WHERE users."userID" = $1 ' + 
-			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
-			'	UNION ' + 
-			'	SELECT COUNT(0) AS authorized ' + 
-			'	FROM "groupAuthorizationTags" ' + 
-			'		JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
-			'		JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
-			'	WHERE users."userID" = $1 ' + 
-			'		AND users.status = \'active\'' +
-			'		AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2) ' + 
-			') AS foo';
+			'SELECT COUNT(0) > 0 AS authorized ' + 
+			'FROM "groupAuthorizationTags" ' + 
+			'	JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID" ' + 
+			'	JOIN users ON "userGroups"."userID" = "users"."userID" ' + 
+			'WHERE users."userID" = $1 ' + 
+			'	AND users.status = \'active\'' +
+			'	AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = $2)';
 		
 		var process = function(data){
 			if(data[0]['authorized']){
@@ -792,35 +793,44 @@ module.exports = {
 		return query(sql, [userID, what], process, onUnauthorized);
 	},
 	
+	/**
+	 * onAuthorized(user)
+	 * onUnauthorized(user, reason)
+	 **/
 	checkAuthorizationByNFC: function(nfcID, what, onAuthorized, onUnauthorized){
 		backend.debug("checking NFC ID " + nfcID + " for authorization on " + what);
-
+		var unauthed = function(){
+			onUnauthorized(null, 'System error');
+		};
+		
 		module.exports.getUserByNFC(nfcID, function(user){
 			if(!user){
-				onUnauthorized();
+				onUnauthorized(null, 'Could not find user');
+			}else if(user.status != 'active'){
+				onUnauthorized(user, 'User not active');
 			}else{
 				var authed = function(){
 					onAuthorized(user);
 				};
 				var unauthed = function(){
-					onUnauthorized(user);
+					onUnauthorized(user, 'Not authorized');
 				};
 				module.exports.checkAuthorization(user.userID, what, authed, unauthed, true);
 			}
-		}, onUnauthorized);
+		}, unauthed);
 	},
 	
 	checkPassword: function(login, password, goodCallback, badCallback){
 		var sql = 'SELECT "userID", "passwordHash" FROM users WHERE email = $1';
 		
 		var process = function(data){
-			if(data.length > 0 && bcrypt.compareSync(password, data[0].passwordHash)){
+			if(data.length > 0 && bcrypt.compareSync(password, data[0].passwordHash || '')){
 				goodCallback(data[0].userID);
 			}else{
 				badCallback();
 			}
 		};
-		
+
 		return query(sql, [login], process);
 	},
 	
@@ -853,7 +863,7 @@ module.exports = {
 		}
 		
 		var log = function(){
-			module.exports.log((enrolled ? 'Add ' : 'Remove ') + 'group(' + group + ') enrollment', who);
+			module.exports.log((enrolled ? 'Add user to' : 'Remove user from') + ' group: ' + group, who);
 			if(onSuccess) onSuccess();
 		};
 		return query(sql, [who, group], log, onFailure);
@@ -862,7 +872,7 @@ module.exports = {
 	log: function(message, userID, code, logType, skipBroadcast){
 		if(!logType) logType = 'message';
 		
-		console.log(logType, message, userID ? userID : '-', ',', code ? code : '-');
+		console.log(logType, message, userID ? userID : '', ',', code ? code : '');
 		
 		sql =
 			'INSERT INTO logs (timestamp, "message", "logType", "userID", "code") ' +
@@ -870,10 +880,26 @@ module.exports = {
 		params = [message, logType, userID, code];
 		
 		if(!skipBroadcast){
-			broadcaster.broadcast(module.exports, 'log', message);
+			var lookupFunction, lookupValue;
+			if(userID){
+				lookupFunction = module.exports.getUserByID;
+				lookupValue = userID;
+			}else if(code){
+				lookupFunction = module.exports.getUserByNFC;
+				lookupValue = code;
+			}else{
+				lookupFunction = function(callback){
+					if(callback) return callback();
+				};
+			}
+			lookupFunction(lookupValue, function(user){
+				if(user) message += ' (' + user.firstName + ' ' + user.lastName + ')';
+				if(code) message += ' (' + code + ')';
+				broadcaster.broadcast(module.exports, 'log', message);
+			});
 		}
 		
-		return query(sql,  params);
+		return query(sql, params);
 	},
 	
 	error: function(message){
@@ -917,6 +943,7 @@ module.exports = {
 
 		return query(sql, [nfcID, userID], log, onFailure);
 	},
+
 };
 var backend = module.exports;
 module.exports.reloadPlugins();

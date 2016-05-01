@@ -35,16 +35,41 @@ function sendMessage(subject, message, recipient){
 
 module.exports = {
 	name: 'Email Alerter',
-	options: {
-		'Protocol': 'text',
-		'Sender address': 'text',
-		'Password': 'password',
-		'Server': 'text',
-		'Subject': 'text',
-		'BCC': 'text',
-		'Add subscription': 'text',
-		'Delete subscription': 'text',
-	},
+	options: [
+		{
+			'name': 'Protocol',
+			'type': 'text',
+			'value': 'smtps',
+		},{	
+			'name': 'Sender address',
+			'type': 'text',
+			'value': 'your-email-here@gmail.com',
+		},{	
+			'name': 'Password',
+			'type': 'password',
+			'value': null,
+		},{	
+			'name': 'Server',
+			'type': 'text',
+			'value': 'smtp.gmail.com',
+		},{	
+			'name': 'Subject',
+			'type': 'text',
+			'value': 'MCP Message',
+		},{	
+			'name': 'BCC',
+			'type': 'text',
+			'value': null,
+		},{	
+			'name': 'Add subscription',
+			'type': 'text',
+			'value': null,
+		},{	
+			'name': 'Delete subscription',
+			'type': 'text',
+			'value': null,
+		}
+	],
 	
 	actions: {
 		'Send test message': function(callback){

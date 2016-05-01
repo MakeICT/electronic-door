@@ -25,11 +25,10 @@ function fixUnlockDuration(duration){
 function doUnlock(client, userID, nfc){
 	try{
 		// regroup the options by key/value pairs for easy lookup
-		var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
-
+		var options = backend.regroup(module.exports.options, 'name', 'value');
 		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(options['Unlock duration']));
-		broadcaster.broadcast(module.exports, "door-unlocked", { 'client': client.clientID });
 		backend.log(client.name, userID, nfc, 'unlock');
+		broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
 	}catch(exc){
 		backend.error('Exception during unlock');
 		backend.error(exc);
@@ -49,10 +48,17 @@ module.exports = {
 		
 	},
 	clientDetails: {
-		options: {
-			'Unlock duration': 'number',
-			'Authorization tag': 'text',
-		},
+		options: [
+			{
+				'name': 'Unlock duration',
+				'type': 'number',
+				'value': 3,
+			},{
+				'name': 'Authorization tag',
+				'type': 'text',
+				'value': null,
+			},
+		],
 		actions: {
 			'Unlock': function(client, callback){
 				// @TODO get client from session
@@ -124,17 +130,18 @@ module.exports = {
 	},
 	
 	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
 	},
 	
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'serial-data-received'){
 			if(data['to'] == 0){
-				if(data['function'] == superSerial.SERIAL_COMMANDS['KEY']){
+				if(data['command'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
 					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 					
-					var nfc = data['data'].map(function(x) {
+					var nfc = data['payload'].map(function(x) {
 						var hex = x.toString(16);
 						if(hex.length < 2) hex = '0' + hex;
 						return hex;
@@ -144,9 +151,9 @@ module.exports = {
 						// @TODO add user to log
 						doUnlock(client, user.userID, nfc);
 					};
-					var deny = function(user){
+					var deny = function(user, reason){
 						var userID = (user == null) ? null : user.userID;
-						backend.log(client.name, userID, nfc, 'deny');
+						backend.log(client.name + ' - ' + reason, userID, nfc, 'deny');
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
 					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);

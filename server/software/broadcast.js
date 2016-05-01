@@ -27,13 +27,22 @@ module.exports = {
 			}
 		}
 	},
-	
 	broadcast: function(source, message, data){
 		if(backend.debug && message != 'log'){
 			backend.debug('Broadcast message from ' + source + ' (' + message + ')' + JSON.stringify(data));
 		}
 		for(var i=0; i<module.exports.listeners.length; i++){
-			module.exports.listeners[i].receiveMessage(source, message, data);
+			try{
+				module.exports.listeners[i].receiveMessage(source, message, data);
+			}catch(exc){
+				if(backend && backend.error){
+					backend.error(module.exports.listeners[i].name + ' did something bad :(');
+					backend.error(exc);
+				}else{
+					console.log(module.exports.listeners[i].name + ' did something bad :(');
+					console.log(exc);
+				}
+			}
 		}
 	},
 };

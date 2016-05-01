@@ -1,5 +1,6 @@
 # Master Control Program 
 
+
 This system is used to secure spaces with an electronic door latch.
 
 ## Dependencies:
@@ -18,21 +19,20 @@ This system is used to secure spaces with an electronic door latch.
 
 ## Todo
 * Server
-	* Change plugins and clients to tiles and hide/expand settings
+	* Send chimes
 	* Super admins vs group admins
 	* Ability to create groups
-	* Better logging on denial
-	* Fix user accordian
 	* Create scheduling system
-	* Pull groups and authentication on exapnd
-	* Load groups when tab is selected
-	* Force layout on Plugins and Clients tabs when selected
 	* Make plugins respect disabled mode
 	* Add / edit users
 	* Fix user search (first + last name = no results)
+	* When unlocking from web ui, display user in log
+	
 * Client
-	* Blink red-only on denial
-	* Blink green-only on unlock
+	* New NFC reader
+	* Add doorbell input (capacitive?)
+	* Design/build case for front
+	* Build 2nd client for testing & back door
 
 ## License 
 

@@ -7,9 +7,13 @@ var runningProcs = {};
 
 module.exports = {
 	name: 'System Tools',
-	options: {
-		'Log line limit': 'number'
-	},
+	options: [
+		{
+			'name': 'Log line limit',
+			'type': 'number',
+			'value': null,
+		},
+	],
 	actions: {
 		'Download log': function(session){
 			backend.getPluginOptions(module.exports.name, function(settings){

@@ -50,7 +50,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		$scope.socket.on('log', function(message){
 			addMessage('log', message);
 		});
-		
+
 		$scope.clearMessages = function(){
 			$scope.messages.length = 0;
 		};
@@ -64,7 +64,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		
 		$scope.setLocation = function(path){
 			$location.path(path);
-			if(path == 'log'){
+			if(path == 'log' && !$scope.log){
 				$scope.loadLog();
 			}
 		}
@@ -165,6 +165,11 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		'lastName': '',
 		'joinDate': new Date(),
 	};
+	
+	$scope.newGroup = {
+		'name': '',
+		'description': '',
+	};
 
 	$scope.setCurrentUser = function(user){
 		$scope.currentUser = user;
@@ -185,30 +190,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});
 	};
 	
-	$scope.getUserAuthorizations = function(user){
-		$http.get('/users/' + user.userID + '/authorizations').success(function(response){
-			if($scope.checkAjax(response)){
-				user.authorizations = response;
-			}
-		});
-	};
-	
-	$scope.setUserAuthorization = function(user, authTag, authorized){
-		$http.put('/users/' + user.userID + '/authorizations/' + authTag, authorized).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback to user that this worked
-			}
-		});		
-	};
-	
-	$scope.getUserGroups = function(user){
-		$http.get('/users/' + user.userID + '/groups').success(function(response){
-			if($scope.checkAjax(response)){
-				user.groups = response;
-			}
-		});
-	};
-	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
 		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
 			if($scope.checkAjax(response)){
@@ -223,6 +204,32 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				// @TODO: give feedback to user that this worked
 			}
 		});		
+	};
+	
+	$scope.saveNewGroup = function(){
+		console.log($scope.newGroup);
+		if(!$scope.newGroup || $scope.newGroup.name == ''){
+			$scope.error = {
+				'message': 'Group name must be specified',
+				'detail': '...so type something in.',
+			};
+		}else{
+			$http.post('/groups', $scope.newGroup).success(function(response){
+				if($scope.checkAjax(response)){
+					$scope.newGroup = {'name': null, 'description': null };
+					$http.get('/groups').success(function(response){
+						if($scope.checkAjax(response)){
+							$scope.groups = response;
+						}
+					});
+				}
+			}).error(function(error){
+				$scope.error = {
+					'message': 'Failed to add group',
+					'detail': error.code + ": " + error.message,
+				};
+			});
+		}
 	};
 	
 	$scope.resetPassword = function(user){
@@ -261,6 +268,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	};
 	
 	$scope.loadLog = function(){
+		$scope.log = null;
 		$http.get('/log').success(function(response){
 			if($scope.checkAjax(response)){
 				$scope.log = response;
@@ -316,6 +324,17 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				// @TODO: give feedback
 			}
 		});
+	};
+	
+	$scope.toggleUserDisplay = function(user){
+		user.isExpanded = !user.isExpanded;
+		if(!user.groups){
+			$http.get('/users/' + user.userID + '/groups').success(function(response){
+				if($scope.checkAjax(response)){
+					user.groups = response;
+				}
+			});
+		}
 	};
 
 

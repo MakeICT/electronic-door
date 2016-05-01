@@ -4,6 +4,7 @@ var backend = require('./backend.js');
 var broadcaster = require('./broadcast.js');
 var sessionManager = require('./simple-session.js');
 
+broadcaster.broadcast('hi');
 var doneLoading = false;
 
 var server = restify.createServer({
@@ -51,24 +52,6 @@ server.get('/users', function (request, response, next) {
 		});
 	}
 	
-	return next();
-});
-
-server.get('/users/:userID/authorizations', function (request, response, next) {
-	var session = checkIfLoggedIn(request, response);
-	if(session){
-		backend.getUserAuthorizations(request.params.userID, function(auths){
-			response.send(auths);
-		});
-	}		
-	return next();
-});
-
-server.put('/users/:userID/authorizations/:authTag', function (request, response, next) {
-	var session = checkIfLoggedIn(request, response);
-	if(session){
-		backend.setUserAuthorization(request.context.userID, request.context.authTag, request.body, function(){response.send();});
-	}
 	return next();
 });
 
@@ -153,6 +136,27 @@ server.get('/groups', function(request, response, next){
 	return next();
 });
 
+server.post('/groups', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.addGroup(
+			request.params.name, request.params.description,
+			function(result){
+				response.send(result);
+			},
+			function(error){
+				if(error.detail){
+					response.send(error.detail);
+				}else{
+					response.send(error);
+				}
+			}
+		);
+	}
+	
+	return next();
+});
+
 /**
  * Plugins
  **/
@@ -173,16 +177,16 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 			plugin.name,
 			function(){
 				if(request.params.value){
-					plugin.onEnable(session);
+					plugin.onEnable();
 				}else{
-					plugin.onDisable(session);
+					plugin.onDisable();
 				}
-//				response.send();
 			},
 			function(error){
 				response.send(error.detail);
 			}
 		);
+		response.send();
 	}
 		
 	return next();
@@ -330,7 +334,6 @@ server.get('/log', function(request, response, next) {
 
 server.post('/login', function(request, response, next){
 	var session = sessionManager.start(request, response);
-	
 	if(session.properties['authenticated'] && !request.params.email && !request.params.password){
 		response.send();
 	}else{
@@ -347,7 +350,11 @@ server.post('/login', function(request, response, next){
 			response.send({'error': 'Login failed'});
 		};
 		
-		backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);
+		if(request.params.email == '' || request.params.password == ''){
+			response.send({'error': 'Login failed'});
+		}else{
+			backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);
+		}
 	}
 	next();
 });
