@@ -52,6 +52,7 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 				}else{
 					backend.debug('SQL ERROR');
 					backend.debug(err);
+					backend.debug(sql);
 					backend.debug(params);
 				}
 			}else if(onSuccess){
@@ -101,18 +102,13 @@ module.exports = {
 	},
 	
 	addClient: function(id, name, onSuccess, onFailure){
-		console.log('AAAAAAAAAAAAAA');
 		if(!name) name = 'Unknown client';
 		
 		var sql = 'INSERT INTO clients ("clientID", name) VALUES ($1, $2)';
-		console.log('BBBBBBBBBBBBB');
-		console.log(sql);
 		var doReload = function(){
-		console.log('DDDDDDDDDDDD');
 			backend.log('Added client ' + id + ' ' + name);
 			module.exports.reloadClients(onSuccess);
 		}
-		console.log('CCCCCCCCCCCCC');
 		
 		return query(sql, [id, name], doReload, generateFailureCallback('Failed to add client', onFailure));
 	},
@@ -407,10 +403,12 @@ module.exports = {
 								var option = plugin.options[i];
 								sql += '($' + (i*4+1) + ', $' + (i*4+2) + ', $' + (i*4+3) + ', $' + (i*4+4) + '), ';
 								params.push(option.name);
-								params.push(option.value);
+								params.push(option.type);
+//								params.push(option.value);
 								params.push(i);
 								params.push(plugin.pluginID);
 							}
+							// @TODO: also set the default value...
 							sql = sql.substring(0, sql.length-2);
 							return query(sql, params, function(){onSuccess(plugin);}, logAndFail);
 						}else{
@@ -437,7 +435,7 @@ module.exports = {
 					for(var key in plugin.clientDetails['options']){
 						sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
 						params.push(key);
-						params.push(plugin.clientDetails['options'][key]);
+						params.push(plugin.clientDetails['options'][key].type);
 						params.push(ordinal);
 						params.push(pluginID);
 						
@@ -694,18 +692,19 @@ module.exports = {
 				}
 				plugins.push(plugin);
 				
-				var setOptions = function(options){
-					for(var optionName in options){
-						var value = options[optionName];
-						for(var i=0; i<this.options.length; i++){
-							if(this.options[i].name == optionName){
-								this.options[i].value = value;
+				var setOptions = function(plugin, savedOptions){
+					for(var optionName in savedOptions){
+						var value = savedOptions[optionName];
+						for(var i=0; i<plugin.options.length; i++){
+							if(plugin.options[i].name == optionName){
+								plugin.options[i].value = value;
 								break;
 							}
 						}
 					}
 						
 					if(++loadedPluginCount >= pluginFolders.length){
+						// all plugins are loaded
 						module.exports.reloadClients(function(){
 							for(var i=0; i<plugins.length; i++){
 								if(plugins[i].enabled){
@@ -714,11 +713,11 @@ module.exports = {
 							}
 						});
 					}else{
-						backend.debug('Loaded plugin ' + this.name);
+						backend.debug('Loaded plugin ' + plugin.name);
 					}
 				};
 				
-				module.exports.getPluginOptions(plugin.name, setOptions.bind(plugin));
+				module.exports.getPluginOptions(plugin.name, setOptions.bind(this, plugin));
 			}
 		});
 	},
