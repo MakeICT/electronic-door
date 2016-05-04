@@ -983,7 +983,7 @@ module.exports = {
 				'	users.* ' +
 				'FROM logs ' +
 				'	LEFT JOIN users ON logs."userID" = users."userID" ' +
-				'ORDER BY timestamp DESC';
+				'ORDER BY timestamp DESC LIMIT 100';
 		}
 		return query(sql, [], onSuccess, onFailure);
 	},
