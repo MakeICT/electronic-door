@@ -141,14 +141,15 @@ module.exports = {
 						for(var k in details){
 							clients[i][k] = details[k];
 						}
+						broadcaster.broadcast(module.exports, 'client-updated', {'oldID': id, 'details': details});
 						break;
 					}
 				}
-				
+				module.exports.log('Client updated');
 				if(onSuccess) onSuccess();
 			}catch(exc){
-				backend.error('Failed while updating active client');
-				backend.error(exc);
+				module.exports.error('Failed while updating active client');
+				module.exports.error(exc);
 			}
 		};
 		
@@ -536,7 +537,6 @@ module.exports = {
 	
 	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
 		// @TODO: collapse into a single query or find a better sequential execution method (async module?)
-		console.log('setting plugin option');
 		var sendUpdateToPlugin = function(){
 			var plugin = module.exports.getPluginByName(pluginName);
 			for(var i=0; i<plugin.options.length; i++){

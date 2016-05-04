@@ -18,6 +18,7 @@ var SERIAL_FLAGS = {
 	'END':		0xFB,
 };
 var SERIAL_COMMANDS = {
+	'ADDRESS':	0x00,
 	'UNLOCK':	0x01,
 	'LOCK':	 	0x02,
 	'KEY':		0x03,
@@ -455,9 +456,11 @@ module.exports = {
 		);
 		
 		reloadClients();
+		broadcaster.subscribe(module.exports);
 	},
 	
 	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
 		if(serialPort){
 			try{
 				module.exports.reset();
@@ -492,6 +495,17 @@ module.exports = {
 		escapeFlag = false;
 		retryDelay = 0;
 	},
+	
+	receiveMessage: function(source, messageID, data){
+		if(messageID == 'client-updated'){
+			if(data.details.clientID){
+				module.exports.send(data.oldID, SERIAL_COMMANDS['ADDRESS'], data.details.clientID);
+				clients[data.details.clientID] = clients[data.oldID];
+				delete clients[data.oldID];
+			}
+		}
+	},
+
 	
 	stringToByteArray: function(str){
 		var bytes = []
