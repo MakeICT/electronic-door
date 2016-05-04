@@ -21,10 +21,14 @@
 #include "superserial.h"
 #include "utils.h"
 
+
+
 /*-----( Declare Constants and Pin Numbers )-----*/
 #define DEBUG1
 
 // Pin assignments
+#define RS485_RX          0       // Reserved for hardware serial
+#define RS485_TX          1       // Reserved for hardware serial
 #define RING_PIN          2       // Pin communicating with NeoPixel Ring
 #define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
 #define LCD_SERIAL_TX     4       // Serial data for LCD
@@ -40,6 +44,7 @@
 #define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
 #define DOOR_SWITCH_PIN   15      // Magnetic switch on door
 #define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
+#define DOOR_BELL_PIN     19      // Door bell pin
 
 
 // Constants for audio playback
@@ -73,7 +78,6 @@ Reader card_reader;
 rs485 bus(SSerialTxControl);
 //SuperSerial* superSerial;
 //TEMPORARY TEST CODE
-SuperSerial superSerial(&bus, 0x01);
 
 Ring status_ring(RING_PIN, NUMPIXELS);
 LCD readout;
@@ -81,11 +85,17 @@ Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
 Config conf;
 
+// Load config info saved in EEPROM
+uint8_t address = conf.GetAddress();
+SuperSerial superSerial(&bus, address);
+
 /*-----( Declare Variables )-----*/
 uint8_t byteReceived;
 boolean alarmButton = 0;
 boolean doorState = 0;
+boolean doorBell = 0;
 uint32_t lastIDSend = 0;
+
 //TODO: store start tune and other settings in EEPROM, make configurable
 byte startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
 byte startTuneDurations[] = {12, 6, 6, 12, 12, 12, 12, 12};
@@ -121,17 +131,17 @@ void setup(void) {
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   
   
-  conf.SaveAddress(0x01);             //TODO: this is temporary; needs to be configurable
+  //conf.SaveAddress(0x02);             //TODO: this is temporary; needs to be configurable
   
-  // Load config info saved in EEPROM
-  uint8_t address = conf.GetAddress();
-  //superSerial = new SuperSerial(&bus, address);
+
+ // superSerial = new SuperSerial(&bus, address);
 
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
   readout.Print("Try Me! :)");
   if(!card_reader.start())  {
+//  if(false)  {
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
   else  {
@@ -310,6 +320,17 @@ void CheckInputs()  {
     byte payload[1] = {doorState};
     superSerial.QueueMessage(F_DOOR_STATE, payload, 1);
     state = S_WAIT_SEND;
+    return;
+  }
+  
+  if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
+    doorBell = !doorBell;
+    if (doorBell == 1)  {
+      LOG_INFO(F("Door Bell Pressed\r\n"));
+      byte payload[1] = {doorBell};
+      superSerial.QueueMessage(F_DOOR_BELL, payload, 1);
+      state = S_WAIT_SEND;
+    }
     return;
   }
 }
