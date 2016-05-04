@@ -191,8 +191,12 @@
 					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
 						<h2>Clients</h2>
 						<div ng-repeat="client in clients" class="card well">
-							<h3>{{client.name}}</h3>
-							<table class="table table-bordered table-condensed">
+							<div>
+								<span toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
+								<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove plugin from client" ng-click="disassociatePlugin(client, plugin)">✖</span>
+								<h4 class="pull-left" ng-click="isOpened = !isOpened">{{client.name}}</h4>
+							</div>
+							<table class="table table-condensed" uib-collapse="!isOpened" style="clear: both">
 								<tr>
 									<td>ID:</td>
 									<td><input class="form-control input-sm" type="text" ng-model="client.clientID" ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></td>
@@ -200,10 +204,13 @@
 									<td>Name:</td>
 									<td><input class="form-control input-sm" type="text" ng-model="client.name"  ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></td>
 								</tr><tr>
-									<td colspan="2">
+									<td>Add plugin:</td>
+									<td>
 										<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
-											<option disabled selected hidden value=""> - Bind new plugin - </option>
-											<option ng-repeat="plugin in clientPlugins" value="{{plugin.name}}">{{plugin.name}}</option>
+											<option ng-repeat="plugin in clientPlugins"
+												value="{{plugin.name}}"
+												ng-if="client.plugins[plugin.name] == null"
+											>{{plugin.name}}</option>
 										</select>
 									</td>
 								</tr>
@@ -213,8 +220,10 @@
 									<thead>
 										<tr>
 											<th colspan="2" class="active">
-												<span toggle class="btn btn-default btn-sm" style="float: right" ng-model="isOpened">⚙</span>
-												<h5>{{plugin.name}}</h5>
+												<span toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
+												<span class="btn btn-default text-warning btn-sm pull-right" ng-if="isOpened" title="Reload defaults" onclick="alert('Not implemented :(')">↺</span>
+												<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove plugin from client" ng-click="disassociatePlugin(client, plugin)">✖</span>
+												{{plugin.name}}
 											</th>
 										</tr>
 									</thead>

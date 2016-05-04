@@ -69,38 +69,58 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			}
 		}
 		
-		$http.get('/plugins').success(function(response){
-			if($scope.checkAjax(response)){
-				var plugins = response;
-				for(var i=0; i<plugins.length; i++){
-					var plugin = plugins[i];
-					$scope.plugins[plugin.name] = plugin;
-					var attachOptions = function(response){
-						$scope.plugins[response.plugin].options = [];
-						for(var i in response.options){
-							if(response.options[i].type != 'hidden'){
-								$scope.plugins[response.plugin].options[i] = response.options[i];
+		$scope.reloadPlugins = function(){		
+			$http.get('/plugins').success(function(response){
+				if($scope.checkAjax(response)){
+					var plugins = response;
+					for(var i=0; i<plugins.length; i++){
+						var plugin = plugins[i];
+						$scope.plugins[plugin.name] = plugin;
+						var attachOptions = function(response){
+							$scope.plugins[response.plugin].options = [];
+							for(var i in response.options){
+								if(response.options[i].type != 'hidden'){
+									$scope.plugins[response.plugin].options[i] = response.options[i];
+								}
 							}
+						};
+						$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
+						
+						if(plugin.clientDetails){
+							$scope.clientPlugins.push(plugin);
 						}
-					};
-					$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
-					
-					if(plugin.clientDetails){
-						$scope.clientPlugins.push(plugin);
 					}
 				}
-			}
-		});
+			});
+		};
+		$scope.reloadPlugins();
 
-		$http.get('/clients').success(function(response){
-			if($scope.checkAjax(response)){
-				var clients = response;
-				for(var i=0; i<clients.length; i++){
-					clients[i].oldID = clients[i].clientID;
+		$scope.reloadClients = function(){
+			$http.get('/clients').success(function(response){
+				if($scope.checkAjax(response)){
+					var clients = response;
+					for(var i=0; i<clients.length; i++){
+						clients[i].oldID = clients[i].clientID;
+						
+						var found = false;
+						for(var j=0; j<$scope.clients.length; j++){
+							if($scope.clients[j].clientID == clients[i].clientID){
+								for(var k in clients[i]){
+									$scope.clients[j][k] = clients[i][k];
+								}
+								console.log('found existing client');
+								found = true;
+								break;
+							}
+						}
+						if(!found){
+							$scope.clients.push(clients[i]);
+						}
+					}
 				}
-				$scope.clients = clients;
-			}
-		});
+			});
+		};
+		$scope.reloadClients();
 
 		$http.get('/groups').success(function(response){
 			if($scope.checkAjax(response)){
@@ -317,7 +337,15 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.createClientPluginAssociation = function(client, pluginName){
 		$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
 			if($scope.checkAjax(response)){
-				window.location.reload();
+				$scope.reloadClients();
+			}
+		});
+	};
+	
+	$scope.disassociatePlugin = function(client, plugin){
+		$http.delete('/clients/' + client.clientID + '/plugins/' + plugin.name).success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.reloadClients();
 			}
 		});
 	};
@@ -351,7 +379,6 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		}
 	};
 	
-
 	$scope.login(true);
 })
 .filter('timestampToHumanReadableDate', function(){

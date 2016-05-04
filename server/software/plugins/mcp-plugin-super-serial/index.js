@@ -518,7 +518,7 @@ module.exports = {
 	
 	hexStringToByteArray: function(str){
 		var result = [];
-		while (str.length >= 2) { 
+		while(str && str.length >= 2) { 
 			result.push(parseInt(str.substring(0, 2), 16));
 			str = str.substring(2, str.length);
 		}

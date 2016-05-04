@@ -298,6 +298,19 @@ server.post('/clients/:clientID/plugins/:pluginName', function (request, respons
 	return next();
 });
 
+server.del('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.disassociateClientPlugin(
+			request.params.clientID,
+			request.params.pluginName,
+			function(){ response.send(); },
+			function(error){ response.send({'error': 'Failed to disassociate plugin from client', 'detail': error.detail}); }
+		);
+	}
+	return next();
+});
+
 server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){

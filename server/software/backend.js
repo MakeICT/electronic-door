@@ -73,6 +73,7 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 
 function generateFailureCallback(msg, failCallback){
 	return function(err){
+		backend.error(err);
 		module.exports.log(msg);
 		if(failCallback) failCallback();
 	};
@@ -655,6 +656,20 @@ module.exports = {
 		}
 		
 		return query(sql, [clientID, plugin.pluginID], addOptions, onFailure);
+	},
+	
+	disassociateClientPlugin: function(clientID, pluginName, onSuccess, onFailure){
+		var plugin = module.exports.getPluginByName(pluginName);
+		var client = module.exports.getClientByID(clientID);
+		
+		var sql = 'DELETE FROM "clientPluginAssociations" WHERE "clientID" = $1 AND "pluginID" = $2';
+		
+		var updateRAM = function(){
+			delete client.plugins[pluginName];
+			if(onSuccess) onSuccess();
+		};
+		
+		return query(sql, [clientID, plugin.pluginID], updateRAM, generateFailureCallback('Failed to disassociate client plugin', onFailure));
 	},
 	
 	setClientPluginOption: function(clientID, pluginName, option, value, onSuccess, onFailure){
