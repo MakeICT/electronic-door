@@ -9,7 +9,7 @@ var app = angular.module('electronic-door', ['ui.bootstrap']);
 angular.module('electronic-door').controller('controller', function($scope, $http, $location){
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
-	$scope.clients = {};
+	$scope.clients = [];
 	$scope.messages = [];
 	$scope.error = null;
 
@@ -94,7 +94,11 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 
 		$http.get('/clients').success(function(response){
 			if($scope.checkAjax(response)){
-				$scope.clients = response;
+				var clients = response;
+				for(var i=0; i<clients.length; i++){
+					clients[i].oldID = clients[i].clientID;
+				}
+				$scope.clients = clients;
 			}
 		});
 
@@ -300,6 +304,16 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});
 	};
 	
+	$scope.updateClient = function(client){
+		var oldID = client.oldID;
+		$http.put('/clients/' + oldID, client).success(function(response){
+			if($scope.checkAjax(response)){
+				client.oldID = client.clientID;
+				// @TODO: give feedback
+			}
+		});
+	};
+	
 	$scope.createClientPluginAssociation = function(client, pluginName){
 		$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
 			if($scope.checkAjax(response)){
@@ -336,7 +350,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			});
 		}
 	};
-
+	
 
 	$scope.login(true);
 })

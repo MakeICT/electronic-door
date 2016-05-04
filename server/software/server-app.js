@@ -274,6 +274,17 @@ server.get('/clients', function(request, response, next) {
 	return next();
 });
 
+// update a client
+server.put('/clients/:clientID', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.updateClient(request.params.clientID, request.body);
+		response.send();
+	}
+	
+	return next();
+});
+
 server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
@@ -290,11 +301,16 @@ server.post('/clients/:clientID/plugins/:pluginName', function (request, respons
 server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		var client = backend.getClientByID(request.params.clientID);
-		var plugin = backend.getPluginByName(request.params.pluginName);
-		var action = plugin['clientDetails']['actions'][request.params.action];
-		
-		action(client, function(){ response.send(); });
+		try{
+			var client = backend.getClientByID(request.params.clientID);
+			var plugin = backend.getPluginByName(request.params.pluginName);
+			var action = plugin['clientDetails']['actions'][request.params.action];
+			
+			action(client, function(){ response.send(); });
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to perform client plugin action', 'detail': exc});
+		}
 	}
 	
 	return next();

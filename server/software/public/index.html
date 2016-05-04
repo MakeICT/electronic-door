@@ -195,10 +195,10 @@
 							<table class="table table-bordered table-condensed">
 								<tr>
 									<td>ID:</td>
-									<td><input class="form-control input-sm" type="text" ng-model="client.clientID" /></td>
+									<td><input class="form-control input-sm" type="text" ng-model="client.clientID" ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></td>
 								</tr><tr>
 									<td>Name:</td>
-									<td><input class="form-control input-sm" type="text" ng-model="client.name" /></td>
+									<td><input class="form-control input-sm" type="text" ng-model="client.name"  ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></td>
 								</tr><tr>
 									<td colspan="2">
 										<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
