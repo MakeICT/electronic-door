@@ -334,6 +334,15 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});
 	};
 	
+	$scope.removeClient = function(client){
+		$http.delete('/clients/' + client.clientID).success(function(response){
+			if($scope.checkAjax(response)){
+				var index = $scope.clients.indexOf(client);
+				$scope.clients.splice(index, 1);
+			}
+		});
+	};
+	
 	$scope.createClientPluginAssociation = function(client){
 		$http.post('/clients/' + client.clientID + '/plugins/' + client.newPlugin).success(function(response){
 			if($scope.checkAjax(response)){

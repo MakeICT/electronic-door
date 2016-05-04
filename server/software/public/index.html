@@ -193,7 +193,7 @@
 						<div ng-repeat="client in clients" class="card well">
 							<div>
 								<span toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
-								<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove plugin from client" ng-click="disassociatePlugin(client, plugin)">✖</span>
+								<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove client" ng-click="removeClient(client)">✖</span>
 								<h4 class="pull-left" ng-click="isOpened = !isOpened">{{client.name}}</h4>
 							</div>
 							<table class="table table-condensed" uib-collapse="!isOpened" style="clear: both">

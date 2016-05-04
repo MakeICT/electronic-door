@@ -285,6 +285,16 @@ server.put('/clients/:clientID', function(request, response, next) {
 	return next();
 });
 
+server.del('/clients/:clientID', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.removeClient(request.params.clientID);
+		response.send();
+	}
+	
+	return next();
+});
+
 server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){

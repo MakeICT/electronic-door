@@ -157,6 +157,28 @@ module.exports = {
 		return query(sql, params, updateRAM, onFailure);
 	},
 	
+	removeClient: function(id, onSuccess, onFailure){
+		var updateRAM = function(){
+			try{
+				for(var i=0; i<clients.length; i++){
+					if(clients[i].clientID == id){
+						clients.splice(i, 1);
+						break;
+					}
+				}
+				broadcaster.broadcast(module.exports, 'client-deleted', id);
+				module.exports.log('Client deleted');
+				if(onSuccess) onSuccess();
+			}catch(exc){
+				module.exports.error('Failed while deleting active client');
+				module.exports.error(exc);
+			}
+		};
+		
+		var sql = 'DELETE FROM clients WHERE "clientID" = $1';
+		return query(sql, [id], updateRAM, onFailure);
+	},
+	
 	getPlugins: function(){
 		return plugins;
 	},

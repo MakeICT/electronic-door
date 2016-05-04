@@ -498,11 +498,13 @@ module.exports = {
 	
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'client-updated'){
-			if(data.details.clientID){
+			if(data.details.clientID && (data.details.clientID != data.oldID)){
 				module.exports.send(data.oldID, SERIAL_COMMANDS['ADDRESS'], parseInt(data.details.clientID));
 				clients[data.details.clientID] = clients[data.oldID];
 				delete clients[data.oldID];
 			}
+		}else if(messageID == 'client-deleted'){
+			delete clients[data];
 		}
 	},
 
