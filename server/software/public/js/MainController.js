@@ -334,12 +334,13 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});
 	};
 	
-	$scope.createClientPluginAssociation = function(client, pluginName){
-		$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
+	$scope.createClientPluginAssociation = function(client){
+		$http.post('/clients/' + client.clientID + '/plugins/' + client.newPlugin).success(function(response){
 			if($scope.checkAjax(response)){
 				$scope.reloadClients();
 			}
 		});
+		client.newPlugin = null;
 	};
 	
 	$scope.disassociatePlugin = function(client, plugin){

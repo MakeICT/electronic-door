@@ -206,7 +206,8 @@
 								</tr><tr>
 									<td>Add plugin:</td>
 									<td>
-										<select class="form-control input-sm" ng-change="createClientPluginAssociation(client, client.newPlugin)" ng-model="client.newPlugin">
+										<select class="form-control input-sm" ng-change="createClientPluginAssociation(client)" ng-model="client.newPlugin">
+											<option disabled selected hidden value=""> - Available plugins - </option>
 											<option ng-repeat="plugin in clientPlugins"
 												value="{{plugin.name}}"
 												ng-if="client.plugins[plugin.name] == null"
@@ -220,14 +221,14 @@
 									<thead>
 										<tr>
 											<th colspan="2" class="active">
-												<span toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
-												<span class="btn btn-default text-warning btn-sm pull-right" ng-if="isOpened" title="Reload defaults" onclick="alert('Not implemented :(')">↺</span>
-												<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove plugin from client" ng-click="disassociatePlugin(client, plugin)">✖</span>
+												<button class="btn btn-default btn-sm pull-right" toggle ng-model="z.isOpened" title="Settings">⚙</button>
+												<button class="btn btn-default text-warning btn-sm pull-right" disabled="disabled" ng-if="z.isOpened" title="Reload defaults" onclick="alert('Not implemented :(')">↺</button>
+												<button class="btn btn-default text-danger btn-sm pull-right" ng-if="z.isOpened" title="Remove plugin from client" ng-click="disassociatePlugin(client, plugin)">✖</button>
 												{{plugin.name}}
 											</th>
 										</tr>
 									</thead>
-									<tbody uib-collapse="!isOpened" >
+									<tbody uib-collapse="!z.isOpened" >
 										<tr ng-repeat="option in plugin.options">
 											<td>{{option.name}}</td>
 											<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/></td>
