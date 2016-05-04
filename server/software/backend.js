@@ -36,6 +36,15 @@ function getOneOrNone(callback){
 	}
 }
 
+function filterFields(obj, allowedFields){
+	for(var k in obj){
+		if(allowedFields.indexOf(k) < 0){
+			delete obj[k];
+		}
+	}
+	return obj;
+}
+
 function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
@@ -111,6 +120,39 @@ module.exports = {
 		}
 		
 		return query(sql, [id, name], doReload, generateFailureCallback('Failed to add client', onFailure));
+	},
+	
+	updateClient: function(id, details, onSuccess, onFailure){
+		filterFields(details, ['clientID', 'name']);
+		
+		var sql = '';
+		var params = [];
+		for(var k in details){
+			sql += ', "' + k + '" = $' + (params.length+1);
+			params.push(details[k]);
+		}
+		sql = 'UPDATE clients SET' + sql.substring(1) + ' WHERE "clientID" = $' + (params.length+1);
+		params.push(id);
+		
+		var updateRAM = function(){
+			try{
+					for(var i=0; i<clients.length; i++){
+					if(clients[i].clientID == id){
+						for(var k in details){
+							clients[i][k] = details[k];
+						}
+						break;
+					}
+				}
+				
+				if(onSuccess) onSuccess();
+			}catch(exc){
+				backend.error('Failed while updating active client');
+				backend.error(exc);
+			}
+		};
+		
+		return query(sql, params, updateRAM, onFailure);
 	},
 	
 	getPlugins: function(){
@@ -432,10 +474,11 @@ module.exports = {
 					var sql = 'INSERT INTO "clientPluginOptions" (name, type, ordinal, "pluginID") VALUES ';
 					var ordinal = 0;
 					var params = [];
-					for(var key in plugin.clientDetails['options']){
+					for(var i=0; i<plugin.clientDetails['options'].length; i++){
+						var option = plugin.clientDetails['options'][i];
 						sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
-						params.push(key);
-						params.push(plugin.clientDetails['options'][key].type);
+						params.push(option.name);
+						params.push(option.type);
 						params.push(ordinal);
 						params.push(pluginID);
 						
@@ -606,6 +649,7 @@ module.exports = {
 		var sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES ($1, $2)';
 		
 		var addOptions = function(){
+			// @TODO: use defaults from plugin
 			module.exports.reloadClients();
 			if(onSuccess) onSuccess();
 		}
