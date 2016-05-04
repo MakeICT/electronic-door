@@ -52,6 +52,17 @@ function lookupSerialFlag(byte){
 	}
 }
 
+function reloadClients(callback){
+	var knownClients = backend.getClients();
+	for(var i=0; i<knownClients.length; i++){
+		var c = knownClients[i];
+		if(!clients[c.clientID]){
+			clients[c.clientID] = new SerialClient(c);
+		}
+	}
+}
+
+
 function Packet(rawBytesOrTransactionID, from, to, command, payload){
 	this.bytes = [];
 	this.unescapedPacket = [];
@@ -328,23 +339,36 @@ function onData(data){
 						// blah blah blah
 						if(packet.from != 0) packetQueue.onACKReceived(packet);
 					}else{
-						var client = clients[packet.from];
-						if(client.hasReceivedPacket(packet)){
-							backend.debug('=============================');
-							backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
-							backend.debug('=============================');
+						var handlePacket = function(){
+							var client = clients[packet.from];
+							if(client.hasReceivedPacket(packet)){
+								backend.debug('=============================');
+								backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
+								backend.debug('=============================');
+							}else{
+								backend.debug('=============================');
+								backend.debug(' Received : ' + dataBuffer);
+								backend.debug('Unescaped : ' + packet.unescapedPacket);
+								backend.debug('       ID : ' + packet.transactionID);
+								backend.debug('     From : ' + packet.from);
+								backend.debug('       To : ' + packet.to);
+								backend.debug('  Command : ' + packet.command);
+								backend.debug('  Payload : ' + packet.payload);
+								backend.debug('=============================');
+								sendACK(packet);
+								broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+							}
+						};
+						if(!clients[packet.from]){
+							console.log('Client does not exist :(');
+							var prepAndSend = function(){
+								reloadClients();
+								console.log(clients);
+								handlePacket();
+							};
+							backend.addClient(packet.from, null, prepAndSend);
 						}else{
-							backend.debug('=============================');
-							backend.debug(' Received : ' + dataBuffer);
-							backend.debug('Unescaped : ' + packet.unescapedPacket);
-							backend.debug('       ID : ' + packet.transactionID);
-							backend.debug('     From : ' + packet.from);
-							backend.debug('       To : ' + packet.to);
-							backend.debug('  Command : ' + packet.command);
-							backend.debug('  Payload : ' + packet.payload);
-							backend.debug('=============================');
-							sendACK(packet);
-							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+							handlePacket();
 						}
 					}
 				}
@@ -430,11 +454,7 @@ module.exports = {
 			}
 		);
 		
-		var knownClients = backend.getClients();
-		for(var i=0; i<knownClients.length; i++){
-			var c = knownClients[i];
-			clients[c.clientID] = new SerialClient(c);
-		}
+		reloadClients();
 	},
 	
 	onDisable: function(){

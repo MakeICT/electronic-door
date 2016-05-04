@@ -100,6 +100,23 @@ module.exports = {
 		return null;
 	},
 	
+	addClient: function(id, name, onSuccess, onFailure){
+		console.log('AAAAAAAAAAAAAA');
+		if(!name) name = 'Unknown client';
+		
+		var sql = 'INSERT INTO clients ("clientID", name) VALUES ($1, $2)';
+		console.log('BBBBBBBBBBBBB');
+		console.log(sql);
+		var doReload = function(){
+		console.log('DDDDDDDDDDDD');
+			backend.log('Added client ' + id + ' ' + name);
+			module.exports.reloadClients(onSuccess);
+		}
+		console.log('CCCCCCCCCCCCC');
+		
+		return query(sql, [id, name], doReload, generateFailureCallback('Failed to add client', onFailure));
+	},
+	
 	getPlugins: function(){
 		return plugins;
 	},
@@ -583,12 +600,7 @@ module.exports = {
 			onFailure)
 		;
 	},
-	
-	addClient: function(name, onSuccess, onFailure){
-		var sql = 'INSERT INTO clients (name) VALUES ($1)';
-		return query(sql, [name], onSuccess, onFailure);
-	},
-	
+		
 	associateClientPlugin: function(clientID, pluginName, onSuccess, onFailure){
 		var plugin = module.exports.getPluginByName(pluginName);
 		var client = module.exports.getClientByID(clientID);
