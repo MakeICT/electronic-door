@@ -60,8 +60,10 @@ module.exports = {
 		if(messageID == "door-unlocked"){
 			var clients = backend.getClients();
 			for(var i=0; i<clients.length; i++){
-				sendTone = module.exports.clientDetails.actions['Test sound'];
-				setTimeout(sendTone.bind(module.exports, clients[i]), 500);
+				if(client.plugins[module.exports.name]){
+					sendTone = module.exports.clientDetails.actions['Test sound'];
+					setTimeout(sendTone.bind(module.exports, clients[i]), 500);
+				}
 			}
 		}
 	},
