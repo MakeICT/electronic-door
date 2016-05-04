@@ -499,7 +499,7 @@ module.exports = {
 	receiveMessage: function(source, messageID, data){
 		if(messageID == 'client-updated'){
 			if(data.details.clientID){
-				module.exports.send(data.oldID, SERIAL_COMMANDS['ADDRESS'], data.details.clientID);
+				module.exports.send(data.oldID, SERIAL_COMMANDS['ADDRESS'], parseInt(data.details.clientID));
 				clients[data.details.clientID] = clients[data.oldID];
 				delete clients[data.oldID];
 			}
