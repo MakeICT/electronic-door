@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE TABLE IF NOT EXISTS "clientPluginAssociations" (
 	"clientID" INT NOT NULL,
 	"pluginID" INT NOT NULL,
-	FOREIGN KEY("clientID") REFERENCES "clients"("clientID"),
+	FOREIGN KEY("clientID") REFERENCES "clients"("clientID") ON UPDATE CASCADE,
 	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID"),
 	PRIMARY KEY("clientID", "pluginID")
 );
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS "clientPluginOptionValues" (
 	"clientID" INT NOT NULL,
 	"clientPluginOptionID" INT NOT NULL,
 	"optionValue" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("clientID") REFERENCES clients("clientID"),
+	FOREIGN KEY("clientID") REFERENCES clients("clientID") ON UPDATE CASCADE,
 	FOREIGN KEY("clientPluginOptionID") REFERENCES "clientPluginOptions"("clientPluginOptionID")
 );
 
@@ -141,4 +141,5 @@ INSERT INTO users ("firstName", "lastName", "email", "status", "joinDate") VALUE
 	('User 2', 'Test', 'test2@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp));
 
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
-INSERT INTO clients ("name") VALUES ('Front door');
+INSERT INTO clients ("clientID", "name") VALUES (1, 'Test client 1');
+INSERT INTO clients ("clientID", "name") VALUES (2, 'Test client 2');
