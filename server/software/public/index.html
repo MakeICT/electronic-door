@@ -158,35 +158,47 @@
 								</tbody>
 							</table>
 						</div>
-						<table class="table table-striped table-bordered table-hover table-condensed">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th>Description</th>
-									<th>Authorizations</th>
-									<th>Administrators</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr ng-repeat="group in groups">
-									<td>{{group.name}}</td>
-									<td>{{group.description}}</td>
-									<td>
-										<button
-											ng-repeat="auth in group.authorizations"
-											uib-btn-checkbox
-											ng-model="auth.authorized"
-											ng-click="setGroupAuthorization(group, auth.name, auth.authorized)"
-											type="button"
-											class="btn btn-default btn-sm"
-										>
-											{{auth.name}}
-										</button>
-									</td>
-									<td>&nbsp;</td>
-								</tr>
-							</tbody>
-						</table>
+						<div class="container-fluid groups-table">
+							<div class="row hidden-xs">
+								<h3 class="col-md-3 col-sm-3">Name</h3>
+								<h3 class="col-md-3 col-sm-3">Description</h3>
+								<h3 class="col-md-3 col-sm-3">Authorizations</h3>
+								<h3 class="col-md-3 col-sm-3">Administrators</h3>
+							</div>
+							<div ng-repeat="group in groups" class="row">
+								<h3 class="col-xs-12 visible-xs">{{group.name}}</h3>
+								<div class="col-md-3 col-sm-3 hidden-xs">
+									<div class="row">
+										<div class="col-md-1 col-sm-1">
+											<button class="btn btn-danger btn-sm" ng-click="removeGroup(group)">x</button>
+										</div>
+										<div class="col-md-10 col-sm-10"><strong>{{group.name}}</strong></div>
+									</div>
+								</div>
+								<div class="col-md-3 col-sm-3">{{group.description}}</div>
+								<div class="col-md-3 col-sm-3" style="text-align: left">
+									<div class="btn-group pull-right" role="group">
+										<button type="button" class="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown" ng-model="dropdown" title="Add an authorization">+</button>
+										<ul class="dropdown-menu" style="width:100%">
+											<li ng-repeat="auth in unapprovedAuths = (group.authorizations|filter:{'authorized':false}|orderBy:'name')" ng-click="setGroupAuthorization(group, auth.name, true)">
+												<a>{{auth.name}}</a>
+											</li>
+											<li ng-if="unapprovedAuths.length == 0"><a>None to add!</a></li>
+										</ul>
+									</div>
+
+									<div class="btn-group" ng-repeat="auth in approvedAuths = (group.authorizations|filter:{'authorized':true}|orderBy:'name')">
+										<div class="btn btn-addon btn-danger btn-xs" ng-click="setGroupAuthorization(group, auth.name, false)">x</div>
+										<div class="btn btn-default btn-xs authorizationName">{{auth.name}}</div>
+									</div>
+									<div ng-if="approvedAuths.length==0" class="text-center">No authorizations</div>
+								</div>
+								<div class="col-md-3 col-sm-3">&nbsp;</div>
+								<div class="col-xs-12 visible-xs">
+									<button class="btn btn-danger btn-sm" ng-click="removeGroup(group)">Remove {{group.name}}</button>
+								</div>
+							</div>
+						</div>
 					</uib-tab>
 					<uib-tab heading="Clients" active="tabs.clients.active" select="setLocation('clients');">
 						<h2>Clients</h2>

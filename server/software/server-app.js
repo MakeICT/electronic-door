@@ -145,13 +145,32 @@ server.post('/groups', function(request, response, next){
 				response.send(result);
 			},
 			function(error){
-				if(error.detail){
-					response.send(error.detail);
-				}else{
-					response.send(error);
-				}
+				response.send(error);
 			}
 		);
+	}
+	
+	return next();
+});
+
+server.del('/groups/:groupID', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		try{
+			backend.deleteGroup(
+				request.params.groupID,
+				function(result){
+					response.send(result);
+				},
+				function(error){
+					backend.error(error);
+					response.send(error);
+				}
+			);
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to perform client plugin action', 'detail': exc});
+		}
 	}
 	
 	return next();

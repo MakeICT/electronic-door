@@ -73,9 +73,15 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 
 function generateFailureCallback(msg, failCallback){
 	return function(err){
-		backend.error(err);
-		module.exports.log(msg);
+		module.exports.error(err);
 		if(failCallback) failCallback();
+	};
+}
+
+function generateSuccessCallback(msg, successCallback){
+	return function(){
+		module.exports.log(msg);
+		if(successCallback) successCallback();
 	};
 }
 
@@ -273,6 +279,11 @@ module.exports = {
 		return query(sql, [name], getOneOrNone(onSuccess), onFailure);
 	},
 	
+	getGroupByID: function(id, onSuccess, onFailure){
+		var sql = 'SELECT * FROM groups WHERE "groupID" = $1';
+		return query(sql, [id], getOneOrNone(onSuccess), onFailure);
+	},
+	
 	// sends the groupID to the success callback
 	addGroup: function(groupName, description, onSuccess, onFailure){
 		try{
@@ -283,6 +294,18 @@ module.exports = {
 				return query(sql, [groupName], getOneOrNone(onSuccess), onFailure);
 			};
 			return query(sql, [groupName, description], findGroupID, onFailure);
+		}catch(exc){
+			onFailure(exc);
+		}
+	},
+	
+	deleteGroup: function(groupID, onSuccess, onFailure){
+		try{
+			var doDelete = function(group){
+				var sql = 'DELETE FROM GROUPS WHERE "groupID" = $1';
+				return query(sql, [groupID], generateSuccessCallback('Group deleted (' + group.name + ')', onSuccess), onFailure);
+			};
+			module.exports.getGroupByID(groupID, doDelete, onFailure);
 		}catch(exc){
 			onFailure(exc);
 		}
@@ -980,7 +1003,7 @@ module.exports = {
 				lookupFunction = module.exports.getUserByNFC;
 				lookupValue = code;
 			}else{
-				lookupFunction = function(callback){
+				lookupFunction = function(lookupValue, callback){
 					if(callback) return callback();
 				};
 			}

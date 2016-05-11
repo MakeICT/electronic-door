@@ -4,6 +4,20 @@ body{
 	overflow-y: scroll;
 }
 
+.authorizationName {
+	cursor: default;
+	margin-right: 0.75em;
+}
+
+.groups-table>.row {
+	padding-top: .75em;
+	padding-bottom: .75em;
+}
+
+.groups-table>.row:nth-child(2n) {
+	background-color: #49515a;
+}
+
 .header {
 	height: 200px;
 	background:url(/images/logo-header.svg);

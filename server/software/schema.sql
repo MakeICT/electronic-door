@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS groups (
 CREATE TABLE IF NOT EXISTS "userGroups" (
 	"groupID" INT NOT NULL,
 	"userID" INT NOT NULL,
-	FOREIGN KEY("groupID") REFERENCES "groups"("groupID"),
+	FOREIGN KEY("groupID") REFERENCES "groups"("groupID") ON DELETE CASCADE,
 	FOREIGN KEY("userID") REFERENCES users("userID"),
 	PRIMARY KEY("groupID", "userID")
 );
@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS "authorizationTags" (
 CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 	"groupID" INT NOT NULL,
 	"tagID" INT NOT NULL,
-	FOREIGN KEY("groupID") REFERENCES "groups"("groupID"),
-	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID"),
+	FOREIGN KEY("groupID") REFERENCES "groups"("groupID") ON DELETE CASCADE,
+	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID") ON DELETE CASCADE,
 	PRIMARY KEY("groupID", "tagID")
 );
 

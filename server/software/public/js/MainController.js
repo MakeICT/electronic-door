@@ -225,7 +225,11 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.setGroupAuthorization = function(group, authTag, authorized){
 		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
 			if($scope.checkAjax(response)){
-				// @TODO: give feedback to user that this worked
+				for(var i=0; i<group.authorizations.length; i++){
+					if(group.authorizations[i].name == authTag){
+						group.authorizations[i].authorized = authorized;
+					}
+				}
 			}
 		});		
 	};
@@ -254,6 +258,18 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				};
 			});
 		}
+	};
+	
+	$scope.removeGroup = function(group){
+		console.log(group);
+		$http.delete('/groups/' + group.groupID).success(function(response){
+			$scope.groups.splice($scope.groups.indexOf(group), 1);
+		}).error(function(error){
+			$scope.error = {
+				'message': 'Failed to delete group',
+				'detail': error.code + ": " + error.message,
+			};
+		});
 	};
 	
 	$scope.resetPassword = function(user){
