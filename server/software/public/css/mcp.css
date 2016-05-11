@@ -9,12 +9,18 @@ body{
 	margin-right: 0.75em;
 }
 
+.groups-table>.row:first-child {
+	background-color: #3e444c;
+
+}
+
 .groups-table>.row {
 	padding-top: .75em;
 	padding-bottom: .75em;
+	border-bottom: 1px solid #49515a;
 }
 
-.groups-table>.row:nth-child(2n) {
+.groups-table>.row:hover:nth-child(n+2) {
 	background-color: #49515a;
 }
 
