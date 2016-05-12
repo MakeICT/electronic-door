@@ -36,6 +36,15 @@ function getOneOrNone(callback){
 	}
 }
 
+function filterFields(obj, allowedFields){
+	for(var k in obj){
+		if(allowedFields.indexOf(k) < 0){
+			delete obj[k];
+		}
+	}
+	return obj;
+}
+
 function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
@@ -52,6 +61,7 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 				}else{
 					backend.debug('SQL ERROR');
 					backend.debug(err);
+					backend.debug(sql);
 					backend.debug(params);
 				}
 			}else if(onSuccess){
@@ -63,8 +73,15 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 
 function generateFailureCallback(msg, failCallback){
 	return function(err){
-		module.exports.log(msg);
+		module.exports.error(err);
 		if(failCallback) failCallback();
+	};
+}
+
+function generateSuccessCallback(msg, successCallback){
+	return function(){
+		module.exports.log(msg);
+		if(successCallback) successCallback();
 	};
 }
 
@@ -98,6 +115,74 @@ module.exports = {
 			}
 		}
 		return null;
+	},
+	
+	addClient: function(id, name, onSuccess, onFailure){
+		if(!name) name = 'Unknown client';
+		
+		var sql = 'INSERT INTO clients ("clientID", name) VALUES ($1, $2)';
+		var doReload = function(){
+			backend.log('Added client ' + id + ' ' + name);
+			module.exports.reloadClients(onSuccess);
+		}
+		
+		return query(sql, [id, name], doReload, generateFailureCallback('Failed to add client', onFailure));
+	},
+	
+	updateClient: function(id, details, onSuccess, onFailure){
+		filterFields(details, ['clientID', 'name']);
+		
+		var sql = '';
+		var params = [];
+		for(var k in details){
+			sql += ', "' + k + '" = $' + (params.length+1);
+			params.push(details[k]);
+		}
+		sql = 'UPDATE clients SET' + sql.substring(1) + ' WHERE "clientID" = $' + (params.length+1);
+		params.push(id);
+		
+		var updateRAM = function(){
+			try{
+					for(var i=0; i<clients.length; i++){
+					if(clients[i].clientID == id){
+						for(var k in details){
+							clients[i][k] = details[k];
+						}
+						broadcaster.broadcast(module.exports, 'client-updated', {'oldID': id, 'details': details});
+						break;
+					}
+				}
+				module.exports.log('Client updated');
+				if(onSuccess) onSuccess();
+			}catch(exc){
+				module.exports.error('Failed while updating active client');
+				module.exports.error(exc);
+			}
+		};
+		
+		return query(sql, params, updateRAM, onFailure);
+	},
+	
+	removeClient: function(id, onSuccess, onFailure){
+		var updateRAM = function(){
+			try{
+				for(var i=0; i<clients.length; i++){
+					if(clients[i].clientID == id){
+						clients.splice(i, 1);
+						break;
+					}
+				}
+				broadcaster.broadcast(module.exports, 'client-deleted', id);
+				module.exports.log('Client deleted');
+				if(onSuccess) onSuccess();
+			}catch(exc){
+				module.exports.error('Failed while deleting active client');
+				module.exports.error(exc);
+			}
+		};
+		
+		var sql = 'DELETE FROM clients WHERE "clientID" = $1';
+		return query(sql, [id], updateRAM, onFailure);
 	},
 	
 	getPlugins: function(){
@@ -194,6 +279,11 @@ module.exports = {
 		return query(sql, [name], getOneOrNone(onSuccess), onFailure);
 	},
 	
+	getGroupByID: function(id, onSuccess, onFailure){
+		var sql = 'SELECT * FROM groups WHERE "groupID" = $1';
+		return query(sql, [id], getOneOrNone(onSuccess), onFailure);
+	},
+	
 	// sends the groupID to the success callback
 	addGroup: function(groupName, description, onSuccess, onFailure){
 		try{
@@ -204,6 +294,18 @@ module.exports = {
 				return query(sql, [groupName], getOneOrNone(onSuccess), onFailure);
 			};
 			return query(sql, [groupName, description], findGroupID, onFailure);
+		}catch(exc){
+			onFailure(exc);
+		}
+	},
+	
+	deleteGroup: function(groupID, onSuccess, onFailure){
+		try{
+			var doDelete = function(group){
+				var sql = 'DELETE FROM GROUPS WHERE "groupID" = $1';
+				return query(sql, [groupID], generateSuccessCallback('Group deleted (' + group.name + ')', onSuccess), onFailure);
+			};
+			module.exports.getGroupByID(groupID, doDelete, onFailure);
 		}catch(exc){
 			onFailure(exc);
 		}
@@ -390,10 +492,12 @@ module.exports = {
 								var option = plugin.options[i];
 								sql += '($' + (i*4+1) + ', $' + (i*4+2) + ', $' + (i*4+3) + ', $' + (i*4+4) + '), ';
 								params.push(option.name);
-								params.push(option.value);
+								params.push(option.type);
+//								params.push(option.value);
 								params.push(i);
 								params.push(plugin.pluginID);
 							}
+							// @TODO: also set the default value...
 							sql = sql.substring(0, sql.length-2);
 							return query(sql, params, function(){onSuccess(plugin);}, logAndFail);
 						}else{
@@ -417,10 +521,11 @@ module.exports = {
 					var sql = 'INSERT INTO "clientPluginOptions" (name, type, ordinal, "pluginID") VALUES ';
 					var ordinal = 0;
 					var params = [];
-					for(var key in plugin.clientDetails['options']){
+					for(var i=0; i<plugin.clientDetails['options'].length; i++){
+						var option = plugin.clientDetails['options'][i];
 						sql += '($' + (ordinal*4+1) + ', $' + (ordinal*4+2) + ', $' + (ordinal*4+3) + ', $' + (ordinal*4+4) + '), ';
-						params.push(key);
-						params.push(plugin.clientDetails['options'][key]);
+						params.push(option.name);
+						params.push(option.type);
 						params.push(ordinal);
 						params.push(pluginID);
 						
@@ -478,7 +583,6 @@ module.exports = {
 	
 	setPluginOption: function(pluginName, optionName, value, onSuccess, onFailure){
 		// @TODO: collapse into a single query or find a better sequential execution method (async module?)
-		console.log('setting plugin option');
 		var sendUpdateToPlugin = function(){
 			var plugin = module.exports.getPluginByName(pluginName);
 			for(var i=0; i<plugin.options.length; i++){
@@ -583,12 +687,7 @@ module.exports = {
 			onFailure)
 		;
 	},
-	
-	addClient: function(name, onSuccess, onFailure){
-		var sql = 'INSERT INTO clients (name) VALUES ($1)';
-		return query(sql, [name], onSuccess, onFailure);
-	},
-	
+		
 	associateClientPlugin: function(clientID, pluginName, onSuccess, onFailure){
 		var plugin = module.exports.getPluginByName(pluginName);
 		var client = module.exports.getClientByID(clientID);
@@ -596,11 +695,26 @@ module.exports = {
 		var sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES ($1, $2)';
 		
 		var addOptions = function(){
+			// @TODO: use defaults from plugin
 			module.exports.reloadClients();
 			if(onSuccess) onSuccess();
 		}
 		
 		return query(sql, [clientID, plugin.pluginID], addOptions, onFailure);
+	},
+	
+	disassociateClientPlugin: function(clientID, pluginName, onSuccess, onFailure){
+		var plugin = module.exports.getPluginByName(pluginName);
+		var client = module.exports.getClientByID(clientID);
+		
+		var sql = 'DELETE FROM "clientPluginAssociations" WHERE "clientID" = $1 AND "pluginID" = $2';
+		
+		var updateRAM = function(){
+			delete client.plugins[pluginName];
+			if(onSuccess) onSuccess();
+		};
+		
+		return query(sql, [clientID, plugin.pluginID], updateRAM, generateFailureCallback('Failed to disassociate client plugin', onFailure));
 	},
 	
 	setClientPluginOption: function(clientID, pluginName, option, value, onSuccess, onFailure){
@@ -682,18 +796,19 @@ module.exports = {
 				}
 				plugins.push(plugin);
 				
-				var setOptions = function(options){
-					for(var optionName in options){
-						var value = options[optionName];
-						for(var i=0; i<this.options.length; i++){
-							if(this.options[i].name == optionName){
-								this.options[i].value = value;
+				var setOptions = function(plugin, savedOptions){
+					for(var optionName in savedOptions){
+						var value = savedOptions[optionName];
+						for(var i=0; i<plugin.options.length; i++){
+							if(plugin.options[i].name == optionName){
+								plugin.options[i].value = value;
 								break;
 							}
 						}
 					}
 						
 					if(++loadedPluginCount >= pluginFolders.length){
+						// all plugins are loaded
 						module.exports.reloadClients(function(){
 							for(var i=0; i<plugins.length; i++){
 								if(plugins[i].enabled){
@@ -702,11 +817,11 @@ module.exports = {
 							}
 						});
 					}else{
-						backend.debug('Loaded plugin ' + this.name);
+						backend.debug('Loaded plugin ' + plugin.name);
 					}
 				};
 				
-				module.exports.getPluginOptions(plugin.name, setOptions.bind(plugin));
+				module.exports.getPluginOptions(plugin.name, setOptions.bind(this, plugin));
 			}
 		});
 	},
@@ -888,7 +1003,7 @@ module.exports = {
 				lookupFunction = module.exports.getUserByNFC;
 				lookupValue = code;
 			}else{
-				lookupFunction = function(callback){
+				lookupFunction = function(lookupValue, callback){
 					if(callback) return callback();
 				};
 			}
@@ -928,7 +1043,7 @@ module.exports = {
 				'	users.* ' +
 				'FROM logs ' +
 				'	LEFT JOIN users ON logs."userID" = users."userID" ' +
-				'ORDER BY timestamp DESC';
+				'ORDER BY timestamp DESC LIMIT 100';
 		}
 		return query(sql, [], onSuccess, onFailure);
 	},

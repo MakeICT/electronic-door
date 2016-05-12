@@ -145,13 +145,32 @@ server.post('/groups', function(request, response, next){
 				response.send(result);
 			},
 			function(error){
-				if(error.detail){
-					response.send(error.detail);
-				}else{
-					response.send(error);
-				}
+				response.send(error);
 			}
 		);
+	}
+	
+	return next();
+});
+
+server.del('/groups/:groupID', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		try{
+			backend.deleteGroup(
+				request.params.groupID,
+				function(result){
+					response.send(result);
+				},
+				function(error){
+					backend.error(error);
+					response.send(error);
+				}
+			);
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to perform client plugin action', 'detail': exc});
+		}
 	}
 	
 	return next();
@@ -274,6 +293,27 @@ server.get('/clients', function(request, response, next) {
 	return next();
 });
 
+// update a client
+server.put('/clients/:clientID', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.updateClient(request.params.clientID, request.body);
+		response.send();
+	}
+	
+	return next();
+});
+
+server.del('/clients/:clientID', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.removeClient(request.params.clientID);
+		response.send();
+	}
+	
+	return next();
+});
+
 server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
@@ -287,14 +327,32 @@ server.post('/clients/:clientID/plugins/:pluginName', function (request, respons
 	return next();
 });
 
+server.del('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.disassociateClientPlugin(
+			request.params.clientID,
+			request.params.pluginName,
+			function(){ response.send(); },
+			function(error){ response.send({'error': 'Failed to disassociate plugin from client', 'detail': error.detail}); }
+		);
+	}
+	return next();
+});
+
 server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		var client = backend.getClientByID(request.params.clientID);
-		var plugin = backend.getPluginByName(request.params.pluginName);
-		var action = plugin['clientDetails']['actions'][request.params.action];
-		
-		action(client, function(){ response.send(); });
+		try{
+			var client = backend.getClientByID(request.params.clientID);
+			var plugin = backend.getPluginByName(request.params.pluginName);
+			var action = plugin['clientDetails']['actions'][request.params.action];
+			
+			action(client, function(){ response.send(); });
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to perform client plugin action', 'detail': exc});
+		}
 	}
 	
 	return next();

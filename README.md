@@ -19,9 +19,7 @@ This system is used to secure spaces with an electronic door latch.
 
 ## Todo
 * Server
-	* Send chimes
 	* Super admins vs group admins
-	* Ability to create groups
 	* Create scheduling system
 	* Make plugins respect disabled mode
 	* Add / edit users

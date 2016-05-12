@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS groups (
 CREATE TABLE IF NOT EXISTS "userGroups" (
 	"groupID" INT NOT NULL,
 	"userID" INT NOT NULL,
-	FOREIGN KEY("groupID") REFERENCES "groups"("groupID"),
+	FOREIGN KEY("groupID") REFERENCES "groups"("groupID") ON DELETE CASCADE,
 	FOREIGN KEY("userID") REFERENCES users("userID"),
 	PRIMARY KEY("groupID", "userID")
 );
@@ -82,14 +82,14 @@ CREATE TABLE IF NOT EXISTS logs (
 );
 
 CREATE TABLE IF NOT EXISTS clients (
-	"clientID" SERIAL PRIMARY KEY,
+	"clientID" INT NOT NULL PRIMARY KEY,
 	"name" VARCHAR(128) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "clientPluginAssociations" (
 	"clientID" INT NOT NULL,
 	"pluginID" INT NOT NULL,
-	FOREIGN KEY("clientID") REFERENCES "clients"("clientID"),
+	FOREIGN KEY("clientID") REFERENCES "clients"("clientID") ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID"),
 	PRIMARY KEY("clientID", "pluginID")
 );
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS "clientPluginOptionValues" (
 	"clientID" INT NOT NULL,
 	"clientPluginOptionID" INT NOT NULL,
 	"optionValue" VARCHAR(128) NOT NULL,
-	FOREIGN KEY("clientID") REFERENCES clients("clientID"),
+	FOREIGN KEY("clientID") REFERENCES clients("clientID") ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY("clientPluginOptionID") REFERENCES "clientPluginOptions"("clientPluginOptionID")
 );
 
@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS "authorizationTags" (
 CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 	"groupID" INT NOT NULL,
 	"tagID" INT NOT NULL,
-	FOREIGN KEY("groupID") REFERENCES "groups"("groupID"),
-	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID"),
+	FOREIGN KEY("groupID") REFERENCES "groups"("groupID") ON DELETE CASCADE,
+	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID") ON DELETE CASCADE,
 	PRIMARY KEY("groupID", "tagID")
 );
 
@@ -141,4 +141,5 @@ INSERT INTO users ("firstName", "lastName", "email", "status", "joinDate") VALUE
 	('User 2', 'Test', 'test2@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp));
 
 INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
-INSERT INTO clients ("name") VALUES ('Front door');
+INSERT INTO clients ("clientID", "name") VALUES (1, 'Test client 1');
+INSERT INTO clients ("clientID", "name") VALUES (2, 'Test client 2');

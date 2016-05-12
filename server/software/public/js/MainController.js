@@ -9,7 +9,7 @@ var app = angular.module('electronic-door', ['ui.bootstrap']);
 angular.module('electronic-door').controller('controller', function($scope, $http, $location){
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
-	$scope.clients = {};
+	$scope.clients = [];
 	$scope.messages = [];
 	$scope.error = null;
 
@@ -69,34 +69,58 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			}
 		}
 		
-		$http.get('/plugins').success(function(response){
-			if($scope.checkAjax(response)){
-				var plugins = response;
-				for(var i=0; i<plugins.length; i++){
-					var plugin = plugins[i];
-					$scope.plugins[plugin.name] = plugin;
-					var attachOptions = function(response){
-						$scope.plugins[response.plugin].options = [];
-						for(var i in response.options){
-							if(response.options[i].type != 'hidden'){
-								$scope.plugins[response.plugin].options[i] = response.options[i];
+		$scope.reloadPlugins = function(){		
+			$http.get('/plugins').success(function(response){
+				if($scope.checkAjax(response)){
+					var plugins = response;
+					for(var i=0; i<plugins.length; i++){
+						var plugin = plugins[i];
+						$scope.plugins[plugin.name] = plugin;
+						var attachOptions = function(response){
+							$scope.plugins[response.plugin].options = [];
+							for(var i in response.options){
+								if(response.options[i].type != 'hidden'){
+									$scope.plugins[response.plugin].options[i] = response.options[i];
+								}
 							}
+						};
+						$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
+						
+						if(plugin.clientDetails){
+							$scope.clientPlugins.push(plugin);
 						}
-					};
-					$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
-					
-					if(plugin.clientDetails){
-						$scope.clientPlugins.push(plugin);
 					}
 				}
-			}
-		});
+			});
+		};
+		$scope.reloadPlugins();
 
-		$http.get('/clients').success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.clients = response;
-			}
-		});
+		$scope.reloadClients = function(){
+			$http.get('/clients').success(function(response){
+				if($scope.checkAjax(response)){
+					var clients = response;
+					for(var i=0; i<clients.length; i++){
+						clients[i].oldID = clients[i].clientID;
+						
+						var found = false;
+						for(var j=0; j<$scope.clients.length; j++){
+							if($scope.clients[j].clientID == clients[i].clientID){
+								for(var k in clients[i]){
+									$scope.clients[j][k] = clients[i][k];
+								}
+								console.log('found existing client');
+								found = true;
+								break;
+							}
+						}
+						if(!found){
+							$scope.clients.push(clients[i]);
+						}
+					}
+				}
+			});
+		};
+		$scope.reloadClients();
 
 		$http.get('/groups').success(function(response){
 			if($scope.checkAjax(response)){
@@ -201,7 +225,11 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 	$scope.setGroupAuthorization = function(group, authTag, authorized){
 		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
 			if($scope.checkAjax(response)){
-				// @TODO: give feedback to user that this worked
+				for(var i=0; i<group.authorizations.length; i++){
+					if(group.authorizations[i].name == authTag){
+						group.authorizations[i].authorized = authorized;
+					}
+				}
 			}
 		});		
 	};
@@ -230,6 +258,18 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 				};
 			});
 		}
+	};
+	
+	$scope.removeGroup = function(group){
+		console.log(group);
+		$http.delete('/groups/' + group.groupID).success(function(response){
+			$scope.groups.splice($scope.groups.indexOf(group), 1);
+		}).error(function(error){
+			$scope.error = {
+				'message': 'Failed to delete group',
+				'detail': error.code + ": " + error.message,
+			};
+		});
 	};
 	
 	$scope.resetPassword = function(user){
@@ -300,10 +340,38 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 		});
 	};
 	
-	$scope.createClientPluginAssociation = function(client, pluginName){
-		$http.post('/clients/' + client.clientID + '/plugins/' + pluginName).success(function(response){
+	$scope.updateClient = function(client){
+		var oldID = client.oldID;
+		$http.put('/clients/' + oldID, client).success(function(response){
 			if($scope.checkAjax(response)){
-				window.location.reload();
+				client.oldID = client.clientID;
+				// @TODO: give feedback
+			}
+		});
+	};
+	
+	$scope.removeClient = function(client){
+		$http.delete('/clients/' + client.clientID).success(function(response){
+			if($scope.checkAjax(response)){
+				var index = $scope.clients.indexOf(client);
+				$scope.clients.splice(index, 1);
+			}
+		});
+	};
+	
+	$scope.createClientPluginAssociation = function(client){
+		$http.post('/clients/' + client.clientID + '/plugins/' + client.newPlugin).success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.reloadClients();
+			}
+		});
+		client.newPlugin = null;
+	};
+	
+	$scope.disassociatePlugin = function(client, plugin){
+		$http.delete('/clients/' + client.clientID + '/plugins/' + plugin.name).success(function(response){
+			if($scope.checkAjax(response)){
+				$scope.reloadClients();
 			}
 		});
 	};
@@ -336,8 +404,7 @@ angular.module('electronic-door').controller('controller', function($scope, $htt
 			});
 		}
 	};
-
-
+	
 	$scope.login(true);
 })
 .filter('timestampToHumanReadableDate', function(){

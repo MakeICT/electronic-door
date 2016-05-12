@@ -18,6 +18,7 @@ var SERIAL_FLAGS = {
 	'END':		0xFB,
 };
 var SERIAL_COMMANDS = {
+	'ADDRESS':	0x00,
 	'UNLOCK':	0x01,
 	'LOCK':	 	0x02,
 	'KEY':		0x03,
@@ -51,6 +52,17 @@ function lookupSerialFlag(byte){
 		}
 	}
 }
+
+function reloadClients(callback){
+	var knownClients = backend.getClients();
+	for(var i=0; i<knownClients.length; i++){
+		var c = knownClients[i];
+		if(!clients[c.clientID]){
+			clients[c.clientID] = new SerialClient(c);
+		}
+	}
+}
+
 
 function Packet(rawBytesOrTransactionID, from, to, command, payload){
 	this.bytes = [];
@@ -328,23 +340,36 @@ function onData(data){
 						// blah blah blah
 						if(packet.from != 0) packetQueue.onACKReceived(packet);
 					}else{
-						var client = clients[packet.from];
-						if(client.hasReceivedPacket(packet)){
-							backend.debug('=============================');
-							backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
-							backend.debug('=============================');
+						var handlePacket = function(){
+							var client = clients[packet.from];
+							if(client.hasReceivedPacket(packet)){
+								backend.debug('=============================');
+								backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
+								backend.debug('=============================');
+							}else{
+								backend.debug('=============================');
+								backend.debug(' Received : ' + dataBuffer);
+								backend.debug('Unescaped : ' + packet.unescapedPacket);
+								backend.debug('       ID : ' + packet.transactionID);
+								backend.debug('     From : ' + packet.from);
+								backend.debug('       To : ' + packet.to);
+								backend.debug('  Command : ' + packet.command);
+								backend.debug('  Payload : ' + packet.payload);
+								backend.debug('=============================');
+								sendACK(packet);
+								broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+							}
+						};
+						if(!clients[packet.from]){
+							console.log('Client does not exist :(');
+							var prepAndSend = function(){
+								reloadClients();
+								console.log(clients);
+								handlePacket();
+							};
+							backend.addClient(packet.from, null, prepAndSend);
 						}else{
-							backend.debug('=============================');
-							backend.debug(' Received : ' + dataBuffer);
-							backend.debug('Unescaped : ' + packet.unescapedPacket);
-							backend.debug('       ID : ' + packet.transactionID);
-							backend.debug('     From : ' + packet.from);
-							backend.debug('       To : ' + packet.to);
-							backend.debug('  Command : ' + packet.command);
-							backend.debug('  Payload : ' + packet.payload);
-							backend.debug('=============================');
-							sendACK(packet);
-							broadcaster.broadcast(module.exports, 'serial-data-received', packet);
+							handlePacket();
 						}
 					}
 				}
@@ -430,14 +455,12 @@ module.exports = {
 			}
 		);
 		
-		var knownClients = backend.getClients();
-		for(var i=0; i<knownClients.length; i++){
-			var c = knownClients[i];
-			clients[c.clientID] = new SerialClient(c);
-		}
+		reloadClients();
+		broadcaster.subscribe(module.exports);
 	},
 	
 	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
 		if(serialPort){
 			try{
 				module.exports.reset();
@@ -473,6 +496,19 @@ module.exports = {
 		retryDelay = 0;
 	},
 	
+	receiveMessage: function(source, messageID, data){
+		if(messageID == 'client-updated'){
+			if(data.details.clientID && (data.details.clientID != data.oldID)){
+				module.exports.send(data.oldID, SERIAL_COMMANDS['ADDRESS'], parseInt(data.details.clientID));
+				clients[data.details.clientID] = clients[data.oldID];
+				delete clients[data.oldID];
+			}
+		}else if(messageID == 'client-deleted'){
+			delete clients[data];
+		}
+	},
+
+	
 	stringToByteArray: function(str){
 		var bytes = []
 		for(var i=0; i<str.length; i++){
@@ -484,7 +520,7 @@ module.exports = {
 	
 	hexStringToByteArray: function(str){
 		var result = [];
-		while (str.length >= 2) { 
+		while(str && str.length >= 2) { 
 			result.push(parseInt(str.substring(0, 2), 16));
 			str = str.substring(2, str.length);
 		}
