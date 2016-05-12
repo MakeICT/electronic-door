@@ -21,6 +21,16 @@
 #include "superserial.h"
 #include "utils.h"
 
+/*-----( Specify Available Features )-----*/
+#define MOD_SERIAL
+#define MOD_LIGHT_RING
+#define MOD_LATCH
+#define MOD_ALARM_BUTTON
+#define MOD_DOOR_SWITCH
+#define MOD_NFC_READER
+#define MOD_DOORBELL
+#define MOD_CHIME
+#define MOD_LCD
 
 
 /*-----( Declare Constants and Pin Numbers )-----*/
@@ -140,15 +150,19 @@ void setup(void) {
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
   readout.Print("Try Me! :)");
+  
+  #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
 //  if(false)  {
     status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
-  else  {
-  }
+  else  
+  #endif
+  {
   status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
   speaker.Play(startTune, startTuneDurations, 8);
   state = S_READY;
+  }
 }
 
 
@@ -169,11 +183,13 @@ void loop(void) {
   {
     case S_READY:
     {
+      #ifdef MOD_NFC_READER
       if ((currentMillis - lastRead ) > NFC_READ_INTERVAL &&
           (currentMillis - lastIDSend) > ID_SEND_INTERVAL)  {
         CheckReader();
         lastRead = currentMillis;
       }
+      #endif
       CheckInputs();
     }
       
@@ -181,8 +197,8 @@ void loop(void) {
     {
       speaker.Update();
       status_ring.Update();
-      if (!doorState && !door_latch.HoldingOpen() )  {
-        //LOG_DEBUG(F("Door opened, re-latching\r\n"));
+      if (!doorState && !door_latch.HoldingOpen() && !door_latch.Locked())  {
+        LOG_DEBUG(F("Door opened, re-latching\r\n"));
         door_latch.Lock();
       }
       door_latch.Update();

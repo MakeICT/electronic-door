@@ -142,7 +142,8 @@ bool SuperSerial::GetPacket() {
                   LOG_ERROR(F("Received ack for non-current transaction\r\n"));
                 }              
                 else  {
-                  LOG_DEBUG(F("Sending ACK.\r\n"));
+                LOG_DEBUG(F("Sending ACK.\r\n"));
+                  this->currentTransaction = this->receivedPacket.TransID();
                   SendACK(this->receivedPacket.TransID());
                   this->newMessage = true;
                   return true;
@@ -219,7 +220,10 @@ inline void SuperSerial::SendControl(byte function, byte transID)  {
   byte array[responsePacket.EscapedSize()];
   
   responsePacket.ToEscapedArray(array);
-  bus->Send(array, responsePacket.EscapedSize());
+  int result = bus->Send(array, responsePacket.EscapedSize());
+  //~ while (result != 0)  {
+    //~ result = bus->Send(array, responsePacket.EscapedSize());
+  //~ }
 }
 
 inline void SuperSerial::SendACK(byte transID)  {

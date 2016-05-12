@@ -23,10 +23,18 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
   //      if not, wait rand(y) ms before attempting
   //      repeat these steps, doubling y after each collision
   //      finished when send is successful
-  LOG_DUMP(F("rs485::Send()\r\n"));
-  if (this->lastRcv - millis() > T_MIN_WAIT && !this->Available())  {
+  LOG_DEBUG(F("rs485::Send()\r\n"));
+//  if (this->lastRcv - millis() > T_MIN_WAIT && !this->Available())  {
+  if (this->lastRcv - millis() > T_MIN_WAIT)  {
+    while (Serial.available())  {
+      Serial.read();    //flush buffer
+    }
     digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
     delay(20);
+    if(Serial.available())  {
+      LOG_DEBUG(F("Bus is busy, aborting send to avoid collision"));
+      return ERR_BUSY_BUS;
+    }
     Serial.write(B_START);
     LOG_DEBUG(F("Sending: "));
     LOG_DEBUG(B_START);
@@ -75,12 +83,15 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
       LOG_ERROR(F("ERROR: Lost Data\r\n"));
       return ERR_LOSTDATA;
     }
-
+  }
+  else  {
+    LOG_DEBUG("NOT SENDING PACKET!!!/r/n");
+    return ERR_BUSY_BUS;
   }
 }
 
 inline int rs485::Send(uint8_t data) {
-  LOG_DUMP(F("rs485::Send()\r\n"));
+  LOG_DEBUG(F("rs485::Send()\r\n"));
   this->Send(&data);
 }
 
