@@ -5,6 +5,10 @@ var fs = require('fs');
 
 var runningProcs = {};
 
+function doCommand(cmd){
+	setTimeout(function(){ child_process.exec(cmd); }, 1000);
+}
+
 module.exports = {
 	name: 'System Tools',
 	options: [
@@ -48,16 +52,17 @@ module.exports = {
 			});
 		},
 		'Restart MCP': function(session){
-			backend.log('Server will now restart');
-			child_process.exec('systemctl restart master-control-program');
+			backend.log('MCP will now restart');
+			
+			doCommand('systemctl restart master-control-program');
 		},
 		'Reboot server': function(session){
 			backend.log('System will now reboot');
-			child_process.exec('reboot');
+			doCommand('reboot');
 		},
 		'Shutdown server': function(session){
 			backend.log('System will now power off');
-			child_process.exec('poweroff');
+			doCommand('poweroff');
 		},
 	},
 
