@@ -161,7 +161,6 @@ var packetQueue = {
 			backend.error('Super Serial CANNOT DEQUEUE RIGHT NOW!');
 			return;
 		}
-		
 		this.lastPacketInfo = this._queue.shift();
 		if(!this.lastPacketInfo) return;
 		
@@ -176,20 +175,23 @@ var packetQueue = {
 	
 	'_doSend': function(){
 		var settings = getSettings();
-		var timeoutPeriod = 0+settings['Timeout'];
-		var maxRetries = 0+settings['Max retries'];
-
-		_sendPacket(this.lastPacketInfo.bytes);
-
+		var timeoutPeriod = parseInt(settings['Timeout']);
+		var maxRetries = parseInt(settings['Max retries']);
+		
+		var afterWriteComplete;
 		if(timeoutPeriod > 0 && maxRetries > 0 && this.lastPacketInfo.command != SERIAL_COMMANDS['ACK']){
-			this.ackTimeout = setTimeout(this.onACKTimeout.bind(this), timeoutPeriod);
+			 // don't allow dequeue until ack is received (or we give up)
+			afterWriteComplete = function(){
+				this.ackTimeout = setTimeout(this.onACKTimeout.bind(this), timeoutPeriod);
+			};
 		}else{
-			this._doneWaiting();
+			 // don't allow dequeue until we're done writing this packet out
+			afterWriteComplete = this._doneWaiting;
 		}
+		_sendPacket(this.lastPacketInfo.bytes, afterWriteComplete.bind(this));
 	},
 	
 	'_doneWaiting': function(){
-		clearTimeout(this.ackTimeout);
 		this.retries = 0;
 		this.waitingForACK = false;
 		this.dequeue();
@@ -197,13 +199,13 @@ var packetQueue = {
 	
 	'onACKTimeout': function(){
 		var settings = getSettings();
-		var maxRetries = 0+settings['Max retries'];
+		var maxRetries = parseInt(settings['Max retries']);
 		
 		if(++this.retries > maxRetries){
 			backend.debug('Packet failed after ' + maxRetries + ' retries: ' + this.lastPacketInfo.toString());
 			this._doneWaiting();
 		}else{
-			backend.debug('Resending packet ' + this.lastPacketInfo.toString());
+			backend.debug('Resending packet (' + this.retries + '/' + maxRetries + '): ' + this.lastPacketInfo.toString());
 			this._doSend();
 		}
 	},
@@ -233,18 +235,18 @@ function SerialClient(clientInfo){
 	};
 	
 	this.hasReceivedPacket = function(packet){
-		return false; // @TODO: make this work so it doesn't re-process already seen packets
+		return packet.transactionID < this.nextTransactionID;
 	}
 
 }
 var clients = {};
 
 // This packet should already have the endcaps
-function _sendPacket(packet){
+function _sendPacket(packet, next){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
 		module.exports.reconnect();
-		setTimeout(function(){ _sendPacket(packet); }, 100);
+		setTimeout(function(){ _sendPacket(packet, next); }, 1000);
 	}else{
 		var packetWriter = {
 			'packet': packet,
@@ -264,8 +266,17 @@ function _sendPacket(packet){
 						backend.error(error);
 					}
 					if(readWriteToggle){
-						var doToggle = readWriteToggle.writeSync.bind(readWriteToggle, 1)
-						setTimeout(doToggle, 10);
+						var settings = getSettings();
+
+						var doToggle = function(){
+							readWriteToggle.writeSync(1);
+							if(next) next();
+						};
+						
+						var delay = Math.ceil(1 / settings['Baud'] * packet.length * 10000);
+						setTimeout(doToggle, delay);
+					}else{
+						if(next) next();
 					}
 				});
 			},
@@ -356,15 +367,14 @@ function onData(data){
 								backend.debug('  Command : ' + packet.command);
 								backend.debug('  Payload : ' + packet.payload);
 								backend.debug('=============================');
-								sendACK(packet);
 								broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 							}
+							sendACK(packet);
 						};
 						if(!clients[packet.from]){
-							console.log('Client does not exist :(');
+							backend.debug('Client does not exist :(');
 							var prepAndSend = function(){
 								reloadClients();
-								console.log(clients);
 								handlePacket();
 							};
 							backend.addClient(packet.from, null, prepAndSend);
