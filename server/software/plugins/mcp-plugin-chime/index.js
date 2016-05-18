@@ -62,8 +62,7 @@ module.exports = {
 			for(var i=0; i<clients.length; i++){
 				var client = clients[i];
 				if(client.plugins[module.exports.name]){
-					sendTone = module.exports.clientDetails.actions['Test sound'];
-					setTimeout(sendTone.bind(module.exports, client), 500);
+					module.exports.clientDetails.actions['Test sound'](client);
 				}
 			}
 		}
