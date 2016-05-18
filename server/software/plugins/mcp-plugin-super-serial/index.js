@@ -192,6 +192,7 @@ var packetQueue = {
 	},
 	
 	'_doneWaiting': function(){
+		clearTimeout(this.ackTimeout);
 		this.retries = 0;
 		this.waitingForACK = false;
 		this.dequeue();
