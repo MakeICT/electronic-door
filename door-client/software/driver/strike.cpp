@@ -22,6 +22,10 @@ void Strike::Unlock(uint16_t duration)  {
   this->locked = false;
 }
 
+bool Strike::Locked()  {
+  return this->locked; 
+}
+
 bool Strike::HoldingOpen()  {
   return this->holdingOpen; 
 }

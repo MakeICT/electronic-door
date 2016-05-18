@@ -15,6 +15,7 @@
 
 #define ERR_COLLISION     0xE1
 #define ERR_LOSTDATA      0xE2
+#define ERR_BUSY_BUS      0xE3
 
 // Times
 #define T_MIN_WAIT      10
