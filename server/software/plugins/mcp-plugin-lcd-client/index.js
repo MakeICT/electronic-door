@@ -6,6 +6,10 @@ var superSerial = require('../mcp-plugin-super-serial');
 
 var lcdResetTimers = {};
 
+function getClientOptions(client){
+	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+}
+
 function center(text, lineLength){
 	if(!lineLength) lineLength = 16;
 	var spaces = (lineLength - text.length) / 2;
@@ -26,7 +30,7 @@ function sendMessage(clientID, line1, line2){
 	if(lcdResetTimers[clientID]) clearTimeout(lcdResetTimers[clientID]);
 	
 	var client = backend.getClientByID(clientID);
-	var clientOptions = backend.regroup(module.exports.options, 'name', 'value');
+	var clientOptions = getClientOptions(client);
 	
 	if(clientOptions['Idle message delay']){
 		var sendIdleMessage = function(){
@@ -99,8 +103,8 @@ module.exports = {
 		],
 		actions: {
 			'Send text': function(client, callback){
-				var options = backend.regroup(module.exports.options, 'name', 'value');				
-				sendMessage(client.clientID, options['Send line 1'], options['Send line 2']);
+				var clientOptions = getClientOptions(client);
+				sendMessage(client.clientID, clientOptions['Send line 1'], clientOptions['Send line 2']);
 				if(callback) callback();
 			},
 			'Clear': function(client, callback){

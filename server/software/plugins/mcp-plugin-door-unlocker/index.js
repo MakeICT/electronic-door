@@ -4,6 +4,9 @@ var superSerial = require('../mcp-plugin-super-serial');
 // this is only needed for backend.regroup convenience
 var backend = require('../../backend.js');
 
+function getClientOptions(client){
+	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+}
 
 function fixUnlockDuration(duration){
 	if(duration === undefined || duration === null){
@@ -25,8 +28,9 @@ function fixUnlockDuration(duration){
 function doUnlock(client, userID, nfc){
 	try{
 		// regroup the options by key/value pairs for easy lookup
-		var options = backend.regroup(module.exports.options, 'name', 'value');
-		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(options['Unlock duration']));
+		var clientOptions = getClientOptions(client);
+
+		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(clientOptions['Unlock duration']));
 		backend.log(client.name, userID, nfc, 'unlock');
 		broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
 	}catch(exc){
