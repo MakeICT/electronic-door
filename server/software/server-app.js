@@ -408,7 +408,7 @@ server.post('/login', function(request, response, next){
 			response.send({'error': 'Login failed'});
 		};
 		
-		if(request.params.email == '' || request.params.password == ''){
+		if(!request.params.email || !request.params.password || request.params.email == '' || request.params.password == ''){
 			response.send({'error': 'Login failed'});
 		}else{
 			backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);
