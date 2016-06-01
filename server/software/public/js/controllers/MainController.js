@@ -1,3 +1,4 @@
+
 function pad(n, width, z) {
 	z = z || '0';
 	n = n + '';
@@ -6,19 +7,46 @@ function pad(n, width, z) {
 
 var app = angular.module('masterControlApp', ['ui.bootstrap']);
 
-app.factory('authenticationService', function($http) {
+app.factory('ajaxChecker', function() {
+    var ajaxChecker = {
+		'errorListeners': [],
+		'checkAjax': function(response){
+			if(response.error){
+				ajaxChecker.error = {
+					'message': response.error,
+					'detail': response.detail,
+				};
+
+				for(var i=0; i<ajaxChecker.errorListeners.length; i++){
+					ajaxChecker.errorListeners[i](ajaxChecker.error);
+				}
+				
+				return false;
+			}else if(response.url){
+				window.open(response.url);
+			}
+			
+			return true;
+		},
+		'addErrorListener': function(callback){
+			ajaxChecker.errorListeners.push(callback);
+		},
+	};
+	
+	return ajaxChecker;
+});
+
+app.factory('authenticationService', function($http, ajaxChecker) {
     var authService = {
 		'authenticated': false,
 		'login': function(credentials, onPass, onFail) {
 			$http.post('/login', credentials).success(function(response){
-				console.log(response);
-				authService.authenticated = true;
-				if(onPass) onPass();
-		//			if($scope.checkAjax(response, suppressError)){
-		//				$scope.clearError();
-		//				$scope.authenticated = true;
-		//				$scope.doLoad();
-		//			}
+				if(ajaxChecker.checkAjax(response)){
+					authService.authenticated = true;
+					if(onPass) onPass();
+				}else{
+					if(onFail) onFail(response);
+				}
 			});
 		},
 		'isAuthenticated': function() {
@@ -29,382 +57,10 @@ app.factory('authenticationService', function($http) {
 	return authService;
 });
 
-app.controller('usersCtrl', function($scope, $http, authenticationService){
-	$scope.searchForUser = function(){
-		// @TODO: encode search string
-		var params = {}
-		if($scope.search.query && $scope.search.query.length > 2) params['q'] = $scope.search.query;
-		if($scope.search.admin) params['isAdmin'] = 1;
-		if($scope.search.active) params['status'] = 'active';
-		if($scope.search.keyed) params['keyActive'] = 1;
-		if($scope.search.thirtyDays){
-			var today = new Date();
-			var thirtyDaysAgo = (new Date()).setDate(today.getDate()-30);
-			params['joinDate'] = Math.floor(thirtyDaysAgo / 1000);
-		}
-		var noTerms = true;
-		for(var k in params){
-			noTerms = false;
-			break;
-		}
-		if(noTerms) return;
-
-		var url = '/users?';
-		for(var p in params){
-			url += p + '=' + params[p] + '&';
-		}
-		$http.get(url).success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.userSearchResults = response;
-			}
-		});
-	};
-
-	$scope.userSearchResults = [];
-	$scope.currentUser = null;
-	$scope.newUser = {
-		'email': '',
-		'firstName': '',
-		'lastName': '',
-		'joinDate': new Date(),
-	};
-
-	$scope.setCurrentUser = function(user){
-		$scope.currentUser = user;
-	};
-
-	$scope.resetNewUser = function(){
-		$scope.newUser.email = null;
-		$scope.newUser.firstName = null;
-		$scope.newUser.lastName = null;
-		$scope.newUser.joinDate = new Date();
-	};
-
-	$scope.saveNewUser = function(){
-		$http.post('/users', $scope.newUser).success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.resetNewUser();
-			}
-		});
-	};
-	
-	$scope.setGroupEnrollment = function(user, groupName, enrolled){
-		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback to user that this worked
-			}
-		});		
-	};
-
-	$scope.search = {
-		'admin': false,
-		'active': false,
-		'keyed': false,
-		'thirtyDays': false,
-	};	
-
-	$scope.resetPassword = function(user){
-		user.passwordSaved = false;
-		var url = '/users/' + user.userID + '/password';
-		$http.put(url, {'password': user.password}).success(function(response){
-			if($scope.checkAjax(response)){
-				user.passwordSaved = true;
-			}
-		});
-	};
-	
-	$scope.toggleKeyEnrollment = function(user){
-		if(user.keyActive){
-			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){
-				if($scope.checkAjax(response)){
-					user.keyActive = false;
-				}
-			});
-		}else{
-			$http.get('/log?type=nfc').success(function(response){
-				if($scope.checkAjax(response)){
-					$scope.nfcLog = response;
-				}
-			});
-		}
-	};
-	
-	$scope.enrollUser = function(user, nfcID){
-		$http.put('/users/' + user.userID, { nfcID: nfcID }).success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.nfcLog = null;
-				user.keyActive = true;
-			}
-		});
-	};
-
-	$scope.toggleUserDisplay = function(user){
-		user.isExpanded = !user.isExpanded;
-		if(!user.groups){
-			$http.get('/users/' + user.userID + '/groups').success(function(response){
-				if($scope.checkAjax(response)){
-					user.groups = response;
-				}
-			});
-		}
-	};	
-});
-
-app.controller('groupsCtrl', function($scope, $http, authenticationService){
-	$scope.newGroup = {
-		'name': '',
-		'description': '',
-	};
-
-	$scope.setGroupAuthorization = function(group, authTag, authorized){
-		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
-			if($scope.checkAjax(response)){
-				for(var i=0; i<group.authorizations.length; i++){
-					if(group.authorizations[i].name == authTag){
-						group.authorizations[i].authorized = authorized;
-					}
-				}
-			}
-		});		
-	};
-		
-	$scope.saveNewGroup = function(){
-		console.log($scope.newGroup);
-		if(!$scope.newGroup || $scope.newGroup.name == ''){
-			$scope.error = {
-				'message': 'Group name must be specified',
-				'detail': '...so type something in.',
-			};
-		}else{
-			$http.post('/groups', $scope.newGroup).success(function(response){
-				if($scope.checkAjax(response)){
-					$scope.newGroup = {'name': null, 'description': null };
-					$http.get('/groups').success(function(response){
-						if($scope.checkAjax(response)){
-							$scope.groups = response;
-						}
-					});
-				}
-			}).error(function(error){
-				$scope.error = {
-					'message': 'Failed to add group',
-					'detail': error.code + ": " + error.message,
-				};
-			});
-		}
-	};
-	
-	$scope.removeGroup = function(group){
-		console.log(group);
-		$http.delete('/groups/' + group.groupID).success(function(response){
-			$scope.groups.splice($scope.groups.indexOf(group), 1);
-		}).error(function(error){
-			$scope.error = {
-				'message': 'Failed to delete group',
-				'detail': error.code + ": " + error.message,
-			};
-		});
-	};
-
-	$http.get('/groups').success(function(response){
-		if($scope.checkAjax(response)){
-			$scope.groups = response;
-		}
-	});
-});
-
-app.controller('clientsCtrl', function($scope, $http, authenticationService){
-	$scope.clients = [];
-	$scope.updateClient = function(client){
-		var oldID = client.oldID;
-		$http.put('/clients/' + oldID, client).success(function(response){
-			if($scope.checkAjax(response)){
-				client.oldID = client.clientID;
-				// @TODO: give feedback
-			}
-		});
-	};
-	
-	$scope.removeClient = function(client){
-		$http.delete('/clients/' + client.clientID).success(function(response){
-			if($scope.checkAjax(response)){
-				var index = $scope.clients.indexOf(client);
-				$scope.clients.splice(index, 1);
-			}
-		});
-	};
-	
-	$scope.createClientPluginAssociation = function(client){
-		$http.post('/clients/' + client.clientID + '/plugins/' + client.newPlugin).success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.reloadClients();
-			}
-		});
-		client.newPlugin = null;
-	};
-	
-	$scope.disassociatePlugin = function(client, plugin){
-		$http.delete('/clients/' + client.clientID + '/plugins/' + plugin.name).success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.reloadClients();
-			}
-		});
-	};
-	
-	$scope.doClientPluginAction = function(client, plugin, action){
-		$http.post('/clients/' + client.clientID + '/plugins/' + plugin.name + '/actions/' + action).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback
-			}
-		});
-	};
-	
-	$scope.saveClientPluginOption = function(client, plugin, option){
-		var params = {'option': option.name, 'value': option.value};
-		
-		$http.put('/clients/' + client.clientID + '/plugins/' + plugin.name, params).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback
-			}
-		});
-	};
-
-	$scope.reloadClients = function(){
-		$http.get('/clients').success(function(response){
-			if($scope.checkAjax(response)){
-				var clients = response;
-				for(var i=0; i<clients.length; i++){
-					clients[i].oldID = clients[i].clientID;
-					
-					var found = false;
-					for(var j=0; j<$scope.clients.length; j++){
-						if($scope.clients[j].clientID == clients[i].clientID){
-							for(var k in clients[i]){
-								$scope.clients[j][k] = clients[i][k];
-							}
-							console.log('found existing client');
-							found = true;
-							break;
-						}
-					}
-					if(!found){
-						$scope.clients.push(clients[i]);
-					}
-				}
-			}
-		});
-	};
-
-	$scope.reloadClients();
-});
-
-app.controller('logCtrl', function($scope, $http, authenticationService){
-	$scope.loadLog = function(){
-		$scope.log = null;
-		$http.get('/log').success(function(response){
-			if($scope.checkAjax(response)){
-				$scope.log = response;
-			}
-		});
-	};
-});
-
-app.controller('pluginsCtrl', function($scope, $http, authenticationService){
-	$scope.plugins = {};
-	$scope.clientPlugins = [];
-	
-	$scope.togglePlugin = function(plugin, enabled){
-		$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback
-			}
-		});
-	};
-
-	$scope.savePluginOption = function(plugin, option){
-		$http.put('/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback
-			}
-		});
-	};
-
-	$scope.doPluginAction = function(plugin, action){
-		$http.post('/plugins/' + plugin.name + '/actions/' + action).success(function(response){
-			if($scope.checkAjax(response)){
-				// @TODO: give feedback
-			}
-		});
-	};
-
-	$scope.reloadPlugins = function(){
-		$http.get('/plugins').success(function(response){
-			if($scope.checkAjax(response)){
-				var plugins = response;
-				for(var i=0; i<plugins.length; i++){
-					var plugin = plugins[i];
-					$scope.plugins[plugin.name] = plugin;
-					var attachOptions = function(response){
-						$scope.plugins[response.plugin].options = [];
-						for(var i in response.options){
-							if(response.options[i].type != 'hidden'){
-								$scope.plugins[response.plugin].options[i] = response.options[i];
-							}
-						}
-					};
-					$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
-					
-					if(plugin.clientDetails){
-						$scope.clientPlugins.push(plugin);
-					}
-				}
-			}
-		});
-	};
-	
-	$scope.reloadPlugins();
-});
-
-app.controller('consoleCtrl', function($scope, $http, authenticationService){
-	$scope.socket = io();
-	$scope.messages = [];
-
-	$scope.socket.on('debug', function(message){
-		addMessage('debug', message);
-	});
-	$scope.socket.on('error', function(message){
-		addMessage('error', message);
-	});
-	$scope.socket.on('log', function(message){
-		addMessage('log', message);
-	});
-
-	$scope.clearMessages = function(){
-		$scope.messages.length = 0;
-	};
-});
-
-app.controller('controller', function($scope, $http, $location, authenticationService){
+app.controller('controller', function($scope, $http, $location, authenticationService, ajaxChecker){
+	$scope.blah = 'hi';
 	$scope.error = null;
 
-	$scope.checkAjax = function(response, suppressError){
-		if(response.error){
-			if(!suppressError){
-				if(response.error == 'Not logged in'){
-					$scope.authenticated = false;
-				}
-				$scope.error = {
-					'message': response.error,
-					'detail': response.detail,
-				};
-			}
-			return false;
-		}else if(response.url){
-			window.open(response.url);
-		}
-		return true;
-	};
-	
 	$scope.doLoad = function(){
 		var addMessage = function(type, message){
 			var date = new Date();
@@ -434,12 +90,16 @@ app.controller('controller', function($scope, $http, $location, authenticationSe
 	$scope.login = function(){
 		authenticationService.login(
 			$scope.loginForm, 
-			function(){ $scope.authenticated = true; },
-			function(error){
+			function(){
+				$scope.clearError();
+				$scope.authenticated = true;
 			}
 		);
 	};
 
+	ajaxChecker.addErrorListener(function(error){
+		$scope.error = error;
+	});
 	authenticationService.login(null, function(){ $scope.authenticated = true; });
 });
 

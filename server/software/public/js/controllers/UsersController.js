@@ -1,4 +1,4 @@
-app.controller('usersCtrl', function($scope, $http, authenticationService){
+app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxChecker){
 	$scope.searchForUser = function(){
 		// @TODO: encode search string
 		var params = {}
@@ -23,7 +23,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 			url += p + '=' + params[p] + '&';
 		}
 		$http.get(url).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				$scope.userSearchResults = response;
 			}
 		});
@@ -51,7 +51,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 
 	$scope.saveNewUser = function(){
 		$http.post('/users', $scope.newUser).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				$scope.resetNewUser();
 			}
 		});
@@ -59,7 +59,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
 		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback to user that this worked
 			}
 		});		
@@ -76,7 +76,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 		user.passwordSaved = false;
 		var url = '/users/' + user.userID + '/password';
 		$http.put(url, {'password': user.password}).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				user.passwordSaved = true;
 			}
 		});
@@ -85,13 +85,13 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
 			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){
-				if($scope.checkAjax(response)){
+				if(ajaxChecker.checkAjax(response)){
 					user.keyActive = false;
 				}
 			});
 		}else{
 			$http.get('/log?type=nfc').success(function(response){
-				if($scope.checkAjax(response)){
+				if(ajaxChecker.checkAjax(response)){
 					$scope.nfcLog = response;
 				}
 			});
@@ -100,7 +100,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 	
 	$scope.enrollUser = function(user, nfcID){
 		$http.put('/users/' + user.userID, { nfcID: nfcID }).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				$scope.nfcLog = null;
 				user.keyActive = true;
 			}
@@ -111,7 +111,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService){
 		user.isExpanded = !user.isExpanded;
 		if(!user.groups){
 			$http.get('/users/' + user.userID + '/groups').success(function(response){
-				if($scope.checkAjax(response)){
+				if(ajaxChecker.checkAjax(response)){
 					user.groups = response;
 				}
 			});

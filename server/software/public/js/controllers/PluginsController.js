@@ -1,10 +1,10 @@
-app.controller('pluginsCtrl', function($scope, $http, authenticationService){
+app.controller('pluginsCtrl', function($scope, $http, authenticationService, ajaxChecker){
 	$scope.plugins = {};
 	$scope.clientPlugins = [];
 	
 	$scope.togglePlugin = function(plugin, enabled){
 		$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
 		});
@@ -12,7 +12,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService){
 
 	$scope.savePluginOption = function(plugin, option){
 		$http.put('/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
 		});
@@ -20,7 +20,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService){
 
 	$scope.doPluginAction = function(plugin, action){
 		$http.post('/plugins/' + plugin.name + '/actions/' + action).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
 		});
@@ -28,7 +28,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService){
 
 	$scope.reloadPlugins = function(){
 		$http.get('/plugins').success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				var plugins = response;
 				for(var i=0; i<plugins.length; i++){
 					var plugin = plugins[i];

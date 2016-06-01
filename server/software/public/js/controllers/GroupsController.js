@@ -1,4 +1,4 @@
-app.controller('groupsCtrl', function($scope, $http, authenticationService){
+app.controller('groupsCtrl', function($scope, $http, authenticationService, ajaxChecker){
 	$scope.newGroup = {
 		'name': '',
 		'description': '',
@@ -6,7 +6,7 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService){
 
 	$scope.setGroupAuthorization = function(group, authTag, authorized){
 		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
-			if($scope.checkAjax(response)){
+			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<group.authorizations.length; i++){
 					if(group.authorizations[i].name == authTag){
 						group.authorizations[i].authorized = authorized;
@@ -25,10 +25,10 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService){
 			};
 		}else{
 			$http.post('/groups', $scope.newGroup).success(function(response){
-				if($scope.checkAjax(response)){
+				if(ajaxChecker.checkAjax(response)){
 					$scope.newGroup = {'name': null, 'description': null };
 					$http.get('/groups').success(function(response){
-						if($scope.checkAjax(response)){
+						if(ajaxChecker.checkAjax(response)){
 							$scope.groups = response;
 						}
 					});
@@ -55,7 +55,7 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService){
 	};
 
 	$http.get('/groups').success(function(response){
-		if($scope.checkAjax(response)){
+		if(ajaxChecker.checkAjax(response)){
 			$scope.groups = response;
 		}
 	});
