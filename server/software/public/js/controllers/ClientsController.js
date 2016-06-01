@@ -1,5 +1,7 @@
-app.controller('clientsCtrl', function($scope, $http, authenticationService, ajaxChecker){
+app.controller('clientsCtrl', function($scope, $http, authenticationService, ajaxChecker, pluginService){
 	$scope.clients = [];
+	$scope.clientPlugins = pluginService.clientPlugins;
+	
 	$scope.updateClient = function(client){
 		var oldID = client.oldID;
 		$http.put('/clients/' + oldID, client).success(function(response){
@@ -37,7 +39,12 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 	};
 	
 	$scope.doClientPluginAction = function(client, plugin, action){
-		$http.post('/clients/' + client.clientID + '/plugins/' + plugin.name + '/actions/' + action).success(function(response){
+		var params = {};
+		for(var i=0; i<action.parameters.length; i++){
+			var param = action.parameters[i];
+			params[param.name] = param.value;
+		}
+		$http.post('/clients/' + client.clientID + '/plugins/' + plugin.name + '/actions/' + action.name, params).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
@@ -67,7 +74,6 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 							for(var k in clients[i]){
 								$scope.clients[j][k] = clients[i][k];
 							}
-							console.log('found existing client');
 							found = true;
 							break;
 						}

@@ -50,68 +50,75 @@ function sendToAll(line1, line2){
 
 module.exports = {
 	name: 'LCD Client',
-	options: [
+	options: [],
+	actions: [
 		{
-			'name': 'Send line 1',
-			'type': 'text',
-			'value': null,
+			'name': 'Send to all',
+			'parameters': [
+				{
+					'name': 'Line 1',
+					'type': 'text',
+					'value': 'Hello',
+				},{
+					'name': 'Line 2',
+					'type': 'text',
+					'value': 'World!',
+				},
+			],
+			'execute': function(parameters){
+				sendToAll(parameters['Line 1'], parameters['Line 2']);
+			},
 		},{
-			'name': 'Send line 2',
-			'type': 'text',
-			'value': null,
-		},{
-			'name': 'Idle message delay',
-			'type': 'number',
-			'value': null,
-		},
+			'name': 'Clear all',
+			'parameters': [],
+			'execute': function(parameters){
+				sendToAll('', '');
+			},
+		}
 	],
-	actions: {
-		'Send to all': function(){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				sendToAll(settings['Send line 1'], settings['Send line 2']);
-			});
-		},
-		'Clear all': function(){
-			sendToAll('', '');
-		},
-		'Apply to all': function(client, callback){
-			var clients = backend.getClients();
-			backend.getPluginOptions(module.exports.name, function(settings){
-				for(var i=0; i<clients.length; i++){
-					for(var optionName in module.exports.options){
-						backend.setClientPluginOption(clients[i].clientID, module.exports.name, optionName, settings[optionName]);
-					}
-				}
-			});
-		},
-	},
 	clientDetails: {
 		options: [
 			{
-				'name': 'Send line 1',
-				'type': 'text',
-				'value': null,
-			},{
-				'name': 'Send line 2',
-				'type': 'text',
-				'value': null,
-			},{
-				'name': 'Idle message delay',
+				'name': 'Idle timeout',
 				'type': 'number',
-				'value': null,
+				'value': 60,
+			},{
+				'name': 'Idle line 1',
+				'type': 'text',
+				'value': 'Red button',
+			},{
+				'name': 'Idle line 2',
+				'type': 'text',
+				'value': 'arms alarm',
 			},
 		],
-		actions: {
-			'Send text': function(client, callback){
-				var clientOptions = getClientOptions(client);
-				sendMessage(client.clientID, clientOptions['Send line 1'], clientOptions['Send line 2']);
-				if(callback) callback();
+		actions: [
+			{
+				'name': 'Send text',
+				'parameters': [
+					{
+						'name': 'Line 1',
+						'type': 'text',
+						'value': 'Hello',
+					},{
+						'name': 'Line 2',
+						'type': 'text',
+						'value': 'World!',
+					},
+				],
+				'execute': function(parameters, client, callback){
+					sendMessage(client.clientID, parameters['Line 1'], parameters['Line 2']);
+					if(callback) callback();
+				},
+			},{
+				'name': 'Clear',
+				'parameters': [],
+				'execute': function(parameters, client, callback){
+					sendMessage(client.clientID, '', '');
+					if(callback) callback();
+				},
 			},
-			'Clear': function(client, callback){
-				sendMessage(client.clientID, '', '');
-				if(callback) callback();
-			},
-		},
+		],
 		optionUpdated: function(client, option, newValue, oldValue, callback){
 		},
 	},

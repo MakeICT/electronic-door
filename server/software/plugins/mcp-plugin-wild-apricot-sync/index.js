@@ -88,79 +88,83 @@ module.exports = {
 		},
 	],
 
-	actions: {
-		'Sync Now': function(){
-			backend.log('Starting WildApricot sync...');
-			backend.getPluginOptions(this.name, function(settings){
-				backend.debug('Connecting to WildApricot...');
-				api.connect(function(token){
-					backend.debug('Downloading contacts...');
-					api.get('contacts?$async=false', null, function(data){
-						data = JSON.parse(data);
-						if(!data || !data['Contacts'] || data['reason']){
-							data = doThatThing();
-						}
-						var contacts = data['Contacts'];
-						
-						for(var i=0; i<contacts.length; i++){
-							var contact = contacts[i];
+	actions: [
+		{
+			'name': 'Sync Now',
+			'parameters': [],
+			'execute': function(){
+				backend.log('Starting WildApricot sync...');
+				backend.getPluginOptions(this.name, function(settings){
+					backend.debug('Connecting to WildApricot...');
+					api.connect(function(token){
+						backend.debug('Downloading contacts...');
+						api.get('contacts?$async=false', null, function(data){
+							data = JSON.parse(data);
+							if(!data || !data['Contacts'] || data['reason']){
+								data = doThatThing();
+							}
+							var contacts = data['Contacts'];
 							
-							var transaction = {
-								data: contact,
-								callback: function(user){
-									if(!user) user = {};
-									user.firstName = this.data.FirstName;
-									user.lastName = this.data.LastName;
-									user.email = this.data.Email;
-									user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
+							for(var i=0; i<contacts.length; i++){
+								var contact = contacts[i];
+								
+								var transaction = {
+									data: contact,
+									callback: function(user){
+										if(!user) user = {};
+										user.firstName = this.data.FirstName;
+										user.lastName = this.data.LastName;
+										user.email = this.data.Email;
+										user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
 
-									for(var j=0; j<this.data.FieldValues.length; j++){
-										this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
-									}
-									user.joinDate = this.data['Member since'];
-									user.joinDate = 0;
-									
-									var level = this.data['MembershipLevel']['Name'];
-									var alreadyEnrolledInCorrectGroup = false;
-									
-									var updateGroups = function(){
-										backend.getUserByEmail(user.email, function(user){
-											var newGroupName = "WA-Level: " + level;
-											backend.getUserGroups(user.userID, function(groups){
-												for(var i=0; i<groups.length; i++){
-													if(!groups[i].enrolled) continue;
-													var groupName = groups[i].name;
+										for(var j=0; j<this.data.FieldValues.length; j++){
+											this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
+										}
+										user.joinDate = this.data['Member since'];
+										user.joinDate = 0;
+										
+										var level = this.data['MembershipLevel']['Name'];
+										var alreadyEnrolledInCorrectGroup = false;
+										
+										var updateGroups = function(){
+											backend.getUserByEmail(user.email, function(user){
+												var newGroupName = "WA-Level: " + level;
+												backend.getUserGroups(user.userID, function(groups){
+													for(var i=0; i<groups.length; i++){
+														if(!groups[i].enrolled) continue;
+														var groupName = groups[i].name;
 
-													// remove user from all of the WA groups they are in if they are not the current group
-													if(groupName.indexOf("WA-Level: ") == 0){
-														if(groupName != newGroupName){
-															backend.setGroupEnrollment(user.userID, groupName, false);
-														}else{
-															alreadyEnrolledInCorrectGroup = true;
+														// remove user from all of the WA groups they are in if they are not the current group
+														if(groupName.indexOf("WA-Level: ") == 0){
+															if(groupName != newGroupName){
+																backend.setGroupEnrollment(user.userID, groupName, false);
+															}else{
+																alreadyEnrolledInCorrectGroup = true;
+															}
 														}
 													}
-												}
-												if(level && !alreadyEnrolledInCorrectGroup){
-													var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
-													backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
-												}
+													if(level && !alreadyEnrolledInCorrectGroup){
+														var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
+														backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
+													}
+												});
 											});
-										});
-									};
-									
-									if(!user.userID){
-										backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
-									}
-									backend.updateUser(user, updateGroups);
-								},
-							};
-							backend.getUserByProxyID('WildApricot', contact.Id, transaction);
-						}
+										};
+										
+										if(!user.userID){
+											backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
+										}
+										backend.updateUser(user, updateGroups);
+									},
+								};
+								backend.getUserByProxyID('WildApricot', contact.Id, transaction);
+							}
+						});
 					});
 				});
-			});
+			},
 		},
-	},
+	],
 	
 	onInstall: function(){
 		backend.addProxySystem('WildApricot');

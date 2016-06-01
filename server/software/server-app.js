@@ -17,7 +17,7 @@ var io = require('socket.io').listen(server.server);
 broadcaster.subscribe({
 	receiveMessage: function(source, messageID, message){
 		if(messageID == 'log' || messageID == 'error' || messageID == 'debug'){
-			io.emit(messageID, message);
+			io.emit(messageID, message.toString());
 		}
 	},
 });
@@ -274,10 +274,23 @@ server.get('/plugins/:plugin/options/:option', function (request, response, next
 server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getPluginByName(request.params.plugin).actions[request.params.action](session);
+		try{
+			var action;
+			
+			var actions = backend.getPluginByName(request.params.plugin).actions;
+			for(var i=0; i<=actions.length; i++){
+				var searchAction = actions[i];
+				if(searchAction.name == request.params.action){
+					action = searchAction;
+					break;
+				}
+			}
+			action.execute(request.body, session);
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to perform plugin action', 'detail': exc});
+		}
 	}
-	
-	return next();
 });
 
 
@@ -346,12 +359,19 @@ server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (
 		try{
 			var client = backend.getClientByID(request.params.clientID);
 			var plugin = backend.getPluginByName(request.params.pluginName);
-			var action = plugin['clientDetails']['actions'][request.params.action];
-			
-			action(client, function(){ response.send(); });
+			var action;
+			for(var i=0; i<= plugin['clientDetails']['actions'].length; i++){
+				var searchAction = plugin['clientDetails']['actions'][i];
+				if(searchAction.name == request.params.action){
+					action = searchAction;
+					break;
+				}
+			}
+			action.execute(request.body, client, function(){ response.send(); });			
 		}catch(exc){
-			backend.error(exc);
-			response.send({'error': 'Failed to perform client plugin action', 'detail': exc});
+			var errorDetails = {'error': 'Failed to perform client plugin action', 'detail': exc.toString()};
+			backend.error(errorDetails);
+			response.send(errorDetails);
 		}
 	}
 	

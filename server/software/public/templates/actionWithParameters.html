@@ -1,0 +1,20 @@
+<div ng-if="!properties.parameters || properties.parameters.length == 0">
+	<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
+</div>
+<div ng-if="properties.parameters && properties.parameters.length > 0">
+	<div toggle class="btn btn-primary btn-sm" style="width: 100%; position: relative;" ng-model="isOpened">
+		<div class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="position: absolute; right: 0.25em; top: 25%"></div>
+		{{properties.name}}
+	</div>
+	<table class="table table-condensed clientActionParameters" uib-collapse="!isOpened" style="width: 100%; clear: both;">
+		<tr ng-repeat="parameter in properties.parameters">
+			<td>{{parameter.name}}</td>
+			<td><input ng-model="parameter.value"/></td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
+			</td>
+		</tr>
+	</table>
+</div>

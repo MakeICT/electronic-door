@@ -8,41 +8,74 @@ function getClientOptions(client){
 	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 }
 
+function getClientActionParameter(action, parameterName){
+	var action = module.exports.clientDetails.actions[action];
+	for(var i=0; i<action.parameters.length; i++){
+		if(action.parameters[i].name == parameterName){
+			var parameter = action.parameters[i].name;
+			if(parameter.value === null){
+				return parameter.default;
+			}else{
+				return parameter.value;
+			}
+		}
+	}
+	backend.error('Unknown parameter (' + parameterName + ') for action (' + action + ')');
+}
+
 module.exports = {
 	name: 'Chime',
 	options: {},
-	actions: {
-		'Chime all': function(){},
-	},
-	clientDetails: {
-		options: [
-			{
-				'name': 'Default tone sequence',
-				'type': 'text',
-				'value': '3032343537393b3c151515151515150c',
-			},{
-				'name': 'Default light sequence',
-				'type': 'text',
-				'value': '',
-			}
-		],
-		
-		actions: {
-			'Test sound': function(client, callback){
-				var options = getClientOptions(client);
-				var tone = superSerial.hexStringToByteArray(options['Default tone sequence']);
-				if(tone.length == 0){
-					tone = superSerial.hexStringToByteArray('3032343537393b3c151515151515150c');
+	actions: [
+		{
+			'name': 'Chime all',
+			'parameters': [
+				{
+					'name': 'Tune',
+					'type': 'text',
+					'value': '3032343537393b3c151515151515150c',
+				},{
+					'name': 'Lights',
+					'type': 'text',
+					'value': '35003500350031003500380020060106060606060106060b110b',
 				}
-				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], tone);
-				if(callback) callback();
+			],
+			'execute': function(parameters){
+				throw 'Not yet implemented';
 			},
-			'Test lights': function(client, callback){
-				var options = getClientOptions(client);
-				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(options['Default light sequence']));
-				if(callback) callback();
+		}
+	],
+	clientDetails: {
+		options: [],
+		actions: [
+			{
+				'name': 'Test sound',
+				'parameters': [
+					{
+						'name': 'Tune',
+						'type': 'text',
+						'value': '3032343537393b3c151515151515150c',
+					}
+				],
+				'execute': function(parameters, client, callback){
+					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], parameters['tone']);
+					if(callback) callback();
+				},
+			},{
+				'name': 'Test lights',
+				'parameters': [
+					{
+						'name': 'Lights',
+						'type': 'text',
+						'value': '35003500350031003500380020060106060606060106060b110b',
+					}
+				],
+				'execute': function(parameters, client, callback){
+					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], parameters['lights']);
+					if(callback) callback();
+				},
 			},
-		},
+		],
 		optionUpdated: function(client, option, newValue, oldValue, callback){},
 	},
 	

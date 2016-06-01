@@ -1,5 +1,4 @@
 app.controller('consoleCtrl', function($scope, $http, authenticationService){
-	console.log('hi');
 	$scope.socket = io();
 	$scope.messages = [];
 	

@@ -48,7 +48,7 @@ function filterFields(obj, allowedFields){
 function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
-			return backend.error('Failed to connect', err);
+			return module.exports.error('Failed to connect', err);
 		}
 		return client.query(sql, params, function(err, result) {
 			if(!keepOpen){
@@ -59,10 +59,10 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 				if(onFailure){
 					return onFailure(err);
 				}else{
-					backend.debug('SQL ERROR');
-					backend.debug(err);
-					backend.debug(sql);
-					backend.debug(params);
+					module.exports.debug('SQL ERROR');
+					module.exports.debug(err);
+					module.exports.debug(sql);
+					module.exports.debug(params);
 				}
 			}else if(onSuccess){
 				return onSuccess(result.rows, done);
@@ -231,7 +231,7 @@ module.exports = {
 			
 			return query(sql, params, onSuccess, onFailure);
 		}catch(exc){
-			backend.error(exc);
+			module.exports.error(exc);
 		}
 	},
 	
@@ -270,7 +270,7 @@ module.exports = {
 			return query(sql, [], process, onFailure);
 
 		}catch(exc){
-			backend.error(exc);
+			module.exports.error(exc);
 		}
 	},
 	
@@ -422,7 +422,7 @@ module.exports = {
 		
 		bcrypt.hash(password, 8, function(err, hash){
 			if(err){
-				backend.error('Password hashing error');
+				module.exports.error('Password hashing error');
 				onFailure(err);
 			}else{
 				return query(sql, [hash, userID], log, onFailure);
@@ -451,7 +451,8 @@ module.exports = {
 			'SELECT "pluginID" FROM plugins WHERE name = $1',
 			[pluginName],
 			function(rows){
-				var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ($1, $2, 999, $3)';
+				var optionCountSQL = 'SELECT COUNT (0) FROM "pluginOptions" WHERE "pluginID" = $3';
+				var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ($1, $2, (' + optionCountSQL + '), $3)';
 				var params = [optionName, type, rows[0].pluginID];
 				return query(sql, params, onSuccess, onFailure);
 			}
@@ -472,7 +473,7 @@ module.exports = {
 	
 	installPlugin: function(plugin, onSuccess, onFailure){
 		var logAndFail = function(msg){
-			backend.error("Failed to install plugin (" + plugin + "): " + msg);
+			module.exports.error("Failed to install plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
 		};
 
@@ -835,10 +836,10 @@ module.exports = {
 				
 				for(var pluginName in client.plugins){
 					try{
-						client.plugins[pluginName].actions = Object.keys(module.exports.getPluginByName(pluginName).clientDetails.actions);
+						client.plugins[pluginName].actions = module.exports.getPluginByName(pluginName).clientDetails.actions;
 					}catch(exc){
-						backend.error('Failed to load plugin (' + pluginName + ') for client (' + client.clientID + ')');
-						backend.error(exc);
+						module.exports.error('Failed to load plugin (' + pluginName + ') for client (' + client.clientID + ')');
+						module.exports.error(exc);
 					}
 				}
 				clients.push(client);
@@ -1018,7 +1019,10 @@ module.exports = {
 	},
 	
 	error: function(message){
-		backend.log(message, null, null, 'error', true);
+		if(message.detail){
+			message = message.error + ' (' + message.detail + ')';
+		}
+		module.exports.log(message, null, null, 'error', true);
 		broadcaster.broadcast(module.exports, 'error', message);
 	},
 	

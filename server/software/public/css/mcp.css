@@ -102,6 +102,10 @@ table#activity-log td{
 	text-align: left;
 }
 
+table.clientActionParameters {
+	margin: 0;
+}
+
 .card {
 	width: 25em;
 	float: left;

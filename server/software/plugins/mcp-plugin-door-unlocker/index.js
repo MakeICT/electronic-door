@@ -24,33 +24,31 @@ function fixUnlockDuration(duration){
 	}
 }
 
-// @param client can be client object or clientID
-function doUnlock(client, userID, nfc){
-	try{
-		// regroup the options by key/value pairs for easy lookup
-		var clientOptions = getClientOptions(client);
-
-		superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(clientOptions['Unlock duration']));
-		backend.log(client.name, userID, nfc, 'unlock');
-		broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
-	}catch(exc){
-		backend.error('Exception during unlock');
-		backend.error(exc);
-	}
-}
-
 module.exports = {
 	name: 'Door Unlocker',
 	options: {},
-	actions: {
-		'Unlock all': function(){
-			// @TODO: implement "Unlock all" function
-			broadcaster.broadcast(module.exports, "door-unlocked", { client: 'all', user: null });
-		}, 'Lock all': function(){
-			// @TODO: implement "Lock all" function
+	actions: [
+		{
+			'name': 'Unlock all',
+			'parameters': {
+				'name': 'Duration',
+				'type': 'number',
+				'value': 3
+			},
+			'execute': function(parameters){
+				throw 'Not yet implemented';
+				// @TODO: implement "Unlock all" function
+//					broadcaster.broadcast(module.exports, "door-unlocked", { client: 'all', user: null });
+			},
+		},{
+			'name': 'Lock all',
+			'parameters': [],
+			'execute': function(parameters){
+				throw 'Not yet implemented';
+				// @TODO: implement "Lock all" function
+			},
 		}
-		
-	},
+	],
 	clientDetails: {
 		options: [
 			{
@@ -63,18 +61,31 @@ module.exports = {
 				'value': null,
 			},
 		],
-		actions: {
-			'Unlock': function(client, callback){
-				// @TODO get client from session
-				doUnlock(client);
-				if(callback) callback();
+		actions: [
+			{
+				'name': 'Unlock',
+				'parameters': [{
+					'name': 'Duration',
+					'type': 'number',
+					'value': 3
+				}],
+				'execute': function(parameters, client, callback){
+					// @TODO get client from session
+					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(parameters['Duration']));
+					backend.log(client.name, null, null, 'unlock');
+					broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
+
+					if(callback) callback();
+				},
+			},{
+				'name': 'Lock',
+				'parameters': [],
+				'execute': function(parameters, client, callback){
+					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LOCK']);
+					if(callback) callback();
+				}
 			},
-			'Lock': function(client, callback){
-				superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LOCK']);
-				
-				if(callback) callback();
-			},
-		},
+		],
 		optionUpdated: function(client, option, newValue, oldValue, callback){
 			if(option == 'Authorization tag'){
 				var findDuplicateTag = function(tag){
@@ -123,11 +134,9 @@ module.exports = {
 		},
 	},
 	
-	onInstall: function(){
-	},
+	onInstall: function(){},
 
-	onUninstall: function(){
-	},
+	onUninstall: function(){},
 	
 	onEnable: function(){
 		broadcaster.subscribe(module.exports);
@@ -152,8 +161,16 @@ module.exports = {
 					}).join('');
 					
 					var unlock = function(user){
-						// @TODO add user to log
-						doUnlock(client, user.userID, nfc);
+						try{
+							var clientOptions = getClientOptions(client);
+
+							superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(clientOptions['Unlock duration']));
+							backend.log(client.name, user.userID, nfc, 'unlock');
+							broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
+						}catch(exc){
+							backend.error('Exception during unlock');
+							backend.error(exc);
+						}
 					};
 					var deny = function(user, reason){
 						var userID = (user == null) ? null : user.userID;

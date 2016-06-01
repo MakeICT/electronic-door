@@ -254,9 +254,9 @@
 											<tr ng-repeat="option in plugin.options">
 												<td>{{option.name}}</td>
 												<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/></td>
-											</tr><tr>
-												<td colspan="2" class="actions">
-													<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actions" ng-click="doClientPluginAction(client, plugin, action)">{{action}}</button>
+											</tr><tr ng-repeat="action in plugin.actions">
+												<td colspan="2">
+													<action-with-parameters properties="action" execute="doClientPluginAction(client, plugin, action)"/>
 												</td>
 											</tr>
 										</tbody>
@@ -312,9 +312,7 @@
 											<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}" ng-trim="false"></td>
 										</tr>
 									</table>
-									<div class="actions">
-										<button class="btn btn-default btn-sm" ng-repeat="action in plugin.actionNames" ng-click="doPluginAction(plugin, action)">{{action}}</button>
-									</div>
+									<action-with-parameters ng-repeat="action in plugin.actions" properties="action" execute="doPluginAction(plugin, action)"/>
 								</div>
 							</div>
 						</div>
