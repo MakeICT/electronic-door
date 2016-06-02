@@ -1,5 +1,46 @@
-app.controller('clientsCtrl', function($scope, $http, authenticationService, ajaxChecker, pluginService){
-	$scope.clients = [];
+app.factory('clientService', function($http, ajaxChecker) {
+    var clientService = {
+		'clients': [],
+		'onLoadListeners': [],
+		'addOnLoadListener': function(callback){
+			clientService.onLoadListeners.push(callback);
+		},
+		'reload': function(){
+			$http.get('/clients').success(function(response){
+				if(ajaxChecker.checkAjax(response)){
+					var clients = response;
+					for(var i=0; i<clients.length; i++){
+						clients[i].oldID = clients[i].clientID;
+						
+						var found = false;
+						for(var j=0; j<clientService.clients.length; j++){
+							if(clientService.clients[j].clientID == clients[i].clientID){
+								for(var k in clients[i]){
+									clientService.clients[j][k] = clients[i][k];
+								}
+								found = true;
+								break;
+							}
+						}
+						if(!found){
+							clientService.clients.push(clients[i]);
+						}
+					}
+					for(var i=0; i<clientService.onLoadListeners.length; i++){
+						clientService.onLoadListeners[i]();
+					}
+				}
+			});
+		},
+	};
+	
+	clientService.reload();
+	
+	return clientService;
+});
+
+app.controller('clientsCtrl', function($scope, $http, authenticationService, ajaxChecker, clientService, pluginService){
+	$scope.clients = clientService.clients;
 	$scope.clientPlugins = pluginService.clientPlugins;
 	
 	$scope.updateClient = function(client){
@@ -24,7 +65,7 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 	$scope.createClientPluginAssociation = function(client){
 		$http.post('/clients/' + client.clientID + '/plugins/' + client.newPlugin).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
-				$scope.reloadClients();
+				clientService.reload();
 			}
 		});
 		client.newPlugin = null;
@@ -33,7 +74,7 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 	$scope.disassociatePlugin = function(client, plugin){
 		$http.delete('/clients/' + client.clientID + '/plugins/' + plugin.name).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
-				$scope.reloadClients();
+				clientService.reload();
 			}
 		});
 	};
@@ -60,31 +101,4 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 			}
 		});
 	};
-
-	$scope.reloadClients = function(){
-		$http.get('/clients').success(function(response){
-			if(ajaxChecker.checkAjax(response)){
-				var clients = response;
-				for(var i=0; i<clients.length; i++){
-					clients[i].oldID = clients[i].clientID;
-					
-					var found = false;
-					for(var j=0; j<$scope.clients.length; j++){
-						if($scope.clients[j].clientID == clients[i].clientID){
-							for(var k in clients[i]){
-								$scope.clients[j][k] = clients[i][k];
-							}
-							found = true;
-							break;
-						}
-					}
-					if(!found){
-						$scope.clients.push(clients[i]);
-					}
-				}
-			}
-		});
-	};
-
-	$scope.reloadClients();
 });

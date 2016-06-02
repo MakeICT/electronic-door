@@ -1063,6 +1063,12 @@ module.exports = {
 		return query(sql, [nfcID, userID], log, onFailure);
 	},
 
+	
+	getScheduledJobs: function(onSuccess, onFailure){
+		var sql = 'SELECT * FROM "scheduledJobs"';
+		return query(sql, [], onSuccess, onFailure);
+	},
+
 };
 var backend = module.exports;
 module.exports.reloadPlugins();

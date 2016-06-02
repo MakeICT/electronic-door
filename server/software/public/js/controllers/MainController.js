@@ -57,40 +57,6 @@ app.factory('authenticationService', function($http, ajaxChecker) {
 	return authService;
 });
 
-app.factory('pluginService', function($http, ajaxChecker) {
-    var pluginService = {
-		'plugins': {},
-		'clientPlugins': [],
-		'load': function(){
-			$http.get('/plugins').success(function(response){
-				if(ajaxChecker.checkAjax(response)){
-					var plugins = response;
-					for(var i=0; i<plugins.length; i++){
-						var plugin = plugins[i];
-
-						pluginService.plugins[plugin.name] = plugin;
-						var attachOptions = function(response){
-							pluginService.plugins[response.plugin].options = [];
-							for(var i in response.options){
-								if(response.options[i].type != 'hidden'){
-									pluginService.plugins[response.plugin].options[i] = response.options[i];
-								}
-							}
-						};
-						$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
-						
-						if(plugin.clientDetails){
-							pluginService.clientPlugins.push(plugin);
-						}
-					}
-				}
-			});
-		},
-	};
-	
-	return pluginService;
-});
-
 app.controller('controller', function($scope, $http, $location, authenticationService, ajaxChecker){
 	$scope.blah = 'hi';
 	$scope.error = null;
@@ -194,5 +160,15 @@ app.directive('actionWithParameters', function() {
 			'execute': '&',
 		},
 		templateUrl: '/templates/actionWithParameters.html',
+	}
+});
+
+app.directive('jobActionSelector', function() {
+	return {
+		restrict: 'E',
+		scope: {
+			'job': '=',
+		},
+		templateUrl: '/templates/jobActionSelector.html',
 	}
 });

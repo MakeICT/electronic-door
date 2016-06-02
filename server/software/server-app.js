@@ -404,6 +404,15 @@ server.get('/log', function(request, response, next) {
 	return next();
 });
 
+server.get('/scheduledJobs', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.getScheduledJobs(function(data){ response.send(data); });
+	}
+	
+	return next();
+});
+
 /**
  * #############
  * # Stuff

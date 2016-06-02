@@ -53,7 +53,7 @@ module.exports = {
 	options: [],
 	actions: [
 		{
-			'name': 'Send to all',
+			'name': 'Send to all LCDs',
 			'parameters': [
 				{
 					'name': 'Line 1',
@@ -69,7 +69,7 @@ module.exports = {
 				sendToAll(parameters['Line 1'], parameters['Line 2']);
 			},
 		},{
-			'name': 'Clear all',
+			'name': 'Clear all LCDs',
 			'parameters': [],
 			'execute': function(parameters){
 				sendToAll('', '');
@@ -94,7 +94,7 @@ module.exports = {
 		],
 		actions: [
 			{
-				'name': 'Send text',
+				'name': 'Send text to LCD',
 				'parameters': [
 					{
 						'name': 'Line 1',
@@ -111,7 +111,7 @@ module.exports = {
 					if(callback) callback();
 				},
 			},{
-				'name': 'Clear',
+				'name': 'Clear LCD',
 				'parameters': [],
 				'execute': function(parameters, client, callback){
 					sendMessage(client.clientID, '', '');

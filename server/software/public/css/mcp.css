@@ -119,3 +119,8 @@ table.clientActionParameters {
 	width: 45%;
 	margin: 2%;
 }
+
+.nopad {
+	padding: 0;
+	margin: 0;
+}
