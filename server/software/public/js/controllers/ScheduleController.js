@@ -53,17 +53,24 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.saveJob = function(job){
-		var save;
-		if(job.jobID){
-			save = $http.put.bind('/scheduledJobs/' + jobID);
-		}else{
-			save = $http.post.bind('/scheduledJobs';
-		}
+		if(!job.jobID) return;
 		
-		save(job).success(function(response){
+		$http.put('/scheduledJobs/' + job.jobID, job).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.reload();
 			}
+		}).catch(function(err){
+			console.error(err);
+		});
+	};
+	
+	$scope.createJob = function(job){
+		$http.post('/scheduledJobs', job).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+//				$scope.reload();
+			}
+		}).catch(function(err){
+			console.error(err);
 		});
 	};
 	

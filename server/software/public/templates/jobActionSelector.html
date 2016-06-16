@@ -1,7 +1,7 @@
 <div class="container-fluid">
 	<div class="row">
 		<div class="col-md-9 col-xs-9 nopad" uib-dropdown>
-			<button type="button" class="btn btn-default btn-block" style="min-width: 10em;" uib-dropdown-toggle>
+			<button type="button" class="btn btn-default btn-block btn-sm" style="min-width: 10em;" uib-dropdown-toggle>
 				<div class="pull-right">&nbsp;<span class="caret"></span></div>
 				{{job.action.name}}
 			</button>
@@ -16,7 +16,7 @@
 			</ul>
 		</div>
 		<div class="col-md-2 col-xs-2 nopad">
-			<button toggle class="btn btn-default btn-block" ng-disabled="!job.action.parameters || job.action.parameters.length == 0" ng-model="isOpened" title="Settings">⚙</button>
+			<button toggle class="btn btn-default btn-block btn-sm" ng-disabled="!job.action.parameters || job.action.parameters.length == 0" ng-model="isOpened" title="Settings">⚙</button>
 		</div>
 	</div>
 

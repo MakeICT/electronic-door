@@ -56,6 +56,7 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 			}
 			
 			if(err){
+				console.log(err);
 				if(onFailure){
 					return onFailure(err);
 				}else{
@@ -101,6 +102,16 @@ module.exports = {
 	getPluginByName: function(name){
 		for(var i=0; i<plugins.length; i++){
 			if(plugins[i].name == name){
+				return plugins[i];
+			}
+		}
+		return null;
+	},
+	
+	// Synchronous
+	getPluginByID: function(id){
+		for(var i=0; i<plugins.length; i++){
+			if(plugins[i].pluginID == id){
 				return plugins[i];
 			}
 		}
@@ -1063,10 +1074,83 @@ module.exports = {
 		return query(sql, [nfcID, userID], log, onFailure);
 	},
 
-	
 	getScheduledJobs: function(onSuccess, onFailure){
 		var sql = 'SELECT * FROM "scheduledJobs"';
 		return query(sql, [], onSuccess, onFailure);
+	},
+
+	getScheduledJob: function(jobID, onSuccess, onFailure){
+		var sql = 'SELECT * FROM "scheduledJobs" WHERE "jobID" = $1';
+		return query(sql, [jobID], getOneOrNone(onSuccess), onFailure);
+	},
+	 
+	createJob: function(description, cron, action, parameters, pluginID, clientID, onSuccess, onFailure){
+		var sql = 'INSERT INTO "scheduledJobs" ("description", "cron", "action", "pluginID", "clientID")'
+			+ ' VALUES ($1, $2, $3, $4, $5) RETURNING "jobID"';
+			
+		console.log('creating a job');
+		
+		var params = [ description, cron, action, pluginID, clientID ];
+		
+		
+		var saveParameters = function(record){
+			var jobID = record['jobID'];
+			backend.debug("Inserted job as " + jobID);
+			var sql = 'INSERT INTO "jobParameters" ("jobID", "parameterName", "parameterValue") VALUES ';
+			
+			var params = [];
+			for(var i=0; i<parameters.length; i++){
+				sql += '(?, ?, ?),';
+				params.push(jobID);
+				params.push(parameters[i].name);
+				params.push(parameters[i].value);
+			}
+			sql = sql.substring(0, sql.length-1);
+			backend.debug(sql);
+			backend.debug(params);
+			query(sql, params, onSuccess, onFailure);
+			
+			if(onSuccess) onSuccess(jobID);
+		};
+		if(parameters.length == 0) saveParameters = onSuccess;
+
+		return query(sql, params, getOneOrNone(saveParameters), onFailure);
+	},
+	
+	enableJob: function(jobID, onSuccess, onFailure){
+		var sql = 'UPDATE "scheduledJobs" SET "enabled" = TRUE WHERE "jobID" = $1';
+		var runIt = function(){
+			module.exports.getScheduledJob(jobID, function(jobDetails){
+				var action;
+				if(jobDetails.pluginID){
+					if(jobDetails.clientID){
+						var client = module.exports.getClientByID(jobDetails.clientID);
+						for(var pluginName in client.plugins){
+							if(client.plugins[pluginName].pluginID == jobDetails.pluginID){
+								var actions = client.plugins[pluginName].clientDetails.actions;
+								for(var i=0; i<actions.length; i++){
+									if(actions[i].name == jobDetails.action){
+										action = actions[i].bind(this, parameters, client);
+										break;
+									}
+								}
+							}
+						}
+					}else{
+					}
+				}
+				//var job = new CronJob(jobDetails.cron, --------);
+			
+				if(onSuccess) onSuccess();
+			});
+		};
+		return query(sql, [jobID], runIt, onFailure);
+	},
+	
+	updateJob: function(jobID, description, cron, action, pluginID, clientID, onSuccess, onFailure){
+		// disable if enabled
+		// update
+		// re-enable if necessary
 	},
 
 };

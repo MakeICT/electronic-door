@@ -324,14 +324,17 @@
 							<h2>Schedules</h2>
 							<table class="table table-striped table-bordered table-hover table-condensed">
 								<tr>
-									<th>On</th>
+									<th>&nbsp;</th>
 									<th>Description</th>
 									<th>Cron</th>
 									<th>Action</th>
+								</tr><tr ng-if="scheduledJobs.length == 0">
+									<td colspan="4">No jobs have been scheduled</td>
 								</tr><tr ng-repeat="job in scheduledJobs">
 									<td>
-										<div class="btn-group">
-											<button ng-if="!job.jobID" class="btn btn-{{job.enabled?'success':'danger'}} btn-sm" ng-click="toggleJob(job)">
+										<div class="btn-group" ng-if="job.jobID">
+											<button class="btn btn-default btn-block btn-sm" ng-click="saveJob(job)">Save</button>
+											<button class="btn btn-{{job.enabled?'success':'danger'}} btn-sm" ng-click="toggleJob(job)">
 												{{job.enabled ? '✓' : '✘'}}
 											</button>
 											<button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ng-model="isOpened">
@@ -344,10 +347,10 @@
 												<li ng-click="deleteJob(job)"><a class="dropdown-item" href="#">Delete</a></li>
 											</ul>
 										</div>
-										<span ng-if="job.jobID">New</span>
+										<button ng-if="!job.jobID" class="btn btn-default btn-block btn-sm" ng-click="createJob(job)">Create</button>
 									</td>
-									<td><input type="text" ng-model="job.description" ng-change="saveJob(job)" ng-model-options="{debounce: 1500}"/></td>
-									<td><input type="text" ng-model="job.schedule" ng-change="saveJob(job)" ng-model-options="{debounce: 1500}"/></td>
+									<td><input type="text" ng-model="job.description"/></td>
+									<td><input type="text" ng-model="job.schedule"/></td>
 									<td><job-action-selector job="job" /></td>
 								</tr>
 							</table>
