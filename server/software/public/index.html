@@ -330,15 +330,17 @@
 									<th>Action</th>
 									<th>&nbsp;</th>
 								</tr><tr ng-if="scheduledJobs.length == 0 || (scheduledJobs.length == 1 && !scheduleJobs[0].jobID)">
+									<td>&nbsp;</td>
 									<td colspan="4">No jobs have been scheduled</td>
 								</tr><tr ng-repeat="job in scheduledJobs">
 									<td>
 										<button ng-if="job.jobID" class="btn btn-sm btn-block btn-{{job.enabled?'success':'danger'}}" ng-click="toggleJob(job)">
 											{{job.enabled ? '✓ Enabled' : '✘ Disabled'}}
 										</button>
+										<span ng-if="!job.jobID">New</span>
 									</td>
-									<td><input type="text" ng-model="job.description"/></td>
-									<td><input type="text" ng-model="job.cron"/></td>
+									<td><input type="text" ng-model="job.description" placeholder="Enter a job name"/></td>
+									<td><input type="text" ng-model="job.cron" placeholder="Enter a cron schedule"/></td>
 									<td><job-action-selector job="job" /></td>
 									<td>
 										<div class="btn-group" ng-if="job.jobID">

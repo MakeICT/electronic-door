@@ -57,9 +57,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	
 	$scope.saveJob = function(job){
 		$http.put('/scheduledJobs/' + job.jobID, job).success(function(response){
-			if(ajaxChecker.checkAjax(response)){
-				$scope.reload();
-			}
+			ajaxChecker.checkAjax(response);
 		}).catch(function(err){
 			consoleService.addMessage('error', err.data.code + ': ' + err.data.message);
 		});
@@ -67,10 +65,14 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	
 	$scope.createJob = function(job){
 		$http.post('/scheduledJobs', job).success(function(response){
+			console.log('response');
+			console.log(response);
+			
 			if(ajaxChecker.checkAjax(response)){
 				$scope.reload();
 			}
 		}).catch(function(err){
+			console.log('error!');
 			console.error(err);
 		});
 	};
@@ -114,6 +116,20 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 				job.action.parameters = job.parameters;
 			}
 		}
+	};
+	
+	$scope.deleteJob = function(job){
+		$http.delete('/scheduledJobs/' + job.jobID).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+				console.log(response);
+				for(var i=0; i<$scope.scheduledJobs.length; i++){
+					console.log($scope.scheduledJobs[i]);
+					if($scope.scheduledJobs[i] == job){
+						$scope.scheduledJobs.splice(i, 1);
+					}
+				}
+			}
+		});
 	};
 	
 	$scope.reload = function(){

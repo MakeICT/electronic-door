@@ -57,7 +57,6 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 			}
 			
 			if(err){
-				console.log(err);
 				if(onFailure){
 					return onFailure(err);
 				}else{
@@ -1215,6 +1214,7 @@ module.exports = {
 		if(enabled){
 			module.exports.getScheduledJob(jobID, function(jobDetails){
 				var action;
+
 				if(jobDetails.pluginID){
 					if(jobDetails.clientID){
 						var client = module.exports.getClientByID(jobDetails.clientID);
@@ -1248,6 +1248,7 @@ module.exports = {
 					});
 				}else{
 					try{
+						if(jobDetails.cron == '') throw 'Cron pattern cannot be empty';
 						var job = new CronJob(jobDetails.cron, action, null, true);
 						scheduledJobs.push({
 							'jobID': jobID,
@@ -1258,9 +1259,9 @@ module.exports = {
 						module.exports.log('Job "' + jobDetails.description + '" enabled');
 					}catch(exc){
 						if(job) job.stop();
-						onFailure({
-							'error': 'Failed to schedule job',
-							'detail': 'Probably a bad cron'
+						if(onFailure) onFailure({
+							'error': 'Failed to schedule job (probably bad cron)',
+							'detail': exc
 						});
 					}
 				}
@@ -1279,6 +1280,15 @@ module.exports = {
 			});
 		}
 	},
+	
+	deleteJob: function(jobID, onSuccess, onFailure){
+		var updateDB = function(){
+			var ok = generateSuccessCallback('Job deleted', onSuccess);
+			query('DELETE FROM "scheduledJobs" WHERE "jobID" = $1', [jobID], ok, onFailure);
+		};
+		module.exports.setJobEnabled(jobID, false, updateDB, onFailure);
+	},
+
 };
 var backend = module.exports;
 module.exports.reloadPlugins();

@@ -416,26 +416,24 @@ server.get('/scheduledJobs', function(request, response, next) {
 server.post('/scheduledJobs', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		try{
-			var parameters = request.body.action ? request.body.action.parameters : [];
-			var pluginID = request.body.action.plugin ? request.body.action.plugin.pluginID : null;
-			var clientID = request.body.action.client ? request.body.action.client.clientID : null;
-			
-			backend.createJob(
-				request.body.description, request.body.cron,
-				request.body.action.name, parameters,
-				pluginID, clientID,
-				function(){
-					response.send();
-				},
-				function(error){
-					response.send(error.detail);
-				}
-			);
-		}catch(exc){
-			console.log(exc);
-			console.error(exc);
-		}
+		var parameters = request.body.action ? request.body.action.parameters : [];
+		var pluginID = request.body.action.plugin ? request.body.action.plugin.pluginID : null;
+		var clientID = request.body.action.client ? request.body.action.client.clientID : null;
+		
+		backend.createJob(
+			request.body.description, request.body.cron,
+			request.body.action.name, parameters,
+			pluginID, clientID,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send({
+					'error': 'Failed to create job',
+					'detail': error,
+				});
+			}
+		);
 	}
 	
 	return next();
@@ -444,27 +442,25 @@ server.post('/scheduledJobs', function(request, response, next) {
 server.put('/scheduledJobs/:jobID', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		try{
-			var parameters = request.body.action ? request.body.action.parameters : [];
-			var pluginID = request.body.action.plugin ? request.body.action.plugin.pluginID : null;
-			var clientID = request.body.action.client ? request.body.action.client.clientID : null;
+		var parameters = request.body.action ? request.body.action.parameters : [];
+		var pluginID = request.body.action.plugin ? request.body.action.plugin.pluginID : null;
+		var clientID = request.body.action.client ? request.body.action.client.clientID : null;
 
-			backend.updateJob(
-				request.params.jobID,
-				request.body.description, request.body.cron,
-				request.body.action.name, parameters,
-				pluginID, clientID,
-				function(){
-					response.send();
-				},
-				function(error){
-					response.send(error.detail);
-				}
-			);
-		}catch(exc){
-			console.log(exc);
-			console.error(exc);
-		}
+		backend.updateJob(
+			request.params.jobID,
+			request.body.description, request.body.cron,
+			request.body.action.name, parameters,
+			pluginID, clientID,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send({
+					'error': 'Failed to create job',
+					'detail': error,
+				});
+			}
+		);
 	}
 	
 	return next();
@@ -486,7 +482,22 @@ server.put('/scheduledJobs/:jobID/enabled', function (request, response, next) {
 	
 	return next();
 });
-		
+
+server.del('/scheduledJobs/:jobID', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.deleteJob(
+			request.params.jobID,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send(error);
+			}
+		);
+	}
+	return next();
+});
 
 
 /**
