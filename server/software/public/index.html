@@ -328,30 +328,30 @@
 									<th>Description</th>
 									<th>Cron</th>
 									<th>Action</th>
-								</tr><tr ng-if="scheduledJobs.length == 0">
+									<th>&nbsp;</th>
+								</tr><tr ng-if="scheduledJobs.length == 0 || (scheduledJobs.length == 1 && !scheduleJobs[0].jobID)">
 									<td colspan="4">No jobs have been scheduled</td>
 								</tr><tr ng-repeat="job in scheduledJobs">
 									<td>
+										<button ng-if="job.jobID" class="btn btn-sm btn-block btn-{{job.enabled?'success':'danger'}}" ng-click="toggleJob(job)">
+											{{job.enabled ? '✓ Enabled' : '✘ Disabled'}}
+										</button>
+									</td>
+									<td><input type="text" ng-model="job.description"/></td>
+									<td><input type="text" ng-model="job.cron"/></td>
+									<td><job-action-selector job="job" /></td>
+									<td>
 										<div class="btn-group" ng-if="job.jobID">
-											<button class="btn btn-default btn-block btn-sm" ng-click="saveJob(job)">Save</button>
-											<button class="btn btn-{{job.enabled?'success':'danger'}} btn-sm" ng-click="toggleJob(job)">
-												{{job.enabled ? '✓' : '✘'}}
-											</button>
+											<button ng-if="job.jobID" class="btn btn-default btn-sm" ng-click="saveJob(job)">Save</button>
 											<button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ng-model="isOpened">
 												<span class="caret"></span>
 											</button>
 											<ul class="dropdown-menu">
-												<li ng-click="toggleJob(job, true)"><a class="dropdown-item" href="#">Enable</a></li>
-												<li ng-click="toggleJob(job, false)"><a class="dropdown-item" href="#">Disable</a></li>
-												<li class="divider"></li>
 												<li ng-click="deleteJob(job)"><a class="dropdown-item" href="#">Delete</a></li>
 											</ul>
 										</div>
 										<button ng-if="!job.jobID" class="btn btn-default btn-block btn-sm" ng-click="createJob(job)">Create</button>
 									</td>
-									<td><input type="text" ng-model="job.description"/></td>
-									<td><input type="text" ng-model="job.cron"/></td>
-									<td><job-action-selector job="job" /></td>
 								</tr>
 							</table>
 						</div>
@@ -359,9 +359,9 @@
 				</tabset>
 				<div ng-controller="consoleCtrl" style="min-height: 2.5em">
 					<div id="message-log" ng-if="messages.length > 0">
-						<div style="position: fixed; right: 2em; bottom: .25em">
-							<button class="btn btn-default btn-sm" ng-click="clearMessages()">Clear</button>
-							<button class="btn btn-default btn-sm" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? 'v' : '^'}}</button>
+						<div style="position: fixed; right: 2em; bottom: .25em" class="btn-group">
+							<button class="btn btn-default btn-xs" ng-click="clearMessages()">Clear</button>
+							<button class="btn btn-default btn-xs" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '▼' : '▲'}}</button>
 						</div>
 						<div uib-collapse="!logWindowDisplayed" class="message-list">
 							<div class="message" ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>

@@ -470,6 +470,25 @@ server.put('/scheduledJobs/:jobID', function(request, response, next) {
 	return next();
 });
 
+server.put('/scheduledJobs/:jobID/enabled', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.setJobEnabled(
+			request.params.jobID, request.params.value,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send(error);
+			}
+		);
+	}
+	
+	return next();
+});
+		
+
+
 /**
  * #############
  * # Stuff

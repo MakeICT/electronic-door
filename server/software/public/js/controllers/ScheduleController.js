@@ -79,7 +79,13 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 		if(enabled === undefined){
 			enabled = !job.enabled;
 		}
-		//$http
+		$http.put('/scheduledJobs/' + job.jobID + '/enabled', {value:enabled}).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+				job.enabled = enabled;
+			};
+		}).catch(function(err){
+			consoleService.addMessage('error', err.data.code + ': ' + err.data.message);
+		});
 	};
 
 	$scope.determineJobActions = function(){

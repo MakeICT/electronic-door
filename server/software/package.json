@@ -21,6 +21,7 @@
     "angular-ui-bootstrap": "*",
     "bcrypt": "^0.8.5",
     "bootstrap": "*",
+    "cron": "^1.1.0",
     "jquery": "*",
     "pg": "*",
     "restify": "*",

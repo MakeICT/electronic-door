@@ -9,7 +9,8 @@ var fs = require('fs');
 var pg = require('pg');
 var path = require('path');
 var bcrypt = require('bcrypt');
-var broadcaster = require('./broadcast.js')
+var CronJob = require('cron').CronJob;
+var broadcaster = require('./broadcast.js');
 
 var credentials = fs.readFileSync('credentials/DB_CREDENTIALS').toString().trim().split('\t');
 var connectionParameters = {
@@ -88,6 +89,7 @@ function generateSuccessCallback(msg, successCallback){
 
 var plugins = [];
 var clients = [];
+var scheduledJobs = [];
 
 module.exports = {
 	connectionParameters: connectionParameters,
@@ -828,6 +830,7 @@ module.exports = {
 									plugins[i].onEnable();
 								}
 							}
+							module.exports.startJobs();
 						});
 					}else{
 						backend.debug('Loaded plugin ' + plugin.name);
@@ -1075,6 +1078,17 @@ module.exports = {
 
 		return query(sql, [nfcID, userID], log, onFailure);
 	},
+	
+	startJobs: function(){
+		backend.log('Starting scheduled jobs...');
+		module.exports.getScheduledJobs(function(jobs){
+			for(var i=0; i<jobs.length; i++){
+				if(jobs[i].enabled){
+					module.exports.setJobEnabled(jobs[i].jobID, true);
+				}
+			}
+		});
+	},
 
 	getScheduledJobs: function(onSuccess, onFailure){
 		var sql = 'SELECT * FROM "scheduledJobs" ORDER BY description';
@@ -1138,40 +1152,67 @@ module.exports = {
 	createJob: function(description, cron, action, parameters, pluginID, clientID, onSuccess, onFailure){
 		var nextStep = function(record){
 			backend.log('Created job ' + description);
+			try {
+				new CronJob(cron, function() {});
+			} catch(ex) {
+				module.exports.error('Warning: cron pattern not valid');
+			}
+			
 			module.exports.setJobParameters(record['jobID'], parameters, onSuccess, onFailure);
 		};
 
 		var sql = 'INSERT INTO "scheduledJobs" ("description", "cron", "action", "pluginID", "clientID")'
 			+ ' VALUES ($1, $2, $3, $4, $5) RETURNING "jobID"';
+			
 		var queryParams = [ description, cron, action, pluginID, clientID ];		
-		return query(sql, queryParams, getOneOrNone(nextstep), onFailure);
-	},
-	
-	updateJob: function(jobID, description, cron, action, parameters, pluginID, clientID, onSuccess, onFailure){
-		// disable if enabled
-		// update
-		var nextStep = function(record){
-			backend.log('Updated job ' + description);
-			module.exports.setJobParameters(jobID, parameters, onSuccess, onFailure);
-			// re-enable if necessary
-		};
-
-		var sql = 'UPDATE "scheduledJobs" ' +
-			'SET ' +
-			'	"description" = $1, ' +
-			'	"cron" = $2, ' +
-			'	"action" = $3, ' +
-			'	"pluginID" = $4, ' + 
-			'	"clientID" = $5 ' +
-			'WHERE "jobID" = $6';
-
-		var queryParams = [ description, cron, action, pluginID, clientID, jobID ];
 		return query(sql, queryParams, getOneOrNone(nextStep), onFailure);
 	},
 	
-	enableJob: function(jobID, onSuccess, onFailure){
-		var sql = 'UPDATE "scheduledJobs" SET "enabled" = TRUE WHERE "jobID" = $1';
-		var runIt = function(){
+	updateJob: function(jobID, description, cron, action, parameters, pluginID, clientID, onSuccess, onFailure){
+		module.exports.getScheduledJob(jobID, function(oldJobDetails){
+			var enableJob = function(){
+				if(oldJobDetails.enabled){
+					module.exports.setJobEnabled(jobID, true, onSuccess, onFailure);
+				}else{
+					try {
+						new CronJob(cron, function() {});
+					} catch(ex) {
+						module.exports.error('Warning: cron pattern not valid');
+					}
+					if(onSuccess) onSuccess();
+				}
+			};
+			
+			var saveParams = function(record){
+				backend.log('Updated job ' + description);
+				module.exports.setJobParameters(jobID, parameters, enableJob, onFailure);
+			};
+
+			var updateDB = function(){
+				var sql = 'UPDATE "scheduledJobs" ' +
+					'SET ' +
+					'	"description" = $1, ' +
+					'	"cron" = $2, ' +
+					'	"action" = $3, ' +
+					'	"pluginID" = $4, ' + 
+					'	"clientID" = $5 ' +
+					'WHERE "jobID" = $6';
+
+				var queryParams = [ description, cron, action, pluginID, clientID, jobID ];
+				return query(sql, queryParams, getOneOrNone(saveParams), onFailure);
+			};
+			
+			module.exports.setJobEnabled(jobID, false, updateDB, onFailure);
+		});
+	},
+	
+	setJobEnabled: function(jobID, enabled, onSuccess, onFailure){
+		var updateDB = function(){
+			var sql = 'UPDATE "scheduledJobs" SET "enabled" = $1 WHERE "jobID" = $2';
+			return query(sql, [enabled, jobID], onSuccess, onFailure);
+		};
+
+		if(enabled){
 			module.exports.getScheduledJob(jobID, function(jobDetails){
 				var action;
 				if(jobDetails.pluginID){
@@ -1179,24 +1220,64 @@ module.exports = {
 						var client = module.exports.getClientByID(jobDetails.clientID);
 						for(var pluginName in client.plugins){
 							if(client.plugins[pluginName].pluginID == jobDetails.pluginID){
-								var actions = client.plugins[pluginName].clientDetails.actions;
+								var actions = client.plugins[pluginName].actions;
 								for(var i=0; i<actions.length; i++){
 									if(actions[i].name == jobDetails.action){
-										action = actions[i].bind(this, parameters, client);
+										action = actions[i].execute.bind(this, jobDetails.parameters, client);
 										break;
 									}
 								}
 							}
 						}
 					}else{
+						var plugin = module.exports.getPluginByID(jobDetails.pluginID);
+						for(var i=0; i<plugin.actions.length; i++){
+							if(plugin.actions[i].name == jobDetails.action){
+								action = plugin.actions[i].execute.bind(this, jobDetails.parameters);
+								break;
+							}
+						}
+						// go through all of the plugin actions
 					}
 				}
-				//var job = new CronJob(jobDetails.cron, --------);
-			
-				if(onSuccess) onSuccess();
+				
+				if(!action){
+					onFailure({
+						'error': 'Failed to schedule job',
+						'detail': 'Could not determine action'
+					});
+				}else{
+					try{
+						var job = new CronJob(jobDetails.cron, action, null, true);
+						scheduledJobs.push({
+							'jobID': jobID,
+							'job': job
+						});
+						
+						updateDB();
+						module.exports.log('Job "' + jobDetails.description + '" enabled');
+					}catch(exc){
+						if(job) job.stop();
+						onFailure({
+							'error': 'Failed to schedule job',
+							'detail': 'Probably a bad cron'
+						});
+					}
+				}
 			});
-		};
-		return query(sql, [jobID], runIt, onFailure);
+		}else{
+			for(var i=0; i<scheduledJobs.length; i++){
+				if(scheduledJobs[i].jobID == jobID){
+					scheduledJobs[i].job.stop();
+					scheduledJobs.splice(i, 1);
+					break;
+				}
+			}
+			updateDB();
+			module.exports.getScheduledJob(jobID, function(jobDetails){
+				module.exports.log('Job "' + jobDetails.description + '" disabled');
+			});
+		}
 	},
 };
 var backend = module.exports;
