@@ -416,14 +416,13 @@ server.get('/scheduledJobs', function(request, response, next) {
 server.post('/scheduledJobs', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		console.log(request.body);
 		var pluginID = null;
 		var clientID = null;
 		if(request.body.plugin) pluginID = request.body.plugin.pluginID;
 		if(request.body.client) clientID = request.body.client.clientID;
 		try{
 			backend.createJob(
-				request.body.description, request.body.schedule,
+				request.body.description, request.body.cron,
 				request.body.action.name, (request.body.action ? request.body.action.parameters : []),
 				request.body.action.plugin ? request.body.action.plugin.pluginID : null,
 				request.body.action.client ? request.body.action.client.clientID : null,

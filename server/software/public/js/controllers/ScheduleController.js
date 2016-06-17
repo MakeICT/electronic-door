@@ -26,6 +26,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 				var action = plugin.actions[j];
 				var actionCopy = JSON.parse(JSON.stringify(action));
 				actionCopy.plugin = plugin;
+				actionCopy.plugin.pluginID = plugin.pluginID;
 				$scope.pluginActions.push(actionCopy);
 			}
 		}
@@ -45,6 +46,8 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 				}				
 			}
 		}
+		
+		$scope.determineJobActions();
 	};
 	
 	$scope.setJobAction = function(job, action){
@@ -80,11 +83,35 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 		}
 		//$http
 	};
-	/*
-	$scope.plugins = pluginService.plugins;
-	$scope.clientPlugins = pluginService.clientPlugins;
-	$scope.clients = clientService.clients;
-	*/
+
+	$scope.determineJobActions = function(){
+		if(!$scope.pluginsLoaded || !$scope.clientsLoaded) return;
+		
+		for(var i=0; i<$scope.scheduledJobs.length; i++){
+			var job = $scope.scheduledJobs[i];
+			if(job.clientID){
+				for(var j=0; j<$scope.clientActions.length; j++){
+					var action = $scope.clientActions[j];
+					if(action.name == job.action && action.client.clientID == job.clientID && action.plugin.pluginID == job.pluginID){
+						job.action = action;
+						break;
+					}
+				}
+			}else if(job.pluginID){
+				for(var j=0; j<$scope.pluginActions.length; j++){
+					var action = $scope.pluginActions[j];
+					if(action.name == job.action && action.plugin.pluginID == job.pluginID){
+						job.action = action;
+						break;
+					}
+				}
+			}
+			if(job.action){
+				job.action.parameters = job.parameters;
+			}
+		}
+	};
+	
 	$scope.reload = function(){
 		$http.get('/scheduledJobs').success(function(response){
 			if(ajaxChecker.checkAjax(response)){
@@ -96,7 +123,9 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 					'enabled': false
 				});
 			}
+			$scope.determineJobActions();
 		});
+		
 	};
 	
 	$scope.reload();

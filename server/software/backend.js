@@ -88,6 +88,7 @@ function generateSuccessCallback(msg, successCallback){
 
 var plugins = [];
 var clients = [];
+
 module.exports = {
 	connectionParameters: connectionParameters,
 	regroup: function(array, keyName, valueName){
@@ -848,6 +849,7 @@ module.exports = {
 				for(var pluginName in client.plugins){
 					try{
 						client.plugins[pluginName].actions = module.exports.getPluginByName(pluginName).clientDetails.actions;
+						client.plugins[pluginName].pluginID = module.exports.getPluginByName(pluginName).pluginID;
 					}catch(exc){
 						module.exports.error('Failed to load plugin (' + pluginName + ') for client (' + client.clientID + ')');
 						module.exports.error(exc);
@@ -1076,7 +1078,34 @@ module.exports = {
 
 	getScheduledJobs: function(onSuccess, onFailure){
 		var sql = 'SELECT * FROM "scheduledJobs"';
-		return query(sql, [], onSuccess, onFailure);
+		var jobs;
+		
+		var getParams = function(rows){
+			jobs = rows;
+			
+			var sql = 'SELECT * FROM "jobParameters"';
+			query(sql, [], attachParams, onFailure);
+		};
+		
+		var attachParams = function(params){
+			for(var i=0; i<params.length; i++){
+				for(var j=0; j<jobs.length; j++){
+					if(params[i].jobID == jobs[j].jobID){
+						if(!jobs[j].parameters) jobs[j].parameters = [];
+						
+						jobs[j].parameters.push({
+							'name': params[i].parameterName,
+							'value': params[i].parameterValue
+						});
+						
+						break;
+					}
+				}
+			}
+			if(onSuccess) onSuccess(jobs);
+		};
+		
+		return query(sql, [], getParams, onFailure);
 	},
 
 	getScheduledJob: function(jobID, onSuccess, onFailure){
@@ -1100,17 +1129,13 @@ module.exports = {
 			
 			var params = [];
 			for(var i=0; i<parameters.length; i++){
-				sql += '(?, ?, ?),';
+				sql += '($' + (i*3+1) + ', $' + (i*3+2) + ', $' + (i*3+3) + '),';
 				params.push(jobID);
 				params.push(parameters[i].name);
 				params.push(parameters[i].value);
 			}
 			sql = sql.substring(0, sql.length-1);
-			backend.debug(sql);
-			backend.debug(params);
 			query(sql, params, onSuccess, onFailure);
-			
-			if(onSuccess) onSuccess(jobID);
 		};
 		if(parameters.length == 0) saveParameters = onSuccess;
 

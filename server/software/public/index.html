@@ -350,7 +350,7 @@
 										<button ng-if="!job.jobID" class="btn btn-default btn-block btn-sm" ng-click="createJob(job)">Create</button>
 									</td>
 									<td><input type="text" ng-model="job.description"/></td>
-									<td><input type="text" ng-model="job.schedule"/></td>
+									<td><input type="text" ng-model="job.cron"/></td>
 									<td><job-action-selector job="job" /></td>
 								</tr>
 							</table>
