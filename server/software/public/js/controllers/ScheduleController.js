@@ -1,4 +1,4 @@
-app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginService, clientService){
+app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginService, clientService, consoleService){
 	$scope.scheduledJobs = [];
 	
 	$scope.pluginActions = [];
@@ -51,26 +51,24 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.setJobAction = function(job, action){
-		job.action = action		
-		$scope.saveJob(job);
+		var actionCopy = JSON.parse(JSON.stringify(action));
+		job.action = actionCopy;
 	};
 	
 	$scope.saveJob = function(job){
-		if(!job.jobID) return;
-		
 		$http.put('/scheduledJobs/' + job.jobID, job).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.reload();
 			}
 		}).catch(function(err){
-			console.error(err);
+			consoleService.addMessage('error', err.data.code + ': ' + err.data.message);
 		});
 	};
 	
 	$scope.createJob = function(job){
 		$http.post('/scheduledJobs', job).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
-//				$scope.reload();
+				$scope.reload();
 			}
 		}).catch(function(err){
 			console.error(err);
@@ -93,7 +91,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 				for(var j=0; j<$scope.clientActions.length; j++){
 					var action = $scope.clientActions[j];
 					if(action.name == job.action && action.client.clientID == job.clientID && action.plugin.pluginID == job.pluginID){
-						job.action = action;
+						$scope.setJobAction(job, action);
 						break;
 					}
 				}
@@ -101,7 +99,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 				for(var j=0; j<$scope.pluginActions.length; j++){
 					var action = $scope.pluginActions[j];
 					if(action.name == job.action && action.plugin.pluginID == job.pluginID){
-						job.action = action;
+						$scope.setJobAction(job, action);
 						break;
 					}
 				}
