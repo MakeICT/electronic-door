@@ -1122,8 +1122,23 @@ module.exports = {
 	},
 
 	getScheduledJob: function(jobID, onSuccess, onFailure){
-		var sql = 'SELECT * FROM "scheduledJobs" WHERE "jobID" = $1';
-		return query(sql, [jobID], getOneOrNone(onSuccess), onFailure);
+		var getParams = function(job){
+			var attachParams = function(params){
+				job.parameters = [];
+				for(var i=0; i<params.length; i++){
+					job.parameters.push({
+						'name': params[i].parameterName,
+						'value': params[i].parameterValue
+					});
+				}
+				if(onSuccess) onSuccess(job);
+			};
+			
+			var sql = 'SELECT * FROM "jobParameters" WHERE "jobID" = $1';
+			query(sql, [job.jobID], attachParams, onFailure);
+		};
+				var sql = 'SELECT * FROM "scheduledJobs" WHERE "jobID" = $1';
+		return query(sql, [jobID], getOneOrNone(getParams), onFailure);
 	},
 	
 	setJobParameters: function(jobID, parameters, onSuccess, onFailure){
@@ -1215,6 +1230,7 @@ module.exports = {
 			module.exports.getScheduledJob(jobID, function(jobDetails){
 				var action;
 
+				var parameters = backend.regroup(jobDetails.parameters, 'name', 'value');
 				if(jobDetails.pluginID){
 					if(jobDetails.clientID){
 						var client = module.exports.getClientByID(jobDetails.clientID);
@@ -1223,7 +1239,7 @@ module.exports = {
 								var actions = client.plugins[pluginName].actions;
 								for(var i=0; i<actions.length; i++){
 									if(actions[i].name == jobDetails.action){
-										action = actions[i].execute.bind(this, jobDetails.parameters, client);
+										action = actions[i].execute.bind(this, parameters, client);
 										break;
 									}
 								}
@@ -1233,7 +1249,7 @@ module.exports = {
 						var plugin = module.exports.getPluginByID(jobDetails.pluginID);
 						for(var i=0; i<plugin.actions.length; i++){
 							if(plugin.actions[i].name == jobDetails.action){
-								action = plugin.actions[i].execute.bind(this, jobDetails.parameters);
+								action = plugin.actions[i].execute.bind(this, parameters);
 								break;
 							}
 						}
