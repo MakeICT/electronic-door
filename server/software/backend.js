@@ -210,8 +210,7 @@ module.exports = {
 		try{
 			var sql =
 				'SELECT DISTINCT  ' +
-				'	users."userID",   ' +
-				'	"firstName", "lastName", "email", "joinDate", "status",   ' +
+				'	users.*, ' +
 				'	"nfcID" IS NOT NULL AS "keyActive" ' +
 				'FROM users ' +
 				'WHERE TRUE ';	
@@ -328,8 +327,7 @@ module.exports = {
 	getUserByProxyID: function(proxySystem, proxyUserID, transaction) {
 		var sql =
 			'SELECT ' +
-			'   users."userID", ' + 
-			'	"firstName", "lastName", "email", "joinDate", "status", ' +
+			'   users.*, ' + 
 			'	"nfcID" IS NOT NULL AS "keyActive" ' +
 			'FROM users ' +
 			'	JOIN "proxyUsers" ON users."userID" = "proxyUsers"."userID" ' +

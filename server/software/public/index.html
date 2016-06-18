@@ -84,23 +84,51 @@
 							</div>
 							<hr/>
 							<h3 ng-if="userSearchResults.length == 0">No search results</h3>
-							<div ng-if="userSearchResults.length > 0">
+							<div ng-if="userSearchResults.length > 0" class="container-fluid">
 								<h3>Search results</h3>
-								<div ng-repeat="user in userSearchResults" class="card well">
+								<div ng-repeat="user in userSearchResults" class="col-lg-4 col-md-6 col-sm-6">
 									<button class="btn btn-default btn-block" ng-click="toggleUserDisplay(user)">{{user.firstName}} {{user.lastName}}</button>
 									<div uib-collapse="!user.isExpanded">
-										<table class="table table-striped user-details">
-											<tr>
-												<th>Member status</th>
-												<td>{{user.status}}</td>
-											</tr><tr>
-												<th>Member since</th>
-												<td>{{user.joinDate|timestampToHumanReadableDate}} ({{user.joinDate|timestampToHumanReadableDuration}})</td>
-											</tr><tr>
-												<th>Key status</th>
-												<td>
+										<div class="container-fluid">
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Status</strong></div>
+												<div class="col-md-8 col-sm-8"><button class="btn btn-default btn-sm btn-block {{user.status == 'active' ? '':'btn-warning'}}" ng-click="toggleUserStatus(user)">{{user.status == 'active' ? '✓ Active':'✘ Inactive'}}</div>
+											</div>
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Join date</strong></div>
+												<div class="col-md-8 col-sm-8">
+													<input
+														type="text"
+														style="text-align: center"
+														class="form-control input-sm"
+														uib-datepicker-popup="yyyy MMMM dd"
+														ng-model="user.joinDate"
+														is-open="joinDateOpen"
+														ng-focus="joinDateOpen=true"
+														ng-change=""
+													/>
+												</div>
+											</div>
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Birthday</strong></div>
+												<div class="col-md-8 col-sm-8">
+													<input
+														type="text"
+														style="text-align: center"
+														class="form-control input-sm"
+														uib-datepicker-popup="yyyy MMMM dd"
+														ng-model="user.birthday"
+														is-open="birthdayOpen"
+														ng-focus="birthdayOpen=true"
+														ng-change=""
+													/>
+												</div>
+											</div>
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Key status</strong></div>
+												<div class="col-md-8 col-sm-8">
 													{{user.keyActive?"Enrolled":"NOT Enrolled"}}
-													<button class="btn btn-sm btn-default" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"Unenroll":"Enroll now"}}</button>
+													<button type="button" class="btn btn-default btn-xs pull-right" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"-":"+"}}</button>
 													<table class="table" ng-if="nfcLog && nfcLog.length > 0">
 														<tr ng-repeat="log in nfcLog">
 															<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
@@ -110,32 +138,39 @@
 													<div ng-if="nfcLog && nfcLog.length == 0">
 														Please scan an NFC card and try again.
 													</div>
-												</td>
-											</tr><tr>
-												<th>Groups</th>
-												<td>
-													<button ng-if="!user.groups" ng-click="getUserGroups(user);" class="btn btn-sm btn-default">Load groups</button>
-													<button
-														ng-repeat="group in user.groups"
-														uib-btn-checkbox
-														ng-model="group.enrolled"
-														ng-click="setGroupEnrollment(user, group.name, group.enrolled)"
-														type="button"
-														class="btn btn-default btn-sm"
-													>
-														{{group.name}}
-													</button>
-												</td>
-											</tr><tr>
-												<th>Password reset</th>
-												<td>
+												</div>
+											</div>
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Groups</strong></div>
+												<div class="col-md-8 col-sm-8">
+													<div class="row" ng-repeat="group in joinedGroups = (user.groups|filter:{'enrolled':true}|orderBy:'name')">
+														<div class="btn btn-addon btn-danger btn-xs col-md-1 col-sm-1 col-xs-1" ng-click="setGroupEnrollment(user, group.name, false)">x</div>
+														<div class="btn btn-default btn-xs col-md-11 col-sm-11 col-xs-11">{{group.name}}</div>
+													</div>
+													<div ng-if="joinedGroups.length==0" class="text-center">No groups</div>
+													<div class="row">
+														<span uib-dropdown title="Add a group">
+															<button uib-dropdown-toggle class="btn btn-default dropdown-toggle btn-xs btn-block">+ Add group</button>
+															<ul uib-dropdown-menu class="dropdown-menu">
+																<li ng-repeat="group in unjoinedGroups = (user.groups|filter:{'enrolled':false}|orderBy:'name')" ng-click="setGroupEnrollment(user, group.name, true)">
+																	<a>{{group.name}}</a>
+																</li>
+																<li ng-if="unjoinedGroups.length == 0"><a>None to add!</a></li>
+															</ul>
+														</span>
+													</div>
+												</div>
+											</div>
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Pasword reset</strong></div>
+												<div class="col-md-8 col-sm-8">
 													<form class="form-inline">
 														<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password" ng-trim="false"/>
 														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
 													</form>
-												</td>
-											</tr>
-										</table>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>

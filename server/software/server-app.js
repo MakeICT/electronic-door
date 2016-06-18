@@ -118,7 +118,9 @@ server.put('/users/:userID', function (request, response, next) {
 		if(request.params.nfcID !== undefined){
 			backend.enrollUser(request.params.userID, request.params.nfcID, function(){ response.send(); });
 		}else{
-			response.send();
+			var user = request.body;
+			user.userID = request.params.userID;
+			backend.updateUser(request.body, function(){ response.send(); });
 		}
 	}	
 	// @TODO: update other fields too...

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 	"email" VARCHAR(256) NULL UNIQUE,
 	"passwordHash" VARCHAR(128) NULL,
 	"joinDate" INT NULL,
+	"birthdate" INT NULL,
 	"nfcID" VARCHAR(256) UNIQUE,
 	"status" USER_STATUS NOT NULL DEFAULT 'inactive'
 );

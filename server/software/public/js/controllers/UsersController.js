@@ -60,6 +60,12 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
 		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
+				for(var i=0; i<user.groups.length; i++){
+					if(user.groups[i].name == groupName){
+						user.groups[i].enrolled = enrolled;
+						break;
+					}
+				}
 				// @TODO: give feedback to user that this worked
 			}
 		});		
@@ -82,9 +88,18 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		});
 	};
 	
+	$scope.toggleUserStatus = function(user){
+		var newStatus = (user.status == 'inactive' ? 'active' : 'inactive');
+		$http.put('/users/' + user.userID, {'status': newStatus}).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+				user.status = newStatus;
+			}
+		});
+	};
+	
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
-			$http.put('/users/' + user.userID, {nfcID: null}).success(function(response){
+			$http.put('/users/' + user.userID, {'nfcID': null}).success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					user.keyActive = false;
 				}
