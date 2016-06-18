@@ -33,11 +33,11 @@ module.exports = {
 				{
 					'name': 'Tune',
 					'type': 'text',
-					'value': '3032343537393b3c151515151515150c',
+					'value': '35003500350031003500380020060106060606060106060b110b',
 				},{
 					'name': 'Lights',
 					'type': 'text',
-					'value': '35003500350031003500380020060106060606060106060b110b',
+					'value': '0300ff0000000000020FFF',
 				}
 			],
 			'execute': function(parameters){
@@ -50,28 +50,26 @@ module.exports = {
 		actions: [
 			{
 				'name': 'Test sound',
-				'parameters': [
-					{
-						'name': 'Tune',
-						'type': 'text',
-						'value': '3032343537393b3c151515151515150c',
-					}
-				],
+				'parameters': [{
+					'name': 'Tune',
+					'type': 'text',
+					'value': '35003500350031003500380020060106060606060106060b110b',
+				}],
 				'execute': function(parameters, client, callback){
-					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], parameters['tone']);
+					var data = superSerial.hexStringToByteArray(parameters['Tune']);
+					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], data);
 					if(callback) callback();
 				},
 			},{
 				'name': 'Test lights',
-				'parameters': [
-					{
-						'name': 'Lights',
-						'type': 'text',
-						'value': '35003500350031003500380020060106060606060106060b110b',
-					}
-				],
+				'parameters': [{
+					'name': 'Lights',
+					'type': 'text',
+					'value': '0300ff0000000000020FFF',
+				}],
 				'execute': function(parameters, client, callback){
-					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], parameters['lights']);
+					var data = superSerial.hexStringToByteArray(parameters['Lights']);
+					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], data);
 					if(callback) callback();
 				},
 			},
