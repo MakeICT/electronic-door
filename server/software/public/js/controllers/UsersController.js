@@ -161,4 +161,25 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 			consoleService.addMessage('error', exc);
 		});
 	};
+
+	$scope.saveUserName = function(user){
+		var update = {
+			'firstName': user.firstName,
+			'lastName': user.lastName,
+		};
+		
+		$http.put('/users/' + user.userID, update).success(function(response){
+			ajaxChecker.checkAjax(response);
+		}).catch(function(exc){
+			consoleService.addMessage('error', exc);
+		});
+	};
+
+	$scope.saveUserEmail = function(user){
+		$http.put('/users/' + user.userID, {'email': user.email}).success(function(response){
+			ajaxChecker.checkAjax(response);
+		}).catch(function(exc){
+			consoleService.addMessage('error', exc);
+		});
+	};
 });

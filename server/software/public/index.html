@@ -91,12 +91,25 @@
 									<div uib-collapse="!user.isExpanded">
 										<div class="container-fluid">
 											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Name</strong></div>
+												<div class="col-md-4 col-sm-4 nopad">
+													<input type="text" ng-model="user.firstName" ng-change="saveUserName(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" />
+												</div>
+												<div class="col-md-4 col-sm-4 nopad">
+													<input type="text" ng-model="user.lastName" ng-change="saveUserName(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" />
+												</div>
+											</div>
+											<div class="row">
+												<div class="col-md-4 col-sm-4"><strong>Email</strong></div>
+												<div class="col-md-8 col-sm-8 nopad"><input type="text" ng-model="user.email" ng-change="saveUserEmail(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" /></div>
+											</div>
+											<div class="row">
 												<div class="col-md-4 col-sm-4"><strong>Status</strong></div>
-												<div class="col-md-8 col-sm-8"><button class="btn btn-default btn-sm btn-block {{user.status == 'active' ? '':'btn-warning'}}" ng-click="toggleUserStatus(user)">{{user.status == 'active' ? '✓ Active':'✘ Inactive'}}</div>
+												<div class="col-md-8 col-sm-8 nopad"><button class="btn btn-default btn-sm btn-block {{user.status == 'active' ? '':'btn-warning'}}" ng-click="toggleUserStatus(user)">{{user.status == 'active' ? '✓ Active':'✘ Inactive'}}</div>
 											</div>
 											<div class="row">
 												<div class="col-md-4 col-sm-4"><strong>Join date</strong></div>
-												<div class="col-md-8 col-sm-8">
+												<div class="col-md-8 col-sm-8 nopad">
 													<input
 														type="text"
 														style="text-align: center"
@@ -112,7 +125,7 @@
 											</div>
 											<div class="row">
 												<div class="col-md-4 col-sm-4"><strong>Birthday</strong></div>
-												<div class="col-md-8 col-sm-8">
+												<div class="col-md-8 col-sm-8 nopad">
 													<input
 														type="text"
 														style="text-align: center"
@@ -128,7 +141,7 @@
 											</div>
 											<div class="row">
 												<div class="col-md-4 col-sm-4"><strong>Key status</strong></div>
-												<div class="col-md-8 col-sm-8">
+												<div class="col-md-8 col-sm-8 nopad">
 													{{user.keyActive?"Enrolled":"NOT Enrolled"}}
 													<button type="button" class="btn btn-default btn-xs pull-right" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"-":"+"}}</button>
 													<table class="table" ng-if="nfcLog && nfcLog.length > 0">
@@ -144,7 +157,7 @@
 											</div>
 											<div class="row">
 												<div class="col-md-4 col-sm-4"><strong>Groups</strong></div>
-												<div class="col-md-8 col-sm-8">
+												<div class="col-md-8 col-sm-8 nopad">
 													<div class="row" ng-repeat="group in joinedGroups = (user.groups|filter:{'enrolled':true}|orderBy:'name')">
 														<div class="btn btn-addon btn-danger btn-xs col-md-1 col-sm-1 col-xs-1" ng-click="setGroupEnrollment(user, group.name, false)">x</div>
 														<div class="btn btn-default btn-xs col-md-11 col-sm-11 col-xs-11">{{group.name}}</div>
@@ -164,9 +177,9 @@
 												</div>
 											</div>
 											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Pasword reset</strong></div>
-												<div class="col-md-8 col-sm-8">
-													<form class="form-inline">
+												<div class="col-md-4 col-sm-4"><strong>Pasword</strong></div>
+												<div class="col-md-8 col-sm-8 nopad">
+													<form class="form-inline" style="width:100%">
 														<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password" ng-trim="false"/>
 														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
 													</form>
