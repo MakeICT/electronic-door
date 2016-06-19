@@ -105,7 +105,8 @@
 														ng-model="user.joinDate"
 														is-open="joinDateOpen"
 														ng-focus="joinDateOpen=true"
-														ng-change=""
+														ng-change="saveUserJoinDate(user)"
+														ng-disabled="user.joinDateSaving"
 													/>
 												</div>
 											</div>
@@ -117,10 +118,11 @@
 														style="text-align: center"
 														class="form-control input-sm"
 														uib-datepicker-popup="yyyy MMMM dd"
-														ng-model="user.birthday"
-														is-open="birthdayOpen"
-														ng-focus="birthdayOpen=true"
-														ng-change=""
+														ng-model="user.birthdate"
+														is-open="birthdateOpen"
+														ng-focus="birthdateOpen=true"
+														ng-change="saveUserBirthdate(user)"
+														ng-disabled="user.birthdateSaving"
 													/>
 												</div>
 											</div>

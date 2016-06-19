@@ -1,4 +1,4 @@
-app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxChecker){
+app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxChecker, consoleService){
 	$scope.searchForUser = function(){
 		// @TODO: encode search string
 		var params = {}
@@ -24,6 +24,10 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		}
 		$http.get(url).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
+				for(var i=0; i<response.length; i++){
+					response[i].joinDate *= 1000;
+					response[i].birthdate *= 1000;
+				}
 				$scope.userSearchResults = response;
 			}
 		});
@@ -131,5 +135,30 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 				}
 			});
 		}
-	};	
+	};
+	
+	$scope.saveUserJoinDate = function(user){
+		user.joinDateSaving = true;
+		var timestamp = (new Date(user.joinDate)).getTime() / 1000 | 0;
+		$http.put('/users/' + user.userID, {'joinDate': timestamp}).success(function(response){
+			ajaxChecker.checkAjax(response);
+			user.joinDateSaving = false;
+		}).catch(function(exc){
+			user.joinDateSaving = false;
+			consoleService.addMessage('error', exc);
+		});
+	};
+	
+	$scope.saveUserBirthdate = function(user){
+		user.birthdateSaving = true;
+		console.log(user);
+		var timestamp = (new Date(user.birthdate)).getTime() / 1000 | 0;
+		$http.put('/users/' + user.userID, {'birthdate': timestamp}).success(function(response){
+			ajaxChecker.checkAjax(response);
+			user.birthdateSaving = false;
+		}).catch(function(exc){
+			user.birthdateSaving = false;
+			consoleService.addMessage('error', exc);
+		});
+	};
 });
