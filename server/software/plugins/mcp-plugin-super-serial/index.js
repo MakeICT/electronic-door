@@ -86,7 +86,6 @@ function Packet(rawBytesOrTransactionID, from, to, command, payload){
 		this.to = this.unescapedPacket[3];
 		this.command = this.unescapedPacket[4];
 		this.payload = this.unescapedPacket.slice(6, 6+this.unescapedPacket[5]);
-		console
 	}else{
 		if(!payload){
 			payload = [];

@@ -166,7 +166,11 @@ module.exports = {
 
 							superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(clientOptions['Unlock duration']));
 							backend.log(client.name, user.userID, nfc, 'unlock');
-							broadcaster.broadcast(module.exports, 'door-unlocked', { 'client': client.clientID });
+							var data = {
+								'client': client.clientID,
+								'user': user,
+							};
+							broadcaster.broadcast(module.exports, 'door-unlocked', data);
 						}catch(exc){
 							backend.error('Exception during unlock');
 							backend.error(exc);

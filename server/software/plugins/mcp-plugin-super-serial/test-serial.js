@@ -198,12 +198,14 @@ function onData(data){
 function sendKey(){
 	console.log("Sending key");
 	var unlock = new Packet([250, 42, 1, 0, 3, 7, 4, 27, 120, 122, 140, 51, 128, 205, 135, 251]);
-	serialPort.write(unlock.bytes, function(error, results){
+	var packet = [250, 42, 1, 0, 3, 7, 4, 27, 120, 122, 140, 51, 128, 205, 135, 251];
+	//serialPort.write(unlock.bytes, function(error, results){
+	serialPort.write(packet, function(error, results){
 		if(error){
 			console.error('Packet write error');
 			console.error(error);
 		}else{
-			console.log("\tWrote packet: " + unlock.toString('hex'));
+			console.log("\tWrote packet: " + packet);
 		}
 	});
 }

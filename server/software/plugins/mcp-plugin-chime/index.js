@@ -87,13 +87,34 @@ module.exports = {
 		broadcaster.unsubscribe(module.exports);
 	},
 	
+	getClientActionByName: function(name){
+		for(var i=0; i<module.exports.clientDetails.actions.length; i++){
+			var action = module.exports.clientDetails.actions[i];
+			if(action.name == name) return action;
+		}
+	},
+	
 	receiveMessage: function(source, messageID, data){
 		if(messageID == "door-unlocked"){
+			var parameters = {
+				'Tune': '35003500350031003500380020060106060606060106060b110b',
+				'Lights': '0300ff0000000000020FFF',
+			};
+			
+			var now = new Date();
+			var birthdate = new Date(data.user.birthdate*1000);
+
+			if(now.getMonth() == birthdate.getMonth() && now.getDate() == birthdate.getDate()){
+				parameters['Tune'] = '313133313635003131333138360031313a38363533003c3c3a3638360c0c18181818180c0c18181818180c0c181818181818181818181818';
+				backend.log('Happy birthday!', data.user.userID);
+			}
+			
 			var clients = backend.getClients();
 			for(var i=0; i<clients.length; i++){
 				var client = clients[i];
 				if(client.plugins[module.exports.name]){
-					module.exports.clientDetails.actions['Test sound'](client);
+					module.exports.getClientActionByName('Test sound').execute(parameters, client);
+					module.exports.getClientActionByName('Test lights').execute(parameters, client);
 				}
 			}
 		}
