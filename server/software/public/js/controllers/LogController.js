@@ -1,4 +1,4 @@
-app.controller('logCtrl', function($scope, $http, authenticationService){
+app.controller('logCtrl', function($scope, $http, authenticationService, ajaxChecker){
 	$scope.loadLog = function(){
 		$scope.log = null;
 		$http.get('/log').success(function(response){
