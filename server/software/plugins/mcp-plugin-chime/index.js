@@ -101,12 +101,14 @@ module.exports = {
 				'Lights': '0300ff0000000000020FFF',
 			};
 			
-			var now = new Date();
-			var birthdate = new Date(data.user.birthdate*1000);
+			if(data.user){
+				var now = new Date();
+				var birthdate = new Date(data.user.birthdate*1000);
 
-			if(now.getMonth() == birthdate.getMonth() && now.getDate() == birthdate.getDate()){
-				parameters['Tune'] = '313133313635003131333138360031313a38363533003c3c3a3638360c0c18181818180c0c18181818180c0c181818181818181818181818';
-				backend.log('Happy birthday!', data.user.userID);
+				if(now.getMonth() == birthdate.getMonth() && now.getDate() == birthdate.getDate()){
+					parameters['Tune'] = '313133313635003131333138360031313a38363533003c3c3a3638360c0c18181818180c0c18181818180c0c181818181818181818181818';
+					backend.log('Happy birthday!', data.user.userID);
+				}
 			}
 			
 			var clients = backend.getClients();
