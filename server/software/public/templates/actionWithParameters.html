@@ -2,7 +2,7 @@
 	<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
 </div>
 <div ng-if="properties.parameters && properties.parameters.length > 0">
-	<div toggle class="btn btn-primary btn-sm" style="width: 100%; position: relative;" ng-model="isOpened">
+	<div simple-toggle class="btn btn-primary btn-sm" style="width: 100%; position: relative;" ng-model="isOpened">
 		<div class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="position: absolute; right: 0.25em; top: 25%"></div>
 		{{properties.name}}
 	</div>

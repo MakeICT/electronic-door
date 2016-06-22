@@ -11,7 +11,7 @@ app.factory('consoleService', function() {
 	return consoleService;
 });
 
-app.controller('consoleCtrl', function($scope, $http, consoleService, authenticationService){
+app.controller('consoleCtrl', function($scope, consoleService){
 	$scope.socket = io();
 	$scope.messages = consoleService.messages;
 

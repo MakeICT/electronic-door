@@ -1,0 +1,53 @@
+<h2>Clients</h2>
+<div ng-repeat="client in clients" class="card well">
+	<div>
+		<span simple-toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
+		<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove client" ng-click="removeClient(client)">✖</span>
+		<h4 class="pull-left" ng-click="isOpened = !isOpened">{{client.name}}</h4>
+	</div>
+	<table class="table table-condensed" uib-collapse="!isOpened" style="clear: both">
+		<tr>
+			<td>ID:</td>
+			<td><input class="form-control input-sm" type="text" ng-model="client.clientID" ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></td>
+		</tr><tr>
+			<td>Name:</td>
+			<td><input class="form-control input-sm" type="text" ng-model="client.name"  ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></td>
+		</tr><tr>
+			<td>Add plugin:</td>
+			<td>
+				<select class="form-control input-sm" ng-change="createClientPluginAssociation(client)" ng-model="client.newPlugin">
+					<option disabled selected hidden value=""> - Available plugins - </option>
+					<option ng-repeat="plugin in clientPlugins"
+						value="{{plugin.name}}"
+						ng-if="client.plugins[plugin.name] == null"
+					>{{plugin.name}}</option>
+				</select>
+			</td>
+		</tr>
+	</table>
+	<div ng-repeat="plugin in client.plugins">
+		<table class="table table-bordered table-condensed">
+			<thead>
+				<tr>
+					<th colspan="2" class="active">
+						<button class="btn btn-default btn-sm pull-right" simple-toggle ng-model="z.isOpened" title="Settings">⚙</button>
+						<button class="btn btn-default text-warning btn-sm pull-right" disabled="disabled" ng-if="z.isOpened" title="Reload defaults" onclick="alert('Not implemented :(')">↺</button>
+						<button class="btn btn-default text-danger btn-sm pull-right" ng-if="z.isOpened" title="Remove plugin from client" ng-click="disassociatePlugin(client, plugin)">✖</button>
+						{{plugin.name}}
+					</th>
+				</tr>
+			</thead>
+			<tbody uib-collapse="!z.isOpened" >
+				<tr ng-repeat="option in plugin.options">
+					<td>{{option.name}}</td>
+					<td><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div ng-repeat="plugin in client.plugins">
+		<div ng-repeat="action in plugin.actions">
+			<action-with-parameters properties="action" execute="doClientPluginAction(client, plugin, action)"/>
+		</div>
+	</div>
+</div>

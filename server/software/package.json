@@ -18,6 +18,7 @@
   "homepage": "https://github.com/MakeICT/electronic-door#readme",
   "dependencies": {
     "angular": "*",
+    "angular-route": "^1.5.7",
     "angular-ui-bootstrap": "*",
     "bcrypt": "^0.8.5",
     "bootstrap": "*",

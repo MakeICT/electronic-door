@@ -29,7 +29,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		}
 		if(noTerms) return;
 
-		var url = '/users?';
+		var url = '/api/users?';
 		for(var p in params){
 			url += p + '=' + params[p] + '&';
 		}
@@ -56,7 +56,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	};
 
 	$scope.saveNewUser = function(){
-		$http.post('/users', $scope.newUser).success(function(response){
+		$http.post('/api/users', $scope.newUser).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.resetNewUser();
 			}
@@ -64,7 +64,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	};
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
-		$http.put('/users/' + user.userID + '/groups/' + encodeURIComponent(groupName), enrolled).success(function(response){
+		$http.put('/api/users/' + user.userID + '/groups/' + encodeURIComponent(groupName), enrolled).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<user.groups.length; i++){
 					if(user.groups[i].name == groupName){
@@ -86,7 +86,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 
 	$scope.resetPassword = function(user){
 		user.passwordSaved = false;
-		var url = '/users/' + user.userID + '/password';
+		var url = '/api/users/' + user.userID + '/password';
 		$http.put(url, {'password': user.password}).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				user.passwordSaved = true;
@@ -96,7 +96,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	
 	$scope.toggleUserStatus = function(user){
 		var newStatus = (user.status == 'inactive' ? 'active' : 'inactive');
-		$http.put('/users/' + user.userID, {'status': newStatus}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'status': newStatus}).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				user.status = newStatus;
 			}
@@ -105,13 +105,13 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
-			$http.put('/users/' + user.userID, {'nfcID': null}).success(function(response){
+			$http.put('/api/users/' + user.userID, {'nfcID': null}).success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					user.keyActive = false;
 				}
 			});
 		}else{
-			$http.get('/log?type=nfc').success(function(response){
+			$http.get('/api/log?type=nfc').success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					$scope.nfcLog = response;
 				}
@@ -120,7 +120,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	};
 	
 	$scope.enrollUser = function(user, nfcID){
-		$http.put('/users/' + user.userID, { nfcID: nfcID }).success(function(response){
+		$http.put('/api/users/' + user.userID, { nfcID: nfcID }).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.nfcLog = null;
 				user.keyActive = true;
@@ -131,7 +131,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	$scope.toggleUserDisplay = function(user){
 		user.isExpanded = !user.isExpanded;
 		if(!user.groups){
-			$http.get('/users/' + user.userID + '/groups').success(function(response){
+			$http.get('/api/users/' + user.userID + '/groups').success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					user.groups = response;
 				}
@@ -142,7 +142,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	$scope.saveUserJoinDate = function(user){
 		user.joinDateSaving = true;
 		var timestamp = (new Date(user.joinDate)).getTime() / 1000 | 0;
-		$http.put('/users/' + user.userID, {'joinDate': timestamp}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'joinDate': timestamp}).success(function(response){
 			ajaxChecker.checkAjax(response);
 			user.joinDateSaving = false;
 		}).catch(function(exc){
@@ -155,7 +155,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		user.birthdateSaving = true;
 		console.log(user);
 		var timestamp = (new Date(user.birthdate)).getTime() / 1000 | 0;
-		$http.put('/users/' + user.userID, {'birthdate': timestamp}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'birthdate': timestamp}).success(function(response){
 			ajaxChecker.checkAjax(response);
 			user.birthdateSaving = false;
 		}).catch(function(exc){
@@ -170,7 +170,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 			'lastName': user.lastName,
 		};
 		
-		$http.put('/users/' + user.userID, update).success(function(response){
+		$http.put('/api/users/' + user.userID, update).success(function(response){
 			ajaxChecker.checkAjax(response);
 		}).catch(function(exc){
 			consoleService.addMessage('error', exc);
@@ -178,7 +178,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	};
 
 	$scope.saveUserEmail = function(user){
-		$http.put('/users/' + user.userID, {'email': user.email}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'email': user.email}).success(function(response){
 			ajaxChecker.checkAjax(response);
 		}).catch(function(exc){
 			consoleService.addMessage('error', exc);

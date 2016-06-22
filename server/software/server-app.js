@@ -4,7 +4,6 @@ var backend = require('./backend.js');
 var broadcaster = require('./broadcast.js');
 var sessionManager = require('./simple-session.js');
 
-broadcaster.broadcast('hi');
 var doneLoading = false;
 
 var server = restify.createServer({
@@ -44,7 +43,7 @@ function checkIfLoggedIn(request, response, suppressErrorResponse){
 	}
 }; 
 
-server.get('/users', function (request, response, next) {
+server.get('/api/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getUsers(request.params.q.split(' '), request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
@@ -55,7 +54,7 @@ server.get('/users', function (request, response, next) {
 	return next();
 });
 
-server.get('/users/:userID/groups', function (request, response, next) {
+server.get('/api/users/:userID/groups', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getUserGroups(request.params.userID, function(groups){
@@ -66,7 +65,7 @@ server.get('/users/:userID/groups', function (request, response, next) {
 	return next();
 });
 
-server.put('/users/:userID/groups/:groupName', function (request, response, next) {
+server.put('/api/users/:userID/groups/:groupName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setGroupEnrollment(request.context.userID, request.context.groupName, request.body, function(){response.send();});
@@ -74,7 +73,7 @@ server.put('/users/:userID/groups/:groupName', function (request, response, next
 	return next();
 });
 
-server.put('/groups/:groupID/authorizations/:authTag', function (request, response, next) {
+server.put('/api/groups/:groupID/authorizations/:authTag', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setGroupAuthorization(request.context.groupID, request.context.authTag, request.body, function(){response.send();});
@@ -82,7 +81,7 @@ server.put('/groups/:groupID/authorizations/:authTag', function (request, respon
 	return next();
 });
 
-server.put('/users/:userID/password', function (request, response, next) {
+server.put('/api/users/:userID/password', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.updateUserPassword(request.params.userID, request.body.password, function(){response.send();});
@@ -94,7 +93,7 @@ server.put('/users/:userID/password', function (request, response, next) {
  * Sends empty response on success
  * Sends a message 
  **/
-server.post('/users', function (request, response, next) {
+server.post('/api/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		request.params.joinDate = parseInt(Date.parse(request.params.joinDate) / 1000);
@@ -112,7 +111,7 @@ server.post('/users', function (request, response, next) {
 	return next();
 });
 
-server.put('/users/:userID', function (request, response, next) {
+server.put('/api/users/:userID', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		if(request.params.nfcID !== undefined){
@@ -127,7 +126,7 @@ server.put('/users/:userID', function (request, response, next) {
 	return next();
 });
 
-server.get('/groups', function(request, response, next){
+server.get('/api/groups', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getGroups(function(groups){
@@ -138,7 +137,7 @@ server.get('/groups', function(request, response, next){
 	return next();
 });
 
-server.post('/groups', function(request, response, next){
+server.post('/api/groups', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.addGroup(
@@ -155,7 +154,7 @@ server.post('/groups', function(request, response, next){
 	return next();
 });
 
-server.del('/groups/:groupID', function(request, response, next){
+server.del('/api/groups/:groupID', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		try{
@@ -181,7 +180,7 @@ server.del('/groups/:groupID', function(request, response, next){
 /**
  * Plugins
  **/
-server.get('/plugins', function (request, response, next) {
+server.get('/api/plugins', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		response.send(backend.getPlugins());
@@ -189,7 +188,7 @@ server.get('/plugins', function (request, response, next) {
 	return next();
 });
 
-server.put('/plugins/:plugin/enabled', function (request, response, next) {
+server.put('/api/plugins/:plugin/enabled', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		var task = request.params.value ? backend.enablePlugin : backend.disablePlugin;
@@ -213,7 +212,7 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 	return next();
 });
 
-server.get('/plugins/:name/options', function (request, response, next) {
+server.get('/api/plugins/:name/options', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getOrderedPluginOptions(request.params.name, function(options){
@@ -228,7 +227,7 @@ server.get('/plugins/:name/options', function (request, response, next) {
 	return next();
 });
 
-server.get('/plugins/:plugin/handler', function (request, response, next) {
+server.get('/api/plugins/:plugin/handler', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		var plugin = backend.getPluginByName(request.params.plugin);
@@ -239,7 +238,7 @@ server.get('/plugins/:plugin/handler', function (request, response, next) {
 	return next();
 });
 
-server.put('/plugins/:plugin/options/:option', function (request, response, next) {
+server.put('/api/plugins/:plugin/options/:option', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setPluginOption(
@@ -256,7 +255,7 @@ server.put('/plugins/:plugin/options/:option', function (request, response, next
 	return next();
 });
 
-server.get('/plugins/:plugin/options/:option', function (request, response, next) {
+server.get('/api/plugins/:plugin/options/:option', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setPluginOption(
@@ -273,7 +272,7 @@ server.get('/plugins/:plugin/options/:option', function (request, response, next
 	return next();
 });
 
-server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
+server.post('/api/plugins/:plugin/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		try{
@@ -299,7 +298,7 @@ server.post('/plugins/:plugin/actions/:action', function (request, response, nex
 /**
  * Clients
  **/
-server.get('/clients', function(request, response, next) {
+server.get('/api/clients', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		response.send(backend.getClients());
@@ -309,7 +308,7 @@ server.get('/clients', function(request, response, next) {
 });
 
 // update a client
-server.put('/clients/:clientID', function(request, response, next) {
+server.put('/api/clients/:clientID', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.updateClient(request.params.clientID, request.body);
@@ -319,7 +318,7 @@ server.put('/clients/:clientID', function(request, response, next) {
 	return next();
 });
 
-server.del('/clients/:clientID', function(request, response, next) {
+server.del('/api/clients/:clientID', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.removeClient(request.params.clientID);
@@ -329,7 +328,7 @@ server.del('/clients/:clientID', function(request, response, next) {
 	return next();
 });
 
-server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+server.post('/api/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.associateClientPlugin(
@@ -342,7 +341,7 @@ server.post('/clients/:clientID/plugins/:pluginName', function (request, respons
 	return next();
 });
 
-server.del('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+server.del('/api/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.disassociateClientPlugin(
@@ -355,7 +354,7 @@ server.del('/clients/:clientID/plugins/:pluginName', function (request, response
 	return next();
 });
 
-server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
+server.post('/api/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		try{
@@ -380,7 +379,7 @@ server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (
 	return next();
 });
 
-server.put('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+server.put('/api/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setClientPluginOption(
@@ -397,7 +396,7 @@ server.put('/clients/:clientID/plugins/:pluginName', function (request, response
 	return next();
 });
 
-server.get('/log', function(request, response, next) {
+server.get('/api/log', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getLog(request.params.type, function(data){ response.send(data); });
@@ -406,7 +405,7 @@ server.get('/log', function(request, response, next) {
 	return next();
 });
 
-server.get('/scheduledJobs', function(request, response, next) {
+server.get('/api/scheduledJobs', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getScheduledJobs(function(data){ response.send(data); });
@@ -415,7 +414,7 @@ server.get('/scheduledJobs', function(request, response, next) {
 	return next();
 });
 
-server.post('/scheduledJobs', function(request, response, next) {
+server.post('/api/scheduledJobs', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		var parameters = request.body.action ? request.body.action.parameters : [];
@@ -441,7 +440,7 @@ server.post('/scheduledJobs', function(request, response, next) {
 	return next();
 });
 
-server.put('/scheduledJobs/:jobID', function(request, response, next) {
+server.put('/api/scheduledJobs/:jobID', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		var parameters = request.body.action ? request.body.action.parameters : [];
@@ -468,7 +467,7 @@ server.put('/scheduledJobs/:jobID', function(request, response, next) {
 	return next();
 });
 
-server.put('/scheduledJobs/:jobID/enabled', function (request, response, next) {
+server.put('/api/scheduledJobs/:jobID/enabled', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setJobEnabled(
@@ -485,7 +484,7 @@ server.put('/scheduledJobs/:jobID/enabled', function (request, response, next) {
 	return next();
 });
 
-server.del('/scheduledJobs/:jobID', function(request, response, next){
+server.del('/api/scheduledJobs/:jobID', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.deleteJob(
@@ -508,7 +507,7 @@ server.del('/scheduledJobs/:jobID', function(request, response, next){
  * #############
  **/
 
-server.post('/login', function(request, response, next){
+server.post('/api/login', function(request, response, next){
 	var session = sessionManager.start(request, response);
 	if(session.properties['authenticated'] && !request.params.email && !request.params.password){
 		response.send();
@@ -542,10 +541,13 @@ server.get('/logout', function(request, response, next){
 	response.redirect('/', next);
 });
 
-// Serve static files for the web client
-server.get(/.*/, restify.serveStatic({
+server.get(/^\/[^\/]*$/, restify.serveStatic({
 	directory: 'public/',
-	default: 'index.html'
+	file: 'index.html'
+}));
+
+server.get(/.*/, restify.serveStatic({
+	directory: 'public/'
 }));
 
 server.listen(443, function () {

@@ -7,7 +7,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 			pluginService.onLoadListeners.push(callback);
 		},
 		'load': function(){
-			$http.get('/plugins').success(function(response){
+			$http.get('/api/plugins').success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					var plugins = response;
 					for(var i=0; i<plugins.length; i++){
@@ -22,7 +22,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 								}
 							}
 						};
-						$http.get('/plugins/' + plugin.name + '/options').success(attachOptions);
+						$http.get('/api/plugins/' + plugin.name + '/options').success(attachOptions);
 						
 						if(plugin.clientDetails){
 							pluginService.clientPlugins.push(plugin);
@@ -45,7 +45,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 	$scope.plugins = pluginService.plugins;
 	
 	$scope.togglePlugin = function(plugin, enabled){
-		$http.put('/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
+		$http.put('/api/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
@@ -53,7 +53,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 	};
 
 	$scope.savePluginOption = function(plugin, option){
-		$http.put('/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
+		$http.put('/api/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
@@ -67,7 +67,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 			params[param.name] = param.value;
 		}
 		
-		$http.post('/plugins/' + plugin.name + '/actions/' + action.name, params).success(function(response){
+		$http.post('/api/plugins/' + plugin.name + '/actions/' + action.name, params).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}

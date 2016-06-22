@@ -5,7 +5,36 @@ function pad(n, width, z) {
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var app = angular.module('masterControlApp', ['ui.bootstrap']);
+var app = angular.module('masterControlApp', ['ui.bootstrap', 'ngRoute']);
+
+app.run(['$route', function($route)  {
+	$route.reload();
+}]);
+
+app.config(function($locationProvider, $routeProvider) {
+	$routeProvider.when('/users', {
+		templateUrl : 'templates/users.html',
+		controller  : 'usersCtrl'
+	}).when('/groups', {
+		templateUrl : 'templates/groups.html',
+		controller  : 'groupsCtrl'
+	}).when('/clients', {
+		templateUrl : 'templates/clients.html',
+		controller  : 'clientsCtrl'
+	}).when('/log', {
+		templateUrl : 'templates/log.html',
+		controller  : 'logCtrl'
+	}).when('/plugins', {
+		templateUrl : 'templates/plugins.html',
+		controller  : 'pluginsCtrl'
+	}).when('/scheduler', {
+		templateUrl : 'templates/scheduler.html',
+		controller  : 'schedulerCtrl'
+	}).otherwise('/users');
+	
+	$locationProvider.hashPrefix();
+	$locationProvider.html5Mode(true);
+});
 
 app.factory('ajaxChecker', function() {
     var ajaxChecker = {
@@ -40,7 +69,7 @@ app.factory('authenticationService', function($http, ajaxChecker) {
     var authService = {
 		'authenticated': false,
 		'login': function(credentials, onPass, onFail) {
-			$http.post('/login', credentials).success(function(response){
+			$http.post('/api/login', credentials).success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					authService.authenticated = true;
 					if(onPass) onPass();
@@ -60,6 +89,14 @@ app.factory('authenticationService', function($http, ajaxChecker) {
 app.controller('controller', function($scope, $http, $location, authenticationService, ajaxChecker){
 	$scope.blah = 'hi';
 	$scope.error = null;
+	$scope.pages = [
+		{'label': 'Users', 'url': '/users'},
+		{'label': 'Groups', 'url': '/groups'},
+		{'label': 'Clients', 'url': '/clients'},
+		{'label': 'Plugins', 'url': '/plugins'},
+		{'label': 'Jobs', 'url': '/scheduler'},
+		{'label': 'Log', 'url': '/log'}
+	];
 
 	$scope.doLoad = function(){
 		var addMessage = function(type, message){
@@ -68,19 +105,6 @@ app.controller('controller', function($scope, $http, $location, authenticationSe
 			$scope.messages.push({type:type, text: message, timestamp: time});
 			$scope.$apply();
 		};
-
-		$scope.tabs = {};
-		var path = $location.path().substring(1).split('/');
-		if(path != ''){
-			$scope.tabs[path] = { active: true };
-		}
-		
-		$scope.setLocation = function(path){
-			$location.path(path);
-			if(path == 'log' && !$scope.log){
-				$scope.loadLog();
-			}
-		}
 	};
 	
 	$scope.clearError = function(){
@@ -96,10 +120,15 @@ app.controller('controller', function($scope, $http, $location, authenticationSe
 			}
 		);
 	};
+	
+	$scope.isPageActive = function(location){
+		return location == $location.path();
+	};
 
 	ajaxChecker.addErrorListener(function(error){
 		$scope.error = error;
 	});
+	
 	authenticationService.login(null, function(){ $scope.authenticated = true; });
 });
 
@@ -132,7 +161,7 @@ app.filter('timestampToHumanReadableDuration', function(){
 	}
 });
 
-app.directive('toggle', function() {
+app.directive('simpleToggle', function() {
 	return {
 		require: 'ngModel',
 		restrict: 'A',

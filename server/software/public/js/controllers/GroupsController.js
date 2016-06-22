@@ -5,7 +5,7 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 	};
 
 	$scope.setGroupAuthorization = function(group, authTag, authorized){
-		$http.put('/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
+		$http.put('/api/groups/' + group.groupID + '/authorizations/' + authTag, authorized).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<group.authorizations.length; i++){
 					if(group.authorizations[i].name == authTag){
@@ -24,10 +24,10 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 				'detail': '...so type something in.',
 			};
 		}else{
-			$http.post('/groups', $scope.newGroup).success(function(response){
+			$http.post('/api/groups', $scope.newGroup).success(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					$scope.newGroup = {'name': null, 'description': null };
-					$http.get('/groups').success(function(response){
+					$http.get('/api/groups').success(function(response){
 						if(ajaxChecker.checkAjax(response)){
 							$scope.groups = response;
 						}
@@ -44,7 +44,7 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 	
 	$scope.removeGroup = function(group){
 		console.log(group);
-		$http.delete('/groups/' + group.groupID).success(function(response){
+		$http.delete('/api/groups/' + group.groupID).success(function(response){
 			$scope.groups.splice($scope.groups.indexOf(group), 1);
 		}).error(function(error){
 			$scope.error = {
@@ -54,7 +54,7 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 		});
 	};
 
-	$http.get('/groups').success(function(response){
+	$http.get('/api/groups').success(function(response){
 		if(ajaxChecker.checkAjax(response)){
 			$scope.groups = response;
 		}

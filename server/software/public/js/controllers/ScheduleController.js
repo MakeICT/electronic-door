@@ -56,7 +56,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.saveJob = function(job){
-		$http.put('/scheduledJobs/' + job.jobID, job).success(function(response){
+		$http.put('/api/scheduledJobs/' + job.jobID, job).success(function(response){
 			ajaxChecker.checkAjax(response);
 		}).catch(function(err){
 			consoleService.addMessage('error', err.data.code + ': ' + err.data.message);
@@ -64,7 +64,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.createJob = function(job){
-		$http.post('/scheduledJobs', job).success(function(response){
+		$http.post('/api/scheduledJobs', job).success(function(response){
 			console.log('response');
 			console.log(response);
 			
@@ -81,7 +81,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 		if(enabled === undefined){
 			enabled = !job.enabled;
 		}
-		$http.put('/scheduledJobs/' + job.jobID + '/enabled', {value:enabled}).success(function(response){
+		$http.put('/api/scheduledJobs/' + job.jobID + '/enabled', {value:enabled}).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				job.enabled = enabled;
 			};
@@ -119,7 +119,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.deleteJob = function(job){
-		$http.delete('/scheduledJobs/' + job.jobID).success(function(response){
+		$http.delete('/api/scheduledJobs/' + job.jobID).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				console.log(response);
 				for(var i=0; i<$scope.scheduledJobs.length; i++){
@@ -133,7 +133,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.reload = function(){
-		$http.get('/scheduledJobs').success(function(response){
+		$http.get('/api/scheduledJobs').success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.scheduledJobs = response;
 				$scope.scheduledJobs.push({

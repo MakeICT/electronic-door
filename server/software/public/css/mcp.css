@@ -2,6 +2,7 @@ body{
 	padding: 0.5em;
 	text-align: center;
 	overflow-y: scroll;
+	margin-top: 235px;
 }
 
 .authorizationName {
@@ -30,6 +31,19 @@ body{
 	background-position: center;
 	background-repeat: no-repeat;
 	margin-bottom: 1em;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 998;
+}
+
+.navbar {
+	position: fixed;
+	top: 200px;
+	left: 0;
+	width: 100%;
+	z-index: 998;
 }
 
 #status-header {
