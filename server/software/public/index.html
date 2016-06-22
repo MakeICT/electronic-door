@@ -83,107 +83,103 @@
 								</form>
 							</div>
 							<hr/>
-							<h3 ng-if="userSearchResults.length == 0">No search results</h3>
-							<div ng-if="userSearchResults.length > 0" class="container-fluid">
+							<h3 ng-if="userSearchResults === null">⌛ Searching...</h3>
+							<h3 ng-if="userSearchResults && userSearchResults.length == 0">No search results</h3>
+							<div ng-if="userSearchResults && userSearchResults.length > 0" class="container-fluid">
 								<h3>Search results</h3>
-								<div ng-repeat="user in userSearchResults" class="col-lg-4 col-md-6 col-sm-6">
+								<div ng-repeat="user in userSearchResults" class="col-lg-4 col-md-6 col-sm-6 well">
 									<button class="btn btn-default btn-block" ng-click="toggleUserDisplay(user)">{{user.firstName}} {{user.lastName}}</button>
-									<div uib-collapse="!user.isExpanded">
-										<div class="container-fluid">
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Name</strong></div>
-												<div class="col-md-4 col-sm-4 nopad">
-													<input type="text" ng-model="user.firstName" ng-change="saveUserName(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" />
-												</div>
-												<div class="col-md-4 col-sm-4 nopad">
-													<input type="text" ng-model="user.lastName" ng-change="saveUserName(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" />
-												</div>
+									<div uib-collapse="!user.isExpanded" class="container-fluid user-details">
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Name</strong></div>
+											<div class="col-md-4 col-sm-4 nopad">
+												<input type="text" ng-model="user.firstName" ng-change="saveUserName(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" />
 											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Email</strong></div>
-												<div class="col-md-8 col-sm-8 nopad"><input type="text" ng-model="user.email" ng-change="saveUserEmail(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" /></div>
+											<div class="col-md-4 col-sm-4 nopad">
+												<input type="text" ng-model="user.lastName" ng-change="saveUserName(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" />
 											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Status</strong></div>
-												<div class="col-md-8 col-sm-8 nopad"><button class="btn btn-default btn-sm btn-block {{user.status == 'active' ? '':'btn-warning'}}" ng-click="toggleUserStatus(user)">{{user.status == 'active' ? '✓ Active':'✘ Inactive'}}</div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Email</strong></div>
+											<div class="col-md-8 col-sm-8 nopad"><input type="text" ng-model="user.email" ng-change="saveUserEmail(user)" ng-model-options="{debounce: 1500}" class="form-control input-sm" /></div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Status</strong></div>
+											<div class="col-md-8 col-sm-8 nopad"><button class="btn btn-default btn-sm btn-block {{user.status == 'active' ? '':'btn-warning'}}" ng-click="toggleUserStatus(user)">{{user.status == 'active' ? '✓ Active':'✘ Inactive'}}</div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Join date</strong></div>
+											<div class="col-md-8 col-sm-8 nopad">
+												<input
+													type="text"
+													style="text-align: center"
+													class="form-control input-sm"
+													uib-datepicker-popup="yyyy MMMM dd"
+													ng-model="user.joinDate"
+													is-open="joinDateOpen"
+													ng-focus="joinDateOpen=true"
+													ng-change="saveUserJoinDate(user)"
+													ng-disabled="user.joinDateSaving"
+												/>
 											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Join date</strong></div>
-												<div class="col-md-8 col-sm-8 nopad">
-													<input
-														type="text"
-														style="text-align: center"
-														class="form-control input-sm"
-														uib-datepicker-popup="yyyy MMMM dd"
-														ng-model="user.joinDate"
-														is-open="joinDateOpen"
-														ng-focus="joinDateOpen=true"
-														ng-change="saveUserJoinDate(user)"
-														ng-disabled="user.joinDateSaving"
-													/>
-												</div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Birthday</strong></div>
+											<div class="col-md-8 col-sm-8 nopad">
+												<input
+													type="text"
+													style="text-align: center"
+													class="form-control input-sm"
+													uib-datepicker-popup="yyyy MMMM dd"
+													ng-model="user.birthdate"
+													is-open="birthdateOpen"
+													ng-focus="birthdateOpen=true"
+													ng-change="saveUserBirthdate(user)"
+													ng-disabled="user.birthdateSaving"
+												/>
 											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Birthday</strong></div>
-												<div class="col-md-8 col-sm-8 nopad">
-													<input
-														type="text"
-														style="text-align: center"
-														class="form-control input-sm"
-														uib-datepicker-popup="yyyy MMMM dd"
-														ng-model="user.birthdate"
-														is-open="birthdateOpen"
-														ng-focus="birthdateOpen=true"
-														ng-change="saveUserBirthdate(user)"
-														ng-disabled="user.birthdateSaving"
-													/>
-												</div>
-											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Key status</strong></div>
-												<div class="col-md-8 col-sm-8 nopad">
-													{{user.keyActive?"Enrolled":"NOT Enrolled"}}
-													<button type="button" class="btn btn-default btn-xs pull-right" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"-":"+"}}</button>
-													<table class="table" ng-if="nfcLog && nfcLog.length > 0">
-														<tr ng-repeat="log in nfcLog">
-															<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
-															<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
-														</tr>
-													</table>
-													<div ng-if="nfcLog && nfcLog.length == 0">
-														Please scan an NFC card and try again.
-													</div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Key status</strong></div>
+											<div class="col-md-8 col-sm-8 nopad">
+												<button type="button" class="btn btn-default btn-block btn-sm {{user.keyActive?'':'btn-warning'}}" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"✓ Enrolled":"✘ Not enrolled"}}</button>
+												<table class="table" ng-if="nfcLog && nfcLog.length > 0">
+													<tr ng-repeat="log in nfcLog">
+														<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
+														<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
+													</tr>
+												</table>
+												<div ng-if="nfcLog && nfcLog.length == 0">
+													Please scan an NFC card and try again.
 												</div>
 											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Groups</strong></div>
-												<div class="col-md-8 col-sm-8 nopad">
-													<div class="row" ng-repeat="group in joinedGroups = (user.groups|filter:{'enrolled':true}|orderBy:'name')">
-														<div class="btn btn-addon btn-danger btn-xs col-md-1 col-sm-1 col-xs-1" ng-click="setGroupEnrollment(user, group.name, false)">x</div>
-														<div class="btn btn-default btn-xs col-md-11 col-sm-11 col-xs-11">{{group.name}}</div>
-													</div>
-													<div ng-if="joinedGroups.length==0" class="text-center">No groups</div>
-													<div class="row">
-														<span uib-dropdown title="Add a group">
-															<button uib-dropdown-toggle class="btn btn-default dropdown-toggle btn-xs btn-block">+ Add group</button>
-															<ul uib-dropdown-menu class="dropdown-menu">
-																<li ng-repeat="group in unjoinedGroups = (user.groups|filter:{'enrolled':false}|orderBy:'name')" ng-click="setGroupEnrollment(user, group.name, true)">
-																	<a>{{group.name}}</a>
-																</li>
-																<li ng-if="unjoinedGroups.length == 0"><a>None to add!</a></li>
-															</ul>
-														</span>
-													</div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Groups</strong></div>
+											<div class="col-md-8 col-sm-8">
+												<div class="row" ng-repeat="group in joinedGroups = (user.groups|filter:{'enrolled':true}|orderBy:'name')">
+													<div class="btn btn-addon btn-danger btn-xs col-md-1 col-sm-1 col-xs-1" ng-click="setGroupEnrollment(user, group.name, false)">x</div>
+													<div class="btn btn-default btn-xs col-md-11 col-sm-11 col-xs-11">{{group.name}}</div>
+												</div>
+												<div ng-if="joinedGroups.length==0" class="text-center">No groups</div>
+												<div class="row">
+													<span uib-dropdown title="Add a group" class="col-md-12 col-sm-12 nopad">
+														<button uib-dropdown-toggle class="btn btn-default dropdown-toggle btn-xs btn-block">+ Add group</button>
+														<ul uib-dropdown-menu class="dropdown-menu">
+															<li ng-repeat="group in unjoinedGroups = (user.groups|filter:{'enrolled':false}|orderBy:'name')" ng-click="setGroupEnrollment(user, group.name, true)">
+																<a>{{group.name}}</a>
+															</li>
+															<li ng-if="unjoinedGroups.length == 0"><a>None to add!</a></li>
+														</ul>
+													</span>
 												</div>
 											</div>
-											<div class="row">
-												<div class="col-md-4 col-sm-4"><strong>Pasword</strong></div>
-												<div class="col-md-8 col-sm-8 nopad">
-													<form class="form-inline" style="width:100%">
-														<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password" ng-trim="false"/>
-														<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
-													</form>
-												</div>
+										</div>
+										<div class="row">
+											<div class="col-md-4 col-sm-4"><strong>Pasword</strong></div>
+											<div class="col-md-8 col-sm-8 nopad">
+												<input type="password" placeholder="New password" class="form-control input-sm"  ng-change="resetPassword(user)" ng-model-options="{debounce: 1500}" ng-model="user.password" ng-trim="false"/>
+												<span ng-if="user.passwordSaved" class="glyphicon glyphicon-glyphicon glyphicon-ok" aria-hidden="true"></span>
 											</div>
 										</div>
 									</div>

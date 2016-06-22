@@ -1,6 +1,17 @@
 app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxChecker, consoleService){
+	$scope.userSearchResults = [];
+	$scope.currentUser = null;
+	$scope.newUser = {
+		'email': '',
+		'firstName': '',
+		'lastName': '',
+		'joinDate': new Date(),
+	};
+
 	$scope.searchForUser = function(){
 		// @TODO: encode search string
+		$scope.userSearchResults = null;
+		
 		var params = {}
 		if($scope.search.query && $scope.search.query.length > 2) params['q'] = $scope.search.query;
 		if($scope.search.admin) params['isAdmin'] = 1;
@@ -33,15 +44,6 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		});
 	};
 
-	$scope.userSearchResults = [];
-	$scope.currentUser = null;
-	$scope.newUser = {
-		'email': '',
-		'firstName': '',
-		'lastName': '',
-		'joinDate': new Date(),
-	};
-
 	$scope.setCurrentUser = function(user){
 		$scope.currentUser = user;
 	};
@@ -62,7 +64,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 	};
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
-		$http.put('/users/' + user.userID + '/groups/' + groupName, enrolled).success(function(response){
+		$http.put('/users/' + user.userID + '/groups/' + encodeURIComponent(groupName), enrolled).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<user.groups.length; i++){
 					if(user.groups[i].name == groupName){

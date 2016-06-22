@@ -38,12 +38,8 @@ body{
 	right: 0.5em;
 }
 
-.user-details th, .user-details td  {
-	width: 50%;
-}
-
-.user-details th {
-	text-align: right;
+.user-details {
+	margin-top: 1em;
 }
 
 table td {
