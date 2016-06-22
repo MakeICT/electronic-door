@@ -120,8 +120,7 @@ module.exports = {
 										for(var j=0; j<this.data.FieldValues.length; j++){
 											this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
 										}
-										user.joinDate = this.data['Member since'];
-										user.joinDate = 0;
+										user.joinDate = Math.floor((new Date(this.data['Member since'])).getTime() / 1000);
 										
 										var level = this.data['MembershipLevel']['Name'];
 										var alreadyEnrolledInCorrectGroup = false;
