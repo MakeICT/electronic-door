@@ -10,6 +10,15 @@ function getClientOptions(client){
 	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 }
 
+function getClientAction(actionName){
+	for(var i=0; i<module.exports.clientDetails.actions.length; i++){
+		var action = module.exports.clientDetails.actions[i];
+		if(action.name == actionName){
+			return action;
+		}
+	}
+}
+
 function center(text, lineLength){
 	if(!lineLength) lineLength = 16;
 	var spaces = (lineLength - text.length) / 2;
@@ -32,11 +41,21 @@ function sendMessage(clientID, line1, line2){
 	var client = backend.getClientByID(clientID);
 	var clientOptions = getClientOptions(client);
 	
-	if(clientOptions['Idle message delay']){
+	if(clientOptions['Idle timeout']){
 		var sendIdleMessage = function(){
-			module.exports.clientDetails.actions['Send text'](client);
+			// `this` must be bound to the client object
+			var opts = getClientOptions(this);
+			var parameters = {
+				'Line 1': opts['Idle line 1'],
+				'Line 2': opts['Idle line 2']
+			};
+			try{
+				getClientAction('Send text to LCD').execute(parameters, this);
+			}catch(exc){
+				console.log(exc);
+			}
 		}
-		lcdResetTimers[clientID] = setTimeout(sendIdleMessage, parseInt(clientOptions['Idle message delay']));
+		lcdResetTimers[clientID] = setTimeout(sendIdleMessage.bind(client), parseInt(clientOptions['Idle timeout']));
 	}
 }
 
