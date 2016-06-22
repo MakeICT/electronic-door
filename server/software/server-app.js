@@ -47,7 +47,7 @@ function checkIfLoggedIn(request, response, suppressErrorResponse){
 server.get('/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getUsers(request.params.q, request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
+		backend.getUsers(request.params.q.split(' '), request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
 			response.send(users);
 		});
 	}

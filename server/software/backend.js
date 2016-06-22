@@ -206,7 +206,7 @@ module.exports = {
 		return clients;
 	},
 	
-	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
+	getUsers: function(searchTerms, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
 		try{
 			var sql =
 				'SELECT DISTINCT  ' +
@@ -231,14 +231,20 @@ module.exports = {
 				sql += '	AND "joinDate" >= $' + params.length;
 			}
 
-			if(q !== undefined){
-				q = '%' + q.toLowerCase() + '%';
-				params.push(q);
-				sql += '	AND (LOWER("firstName") LIKE $' + params.length +
-					'			OR LOWER("lastName") LIKE $' + params.length +
-					'			OR LOWER("email") LIKE $' + params.length +
-					'			OR LOWER("nfcID") LIKE $' + params.length +
-					'		)';
+			if(searchTerms !== undefined){
+				if(searchTerms.constructor !== Array){
+					searchTerms = [searchTerms];
+				}
+
+				for(var i=0; i<searchTerms.length; i++){
+					var q = '%' + searchTerms[i].toLowerCase() + '%';
+					params.push(q);
+					sql += '	AND (LOWER("firstName") LIKE $' + params.length +
+						'			OR LOWER("lastName") LIKE $' + params.length +
+						'			OR LOWER("email") LIKE $' + params.length +
+						'			OR LOWER("nfcID") LIKE $' + params.length +
+						'		)';
+				}
 			}
 			
 			return query(sql, params, onSuccess, onFailure);
