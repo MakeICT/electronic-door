@@ -10,7 +10,7 @@ var google = require('googleapis');
 
 function buildAuthClient(callback){
 	backend.getPluginOptions(module.exports.name, function(settings){
-		var redirectURI = 'https://' + settings['hostname'] + '/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
+		var redirectURI = 'https://' + settings['Hostname'] + '/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
 		var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
 		if(settings['token']){
 			oauth2Client.setCredentials(JSON.parse(settings['token']));
@@ -35,6 +35,10 @@ module.exports = {
 			'value': null,
 		},{
 			'name': 'Client secret',
+			'type': 'hidden',
+			'value': null,
+		},{
+			'name': 'Hostname',
 			'type': 'hidden',
 			'value': null,
 		},{
@@ -75,18 +79,20 @@ module.exports = {
 				backend.debug('Authorizing with Google');
 				backend.setPluginOption(module.exports.name, 'Client ID', parameters['Client ID'], function(){
 					backend.setPluginOption(module.exports.name, 'Client secret', parameters['Client secret'], function(){
-						buildAuthClient(function(oauth2Client){
-							var url = oauth2Client.generateAuthUrl({
-								access_type: 'offline',
-								scope: 'https://www.googleapis.com/auth/drive',
-							});
-							if(session){
-								try{
-									session.response.send({'url' : url});
-								}catch(exc){
-									console.log(exc);
+						backend.setPluginOption(module.exports.name, 'Hostname', parameters['Hostname'], function(){
+							buildAuthClient(function(oauth2Client){
+								var url = oauth2Client.generateAuthUrl({
+									access_type: 'offline',
+									scope: 'https://www.googleapis.com/auth/drive',
+								});
+								if(session){
+									try{
+										session.response.send({'url' : url});
+									}catch(exc){
+										console.log(exc);
+									}
 								}
-							}
+							});
 						});
 					});
 				});
