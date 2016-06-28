@@ -16,8 +16,8 @@
 			</button>
 			<span ng-if="!job.jobID">New</span>
 		</td>
-		<td><input type="text" ng-model="job.description" placeholder="Enter a job name"/></td>
-		<td><input type="text" ng-model="job.cron" placeholder="Enter a cron schedule"/></td>
+		<td><input type="text" class="form-control input-sm" ng-model="job.description" placeholder="Enter a job name"/></td>
+		<td><input type="text" class="form-control input-sm" ng-model="job.cron" placeholder="Enter a cron schedule"/></td>
 		<td><job-action-selector job="job" /></td>
 		<td>
 			<div class="btn-group" ng-if="job.jobID">

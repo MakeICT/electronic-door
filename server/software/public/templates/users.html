@@ -1,38 +1,42 @@
-<h2>Users</h2>
-Search users: <input type="text" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 1500}"/>
-<div style="margin-top: 0.5em;">
-	<span class="btn-group">
-		<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.admin">Admin</span>
-		<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.active">Active</span>
-		<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.keyed">Keyed</span>
-		<span toggle class="btn btn-default btn-sm" ng-click="searchForUser()" ng-model="search.thirtyDays">30+ days</span>
-	</span>
-</div>
-<hr/>
-<button class="btn btn-default btn-sm" ng-click="newUser.isExpanded = !newUser.isExpanded"><h4>Add new</h4></button>
+<h2>
+	Users
+	<button class="btn btn-default btn-sm" ng-click="newUser.isExpanded = !newUser.isExpanded" title="Add new user">
+		{{newUser.isExpanded?'&minus;':'+'}}
+	</button>
+</h2>
 <div uib-collapse="!newUser.isExpanded">
 	<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
 	<form>
 		<table class="table table-striped user-details">
 			<tr>
 				<th>Email</th>
-				<td><input type="email" ng-model="newUser.email"></td>
+				<td><input class="form-control input-sm" type="email" ng-model="newUser.email"></td>
 			</tr><tr>
 				<th>First Name</th>
-				<td><input type="text" ng-model="newUser.firstName"></td>
+				<td><input class="form-control input-sm" type="text" ng-model="newUser.firstName"></td>
 			</tr><tr>
 				<th>Last Name</th>
-				<td><input type="text" ng-model="newUser.lastName"></td>
+				<td><input class="form-control input-sm" type="text" ng-model="newUser.lastName"></td>
 			</tr><tr>
 				<th>Join Date</th>
-				<td><input type="date" ng-model="newUser.joinDate"></td>
+				<td>
+					<input
+						type="text"
+						style="text-align: center"
+						class="form-control input-sm"
+						uib-datepicker-popup="yyyy MMMM dd"
+						ng-model="newUser.joinDate"
+						is-open="joinDateOpen"
+						ng-focus="joinDateOpen=true"
+					/>
+				</td>
 			</tr>
 		</table>
 		<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
 		<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
 	</form>
 </div>
-<hr/>
+<input id="userSearchBox" autofocus placeholder="Enter search terms" type="text" class="form-control input-sm" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 1500}"/>
 <h3 ng-if="userSearchResults === null">⌛ Searching...</h3>
 <h3 ng-if="userSearchResults && userSearchResults.length == 0">No search results</h3>
 <div ng-if="userSearchResults && userSearchResults.length > 0" class="container-fluid">

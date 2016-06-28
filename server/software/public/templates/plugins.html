@@ -8,13 +8,11 @@
 			<label class="btn btn-sm" ng-class="plugin.enabled ? 'btn-success' : 'btn-default'" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>
 		</div>
 	</div>
-	<div uib-collapse="!isOpened" class="card-block" style="margin-top: 0.5em">
-		<table class="table table-striped table-bordered table-hover table-condensed" ng-if="plugin.options.length > 0">
-			<tr ng-repeat="option in plugin.options">
-				<td>{{option.name}}</td>
-				<td><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}" ng-trim="false"></td>
-			</tr>
-		</table>
+	<div uib-collapse="!isOpened" class="card-block" style="margin-top: 0.5em" class="container-fluid">
+		<div class="row" ng-repeat="option in plugin.options">
+			<div class="col-md-5 col-sm-5">{{option.name}}</div>
+			<div class="col-md-7 col-sm-7"><input class="form-control input-sm" ng-model="option.value" ng-change="savePluginOption(plugin, option)" type="{{option.type == 'password' ? 'password' : 'text'}}" ng-model-options="{debounce: 1500}" ng-trim="false"></div>
+		</div>
 		<action-with-parameters ng-repeat="action in plugin.actions" properties="action" execute="doPluginAction(plugin, action)"/>
 	</div>
 </div>
