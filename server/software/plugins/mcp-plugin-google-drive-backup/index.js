@@ -108,7 +108,7 @@ module.exports = {
 		},{
 			'name': 'Backup Now',
 			'parameters': [],
-			'execute': function(parameters){
+			'execute': function(parameters, session){
 				buildAuthClient(function(oauth2Client){				
 					backend.getPluginOptions(module.exports.name, function(settings){
 						if(!settings['token']){
