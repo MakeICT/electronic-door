@@ -205,8 +205,13 @@ var packetQueue = {
 			backend.debug('Packet failed after ' + maxRetries + ' retries: ' + this.lastPacketInfo.toString());
 			this._doneWaiting();
 		}else{
-			backend.debug('Resending packet (' + this.retries + '/' + maxRetries + '): ' + this.lastPacketInfo.toString());
-			this._doSend();
+			try{
+				backend.debug('Resending packet (' + this.retries + '/' + maxRetries + '): ' + this.lastPacketInfo.toString());
+				this._doSend();
+			}catch(exc){
+				backend.error('Error while attempting to resend packet: ' + exc);
+				backend.debug(exc);
+			}
 		}
 	},
 	
