@@ -541,14 +541,20 @@ server.get('/logout', function(request, response, next){
 	response.redirect('/', next);
 });
 
-server.get(/^\/[^\/]*$/, restify.serveStatic({
-	directory: 'public/',
-	file: 'index.html'
-}));
+server.get(/^\/[^\/]*$/, function(request, response, next){
+	var session = sessionManager.start(request, response);
+	var staticServe = restify.serveStatic({
+		directory: 'public/',
+		file: 'index.html'
+	});
+	return staticServe(request, response, next);
+});
 
-server.get(/.*/, restify.serveStatic({
-	directory: 'public/'
-}));
+server.get(/.*/, function(request, response, next){
+	var session = sessionManager.start(request, response);
+	var staticServe = restify.serveStatic({directory: 'public/'});
+	return staticServe(request, response, next);
+});
 
 server.listen(443, function () {
 	backend.log(server.name + ' listening at ' + server.url);

@@ -210,8 +210,3 @@ app.directive('autofocus', ['$timeout', function($timeout) {
     }
   }
 }]);
-
-
-app.config(['$httpProvider', function($httpProvider) {
-	$httpProvider.defaults.withCredentials = true;
-}]);
