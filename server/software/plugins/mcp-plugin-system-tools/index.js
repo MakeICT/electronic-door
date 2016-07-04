@@ -26,7 +26,7 @@ module.exports = {
 				backend.getPluginOptions(module.exports.name, function(settings){
 					tmp.file(function(err, tmpFilePath, fd, cleanupCallback){
 						var filename = encodeURIComponent(tmpFilePath.substring(tmpFilePath.lastIndexOf('/')+1));
-						session.response.send({ 'url': '/plugins/' + encodeURIComponent(module.exports.name) + '/handler?f=' + filename });
+						session.response.send({ 'url': '/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler?f=' + filename });
 						
 						var args = '-u master-control-program --no-pager'.split(' ');
 						if(settings['Log line limit']){
