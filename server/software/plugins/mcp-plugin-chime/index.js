@@ -46,7 +46,17 @@ module.exports = {
 		}
 	],
 	clientDetails: {
-		options: [],
+		options: [
+			{
+				'name': 'Default tune',
+				'type': 'text',
+				'value': '35003500350031003500380020060106060606060106060b110b',
+			},{
+				'name': 'Default lights',
+				'type': 'text',
+				'value': '0300ff0000000000020FFF',
+			}
+		],
 		actions: [
 			{
 				'name': 'Test sound',
@@ -56,8 +66,10 @@ module.exports = {
 					'value': '35003500350031003500380020060106060606060106060b110b',
 				}],
 				'execute': function(parameters, client, callback){
-					var data = superSerial.hexStringToByteArray(parameters['Tune']);
-					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], data);
+					if(parameters['Tune'] != ''){
+						var data = superSerial.hexStringToByteArray(parameters['Tune']);
+						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['TONE'], data);
+					}
 					if(callback) callback();
 				},
 			},{
@@ -68,8 +80,10 @@ module.exports = {
 					'value': '0300ff0000000000020FFF',
 				}],
 				'execute': function(parameters, client, callback){
-					var data = superSerial.hexStringToByteArray(parameters['Lights']);
-					superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], data);
+					if(parameters['Lights'] != ''){
+						var data = superSerial.hexStringToByteArray(parameters['Lights']);
+						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['LIGHTS'], data);
+					}
 					if(callback) callback();
 				},
 			},
@@ -96,9 +110,14 @@ module.exports = {
 	
 	receiveMessage: function(source, messageID, data){
 		if(messageID == "door-unlocked"){
+			console.log(data);
+			var client = backend.getClientByID(data['client']);
+			console.log(client);
+
+			var clientOptions = getClientOptions(client);
 			var parameters = {
-				'Tune': '35003500350031003500380020060106060606060106060b110b',
-				'Lights': '0300ff0000000000020FFF',
+				'Tune': clientOptions['Default tune'],
+				'Lights': clientOptions['Default lights'],
 			};
 			
 			if(data.user){
