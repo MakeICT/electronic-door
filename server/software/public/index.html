@@ -61,7 +61,9 @@
 						</div>
 						<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 							<ul class="nav navbar-nav">
-								<li ng-repeat="page in pages" ng-class="{active: isPageActive(page.url)}"><a href="{{page.url}}">{{page.label}}</a></li>
+								<li ng-repeat="page in pages" ng-class="{active: isPageActive(page.url)}">
+									<a href="{{page.url}}"  data-toggle="collapse" data-target=".navbar-collapse">{{page.label}}</a>
+								</li>
 							</ul>
 							<ul class="nav navbar-nav navbar-right">
 								<li><a href="/logout" target="_self">Logout</a></li>
