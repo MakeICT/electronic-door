@@ -2,7 +2,6 @@ body{
 	padding: 0.5em;
 	text-align: center;
 	overflow-y: scroll;
-	margin-top: 235px;
 }
 
 .authorizationName {
@@ -26,22 +25,21 @@ body{
 }
 
 .header {
-	height: 200px;
 	background:url(/images/logo-header.svg);
 	background-position: center;
 	background-repeat: no-repeat;
+	background-size: contain;
 	margin-bottom: 1em;
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	z-index: 998;
+	height: 200px;
+}
+
+@media (max-width: 600px) {
+	.header {
+		height: 100px;
+	}
 }
 
 .navbar {
-	position: fixed;
-	top: 200px;
-	left: 0;
 	width: 100%;
 	z-index: 998;
 }
