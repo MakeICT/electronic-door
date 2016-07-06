@@ -30,7 +30,7 @@ body{
 	background-repeat: no-repeat;
 	background-size: contain;
 	margin-bottom: 1em;
-	height: 200px;
+	height: 150px;
 }
 
 @media (max-width: 600px) {
