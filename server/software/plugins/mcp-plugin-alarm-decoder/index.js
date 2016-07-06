@@ -24,23 +24,34 @@ module.exports = {
 		},
 	],
 	
-	actions: {
-		'Arm away': function(callback){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				alarm.armAway(settings['Code']);
-			});
-		},
-		'Arm stay': function(callback){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				alarm.armStay(settings['Code']);
-			});
-		},
-		'Disarm': function(callback){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				alarm.disarm(settings['Code']);
-			});
-		},
-	},
+	actions: [
+		{
+			'name': 'Arm away',
+			'parameters': [],
+			'execute': function(callback){
+				backend.getPluginOptions(module.exports.name, function(settings){
+					alarm.armAway(settings['Code']);
+				});
+			},
+		},{
+			'name': 'Arm stay',
+			'parameters': [],
+			'execute': function(callback){
+				backend.getPluginOptions(module.exports.name, function(settings){
+					alarm.armStay(settings['Code']);
+				});
+				
+			},
+		},{
+			'name': 'Disarm',
+			'parameters': [],
+			'execute': function(callback){
+				backend.getPluginOptions(module.exports.name, function(settings){
+					alarm.disarm(settings['Code']);
+				});
+			},
+		}
+	],
 	
 	onInstall: function(){
 	},

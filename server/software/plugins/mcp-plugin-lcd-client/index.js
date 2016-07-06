@@ -6,6 +6,19 @@ var superSerial = require('../mcp-plugin-super-serial');
 
 var lcdResetTimers = {};
 
+function getClientOptions(client){
+	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+}
+
+function getClientAction(actionName){
+	for(var i=0; i<module.exports.clientDetails.actions.length; i++){
+		var action = module.exports.clientDetails.actions[i];
+		if(action.name == actionName){
+			return action;
+		}
+	}
+}
+
 function center(text, lineLength){
 	if(!lineLength) lineLength = 16;
 	var spaces = (lineLength - text.length) / 2;
@@ -26,13 +39,23 @@ function sendMessage(clientID, line1, line2){
 	if(lcdResetTimers[clientID]) clearTimeout(lcdResetTimers[clientID]);
 	
 	var client = backend.getClientByID(clientID);
-	var clientOptions = backend.regroup(module.exports.options, 'name', 'value');
+	var clientOptions = getClientOptions(client);
 	
-	if(clientOptions['Idle message delay']){
+	if(clientOptions['Idle timeout']){
 		var sendIdleMessage = function(){
-			module.exports.clientDetails.actions['Send text'](client);
+			// `this` must be bound to the client object
+			var opts = getClientOptions(this);
+			var parameters = {
+				'Line 1': opts['Idle line 1'],
+				'Line 2': opts['Idle line 2']
+			};
+			try{
+				getClientAction('Send text to LCD').execute(parameters, this);
+			}catch(exc){
+				console.log(exc);
+			}
 		}
-		lcdResetTimers[clientID] = setTimeout(sendIdleMessage, parseInt(clientOptions['Idle message delay']));
+		lcdResetTimers[clientID] = setTimeout(sendIdleMessage.bind(client), parseInt(clientOptions['Idle timeout']));
 	}
 }
 
@@ -46,68 +69,75 @@ function sendToAll(line1, line2){
 
 module.exports = {
 	name: 'LCD Client',
-	options: [
+	options: [],
+	actions: [
 		{
-			'name': 'Send line 1',
-			'type': 'text',
-			'value': null,
+			'name': 'Send to all LCDs',
+			'parameters': [
+				{
+					'name': 'Line 1',
+					'type': 'text',
+					'value': 'Hello',
+				},{
+					'name': 'Line 2',
+					'type': 'text',
+					'value': 'World!',
+				},
+			],
+			'execute': function(parameters){
+				sendToAll(parameters['Line 1'], parameters['Line 2']);
+			},
 		},{
-			'name': 'Send line 2',
-			'type': 'text',
-			'value': null,
-		},{
-			'name': 'Idle message delay',
-			'type': 'number',
-			'value': null,
-		},
+			'name': 'Clear all LCDs',
+			'parameters': [],
+			'execute': function(parameters){
+				sendToAll('', '');
+			},
+		}
 	],
-	actions: {
-		'Send to all': function(){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				sendToAll(settings['Send line 1'], settings['Send line 2']);
-			});
-		},
-		'Clear all': function(){
-			sendToAll('', '');
-		},
-		'Apply to all': function(client, callback){
-			var clients = backend.getClients();
-			backend.getPluginOptions(module.exports.name, function(settings){
-				for(var i=0; i<clients.length; i++){
-					for(var optionName in module.exports.options){
-						backend.setClientPluginOption(clients[i].clientID, module.exports.name, optionName, settings[optionName]);
-					}
-				}
-			});
-		},
-	},
 	clientDetails: {
 		options: [
 			{
-				'name': 'Send line 1',
-				'type': 'text',
-				'value': null,
-			},{
-				'name': 'Send line 2',
-				'type': 'text',
-				'value': null,
-			},{
-				'name': 'Idle message delay',
+				'name': 'Idle timeout',
 				'type': 'number',
-				'value': null,
+				'value': 60,
+			},{
+				'name': 'Idle line 1',
+				'type': 'text',
+				'value': 'Red button',
+			},{
+				'name': 'Idle line 2',
+				'type': 'text',
+				'value': 'arms alarm',
 			},
 		],
-		actions: {
-			'Send text': function(client, callback){
-				var options = backend.regroup(module.exports.options, 'name', 'value');				
-				sendMessage(client.clientID, options['Send line 1'], options['Send line 2']);
-				if(callback) callback();
+		actions: [
+			{
+				'name': 'Send text to LCD',
+				'parameters': [
+					{
+						'name': 'Line 1',
+						'type': 'text',
+						'value': 'Hello',
+					},{
+						'name': 'Line 2',
+						'type': 'text',
+						'value': 'World!',
+					},
+				],
+				'execute': function(parameters, client, callback){
+					sendMessage(client.clientID, parameters['Line 1'], parameters['Line 2']);
+					if(callback) callback();
+				},
+			},{
+				'name': 'Clear LCD',
+				'parameters': [],
+				'execute': function(parameters, client, callback){
+					sendMessage(client.clientID, '', '');
+					if(callback) callback();
+				},
 			},
-			'Clear': function(client, callback){
-				sendMessage(client.clientID, '', '');
-				if(callback) callback();
-			},
-		},
+		],
 		optionUpdated: function(client, option, newValue, oldValue, callback){
 		},
 	},

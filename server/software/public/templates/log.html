@@ -1,0 +1,24 @@
+<h2>Activity Log <button ng-click="loadLog()" class="btn btn-sm btn-primary">↺</button></h2>
+<div ng-if="!log">
+	Loading...
+</div>
+<table id="activity-log" class="table table-striped table-bordered table-hover table-condensed" ng-if="log && log.length > 0">
+	<thead>
+		<tr>
+			<th>Timestamp</th>
+			<th>Log Type</th>
+			<th>Message</th>
+			<th>User</th>
+			<th>NFC</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat="row in log">
+			<td>{{row.timestamp|timestampToHumanReadableDate:true}}</td>
+			<td>{{row.logType}}</td>
+			<td>{{row.message}}</td>
+			<td><a href="mailto:{{row.email}}">{{row.firstName}} {{row.lastName}}</a></td>
+			<td>{{row.code}}</td>
+		</tr>
+	</tbody>
+</table>

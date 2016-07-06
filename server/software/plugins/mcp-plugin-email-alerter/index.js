@@ -47,7 +47,7 @@ module.exports = {
 		},{	
 			'name': 'Password',
 			'type': 'password',
-			'value': null,
+			'value': '',
 		},{	
 			'name': 'Server',
 			'type': 'text',
@@ -59,47 +59,44 @@ module.exports = {
 		},{	
 			'name': 'BCC',
 			'type': 'text',
-			'value': null,
-		},{	
-			'name': 'Add subscription',
-			'type': 'text',
-			'value': null,
-		},{	
-			'name': 'Delete subscription',
-			'type': 'text',
-			'value': null,
+			'value': '',
 		}
 	],
 	
-	actions: {
-		'Send test message': function(callback){
-			sendMessage('Test message from MCP', 'Test body goes <i>here</i>.');
+	actions: [
+		{
+			'name': 'Send test message',
+			'parameters': [],
+			'execute': function(parameters, callback){
+				sendMessage('Test message from MCP', 'Test body goes <i>here</i>.');
+			},
+		},{
+			'name': 'Add subscription',
+			'parameters': [{
+				'name': 'Trigger',
+				'type': 'text',
+				'default': null,
+			}],
+			'execute': function(parameters, session, callback){
+				backend.addPluginOption(module.exports.name, parameters['Trigger'], 'text', callback, callback);
+			},
+		},{
+			'name': 'Delete subscription',
+			'parameters': [{
+				'name': 'Trigger',
+				'type': 'text',
+				'default': null,
+			}],
+			'execute': function(parameters, session, callback){
+				for(var i=0; i<module.exports.options.length; i++){
+					if(module.exports.options[i].name == parameters['Trigger']){
+						throw 'That is not a trigger!';
+					}
+				}
+				backend.removePluginOption(module.exports.name, parameters['Trigger'], callback, callback);
+			}
 		},
-		'Add subscription': function(callback){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				backend.addPluginOption(
-					module.exports.name,
-					settings['Add subscription'], 'text',
-					function(){
-						return backend.setPluginOption(module.exports.name, 'Add subscription', '', callback, callback);
-					},
-					callback
-				);
-			});
-		},
-		'Delete subscription': function(callback){
-			backend.getPluginOptions(module.exports.name, function(settings){
-				backend.removePluginOption(
-					module.exports.name,
-					settings['Delete subscription'],
-					function(){
-						return backend.setPluginOption(module.exports.name, 'Delete subscription', '', callback, callback);
-					},
-					callback
-				);
-			});
-		},
-	},
+	],
 	
 	onInstall: function(){},
 	onUninstall: function(){},

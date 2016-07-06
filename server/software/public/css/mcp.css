@@ -25,11 +25,23 @@ body{
 }
 
 .header {
-	height: 200px;
 	background:url(/images/logo-header.svg);
 	background-position: center;
 	background-repeat: no-repeat;
+	background-size: contain;
 	margin-bottom: 1em;
+	height: 150px;
+}
+
+@media (max-width: 600px) {
+	.header {
+		height: 100px;
+	}
+}
+
+.navbar {
+	width: 100%;
+	z-index: 998;
 }
 
 #status-header {
@@ -38,12 +50,8 @@ body{
 	right: 0.5em;
 }
 
-.user-details th, .user-details td  {
-	width: 50%;
-}
-
-.user-details th {
-	text-align: right;
+.user-details {
+	margin-top: 1em;
 }
 
 table td {
@@ -102,6 +110,10 @@ table#activity-log td{
 	text-align: left;
 }
 
+table.clientActionParameters {
+	margin: 0;
+}
+
 .card {
 	width: 25em;
 	float: left;
@@ -114,4 +126,9 @@ table#activity-log td{
 .actions button {
 	width: 45%;
 	margin: 2%;
+}
+
+.nopad {
+	padding: 0;
+	margin: 0;
 }

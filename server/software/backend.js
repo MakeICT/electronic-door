@@ -9,7 +9,8 @@ var fs = require('fs');
 var pg = require('pg');
 var path = require('path');
 var bcrypt = require('bcrypt');
-var broadcaster = require('./broadcast.js')
+var CronJob = require('cron').CronJob;
+var broadcaster = require('./broadcast.js');
 
 var credentials = fs.readFileSync('credentials/DB_CREDENTIALS').toString().trim().split('\t');
 var connectionParameters = {
@@ -48,7 +49,7 @@ function filterFields(obj, allowedFields){
 function query(sql, params, onSuccess, onFailure, keepOpen){
 	return pg.connect(connectionParameters, function(err, client, done) {
 		if(err) {
-			return backend.error('Failed to connect', err);
+			return module.exports.error('Failed to connect', err);
 		}
 		return client.query(sql, params, function(err, result) {
 			if(!keepOpen){
@@ -59,10 +60,10 @@ function query(sql, params, onSuccess, onFailure, keepOpen){
 				if(onFailure){
 					return onFailure(err);
 				}else{
-					backend.debug('SQL ERROR');
-					backend.debug(err);
-					backend.debug(sql);
-					backend.debug(params);
+					module.exports.debug('SQL ERROR');
+					module.exports.debug(err);
+					module.exports.debug(sql);
+					module.exports.debug(params);
 				}
 			}else if(onSuccess){
 				return onSuccess(result.rows, done);
@@ -87,6 +88,8 @@ function generateSuccessCallback(msg, successCallback){
 
 var plugins = [];
 var clients = [];
+var scheduledJobs = [];
+
 module.exports = {
 	connectionParameters: connectionParameters,
 	regroup: function(array, keyName, valueName){
@@ -101,6 +104,16 @@ module.exports = {
 	getPluginByName: function(name){
 		for(var i=0; i<plugins.length; i++){
 			if(plugins[i].name == name){
+				return plugins[i];
+			}
+		}
+		return null;
+	},
+	
+	// Synchronous
+	getPluginByID: function(id){
+		for(var i=0; i<plugins.length; i++){
+			if(plugins[i].pluginID == id){
 				return plugins[i];
 			}
 		}
@@ -193,12 +206,11 @@ module.exports = {
 		return clients;
 	},
 	
-	getUsers: function(q, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
+	getUsers: function(searchTerms, isAdmin, keyActive, joinDate, onSuccess, onFailure) {
 		try{
 			var sql =
 				'SELECT DISTINCT  ' +
-				'	users."userID",   ' +
-				'	"firstName", "lastName", "email", "joinDate", "status",   ' +
+				'	users.*, ' +
 				'	"nfcID" IS NOT NULL AS "keyActive" ' +
 				'FROM users ' +
 				'WHERE TRUE ';	
@@ -219,19 +231,25 @@ module.exports = {
 				sql += '	AND "joinDate" >= $' + params.length;
 			}
 
-			if(q !== undefined){
-				q = '%' + q.toLowerCase() + '%';
-				params.push(q);
-				sql += '	AND (LOWER("firstName") LIKE $' + params.length +
-					'			OR LOWER("lastName") LIKE $' + params.length +
-					'			OR LOWER("email") LIKE $' + params.length +
-					'			OR LOWER("nfcID") LIKE $' + params.length +
-					'		)';
+			if(searchTerms !== undefined){
+				if(searchTerms.constructor !== Array){
+					searchTerms = [searchTerms];
+				}
+
+				for(var i=0; i<searchTerms.length; i++){
+					var q = '%' + searchTerms[i].toLowerCase() + '%';
+					params.push(q);
+					sql += '	AND (LOWER("firstName") LIKE $' + params.length +
+						'			OR LOWER("lastName") LIKE $' + params.length +
+						'			OR LOWER("email") LIKE $' + params.length +
+						'			OR LOWER("nfcID") LIKE $' + params.length +
+						'		)';
+				}
 			}
 			
 			return query(sql, params, onSuccess, onFailure);
 		}catch(exc){
-			backend.error(exc);
+			module.exports.error(exc);
 		}
 	},
 	
@@ -270,7 +288,7 @@ module.exports = {
 			return query(sql, [], process, onFailure);
 
 		}catch(exc){
-			backend.error(exc);
+			module.exports.error(exc);
 		}
 	},
 	
@@ -315,8 +333,7 @@ module.exports = {
 	getUserByProxyID: function(proxySystem, proxyUserID, transaction) {
 		var sql =
 			'SELECT ' +
-			'   users."userID", ' + 
-			'	"firstName", "lastName", "email", "joinDate", "status", ' +
+			'   users.*, ' + 
 			'	"nfcID" IS NOT NULL AS "keyActive" ' +
 			'FROM users ' +
 			'	JOIN "proxyUsers" ON users."userID" = "proxyUsers"."userID" ' +
@@ -422,7 +439,7 @@ module.exports = {
 		
 		bcrypt.hash(password, 8, function(err, hash){
 			if(err){
-				backend.error('Password hashing error');
+				module.exports.error('Password hashing error');
 				onFailure(err);
 			}else{
 				return query(sql, [hash, userID], log, onFailure);
@@ -451,7 +468,8 @@ module.exports = {
 			'SELECT "pluginID" FROM plugins WHERE name = $1',
 			[pluginName],
 			function(rows){
-				var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ($1, $2, 999, $3)';
+				var optionCountSQL = 'SELECT COUNT (0) FROM "pluginOptions" WHERE "pluginID" = $3';
+				var sql = 'INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES ($1, $2, (' + optionCountSQL + '), $3)';
 				var params = [optionName, type, rows[0].pluginID];
 				return query(sql, params, onSuccess, onFailure);
 			}
@@ -472,7 +490,7 @@ module.exports = {
 	
 	installPlugin: function(plugin, onSuccess, onFailure){
 		var logAndFail = function(msg){
-			backend.error("Failed to install plugin (" + plugin + "): " + msg);
+			module.exports.error("Failed to install plugin (" + plugin + "): " + msg);
 			if(onFailure) onFailure();
 		};
 
@@ -815,6 +833,7 @@ module.exports = {
 									plugins[i].onEnable();
 								}
 							}
+							module.exports.startJobs();
 						});
 					}else{
 						backend.debug('Loaded plugin ' + plugin.name);
@@ -835,10 +854,11 @@ module.exports = {
 				
 				for(var pluginName in client.plugins){
 					try{
-						client.plugins[pluginName].actions = Object.keys(module.exports.getPluginByName(pluginName).clientDetails.actions);
+						client.plugins[pluginName].actions = module.exports.getPluginByName(pluginName).clientDetails.actions;
+						client.plugins[pluginName].pluginID = module.exports.getPluginByName(pluginName).pluginID;
 					}catch(exc){
-						backend.error('Failed to load plugin (' + pluginName + ') for client (' + client.clientID + ')');
-						backend.error(exc);
+						module.exports.error('Failed to load plugin (' + pluginName + ') for client (' + client.clientID + ')');
+						module.exports.error(exc);
 					}
 				}
 				clients.push(client);
@@ -1018,7 +1038,10 @@ module.exports = {
 	},
 	
 	error: function(message){
-		backend.log(message, null, null, 'error', true);
+		if(message.detail){
+			message = message.error + ' (' + message.detail + ')';
+		}
+		module.exports.log(message, null, null, 'error', true);
 		broadcaster.broadcast(module.exports, 'error', message);
 	},
 	
@@ -1057,6 +1080,233 @@ module.exports = {
 		};
 
 		return query(sql, [nfcID, userID], log, onFailure);
+	},
+	
+	startJobs: function(){
+		backend.log('Starting scheduled jobs...');
+		module.exports.getScheduledJobs(function(jobs){
+			for(var i=0; i<jobs.length; i++){
+				if(jobs[i].enabled){
+					module.exports.setJobEnabled(jobs[i].jobID, true);
+				}
+			}
+		});
+	},
+
+	getScheduledJobs: function(onSuccess, onFailure){
+		var sql = 'SELECT * FROM "scheduledJobs" ORDER BY description';
+		var jobs;
+		
+		var getParams = function(rows){
+			jobs = rows;
+			
+			var sql = 'SELECT * FROM "jobParameters"';
+			query(sql, [], attachParams, onFailure);
+		};
+		
+		var attachParams = function(params){
+			for(var i=0; i<params.length; i++){
+				for(var j=0; j<jobs.length; j++){
+					if(params[i].jobID == jobs[j].jobID){
+						if(!jobs[j].parameters) jobs[j].parameters = [];
+						
+						jobs[j].parameters.push({
+							'name': params[i].parameterName,
+							'value': params[i].parameterValue
+						});
+						
+						break;
+					}
+				}
+			}
+			if(onSuccess) onSuccess(jobs);
+		};
+		
+		return query(sql, [], getParams, onFailure);
+	},
+
+	getScheduledJob: function(jobID, onSuccess, onFailure){
+		var getParams = function(job){
+			var attachParams = function(params){
+				job.parameters = [];
+				for(var i=0; i<params.length; i++){
+					job.parameters.push({
+						'name': params[i].parameterName,
+						'value': params[i].parameterValue
+					});
+				}
+				if(onSuccess) onSuccess(job);
+			};
+			
+			var sql = 'SELECT * FROM "jobParameters" WHERE "jobID" = $1';
+			query(sql, [job.jobID], attachParams, onFailure);
+		};
+				var sql = 'SELECT * FROM "scheduledJobs" WHERE "jobID" = $1';
+		return query(sql, [jobID], getOneOrNone(getParams), onFailure);
+	},
+	
+	setJobParameters: function(jobID, parameters, onSuccess, onFailure){
+		var nextStep = function(){
+			if(parameters && parameters.length > 0){
+				var sql = 'INSERT INTO "jobParameters" ("jobID", "parameterName", "parameterValue") VALUES ';
+				
+				var params = [];
+				for(var i=0; i<parameters.length; i++){
+					sql += '($' + (i*3+1) + ', $' + (i*3+2) + ', $' + (i*3+3) + '),';
+					params.push(jobID);
+					params.push(parameters[i].name);
+					params.push(parameters[i].value);
+				}
+				sql = sql.substring(0, sql.length-1);
+				query(sql, params, onSuccess, onFailure);
+			}else{
+				if(onSuccess) onSuccess();
+			}
+		};
+		
+		query('DELETE FROM "jobParameters" WHERE "jobID" = $1', [jobID], nextStep, onFailure);
+	},
+	 
+	createJob: function(description, cron, action, parameters, pluginID, clientID, onSuccess, onFailure){
+		var nextStep = function(record){
+			backend.log('Created job ' + description);
+			try {
+				new CronJob(cron, function() {});
+			} catch(ex) {
+				module.exports.error('Warning: cron pattern not valid');
+			}
+			
+			module.exports.setJobParameters(record['jobID'], parameters, onSuccess, onFailure);
+		};
+
+		var sql = 'INSERT INTO "scheduledJobs" ("description", "cron", "action", "pluginID", "clientID")'
+			+ ' VALUES ($1, $2, $3, $4, $5) RETURNING "jobID"';
+			
+		var queryParams = [ description, cron, action, pluginID, clientID ];		
+		return query(sql, queryParams, getOneOrNone(nextStep), onFailure);
+	},
+	
+	updateJob: function(jobID, description, cron, action, parameters, pluginID, clientID, onSuccess, onFailure){
+		module.exports.getScheduledJob(jobID, function(oldJobDetails){
+			var enableJob = function(){
+				if(oldJobDetails.enabled){
+					module.exports.setJobEnabled(jobID, true, onSuccess, onFailure);
+				}else{
+					try {
+						new CronJob(cron, function() {});
+					} catch(ex) {
+						module.exports.error('Warning: cron pattern not valid');
+					}
+					if(onSuccess) onSuccess();
+				}
+			};
+			
+			var saveParams = function(record){
+				backend.log('Updated job ' + description);
+				module.exports.setJobParameters(jobID, parameters, enableJob, onFailure);
+			};
+
+			var updateDB = function(){
+				var sql = 'UPDATE "scheduledJobs" ' +
+					'SET ' +
+					'	"description" = $1, ' +
+					'	"cron" = $2, ' +
+					'	"action" = $3, ' +
+					'	"pluginID" = $4, ' + 
+					'	"clientID" = $5 ' +
+					'WHERE "jobID" = $6';
+
+				var queryParams = [ description, cron, action, pluginID, clientID, jobID ];
+				return query(sql, queryParams, getOneOrNone(saveParams), onFailure);
+			};
+			
+			module.exports.setJobEnabled(jobID, false, updateDB, onFailure);
+		});
+	},
+	
+	setJobEnabled: function(jobID, enabled, onSuccess, onFailure){
+		var updateDB = function(){
+			var sql = 'UPDATE "scheduledJobs" SET "enabled" = $1 WHERE "jobID" = $2';
+			return query(sql, [enabled, jobID], onSuccess, onFailure);
+		};
+
+		if(enabled){
+			module.exports.getScheduledJob(jobID, function(jobDetails){
+				var action;
+
+				var parameters = backend.regroup(jobDetails.parameters, 'name', 'value');
+				if(jobDetails.pluginID){
+					if(jobDetails.clientID){
+						var client = module.exports.getClientByID(jobDetails.clientID);
+						for(var pluginName in client.plugins){
+							if(client.plugins[pluginName].pluginID == jobDetails.pluginID){
+								var actions = client.plugins[pluginName].actions;
+								for(var i=0; i<actions.length; i++){
+									if(actions[i].name == jobDetails.action){
+										action = actions[i].execute.bind(this, parameters, client);
+										break;
+									}
+								}
+							}
+						}
+					}else{
+						var plugin = module.exports.getPluginByID(jobDetails.pluginID);
+						for(var i=0; i<plugin.actions.length; i++){
+							if(plugin.actions[i].name == jobDetails.action){
+								action = plugin.actions[i].execute.bind(this, parameters);
+								break;
+							}
+						}
+						// go through all of the plugin actions
+					}
+				}
+				
+				if(!action){
+					onFailure({
+						'error': 'Failed to schedule job',
+						'detail': 'Could not determine action'
+					});
+				}else{
+					try{
+						if(jobDetails.cron == '') throw 'Cron pattern cannot be empty';
+						var job = new CronJob(jobDetails.cron, action, null, true);
+						scheduledJobs.push({
+							'jobID': jobID,
+							'job': job
+						});
+						
+						updateDB();
+						module.exports.log('Job "' + jobDetails.description + '" enabled');
+					}catch(exc){
+						if(job) job.stop();
+						if(onFailure) onFailure({
+							'error': 'Failed to schedule job (probably bad cron)',
+							'detail': exc
+						});
+					}
+				}
+			});
+		}else{
+			for(var i=0; i<scheduledJobs.length; i++){
+				if(scheduledJobs[i].jobID == jobID){
+					scheduledJobs[i].job.stop();
+					scheduledJobs.splice(i, 1);
+					break;
+				}
+			}
+			updateDB();
+			module.exports.getScheduledJob(jobID, function(jobDetails){
+				module.exports.log('Job "' + jobDetails.description + '" disabled');
+			});
+		}
+	},
+	
+	deleteJob: function(jobID, onSuccess, onFailure){
+		var updateDB = function(){
+			var ok = generateSuccessCallback('Job deleted', onSuccess);
+			query('DELETE FROM "scheduledJobs" WHERE "jobID" = $1', [jobID], ok, onFailure);
+		};
+		module.exports.setJobEnabled(jobID, false, updateDB, onFailure);
 	},
 
 };

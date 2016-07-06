@@ -20,10 +20,7 @@ This system is used to secure spaces with an electronic door latch.
 ## Todo
 * Server
 	* Super admins vs group admins
-	* Create scheduling system
 	* Make plugins respect disabled mode
-	* Add / edit users
-	* Fix user search (first + last name = no results)
 	* When unlocking from web ui, display user in log
 	
 * Client

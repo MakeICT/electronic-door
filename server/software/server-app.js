@@ -4,7 +4,6 @@ var backend = require('./backend.js');
 var broadcaster = require('./broadcast.js');
 var sessionManager = require('./simple-session.js');
 
-broadcaster.broadcast('hi');
 var doneLoading = false;
 
 var server = restify.createServer({
@@ -17,7 +16,7 @@ var io = require('socket.io').listen(server.server);
 broadcaster.subscribe({
 	receiveMessage: function(source, messageID, message){
 		if(messageID == 'log' || messageID == 'error' || messageID == 'debug'){
-			io.emit(messageID, message);
+			io.emit(messageID, message.toString());
 		}
 	},
 });
@@ -44,10 +43,10 @@ function checkIfLoggedIn(request, response, suppressErrorResponse){
 	}
 }; 
 
-server.get('/users', function (request, response, next) {
+server.get('/api/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getUsers(request.params.q, request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
+		backend.getUsers(request.params.q.split(' '), request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
 			response.send(users);
 		});
 	}
@@ -55,7 +54,7 @@ server.get('/users', function (request, response, next) {
 	return next();
 });
 
-server.get('/users/:userID/groups', function (request, response, next) {
+server.get('/api/users/:userID/groups', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getUserGroups(request.params.userID, function(groups){
@@ -66,7 +65,7 @@ server.get('/users/:userID/groups', function (request, response, next) {
 	return next();
 });
 
-server.put('/users/:userID/groups/:groupName', function (request, response, next) {
+server.put('/api/users/:userID/groups/:groupName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setGroupEnrollment(request.context.userID, request.context.groupName, request.body, function(){response.send();});
@@ -74,7 +73,7 @@ server.put('/users/:userID/groups/:groupName', function (request, response, next
 	return next();
 });
 
-server.put('/groups/:groupID/authorizations/:authTag', function (request, response, next) {
+server.put('/api/groups/:groupID/authorizations/:authTag', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setGroupAuthorization(request.context.groupID, request.context.authTag, request.body, function(){response.send();});
@@ -82,7 +81,7 @@ server.put('/groups/:groupID/authorizations/:authTag', function (request, respon
 	return next();
 });
 
-server.put('/users/:userID/password', function (request, response, next) {
+server.put('/api/users/:userID/password', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.updateUserPassword(request.params.userID, request.body.password, function(){response.send();});
@@ -94,7 +93,7 @@ server.put('/users/:userID/password', function (request, response, next) {
  * Sends empty response on success
  * Sends a message 
  **/
-server.post('/users', function (request, response, next) {
+server.post('/api/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		request.params.joinDate = parseInt(Date.parse(request.params.joinDate) / 1000);
@@ -112,20 +111,22 @@ server.post('/users', function (request, response, next) {
 	return next();
 });
 
-server.put('/users/:userID', function (request, response, next) {
+server.put('/api/users/:userID', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		if(request.params.nfcID !== undefined){
 			backend.enrollUser(request.params.userID, request.params.nfcID, function(){ response.send(); });
 		}else{
-			response.send();
+			var user = request.body;
+			user.userID = request.params.userID;
+			backend.updateUser(request.body, function(){ response.send(); });
 		}
 	}	
 	// @TODO: update other fields too...
 	return next();
 });
 
-server.get('/groups', function(request, response, next){
+server.get('/api/groups', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getGroups(function(groups){
@@ -136,7 +137,7 @@ server.get('/groups', function(request, response, next){
 	return next();
 });
 
-server.post('/groups', function(request, response, next){
+server.post('/api/groups', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.addGroup(
@@ -153,7 +154,7 @@ server.post('/groups', function(request, response, next){
 	return next();
 });
 
-server.del('/groups/:groupID', function(request, response, next){
+server.del('/api/groups/:groupID', function(request, response, next){
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		try{
@@ -179,7 +180,7 @@ server.del('/groups/:groupID', function(request, response, next){
 /**
  * Plugins
  **/
-server.get('/plugins', function (request, response, next) {
+server.get('/api/plugins', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		response.send(backend.getPlugins());
@@ -187,7 +188,7 @@ server.get('/plugins', function (request, response, next) {
 	return next();
 });
 
-server.put('/plugins/:plugin/enabled', function (request, response, next) {
+server.put('/api/plugins/:plugin/enabled', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		var task = request.params.value ? backend.enablePlugin : backend.disablePlugin;
@@ -211,7 +212,7 @@ server.put('/plugins/:plugin/enabled', function (request, response, next) {
 	return next();
 });
 
-server.get('/plugins/:name/options', function (request, response, next) {
+server.get('/api/plugins/:name/options', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getOrderedPluginOptions(request.params.name, function(options){
@@ -226,7 +227,7 @@ server.get('/plugins/:name/options', function (request, response, next) {
 	return next();
 });
 
-server.get('/plugins/:plugin/handler', function (request, response, next) {
+server.get('/api/plugins/:plugin/handler', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		var plugin = backend.getPluginByName(request.params.plugin);
@@ -237,7 +238,7 @@ server.get('/plugins/:plugin/handler', function (request, response, next) {
 	return next();
 });
 
-server.put('/plugins/:plugin/options/:option', function (request, response, next) {
+server.put('/api/plugins/:plugin/options/:option', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setPluginOption(
@@ -254,7 +255,7 @@ server.put('/plugins/:plugin/options/:option', function (request, response, next
 	return next();
 });
 
-server.get('/plugins/:plugin/options/:option', function (request, response, next) {
+server.get('/api/plugins/:plugin/options/:option', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setPluginOption(
@@ -271,20 +272,33 @@ server.get('/plugins/:plugin/options/:option', function (request, response, next
 	return next();
 });
 
-server.post('/plugins/:plugin/actions/:action', function (request, response, next) {
+server.post('/api/plugins/:plugin/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getPluginByName(request.params.plugin).actions[request.params.action](session);
+		try{
+			var action;
+			
+			var actions = backend.getPluginByName(request.params.plugin).actions;
+			for(var i=0; i<=actions.length; i++){
+				var searchAction = actions[i];
+				if(searchAction.name == request.params.action){
+					action = searchAction;
+					break;
+				}
+			}
+			action.execute(request.body, session);
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to perform plugin action', 'detail': exc});
+		}
 	}
-	
-	return next();
 });
 
 
 /**
  * Clients
  **/
-server.get('/clients', function(request, response, next) {
+server.get('/api/clients', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		response.send(backend.getClients());
@@ -294,7 +308,7 @@ server.get('/clients', function(request, response, next) {
 });
 
 // update a client
-server.put('/clients/:clientID', function(request, response, next) {
+server.put('/api/clients/:clientID', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.updateClient(request.params.clientID, request.body);
@@ -304,7 +318,7 @@ server.put('/clients/:clientID', function(request, response, next) {
 	return next();
 });
 
-server.del('/clients/:clientID', function(request, response, next) {
+server.del('/api/clients/:clientID', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.removeClient(request.params.clientID);
@@ -314,7 +328,7 @@ server.del('/clients/:clientID', function(request, response, next) {
 	return next();
 });
 
-server.post('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+server.post('/api/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.associateClientPlugin(
@@ -327,7 +341,7 @@ server.post('/clients/:clientID/plugins/:pluginName', function (request, respons
 	return next();
 });
 
-server.del('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+server.del('/api/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.disassociateClientPlugin(
@@ -340,25 +354,32 @@ server.del('/clients/:clientID/plugins/:pluginName', function (request, response
 	return next();
 });
 
-server.post('/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
+server.post('/api/clients/:clientID/plugins/:pluginName/actions/:action', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		try{
 			var client = backend.getClientByID(request.params.clientID);
 			var plugin = backend.getPluginByName(request.params.pluginName);
-			var action = plugin['clientDetails']['actions'][request.params.action];
-			
-			action(client, function(){ response.send(); });
+			var action;
+			for(var i=0; i<= plugin['clientDetails']['actions'].length; i++){
+				var searchAction = plugin['clientDetails']['actions'][i];
+				if(searchAction.name == request.params.action){
+					action = searchAction;
+					break;
+				}
+			}
+			action.execute(request.body, client, function(){ response.send(); });			
 		}catch(exc){
-			backend.error(exc);
-			response.send({'error': 'Failed to perform client plugin action', 'detail': exc});
+			var errorDetails = {'error': 'Failed to perform client plugin action', 'detail': exc.toString()};
+			backend.error(errorDetails);
+			response.send(errorDetails);
 		}
 	}
 	
 	return next();
 });
 
-server.put('/clients/:clientID/plugins/:pluginName', function (request, response, next) {
+server.put('/api/clients/:clientID/plugins/:pluginName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.setClientPluginOption(
@@ -375,7 +396,7 @@ server.put('/clients/:clientID/plugins/:pluginName', function (request, response
 	return next();
 });
 
-server.get('/log', function(request, response, next) {
+server.get('/api/log', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		backend.getLog(request.params.type, function(data){ response.send(data); });
@@ -384,13 +405,109 @@ server.get('/log', function(request, response, next) {
 	return next();
 });
 
+server.get('/api/scheduledJobs', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.getScheduledJobs(function(data){ response.send(data); });
+	}
+	
+	return next();
+});
+
+server.post('/api/scheduledJobs', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		var parameters = request.body.action ? request.body.action.parameters : [];
+		var pluginID = request.body.action.plugin ? request.body.action.plugin.pluginID : null;
+		var clientID = request.body.action.client ? request.body.action.client.clientID : null;
+		
+		backend.createJob(
+			request.body.description, request.body.cron,
+			request.body.action.name, parameters,
+			pluginID, clientID,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send({
+					'error': 'Failed to create job',
+					'detail': error,
+				});
+			}
+		);
+	}
+	
+	return next();
+});
+
+server.put('/api/scheduledJobs/:jobID', function(request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		var parameters = request.body.action ? request.body.action.parameters : [];
+		var pluginID = request.body.action.plugin ? request.body.action.plugin.pluginID : null;
+		var clientID = request.body.action.client ? request.body.action.client.clientID : null;
+
+		backend.updateJob(
+			request.params.jobID,
+			request.body.description, request.body.cron,
+			request.body.action.name, parameters,
+			pluginID, clientID,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send({
+					'error': 'Failed to create job',
+					'detail': error,
+				});
+			}
+		);
+	}
+	
+	return next();
+});
+
+server.put('/api/scheduledJobs/:jobID/enabled', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.setJobEnabled(
+			request.params.jobID, request.params.value,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send(error);
+			}
+		);
+	}
+	
+	return next();
+});
+
+server.del('/api/scheduledJobs/:jobID', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.deleteJob(
+			request.params.jobID,
+			function(){
+				response.send();
+			},
+			function(error){
+				response.send(error);
+			}
+		);
+	}
+	return next();
+});
+
+
 /**
  * #############
  * # Stuff
  * #############
  **/
 
-server.post('/login', function(request, response, next){
+server.post('/api/login', function(request, response, next){
 	var session = sessionManager.start(request, response);
 	if(session.properties['authenticated'] && !request.params.email && !request.params.password){
 		response.send();
@@ -408,7 +525,7 @@ server.post('/login', function(request, response, next){
 			response.send({'error': 'Login failed'});
 		};
 		
-		if(request.params.email == '' || request.params.password == ''){
+		if(!request.params.email || !request.params.password || request.params.email == '' || request.params.password == ''){
 			response.send({'error': 'Login failed'});
 		}else{
 			backend.checkPassword(request.params.email, request.params.password, loginOK, loginBad);
@@ -424,11 +541,20 @@ server.get('/logout', function(request, response, next){
 	response.redirect('/', next);
 });
 
-// Serve static files for the web client
-server.get(/.*/, restify.serveStatic({
-	directory: 'public/',
-	default: 'index.html'
-}));
+server.get(/^\/[^\/]*$/, function(request, response, next){
+	var session = sessionManager.start(request, response);
+	var staticServe = restify.serveStatic({
+		directory: 'public/',
+		file: 'index.html'
+	});
+	return staticServe(request, response, next);
+});
+
+server.get(/.*/, function(request, response, next){
+	var session = sessionManager.start(request, response);
+	var staticServe = restify.serveStatic({directory: 'public/'});
+	return staticServe(request, response, next);
+});
 
 server.listen(443, function () {
 	backend.log(server.name + ' listening at ' + server.url);

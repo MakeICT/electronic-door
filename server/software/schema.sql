@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 	"email" VARCHAR(256) NULL UNIQUE,
 	"passwordHash" VARCHAR(128) NULL,
 	"joinDate" INT NULL,
+	"birthdate" INT NULL,
 	"nfcID" VARCHAR(256) UNIQUE,
 	"status" USER_STATUS NOT NULL DEFAULT 'inactive'
 );
@@ -128,6 +129,26 @@ CREATE TABLE IF NOT EXISTS "groupAuthorizationTags" (
 	FOREIGN KEY("groupID") REFERENCES "groups"("groupID") ON DELETE CASCADE,
 	FOREIGN KEY("tagID") REFERENCES "authorizationTags"("tagID") ON DELETE CASCADE,
 	PRIMARY KEY("groupID", "tagID")
+);
+
+CREATE TABLE IF NOT EXISTS "scheduledJobs" (
+	"jobID" SERIAL PRIMARY KEY,
+	"description" VARCHAR(1024) NOT NULL,
+	"cron" VARCHAR(64) NOT NULL,
+	"action" VARCHAR(64) NOT NULL,
+	"pluginID" INT DEFAULT NULL,
+	"clientID" INT DEFAULT NULL,
+	"enabled" BOOLEAN NOT NULL DEFAULT FALSE,
+	FOREIGN KEY("pluginID") REFERENCES "plugins"("pluginID") ON DELETE CASCADE,
+	FOREIGN KEY("clientID") REFERENCES "clients"("clientID") ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "jobParameters" (
+	"jobID" INT NOT NULL,
+	"parameterName" VARCHAR(64) NOT NULL,
+	"parameterValue" VARCHAR(64),
+	FOREIGN KEY("jobID") REFERENCES "scheduledJobs"("jobID") ON DELETE CASCADE,
+	PRIMARY KEY("jobID", "parameterName")
 );
 
 INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$2a$08$iV9ABq9Y9o87IKJVAWAa8OvWEU5KORp5b5SIgcfTvnCKlzK/5u28G', EXTRACT('epoch' FROM current_timestamp));

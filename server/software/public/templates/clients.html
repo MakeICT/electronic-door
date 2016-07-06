@@ -1,0 +1,56 @@
+<h2>Clients</h2>
+<div ng-repeat="client in clients" class="card well">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12 col-sm-12 nopad">
+				<span simple-toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
+				<span class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove client" ng-click="removeClient(client)">✖</span>
+				<h4 class="pull-left" ng-click="isOpened = !isOpened">{{client.name}}</h4>
+			</div>
+		</div>
+	</div>
+	<div class="container-fluid" uib-collapse="!isOpened" style="clear: both">
+		<div class="row">
+			<div class="col-md-4 col-sm-4 nopad">ID</div>
+			<div class="col-md-8 col-sm-8 nopad"><input class="form-control input-sm" type="text" ng-model="client.clientID" ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></div>
+		</div>
+		<div class="row">
+			<div class="col-md-4 col-sm-4 nopad">Name</div>
+			<div class="col-md-8 col-sm-8 nopad"><input class="form-control input-sm" type="text" ng-model="client.name"  ng-model-options="{debounce: 1500}" ng-change="updateClient(client)"/></div>
+		</div>
+		<div class="row">
+			<div class="col-md-4 col-sm-4 nopad">Add plugin</div>
+			<div class="col-md-8 col-sm-8 nopad">
+				<select class="form-control input-sm" ng-change="createClientPluginAssociation(client)" ng-model="client.newPlugin">
+					<option disabled selected hidden value=""> - Available plugins - </option>
+					<option ng-repeat="plugin in clientPlugins"
+						value="{{plugin.name}}"
+						ng-if="client.plugins[plugin.name] == null"
+					>{{plugin.name}}</option>
+				</select>
+			</div>
+		</div>
+		<br/>
+	</div>
+	<div ng-repeat="plugin in client.plugins">
+		<div class="container-fluid" style="margin-bottom: 0.5em; background-color: #333; border-radius: 0.25em">
+			<div class="row" style="padding: 0.5em">
+				<div class="col-md-12 col-sm-12 nopad" style="text-align: left">
+					<button class="btn btn-default btn-sm pull-right" simple-toggle ng-model="z.isOpened" title="Settings">⚙</button>
+					<button class="btn btn-default text-warning btn-sm pull-right" disabled="disabled" ng-if="z.isOpened" title="Reload defaults" onclick="alert('Not implemented :(')">↺</button>
+					<button class="btn btn-default text-danger btn-sm pull-right" ng-if="z.isOpened" title="Remove {{plugin.name}} plugin from {{client.name}}" ng-click="disassociatePlugin(client, plugin)">✖</button>
+					{{plugin.name}}
+				</div>
+			</div>
+			<div class="row" uib-collapse="!z.isOpened" ng-repeat="option in plugin.options">
+				<div class="col-md-5 col-sm-5 nopad">{{option.name}}</div>
+				<div class="col-md-7 col-sm-7 nopad"><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/></div>
+			</div>
+		</div>
+	</div>
+	<div ng-repeat="plugin in client.plugins">
+		<div ng-repeat="action in plugin.actions">
+			<action-with-parameters properties="action" execute="doClientPluginAction(client, plugin, action)"/>
+		</div>
+	</div>
+</div>
