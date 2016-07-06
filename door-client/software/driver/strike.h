@@ -5,7 +5,7 @@
 #include "utils.h"
 
 #define STRIKE_HIGH_TIME  1000
-#define HOLD_DUTY_CYCLE   800
+#define HOLD_DUTY_CYCLE   1023
 
 class Strike  {
   public:

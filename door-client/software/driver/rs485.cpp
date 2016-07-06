@@ -17,24 +17,19 @@ void rs485::SetDebugPort(SoftwareSerial* port)  {
 }
 
 byte rs485::Send(uint8_t* data, uint8_t len) {
-  //TODO: check time since last data seen on bus
-  //      if time is greater than x attempt to send data
-  //      check that same data is read after sending
-  //      if not, wait rand(y) ms before attempting
-  //      repeat these steps, doubling y after each collision
-  //      finished when send is successful
-  LOG_DEBUG(F("rs485::Send()\r\n"));
+  LOG_DUMP(F("rs485::Send()\r\n"));
 //  if (this->lastRcv - millis() > T_MIN_WAIT && !this->Available())  {
-  if (this->lastRcv - millis() > T_MIN_WAIT)  {
+  if (true)  {
     while (Serial.available())  {
       Serial.read();    //flush buffer
     }
-    digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
-    delay(20);
+    delay(10);
     if(Serial.available())  {
       LOG_DEBUG(F("Bus is busy, aborting send to avoid collision"));
       return ERR_BUSY_BUS;
     }
+    digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   
+    delay(20);
     Serial.write(B_START);
     LOG_DEBUG(F("Sending: "));
     LOG_DEBUG(B_START);
@@ -53,24 +48,24 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
     //Check for collisions
     if(Serial.available() == len + 2)  {
       if (this->Receive() != B_START)  {
-          LOG_ERROR(F("ERROR: Collision1\r\n"));
+          LOG_ERROR(F("ERROR: Collision; First byte read is not first byte written \r\n"));
           return ERR_COLLISION;
       }
       for (int i = 0; i < len; i++)  {
         if(data[i] != this->Receive())  {
-          LOG_ERROR(F("ERROR: Collision2\r\n"));
+          LOG_ERROR(F("ERROR: Collision; Some read bytes do not match written bytes \r\n"));
           return ERR_COLLISION;
         }
       }
       if (this->Receive() != B_STOP)  {
-          LOG_ERROR(F("ERROR: Collision3\r\n"));
+          LOG_ERROR(F("ERROR: Collision; Last byte read is not last byte written \r\n"));
           return ERR_COLLISION;
       }
       LOG_INFO(F("Successfully sent packet\r\n"));
       return 0;
     }
     else if (Serial.available() > len + 2)  {
-      LOG_ERROR(F("ERROR: Collision4\r\n"));
+      LOG_ERROR(F("ERROR: Collision; packet read is longer than packet written \r\n"));
       return ERR_COLLISION;
     }
     
@@ -85,13 +80,13 @@ byte rs485::Send(uint8_t* data, uint8_t len) {
     }
   }
   else  {
-    LOG_DEBUG("NOT SENDING PACKET!!!/r/n");
+    LOG_DEBUG("NOT SENDING PACKET!!!\r\n");
     return ERR_BUSY_BUS;
   }
 }
 
 inline int rs485::Send(uint8_t data) {
-  LOG_DEBUG(F("rs485::Send()\r\n"));
+  LOG_DUMP(F("rs485::Send()\r\n"));
   this->Send(&data);
 }
 

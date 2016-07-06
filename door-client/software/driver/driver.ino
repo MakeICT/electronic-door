@@ -28,7 +28,7 @@
 #define MOD_ALARM_BUTTON
 #define MOD_DOOR_SWITCH
 #define MOD_NFC_READER
-#define MOD_DOORBELL
+//#define MOD_DOORBELL
 #define MOD_CHIME
 #define MOD_LCD
 
@@ -63,6 +63,7 @@
 // Constants for PN532 NFC reader
 #define NFC_READ_INTERVAL   100     // time in ms between NFC reads
 #define ID_SEND_INTERVAL    1000    // time in ms between sending card IDs
+#define SAME_ID_SEND_INTERVAL 5000  // time in ms between re-sending same card ID
 
 // Constants for NeoPixel ring
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
@@ -107,8 +108,8 @@ boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 
 //TODO: store start tune and other settings in EEPROM, make configurable
-byte startTune[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};    
-byte startTuneDurations[] = {12, 6, 6, 12, 12, 12, 12, 12};
+byte startTune[] = {NOTE_C4, NOTE_D4};    
+byte startTuneDurations[] = {4,4};
 byte userTune[USER_TUNE_LENGTH];
 byte userTuneDurations[USER_TUNE_LENGTH];
 byte state = S_INITIALIZING;
@@ -145,22 +146,23 @@ void setup(void) {
   
 
  // superSerial = new SuperSerial(&bus, address);
+ 
+  door_latch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
 
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
-  readout.Print("Try Me! :)");
+  readout.Print("Initializing...");
   
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
-//  if(false)  {
-    status_ring.SetMode(M_FLASH, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+    status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
   else  
   #endif
   {
   status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
-  speaker.Play(startTune, startTuneDurations, 8);
+  speaker.Play(startTune, startTuneDurations, 2);
   state = S_READY;
   }
 }
@@ -195,13 +197,10 @@ void loop(void) {
       
     case S_WAIT_SEND:
     {
-      speaker.Update();
-      status_ring.Update();
       if (!doorState && !door_latch.HoldingOpen() && !door_latch.Locked())  {
         LOG_DEBUG(F("Door opened, re-latching\r\n"));
         door_latch.Lock();
       }
-      door_latch.Update();
     }
 
     case S_UNADDRESSED:
@@ -214,20 +213,29 @@ void loop(void) {
       }
     }
 
-   // case S_INITIALIZING:  
+    case S_INITIALIZING:
+    {
+      speaker.Update();
+      status_ring.Update();
+      door_latch.Update();
+    }  
   }
 }
 
 void CheckReader()  {
   LOG_DUMP(F("Checking NFC Reader\r\n"));
   //check for NFC card
+  static uint8_t lastuid[7] = {0};
   uint8_t uid[7] = {0};
   uint8_t id_length;
+  bool sameID = true;
   if(card_reader.poll(uid, &id_length))  {
-    superSerial.QueueMessage(F_SEND_ID, uid, 7);
-    state = S_WAIT_SEND;
-    lastIDSend = millis();
-    
+    for (int i = 0; i < 6; i++)  {
+      if (uid[i] != lastuid[i]){
+        sameID = false;
+        break;
+      }
+    }    
     #if LOG_LVL>2
     LOG_INFO(F("Scanned ID: "));
     for(int i=0; i<7; i++)  {
@@ -236,7 +244,17 @@ void CheckReader()  {
     }
     LOG_INFO(F("\r\n"));
     #endif
-    status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
+    if (!sameID) {
+      superSerial.QueueMessage(F_SEND_ID, uid, 7);
+      state = S_WAIT_SEND;
+      lastIDSend = millis();
+      status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
+      arrayCopy(uid, lastuid, 7, 0);
+      LOG_DUMP(F("Sending scanned ID.\r\n"));
+    }
+    else  {
+      LOG_DEBUG(F("Not re-sending same ID more than once in configured timeout.\r\n"));
+    }
   }
   //TODO: Detect unrecoverable reader error
 }
@@ -338,7 +356,7 @@ void CheckInputs()  {
     state = S_WAIT_SEND;
     return;
   }
-  
+  #ifdef MOD_DOORBELL
   if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
     doorBell = !doorBell;
     if (doorBell == 1)  {
@@ -349,4 +367,5 @@ void CheckInputs()  {
     }
     return;
   }
+  #endif
 }

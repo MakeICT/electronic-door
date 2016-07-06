@@ -1,5 +1,10 @@
 #include "reader.h"
 
+void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
+  this->debugPort = dbgPort;
+}
+
+
 #ifdef READER_PN532
 
 PN532_SPI pn532spi(SPI, 10);      //TODO: make this configurable
@@ -10,21 +15,45 @@ Reader::Reader() {
 }
 
 boolean Reader::start() {
-  nfc.begin();
+  this->Initialize();
+}
 
-  uint32_t versiondata = nfc.getFirmwareVersion();
-  if (! versiondata) {
+bool Reader::Initialize()  {
+  LOG_DEBUG(F("Initializing PN532 NFC reader\r\n"));
+  for (int i=0; i<3; i++)  {
+    nfc.begin();
+    if (this->IsAlive())  {
+      //configure board to read RFID tags
+      nfc.SAMConfig();
+      nfc.setPassiveActivationRetries(2);  //reduce retries to prevent hang
+      LOG_DEBUG(F("Reader initialized successfully\r\n"));
+      return true;
+    }
+  }
+  LOG_ERROR(F("Could not initialize reader\r\n"));
+  return false;
+  //TODO: implement self-test if available.
+}
+
+bool Reader::IsAlive()  {
+  uint32_t v = nfc.getFirmwareVersion();
+  if (!v) {
     return false;
   }
-  
-  //configure board to read RFID tags
-  nfc.SAMConfig();
-  nfc.setPassiveActivationRetries(2);  //reduce retries to prevent hang
-  return true;
+  else  {
+    return true;
+  }
 }
 
 uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
 {
+  // Check if reader is still working
+  if (!this->IsAlive())  {
+    LOG_ERROR(F("NFC Reader has stopped responding\r\n"));
+    if (!this->Initialize())  {
+      return false;
+    }
+  }
   //TODO: detect if reader is still functioning correctly; if not, reset
   uint8_t success;
   for (byte i = 0; i <8; i++)
@@ -54,11 +83,6 @@ MFRC522 mfrc522(10, 3);   // TODO: make this configurable
 Reader::Reader() {
 
 }
-
-void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
-  this->debugPort = dbgPort;
-}
-
 
 boolean Reader::start() {
   //TODO: add reader detection
