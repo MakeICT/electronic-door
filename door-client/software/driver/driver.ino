@@ -244,7 +244,7 @@ void CheckReader()  {
     }
     LOG_INFO(F("\r\n"));
     #endif
-    if (!sameID) {
+    if (!sameID || millis() - lastIDSend > SAME_ID_SEND_INTERVAL) {
       superSerial.QueueMessage(F_SEND_ID, uid, 7);
       state = S_WAIT_SEND;
       lastIDSend = millis();
