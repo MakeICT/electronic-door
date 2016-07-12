@@ -174,8 +174,14 @@ var packetQueue = {
 	
 	'_doSend': function(){
 		var settings = getSettings();
-		var timeoutPeriod = parseInt(settings['Timeout']);
-		var maxRetries = parseInt(settings['Max retries']);
+		
+		if(this.lastPacketInfo.to == 255){
+			var timeoutPeriod = 0;
+			var maxRetries = 0;
+		}else{
+			var timeoutPeriod = parseInt(settings['Timeout']);
+			var maxRetries = parseInt(settings['Max retries']);
+		}
 		
 		var afterWriteComplete;
 		if(timeoutPeriod > 0 && maxRetries > 0 && this.lastPacketInfo.command != SERIAL_COMMANDS['ACK']){
@@ -307,7 +313,9 @@ function buildPacket(clientID, command, payload){
 	// call nextTransactionID no matter what
 	// (received packets increment the ID too, but that's not the ID that's sent
 	var transactionID = -1;
-	if(command == SERIAL_COMMANDS['ACK']){
+	if(clientID == 255){
+		var transactionID = 7;
+	}else if(command == SERIAL_COMMANDS['ACK']){
 		var transactionID = clients[clientID].getNextTransactionID(payload);
 		payload = [];
 	}else{
@@ -354,11 +362,17 @@ function onData(data){
 						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
 						backend.debug('=============================');
 						// blah blah blah
-						if(packet.from != 0) packetQueue.onACKReceived(packet);
+						if(packet.from != 0 && packet.from != 255) packetQueue.onACKReceived(packet);
 					}else{
 						var handlePacket = function(){
-							var client = clients[packet.from];
-							if(client.hasReceivedPacket(packet)){
+							if(packet.from != 255){
+								var client = clients[packet.from];
+								var received = client.hasReceivedPacket(packet)
+							}else{
+								var received = false;
+							}
+							
+							if(received){
 								backend.debug('=============================');
 								backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
 								backend.debug('=============================');
@@ -374,17 +388,19 @@ function onData(data){
 								backend.debug('=============================');
 								broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 							}
-							sendACK(packet);
+							if(packet.from != 255){
+								sendACK(packet);
+							}
 						};
-						if(!clients[packet.from]){
+						if(packet.from == 255 || clients[packet.from]){
+							handlePacket();
+						}else{
 							backend.debug('Client does not exist :(');
 							var prepAndSend = function(){
 								reloadClients();
 								handlePacket();
 							};
 							backend.addClient(packet.from, null, prepAndSend);
-						}else{
-							handlePacket();
 						}
 					}
 				}

@@ -110,9 +110,7 @@ module.exports = {
 	
 	receiveMessage: function(source, messageID, data){
 		if(messageID == "door-unlocked"){
-			console.log(data);
 			var client = backend.getClientByID(data['client']);
-			console.log(client);
 
 			var clientOptions = getClientOptions(client);
 			var parameters = {
@@ -130,13 +128,11 @@ module.exports = {
 				}
 			}
 			
-			var clients = backend.getClients();
-			for(var i=0; i<clients.length; i++){
-				var client = clients[i];
-				if(client.plugins[module.exports.name]){
-					module.exports.getClientActionByName('Test sound').execute(parameters, client);
-					module.exports.getClientActionByName('Test lights').execute(parameters, client);
-				}
+			if(parameters['Tune'] && parameters['Tune'] != ''){
+				superSerial.send(255, superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(parameters['Tune']));
+			}
+			if(parameters['Lights'] && parameters['Lights'] != ''){
+				superSerial.send(255, superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(parameters['Lights']));
 			}
 		}
 	},
