@@ -129,10 +129,10 @@ module.exports = {
 			}
 			
 			if(parameters['Tune'] && parameters['Tune'] != ''){
-				superSerial.send(255, superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(parameters['Tune']));
+				superSerial.broadcast(superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(parameters['Tune']));
 			}
 			if(parameters['Lights'] && parameters['Lights'] != ''){
-				superSerial.send(255, superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(parameters['Lights']));
+				superSerial.broadcast(superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(parameters['Lights']));
 			}
 		}
 	},
