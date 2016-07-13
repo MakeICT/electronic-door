@@ -63,7 +63,6 @@ function reloadClients(callback){
 	}
 }
 
-
 function Packet(rawBytesOrTransactionID, from, to, command, payload){
 	this.bytes = [];
 	this.unescapedPacket = [];
@@ -168,6 +167,14 @@ var packetQueue = {
 	},
 	
 	'onACKTimeout': function(){
+		if(!this.lastPacketInfo){
+			backend.error('SuperSerial: lastPacketInfo is empty? That should never happen :(');
+			console.log('Are you sure that \'this\' is bound correctly? Here it is:');
+			console.log(this);
+			// this should never happen, but here's the most fail-safe-ish thing we can do
+			this._doneWaiting();
+			return;
+		}
 		var settings = getSettings();
 		var maxRetries = parseInt(settings['Max retries']);
 		
@@ -302,22 +309,25 @@ function _sendPacket(packet, next){
 }
 
 /**
- * Convenience wrapper for building an ACK packet
+ * Convenience wrapper for building and queueueueing an ACK packet
  **/
 function sendACK(packet){
 	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
 	packetQueue.queue(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
 }
 
+/**
+ * if command is ACK, @payload parameter must contain the transactionID of the packet being ACK'd
+ **/
 function buildPacket(clientID, command, payload){
-	// If command is an ACK, payload should be the transactionID
-	// call nextTransactionID no matter what
-	// (received packets increment the ID too, but that's not the ID that's sent
 	var transactionID = -1;
-	if(clientID == 255){
+	if(clientID == 255){		// broadcast packet
 		var transactionID = 7;
 	}else if(command == SERIAL_COMMANDS['ACK']){
+		// If command is an ACK, payload parameter is abused to hold the transactionID
+		// Note: need to call nextTransactionID no matter what (received packets increment the ID too, but that's not the ID that's sent
 		var transactionID = clients[clientID].getNextTransactionID(payload);
+		// ACK packets have no payload (parameter needs to be reset since we abused it)
 		payload = [];
 	}else{
 		var transactionID = clients[clientID].getNextTransactionID();
@@ -510,6 +520,10 @@ module.exports = {
 		var client = clients[clientID];
 		var packet = buildPacket(clientID, command, payload);
 		packetQueue.queue(packet);
+	},
+	
+	broadcast: function(command, payload){
+		packetQueue.queue(buildPacket(255, command, payload));
 	},
 	
 	reconnect: function(){
