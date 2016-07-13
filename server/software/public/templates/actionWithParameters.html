@@ -9,7 +9,7 @@
 	<div class="container-fluid" uib-collapse="!isOpened">
 		<div class="row" ng-repeat="parameter in properties.parameters">
 			<div class="col-md-4 col-sm-4 nopad">{{parameter.name}}</div>
-			<div class="col-md-8 col-sm-8 nopad"><input class="form-control input-sm" ng-model="parameter.value"/></div>
+			<div class="col-md-8 col-sm-8 nopad"><input class="form-control input-sm" ng-model="parameter.value" ng-trim="false"/></div>
 		</div>
 		<div class="row">
 			<div class="col-md-12 col-sm-12 nopad" style="margin-bottom: 1em;">
