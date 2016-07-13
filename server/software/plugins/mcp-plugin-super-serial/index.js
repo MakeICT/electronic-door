@@ -167,6 +167,30 @@ var packetQueue = {
 		this._doSend();
 	},
 	
+	'onACKTimeout': function(){
+		var settings = getSettings();
+		var maxRetries = parseInt(settings['Max retries']);
+		
+		if(++this.retries > maxRetries){
+			backend.debug('Packet failed after ' + maxRetries + ' retries: ' + this.lastPacketInfo.toString());
+			this._doneWaiting();
+		}else{
+			try{
+				backend.debug('Resending packet (' + this.retries + '/' + maxRetries + '): ' + this.lastPacketInfo.toString());
+				this._doSend();
+			}catch(exc){
+				backend.error('Error while attempting to resend packet: ' + exc);
+				backend.debug(exc);
+			}
+		}
+	},
+	
+	'onACKReceived': function(packet){
+		if(this.lastPacketInfo && packet.from == this.lastPacketInfo.to && packet.transactionID == this.lastPacketInfo.transactionID){
+			this._doneWaiting();
+		}
+	},
+	
 	'clear': function(){
 		this._queue = [];
 		this._doneWaiting();
@@ -196,30 +220,6 @@ var packetQueue = {
 		this.waitingForACK = false;
 		this.dequeue();
 	},
-	
-	'onACKTimeout': function(){
-		var settings = getSettings();
-		var maxRetries = parseInt(settings['Max retries']);
-		
-		if(++this.retries > maxRetries){
-			backend.debug('Packet failed after ' + maxRetries + ' retries: ' + this.lastPacketInfo.toString());
-			this._doneWaiting();
-		}else{
-			try{
-				backend.debug('Resending packet (' + this.retries + '/' + maxRetries + '): ' + this.lastPacketInfo.toString());
-				this._doSend();
-			}catch(exc){
-				backend.error('Error while attempting to resend packet: ' + exc);
-				backend.debug(exc);
-			}
-		}
-	},
-	
-	'onACKReceived': function(packet){
-		if(this.lastPacketInfo && packet.from == this.lastPacketInfo.to && packet.transactionID == this.lastPacketInfo.transactionID){
-			this._doneWaiting();
-		}
-	},
 };
 
 function SerialClient(clientInfo){
@@ -246,7 +246,7 @@ function SerialClient(clientInfo){
 }
 var clients = {};
 
-// This packet should already have the endcaps
+// This is the lowest-level packet-writing function
 function _sendPacket(packet, next){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
@@ -295,15 +295,16 @@ function _sendPacket(packet, next){
 	}
 }
 
+/**
+ * Convenience wrapper for building an ACK packet
+ **/
 function sendACK(packet){
 	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
 	packetQueue.queue(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
 }
 
-/**
- * If command is an ACK, payload should be the transactionID
- **/
 function buildPacket(clientID, command, payload){
+	// If command is an ACK, payload should be the transactionID
 	// call nextTransactionID no matter what
 	// (received packets increment the ID too, but that's not the ID that's sent
 	var transactionID = -1;
