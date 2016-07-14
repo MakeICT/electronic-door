@@ -126,7 +126,12 @@ bool SuperSerial::GetPacket() {
           if (receivedPacket.VerifyCRC())  {    //verify CRC
             if (this->receivedPacket.MsgLength() == (receivedBytes - P_H_F_LENGTH)) {
               LOG_INFO(F("Got valid packet\r\n"));
-              if (this->receivedPacket.TransID() == this->currentTransaction)  {
+              if (this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
+                LOG_DEBUG(F("Received Broadcast packet\r\n"));
+                this->newMessage = true;
+                return true;
+              }
+              else if (this->receivedPacket.TransID() == this->currentTransaction)  {
                 if (this->receivedPacket.Msg().function == F_ACK)  {
                   LOG_DEBUG(F("Received ACK\r\n"));
                   this->dataQueued = false;

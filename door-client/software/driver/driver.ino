@@ -54,7 +54,7 @@
 #define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
 #define DOOR_SWITCH_PIN   15      // Magnetic switch on door
 #define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
-#define DOOR_BELL_PIN     19      // Door bell pin
+#define DOOR_BELL_PIN     17      // Door bell pin
 
 
 // Constants for audio playback
