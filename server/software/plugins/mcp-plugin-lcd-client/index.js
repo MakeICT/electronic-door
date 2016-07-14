@@ -29,41 +29,42 @@ function pad(str){
 	return (str + '                ').substring(0, 16);
 }
 
-function sendMessage(clientID, line1, line2){
-	var msg = pad(line1) + pad(line2);
-	try{
-		superSerial.send(clientID, superSerial.SERIAL_COMMANDS['TEXT'], msg);
-	}catch(exc){
-		console.log(exc);
-	}
+function restartIdleTimer(clientID){
 	if(lcdResetTimers[clientID]) clearTimeout(lcdResetTimers[clientID]);
-	
+
 	var client = backend.getClientByID(clientID);
-	var clientOptions = getClientOptions(client);
-	
-	if(clientOptions['Idle timeout']){
-		var sendIdleMessage = function(){
-			// `this` must be bound to the client object
-			var opts = getClientOptions(this);
-			var parameters = {
-				'Line 1': opts['Idle line 1'],
-				'Line 2': opts['Idle line 2']
-			};
-			try{
-				getClientAction('Send text to LCD').execute(parameters, this);
-			}catch(exc){
-				console.log(exc);
-			}
+	if(client){
+		var clientOptions = getClientOptions(client);
+
+		if(clientOptions['Idle timeout']){
+			var sendIdleMessage = sendMessage.bind(this, clientID, clientOptions['Idle line 1'], clientOptions['Idle line 2'], true);
+			lcdResetTimers[clientID] = setTimeout(sendIdleMessage, parseInt(clientOptions['Idle timeout']));
 		}
-		lcdResetTimers[clientID] = setTimeout(sendIdleMessage.bind(client), parseInt(clientOptions['Idle timeout']));
 	}
 }
 
-function sendToAll(line1, line2){
-	backend.debug("Send this to each client!");
-	var clients = backend.getClients();
-	for(var i=0; i<clients.length; i++){
-		sendMessage(clients[i].clientID, line1, line2);
+function sendMessage(clientID, line1, line2, ignoreIdle){
+	var msg = pad(line1) + pad(line2);
+	try{
+		superSerial.send(clientID, superSerial.SERIAL_COMMANDS['TEXT'], msg);
+		if(!ignoreIdle) restartIdleTimer(clientID);
+	}catch(exc){
+		console.log(exc);
+	}
+}
+
+function sendToAll(line1, line2, ignoreIdle){
+	var msg = pad(line1) + pad(line2);
+	try{
+		superSerial.broadcast(superSerial.SERIAL_COMMANDS['TEXT'], msg);
+		if(!ignoreIdle){
+			var clients = backend.getClients();
+			for(var i=0; i<clients.length; i++){
+				restartIdleTimer(clients[i].clientID);
+			}
+		}
+	}catch(exc){
+		console.log(exc);
 	}
 }
 
@@ -147,6 +148,7 @@ module.exports = {
 	
 	onEnable: function(){
 		broadcaster.subscribe(module.exports);
+		sendToAll(center('Server plugin'), center('initialized'));
 	},
 	
 	onDisable: function(){

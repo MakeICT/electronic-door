@@ -63,7 +63,6 @@ function reloadClients(callback){
 	}
 }
 
-
 function Packet(rawBytesOrTransactionID, from, to, command, payload){
 	this.bytes = [];
 	this.unescapedPacket = [];
@@ -167,37 +166,15 @@ var packetQueue = {
 		this._doSend();
 	},
 	
-	'clear': function(){
-		this._queue = [];
-		this._doneWaiting();
-	},
-	
-	'_doSend': function(){
-		var settings = getSettings();
-		var timeoutPeriod = parseInt(settings['Timeout']);
-		var maxRetries = parseInt(settings['Max retries']);
-		
-		var afterWriteComplete;
-		if(timeoutPeriod > 0 && maxRetries > 0 && this.lastPacketInfo.command != SERIAL_COMMANDS['ACK']){
-			 // don't allow dequeue until ack is received (or we give up)
-			afterWriteComplete = function(){
-				this.ackTimeout = setTimeout(this.onACKTimeout.bind(this), timeoutPeriod);
-			};
-		}else{
-			 // don't allow dequeue until we're done writing this packet out
-			afterWriteComplete = this._doneWaiting;
-		}
-		_sendPacket(this.lastPacketInfo.bytes, afterWriteComplete.bind(this));
-	},
-	
-	'_doneWaiting': function(){
-		clearTimeout(this.ackTimeout);
-		this.retries = 0;
-		this.waitingForACK = false;
-		this.dequeue();
-	},
-	
 	'onACKTimeout': function(){
+		if(!this.lastPacketInfo){
+			backend.error('SuperSerial: lastPacketInfo is empty? That should never happen :(');
+			console.log('Are you sure that \'this\' is bound correctly? Here it is:');
+			console.log(this);
+			// this should never happen, but here's the most fail-safe-ish thing we can do
+			this._doneWaiting();
+			return;
+		}
 		var settings = getSettings();
 		var maxRetries = parseInt(settings['Max retries']);
 		
@@ -219,6 +196,42 @@ var packetQueue = {
 		if(this.lastPacketInfo && packet.from == this.lastPacketInfo.to && packet.transactionID == this.lastPacketInfo.transactionID){
 			this._doneWaiting();
 		}
+	},
+	
+	'clear': function(){
+		this._queue = [];
+		this._doneWaiting();
+	},
+	
+	'_doSend': function(){
+		var settings = getSettings();
+		
+		if(this.lastPacketInfo.to == 255){
+			var timeoutPeriod = 0;
+			var maxRetries = 0;
+		}else{
+			var timeoutPeriod = parseInt(settings['Timeout']);
+			var maxRetries = parseInt(settings['Max retries']);
+		}
+		
+		var afterWriteComplete;
+		if(timeoutPeriod > 0 && maxRetries > 0 && this.lastPacketInfo.command != SERIAL_COMMANDS['ACK']){
+			 // don't allow dequeue until ack is received (or we give up)
+			afterWriteComplete = function(){
+				this.ackTimeout = setTimeout(this.onACKTimeout.bind(this), timeoutPeriod);
+			};
+		}else{
+			 // don't allow dequeue until we're done writing this packet out
+			afterWriteComplete = this._doneWaiting;
+		}
+		_sendPacket(this.lastPacketInfo.bytes, afterWriteComplete.bind(this));
+	},
+	
+	'_doneWaiting': function(){
+		clearTimeout(this.ackTimeout);
+		this.retries = 0;
+		this.waitingForACK = false;
+		this.dequeue();
 	},
 };
 
@@ -246,7 +259,7 @@ function SerialClient(clientInfo){
 }
 var clients = {};
 
-// This packet should already have the endcaps
+// This is the lowest-level packet-writing function
 function _sendPacket(packet, next){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
@@ -295,20 +308,26 @@ function _sendPacket(packet, next){
 	}
 }
 
+/**
+ * Convenience wrapper for building and queueueueing an ACK packet
+ **/
 function sendACK(packet){
 	backend.debug('Sending ACK for ' + packet.transactionID + ' to ' + packet.from);
 	packetQueue.queue(buildPacket(packet.from, SERIAL_COMMANDS['ACK'], packet.transactionID));
 }
 
 /**
- * If command is an ACK, payload should be the transactionID
+ * if command is ACK, @payload parameter must contain the transactionID of the packet being ACK'd
  **/
 function buildPacket(clientID, command, payload){
-	// call nextTransactionID no matter what
-	// (received packets increment the ID too, but that's not the ID that's sent
 	var transactionID = -1;
-	if(command == SERIAL_COMMANDS['ACK']){
+	if(clientID == 255){		// broadcast packet
+		var transactionID = 7;
+	}else if(command == SERIAL_COMMANDS['ACK']){
+		// If command is an ACK, payload parameter is abused to hold the transactionID
+		// Note: need to call nextTransactionID no matter what (received packets increment the ID too, but that's not the ID that's sent
 		var transactionID = clients[clientID].getNextTransactionID(payload);
+		// ACK packets have no payload (parameter needs to be reset since we abused it)
 		payload = [];
 	}else{
 		var transactionID = clients[clientID].getNextTransactionID();
@@ -354,11 +373,17 @@ function onData(data){
 						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
 						backend.debug('=============================');
 						// blah blah blah
-						if(packet.from != 0) packetQueue.onACKReceived(packet);
+						if(packet.from != 0 && packet.from != 255) packetQueue.onACKReceived(packet);
 					}else{
 						var handlePacket = function(){
-							var client = clients[packet.from];
-							if(client.hasReceivedPacket(packet)){
+							if(packet.from != 255){
+								var client = clients[packet.from];
+								var received = client.hasReceivedPacket(packet)
+							}else{
+								var received = false;
+							}
+							
+							if(received){
 								backend.debug('=============================');
 								backend.debug('Received duplicate packet: ' + packet.from + '.' + packet.transactionID);
 								backend.debug('=============================');
@@ -374,17 +399,19 @@ function onData(data){
 								backend.debug('=============================');
 								broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 							}
-							sendACK(packet);
+							if(packet.from != 255){
+								sendACK(packet);
+							}
 						};
-						if(!clients[packet.from]){
+						if(packet.from == 255 || clients[packet.from]){
+							handlePacket();
+						}else{
 							backend.debug('Client does not exist :(');
 							var prepAndSend = function(){
 								reloadClients();
 								handlePacket();
 							};
 							backend.addClient(packet.from, null, prepAndSend);
-						}else{
-							handlePacket();
 						}
 					}
 				}
@@ -493,6 +520,10 @@ module.exports = {
 		var client = clients[clientID];
 		var packet = buildPacket(clientID, command, payload);
 		packetQueue.queue(packet);
+	},
+	
+	broadcast: function(command, payload){
+		packetQueue.queue(buildPacket(255, command, payload));
 	},
 	
 	reconnect: function(){
