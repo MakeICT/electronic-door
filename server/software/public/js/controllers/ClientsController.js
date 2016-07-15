@@ -39,7 +39,7 @@ app.factory('clientService', function($http, ajaxChecker) {
 	return clientService;
 });
 
-app.controller('clientsCtrl', function($scope, $http, authenticationService, ajaxChecker, clientService, pluginService){
+app.controller('clientsCtrl', function($scope, $http, authenticationService, ajaxChecker, clientService, pluginService, tunePlayer){
 	$scope.clients = clientService.clients;
 	$scope.clientPlugins = pluginService.clientPlugins;
 	
@@ -100,5 +100,9 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 				// @TODO: give feedback
 			}
 		});
+	};
+	
+	$scope.playTune = function(tune){
+		tunePlayer.play(tune);
 	};
 });

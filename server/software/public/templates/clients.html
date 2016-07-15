@@ -44,7 +44,17 @@
 			</div>
 			<div class="row" uib-collapse="!z.isOpened" ng-repeat="option in plugin.options">
 				<div class="col-md-5 col-sm-5 nopad">{{option.name}}</div>
-				<div class="col-md-7 col-sm-7 nopad"><input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/></div>
+				<div ng-if="option.type != 'tune'" class="col-md-7 col-sm-7 nopad">
+					<input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/>
+				</div>
+				<div ng-if="option.type == 'tune'">
+					<div class="col-md-6 col-sm-6 nopad">
+						<input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/>
+					</div>
+					<div class="col-md-1 col-sm-1 nopad">
+						<button class="btn btn-sm btn-default" ng-click="playTune(option.value)">&gt;</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

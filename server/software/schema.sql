@@ -5,7 +5,7 @@
 CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
 CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
 
-CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'boolean', 'hidden', 'password');
+CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'boolean', 'hidden', 'password', 'tune');
 
 CREATE TABLE IF NOT EXISTS users (
 	"userID" SERIAL PRIMARY KEY,
