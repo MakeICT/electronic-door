@@ -94,9 +94,17 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-md-4 col-sm-4"><strong>Key status</strong></div>
-				<div class="col-md-8 col-sm-8 nopad">
-					<button type="button" class="btn btn-default btn-block btn-sm {{user.keyActive?'':'btn-warning'}}" ng-click="toggleKeyEnrollment(user)">{{user.keyActive?"✓ Enrolled":"✘ Not enrolled"}}</button>
+				<div class="col-md-4 col-sm-4"><strong>Key</strong></div>
+				<div class="col-md-8 col-sm-8">
+					<div class="row">
+						<div ng-if="user.keyActive">
+							<div class="btn btn-addon btn-danger btn-sm col-md-1 col-sm-1 col-xs-1" ng-click="toggleKeyEnrollment(user)">x</div>
+							<div class="btn btn-default btn-sm col-md-11 col-sm-11 col-xs-11">{{user.nfcID}}</div>
+						</div>
+						<div ng-if="!user.keyActive">
+							<div type="button" class="btn btn-default btn-block btn-sm btn-warning" ng-click="toggleKeyEnrollment(user)">✘ Not enrolled</div>
+						</div>
+					</div>
 					<table class="table" ng-if="nfcLog && nfcLog.length > 0">
 						<tr ng-repeat="log in nfcLog">
 							<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
@@ -104,7 +112,7 @@
 						</tr>
 					</table>
 					<div ng-if="nfcLog && nfcLog.length == 0">
-						Please scan an NFC card and try again.
+						No unassigned scans are available.
 					</div>
 				</div>
 			</div>
