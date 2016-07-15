@@ -1,19 +1,19 @@
-<div ng-if="!properties.parameters || properties.parameters.length == 0">
-	<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
-</div>
-<div ng-if="properties.parameters && properties.parameters.length > 0">
-	<div simple-toggle class="btn btn-primary btn-sm" style="width: 100%; position: relative;" ng-model="isOpened">
-		<div class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="position: absolute; right: 0.25em; top: 25%"></div>
-		{{properties.name}}
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-11 col-sm-11 col-xs-11 nopad">
+			<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
+		</div>
+		<div ng-if="properties.parameters && properties.parameters.length > 0" class="col-md-1 col-sm-1 col-xs-1 nopad">
+			<button simple-toggle class="btn btn-default btn-sm" ng-model="$parent.isOpened">
+				<span class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="font-size: 80%"></span>
+			</button>
+		</div>
 	</div>
-	<div class="container-fluid" uib-collapse="!isOpened">
+	<div uib-collapse="!isOpened" style="margin-bottom: 1em">
 		<div class="row" ng-repeat="parameter in properties.parameters">
 			<div class="col-md-4 col-sm-4 nopad">{{parameter.name}}</div>
-			<div class="col-md-8 col-sm-8 nopad"><input class="form-control input-sm" ng-model="parameter.value" ng-trim="false"/></div>
-		</div>
-		<div class="row">
-			<div class="col-md-12 col-sm-12 nopad" style="margin-bottom: 1em;">
-				<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
+			<div class="col-md-7 col-sm-7 nopad">
+				<input class="form-control input-sm" ng-model="parameter.value" ng-trim="false"/>
 			</div>
 		</div>
 	</div>
