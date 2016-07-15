@@ -130,6 +130,7 @@ module.exports = {
 			
 			if(parameters['Tune'] && parameters['Tune'] != ''){
 				superSerial.broadcast(superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(parameters['Tune']));
+				broadcaster.broadcast(module.exports, 'tune', parameters['Tune']);
 			}
 			if(parameters['Lights'] && parameters['Lights'] != ''){
 				superSerial.broadcast(superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(parameters['Lights']));
