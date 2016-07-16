@@ -56,7 +56,7 @@ void Ring::Update()  {
   uint8_t currentMode;
   uint32_t currentColor1;
   uint32_t currentColor2;
-  int currentPeriod;
+  uint16_t currentPeriod;
   if (currentMillis - tempStarted > tempDuration)
     tempMode = false;
   if (tempMode)  {

@@ -34,7 +34,6 @@
 
 
 /*-----( Declare Constants and Pin Numbers )-----*/
-#define DEBUG1
 
 // Pin assignments
 #define RS485_RX          0       // Reserved for hardware serial
@@ -153,6 +152,8 @@ void setup(void) {
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
   readout.Print("Initializing...");
+  // notify server that client has started
+  superSerial.QueueMessage(F_CLIENT_START, 0, 0);
   
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
