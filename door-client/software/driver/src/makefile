@@ -1,5 +1,7 @@
+#Point this to your Arduino installation
 ARDUINO_DIR=/home/christian/Downloads/arduino-1.6.9
-AVR_TOOLS_DIR=/home/christian/Downloads/arduino-1.6.9/hardware/tools/avr
+
+#These files are included in the repo and shouldn't need to be changed
 ARDMK_DIR=../tools/Arduino-Makefile
 USER_LIB_PATH = ../lib
 OBJDIR = ../build-$(BOARD_TAG)-$(BOARD_SUB)
