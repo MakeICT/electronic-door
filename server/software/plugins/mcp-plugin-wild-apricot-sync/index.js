@@ -99,84 +99,95 @@ module.exports = {
 					backend.debug('Connecting to WildApricot...');
 					api.connect(function(token){
 						backend.debug('Downloading contacts...');
+						
 						api.get('contacts?$async=false', null, function(data){
 							data = JSON.parse(data);
 							if(!data || !data['Contacts'] || data['reason']){
 								data = doThatThing();
 							}
 							var contacts = data['Contacts'];
+							var contactsLeftToSync = contacts.length;
+							backend.debug(contactsLeftToSync + ' contacts to sync');
+							var markOneDone = function(){
+								if(--contactsLeftToSync == 0){
+									backend.log('WildApricot Sync complete!');
+								}
+							};
 							
-							for(var i=0; i<contacts.length; i++){
-								var contact = contacts[i];
+							var updateUser = function(contact, user){
+								if(!user) user = {};
 								
-								var transaction = {
-									data: contact,
-									callback: function(user){
-										if(!user) user = {};
+								try{
+									user.firstName = contact.FirstName;
+									user.lastName = contact.LastName;
+									user.email = contact.Email;
+									user.status = (contact.Status == 'Active') ? 'active' : 'inactive';
+
+									for(var j=0; j<contact.FieldValues.length; j++){
+										contact[contact.FieldValues[j].FieldName] = contact.FieldValues[j].Value;
+									}
+									if(contact['Member since']){
+										user.joinDate = Math.floor((new Date(contact['Member since'])).getTime() / 1000);
 										
-										try{
-											user.firstName = this.data.FirstName;
-											user.lastName = this.data.LastName;
-											user.email = this.data.Email;
-											user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
+										if(contact['MembershipLevel']){
+											var level = contact['MembershipLevel']['Name'];
+										}else{
+											var level = null;
+										}
+										var alreadyEnrolledInCorrectGroup = false;
+										
+										var updateGroups = function(){
+											backend.getUserByEmail(user.email, function(user){
+												var newGroupName = "WA-Level: " + level;
+												backend.getUserGroups(user.userID, function(groups){
+													for(var i=0; i<groups.length; i++){
+														if(!groups[i].enrolled) continue;
+														var groupName = groups[i].name;
 
-											for(var j=0; j<this.data.FieldValues.length; j++){
-												this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
-											}
-											if(!this.data['Member since']) return;
-											
-											user.joinDate = Math.floor((new Date(this.data['Member since'])).getTime() / 1000);
-											
-											if(this.data['MembershipLevel']){											
-												var level = this.data['MembershipLevel']['Name'];
-											}else{
-												var level = null;
-											}
-											var alreadyEnrolledInCorrectGroup = false;
-											
-											var updateGroups = function(){
-												backend.getUserByEmail(user.email, function(user){
-													var newGroupName = "WA-Level: " + level;
-													backend.getUserGroups(user.userID, function(groups){
-														for(var i=0; i<groups.length; i++){
-															if(!groups[i].enrolled) continue;
-															var groupName = groups[i].name;
-
-															// remove user from all of the WA groups they are in if they are not the current group
-															if(groupName.indexOf("WA-Level: ") == 0){
-																if(groupName != newGroupName){
-																	backend.setGroupEnrollment(user.userID, groupName, false);
-																}else{
-																	alreadyEnrolledInCorrectGroup = true;
-																}
+														// remove user from all of the WA groups they are in if they are not the current group
+														if(groupName.indexOf("WA-Level: ") == 0){
+															if(groupName != newGroupName){
+																backend.setGroupEnrollment(user.userID, groupName, false);
+															}else{
+																alreadyEnrolledInCorrectGroup = true;
 															}
 														}
-														if(level && !alreadyEnrolledInCorrectGroup){
-															var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
-															backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
-														}
-													});
+													}
+													if(level && !alreadyEnrolledInCorrectGroup){
+														var doEnrollment = function(){
+															backend.setGroupEnrollment(user.userID, newGroupName, true);
+															markOneDone();
+														};
+														backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
+													}else{
+														markOneDone();
+													}
 												});
-											};
-											
-											if(!user.userID){
-												backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
-											}
-											backend.updateUser(user, updateGroups);
-										}catch(exc){
-											backend.error('WildApricot Sync failed while attempting to update user :(');
-											console.error(exc);
-											var errorData = {
-												'user': user,
-												'exception': exc,
-											};
-											broadcaster.broadcast(module.exports, 'sync-error', errorData);
+											});
+										};
+										
+										if(!user.userID){
+											backend.addProxyUser('WildApricot', contact.Id, user, updateGroups, backend.debug);
 										}
-									},
-								};
-
+										backend.updateUser(user, updateGroups);
+									}else{
+										markOneDone();
+									}
+								}catch(exc){
+									backend.error('WildApricot Sync failed while attempting to update user :(');
+									console.error(exc);
+									var errorData = {
+										'user': user,
+										'exception': exc,
+									};
+									broadcaster.broadcast(module.exports, 'sync-error', errorData);
+								}
+							};
+							for(var i=0; i<contacts.length; i++){
+								var contact = contacts[i];
+								var transaction = updateUser.bind(this, contact);
 								var updateFunc = backend.getUserByProxyID.bind(this, 'WildApricot', contact.Id, transaction);
-								setTimeout(updateFunc, i*500);
+								setTimeout(updateFunc, i*100);
 							}
 						});
 					});
