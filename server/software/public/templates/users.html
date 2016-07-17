@@ -97,9 +97,11 @@
 				<div class="col-md-4 col-sm-4"><strong>Key</strong></div>
 				<div class="col-md-8 col-sm-8">
 					<div class="row">
-						<div ng-if="user.keyActive">
-							<div class="btn btn-addon btn-danger btn-sm col-md-1 col-sm-1 col-xs-1" ng-click="toggleKeyEnrollment(user)">x</div>
-							<div class="btn btn-default btn-sm col-md-11 col-sm-11 col-xs-11">{{user.nfcID}}</div>
+						<div ng-if="user.keyActive" class="col-md-12 col-sm-12 input-group">
+							<div class="btn btn-default btn-sm btn-block">{{user.nfcID}}</div>
+							<div class="input-group-btn">
+								<div class="btn btn-addon btn-danger btn-sm" ng-click="toggleKeyEnrollment(user)">✘</div>
+							</div>
 						</div>
 						<div ng-if="!user.keyActive">
 							<div type="button" class="btn btn-default btn-block btn-sm btn-warning" ng-click="toggleKeyEnrollment(user)">✘ Not enrolled</div>
@@ -120,8 +122,12 @@
 				<div class="col-md-4 col-sm-4"><strong>Groups</strong></div>
 				<div class="col-md-8 col-sm-8">
 					<div class="row" ng-repeat="group in joinedGroups = (user.groups|filter:{'enrolled':true}|orderBy:'name')">
-						<div class="btn btn-addon btn-danger btn-xs col-md-1 col-sm-1 col-xs-1" ng-click="setGroupEnrollment(user, group.name, false)">x</div>
-						<div class="btn btn-default btn-xs col-md-11 col-sm-11 col-xs-11">{{group.name}}</div>
+						<div class="input-group col-md-12 col-sm-12">
+							<div class="input-group-btn">
+								<div class="btn btn-danger btn-xs" ng-click="setGroupEnrollment(user, group.name, false)">✘</div>
+							</div>
+							<div class="btn btn-default btn-xs btn-block">{{group.name}}</div>
+						</div>
 					</div>
 					<div ng-if="joinedGroups.length==0" class="text-center">No groups</div>
 					<div class="row">
