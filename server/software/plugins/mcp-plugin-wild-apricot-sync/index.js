@@ -92,8 +92,12 @@ module.exports = {
 	actions: [
 		{
 			'name': 'Sync Now',
-			'parameters': [],
-			'execute': function(){
+			'parameters': [{
+				'name': 'Delay',
+				'type': 'number',
+				'value': 500
+			}],
+			'execute': function(parameters, session){
 				backend.log('Starting WildApricot sync...');
 				backend.getPluginOptions(this.name, function(settings){
 					backend.debug('Connecting to WildApricot...');
@@ -187,7 +191,7 @@ module.exports = {
 								var contact = contacts[i];
 								var transaction = updateUser.bind(this, contact);
 								var updateFunc = backend.getUserByProxyID.bind(this, 'WildApricot', contact.Id, transaction);
-								setTimeout(updateFunc, i*333);
+								setTimeout(updateFunc, i*parameters['Delay']);
 							}
 						});
 					});
