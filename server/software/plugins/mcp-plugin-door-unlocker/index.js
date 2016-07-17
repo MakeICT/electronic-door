@@ -30,11 +30,11 @@ module.exports = {
 	actions: [
 		{
 			'name': 'Unlock all',
-			'parameters': {
+			'parameters': [{
 				'name': 'Duration',
 				'type': 'number',
 				'value': 3
-			},
+			}],
 			'execute': function(parameters){
 				throw 'Not yet implemented';
 				// @TODO: implement "Unlock all" function
