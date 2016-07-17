@@ -41,7 +41,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 	return pluginService;
 });
 
-app.controller('pluginsCtrl', function($scope, $http, authenticationService, ajaxChecker, pluginService){
+app.controller('pluginsCtrl', function($scope, $http, authenticationService, ajaxChecker, pluginService, tunePlayer){
 	$scope.plugins = pluginService.plugins;
 	
 	$scope.togglePlugin = function(plugin, enabled){
@@ -72,5 +72,9 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 				// @TODO: give feedback
 			}
 		});
+	};
+	
+	$scope.playTune = function(tune){
+		tunePlayer.play(tune);
 	};
 });

@@ -32,7 +32,7 @@ module.exports = {
 			'parameters': [
 				{
 					'name': 'Tune',
-					'type': 'text',
+					'type': 'tune',
 					'value': '35003500350031003500380020060106060606060106060b110b',
 				},{
 					'name': 'Lights',
@@ -49,7 +49,7 @@ module.exports = {
 		options: [
 			{
 				'name': 'Default tune',
-				'type': 'text',
+				'type': 'tune',
 				'value': '35003500350031003500380020060106060606060106060b110b',
 			},{
 				'name': 'Default lights',
@@ -62,7 +62,7 @@ module.exports = {
 				'name': 'Test sound',
 				'parameters': [{
 					'name': 'Tune',
-					'type': 'text',
+					'type': 'tune',
 					'value': '35003500350031003500380020060106060606060106060b110b',
 				}],
 				'execute': function(parameters, client, callback){

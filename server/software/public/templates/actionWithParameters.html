@@ -8,12 +8,23 @@
 				<span class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="font-size: 80%"></span>
 			</button>
 		</div>
+		<div ng-if="!properties.parameters || properties.parameters.length == 0" class="col-md-1 col-sm-1 col-xs-1 nopad">
+			<div class="btn btn-default btn-sm"  ng-disabled="true">&nbsp;&nbsp;</div>
+		</div>
 	</div>
 	<div uib-collapse="!isOpened" style="margin-bottom: 1em">
-		<div class="row" ng-repeat="parameter in properties.parameters">
+		<div class="row" ng-repeat="parameter in properties.parameters" ng-switch="parameter.type">
 			<div class="col-md-4 col-sm-4 nopad">{{parameter.name}}</div>
 			<div class="col-md-7 col-sm-7 nopad">
-				<input class="form-control input-sm" ng-model="parameter.value" ng-trim="false"/>
+				<div ng-switch-when="tune" class="input-group">
+					<input class="form-control input-sm" type="text" ng-model="parameter.value" ng-trim="false"/>
+					<div class="input-group-btn">
+						<button class="btn btn-sm btn-default btn-addon" ng-click="$parent.$parent.$parent.playTune(parameter.value)">♪</button>
+					</div>
+				</div>
+				<div ng-switch-default>
+					<input class="form-control input-sm" ng-model="parameter.value" ng-trim="false"/>
+				</div>
 			</div>
 		</div>
 	</div>

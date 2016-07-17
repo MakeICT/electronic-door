@@ -31,8 +31,8 @@
 		<br/>
 	</div>
 	<div ng-repeat="plugin in client.plugins" style="margin-bottom: 1em; background-color: #333; padding: 0.25em; padding-top: 0; border-radius: 0.25em">
-		<div class="row" style="margin-top: 0.5em; padding: 0.25em 0 0.25em;">
-			<div class="col-md-12 col-sm-12" style="text-align: left;">
+		<div class="row nopad" style="margin-top: 0.5em; padding: 0.25em 0 0.25em;">
+			<div class="col-md-12 col-sm-12 nopad" style="text-align: left;">
 				<button class="btn btn-default btn-sm pull-right" simple-toggle ng-model="z.isOpened" title="Settings">⚙</button>
 				<button class="btn btn-default text-warning btn-sm pull-right" disabled="disabled" ng-if="z.isOpened" title="Reload defaults" onclick="alert('Not implemented :(')">↺</button>
 				<button class="btn btn-default text-danger btn-sm pull-right" ng-if="z.isOpened" title="Remove {{plugin.name}} plugin from {{client.name}}" ng-click="disassociatePlugin(client, plugin)">✖</button>
@@ -40,17 +40,17 @@
 			</div>
 		</div>
 		<div uib-collapse="!z.isOpened" style="margin-bottom: 0.75em">
-			<div class="row" ng-repeat="option in plugin.options">
-				<div class="col-md-5 col-sm-5">{{option.name}}</div>
-				<div ng-if="option.type != 'tune'" class="col-md-7 col-sm-7">
-					<input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/>
-				</div>
-				<div ng-if="option.type == 'tune'">
-					<div class="col-md-6 col-sm-6">
+			<div class="row nopad" ng-repeat="option in plugin.options" ng-switch="option.type">
+				<div class="col-md-4 col-sm-4 nopad">{{option.name}}</div>
+				<div class="col-md-7 col-sm-7 nopad">
+					<div ng-switch-when="tune" class="input-group">
 						<input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/>
+						<div class="input-group-btn">
+							<button class="btn btn-sm btn-default" ng-click="playTune(option.value)">♪</button>
+						</div>
 					</div>
-					<div class="col-md-1 col-sm-1">
-						<button class="btn btn-sm btn-default" ng-click="playTune(option.value)">&gt;</button>
+					<div ng-switch-default>
+						<input class="form-control input-sm" type="text" ng-model="option.value" ng-change="saveClientPluginOption(client, plugin, option)" ng-model-options="{debounce: 1500}" ng-trim="false"/>
 					</div>
 				</div>
 			</div>
