@@ -22,15 +22,16 @@
 #include "utils.h"
 
 /*-----( Specify Available Features )-----*/
-#define MOD_SERIAL
-#define MOD_LIGHT_RING
-#define MOD_LATCH
-#define MOD_ALARM_BUTTON
-#define MOD_DOOR_SWITCH
-#define MOD_NFC_READER
-//#define MOD_DOORBELL
-#define MOD_CHIME
-#define MOD_LCD
+//moved to makefile
+//#define MOD_SERIAL
+//#define MOD_LIGHT_RING
+//#define MOD_LATCH
+//#define MOD_ALARM_BUTTON
+//#define MOD_DOOR_SWITCH
+//#define MOD_NFC_READER
+////#define MOD_DOORBELL
+//#define MOD_CHIME
+//#define MOD_LCD
 
 
 /*-----( Declare Constants and Pin Numbers )-----*/
@@ -60,8 +61,8 @@
 #define USER_TUNE_LENGTH    30      // Max number of notes in entry melody
 
 // Constants for PN532 NFC reader
-#define NFC_READ_INTERVAL   100     // time in ms between NFC reads
-#define ID_SEND_INTERVAL    1000    // time in ms between sending card IDs
+#define NFC_READ_INTERVAL     100     // time in ms between NFC reads
+#define ID_SEND_INTERVAL      1000    // time in ms between sending card IDs
 #define SAME_ID_SEND_INTERVAL 5000  // time in ms between re-sending same card ID
 
 // Constants for NeoPixel ring
@@ -286,15 +287,12 @@ void ProcessMessage()  {
       if (doorState)  {
         LOG_DEBUG(F("Unlocking for "));
         LOG_DEBUG((msg.payload[0] << 8) + msg.payload[1]);
-        //LOG_DEBUG((msg.payload[0] << 8) + msg.payload[1]);
         LOG_DEBUG(F(" seconds.\r\n"));
-        //door_latch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
         door_latch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
       }
       else
         LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
       status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
-      //speaker.Play(startTune, startTuneDurations, 8);
       break;
       
     case F_LOCK_DOOR:

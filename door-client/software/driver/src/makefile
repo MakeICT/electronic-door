@@ -13,4 +13,15 @@ MONITOR_PORT  = /dev/ttyUSB0
 
 CXXFLAGS = --std=gnu++11 -fno-threadsafe-statics
 
+#Specify modules available on the client
+CFLAGS = 	-D MOD_SERIAL \
+					-D MOD_LIGHT_RING \
+					-D MOD_LATCH \
+					-D MOD_ALARM_BUTTON \
+					-D MOD_DOOR_SWITCH \
+					-D MOD_NFC_READER \
+#					-D MOD_DOORBELL \ 
+					-D MOD_CHIME \
+					-D MOD_LCD 
+
 include $(ARDMK_DIR)/Arduino.mk
