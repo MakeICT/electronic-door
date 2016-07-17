@@ -1,5 +1,6 @@
 var https = require('https');
 var backend = require('../../backend.js');
+var broadcaster = require('../../broadcast.js');
 
 var api = {
 	apiKey: null,
@@ -112,51 +113,70 @@ module.exports = {
 									data: contact,
 									callback: function(user){
 										if(!user) user = {};
-										user.firstName = this.data.FirstName;
-										user.lastName = this.data.LastName;
-										user.email = this.data.Email;
-										user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
-
-										for(var j=0; j<this.data.FieldValues.length; j++){
-											this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
-										}
-										user.joinDate = Math.floor((new Date(this.data['Member since'])).getTime() / 1000);
 										
-										var level = this.data['MembershipLevel']['Name'];
-										var alreadyEnrolledInCorrectGroup = false;
-										
-										var updateGroups = function(){
-											backend.getUserByEmail(user.email, function(user){
-												var newGroupName = "WA-Level: " + level;
-												backend.getUserGroups(user.userID, function(groups){
-													for(var i=0; i<groups.length; i++){
-														if(!groups[i].enrolled) continue;
-														var groupName = groups[i].name;
+										try{
+											user.firstName = this.data.FirstName;
+											user.lastName = this.data.LastName;
+											user.email = this.data.Email;
+											user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
 
-														// remove user from all of the WA groups they are in if they are not the current group
-														if(groupName.indexOf("WA-Level: ") == 0){
-															if(groupName != newGroupName){
-																backend.setGroupEnrollment(user.userID, groupName, false);
-															}else{
-																alreadyEnrolledInCorrectGroup = true;
+											for(var j=0; j<this.data.FieldValues.length; j++){
+												this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
+											}
+											if(!this.data['Member since']) return;
+											
+											user.joinDate = Math.floor((new Date(this.data['Member since'])).getTime() / 1000);
+											
+											if(this.data['MembershipLevel']){											
+												var level = this.data['MembershipLevel']['Name'];
+											}else{
+												var level = null;
+											}
+											var alreadyEnrolledInCorrectGroup = false;
+											
+											var updateGroups = function(){
+												backend.getUserByEmail(user.email, function(user){
+													var newGroupName = "WA-Level: " + level;
+													backend.getUserGroups(user.userID, function(groups){
+														for(var i=0; i<groups.length; i++){
+															if(!groups[i].enrolled) continue;
+															var groupName = groups[i].name;
+
+															// remove user from all of the WA groups they are in if they are not the current group
+															if(groupName.indexOf("WA-Level: ") == 0){
+																if(groupName != newGroupName){
+																	backend.setGroupEnrollment(user.userID, groupName, false);
+																}else{
+																	alreadyEnrolledInCorrectGroup = true;
+																}
 															}
 														}
-													}
-													if(level && !alreadyEnrolledInCorrectGroup){
-														var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
-														backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
-													}
+														if(level && !alreadyEnrolledInCorrectGroup){
+															var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
+															backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
+														}
+													});
 												});
-											});
-										};
-										
-										if(!user.userID){
-											backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
+											};
+											
+											if(!user.userID){
+												backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
+											}
+											backend.updateUser(user, updateGroups);
+										}catch(exc){
+											backend.error('WildApricot Sync failed while attempting to update user :(');
+											console.error(exc);
+											var errorData = {
+												'user': user,
+												'exception': exc,
+											};
+											broadcaster.broadcast(module.exports, 'sync-error', errorData);
 										}
-										backend.updateUser(user, updateGroups);
 									},
 								};
-								backend.getUserByProxyID('WildApricot', contact.Id, transaction);
+
+								var updateFunc = backend.getUserByProxyID.bind(this, 'WildApricot', contact.Id, transaction);
+								setTimeout(updateFunc, i*500);
 							}
 						});
 					});
@@ -170,6 +190,12 @@ module.exports = {
 	},
 
 	onUninstall: function(){},
-	onEnable: function(){},
-	onDisable: function(){}
+	onEnable: function(){
+		broadcaster.subscribe(module.exports);
+	},
+	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
+	},
+	
+	receiveMessage: function(source, messageID, data){},
 };
