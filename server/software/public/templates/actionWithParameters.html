@@ -1,15 +1,17 @@
 <div class="container-fluid">
 	<div class="row">
-		<div class="col-md-11 col-sm-11 col-xs-11 nopad">
-			<button class="btn btn-default btn-sm" style="width: 100%" ng-click="execute()">{{properties.name}}</button>
-		</div>
-		<div ng-if="properties.parameters && properties.parameters.length > 0" class="col-md-1 col-sm-1 col-xs-1 nopad">
-			<button simple-toggle class="btn btn-default btn-sm" ng-model="$parent.isOpened">
-				<span class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="font-size: 80%"></span>
-			</button>
-		</div>
-		<div ng-if="!properties.parameters || properties.parameters.length == 0" class="col-md-1 col-sm-1 col-xs-1 nopad">
-			<div class="btn btn-default btn-sm"  ng-disabled="true">&nbsp;&nbsp;</div>
+		<div class="col-md-12 col-sm-12 nopad">
+			<div class="input-group">
+				<button class="btn btn-default btn-sm btn-block" ng-click="execute()">{{properties.name}}</button>
+				<div class="input-group-btn">
+					<button ng-if="properties.parameters && properties.parameters.length > 0" simple-toggle class="btn btn-default btn-sm" ng-model="$parent.isOpened">
+						<span class="glyphicon glyphicon-triangle-{{isOpened ? 'bottom' : 'left'}}" style="font-size: 80%"></span>
+					</button>
+					<div ng-if="!properties.parameters || properties.parameters.length == 0" class="btn btn-default btn-sm disabled">
+						<span class="glyphicon glyphicon-triangle-left" style="font-size: 80%; visibility: hidden"></span>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div uib-collapse="!isOpened" style="margin-bottom: 1em">
@@ -19,7 +21,7 @@
 				<div ng-switch-when="tune" class="input-group">
 					<input class="form-control input-sm" type="text" ng-model="parameter.value" ng-trim="false"/>
 					<div class="input-group-btn">
-						<button class="btn btn-sm btn-default btn-addon" ng-click="$parent.$parent.$parent.playTune(parameter.value)">♪</button>
+						<button class="btn btn-sm btn-default" ng-click="$parent.$parent.$parent.playTune(parameter.value)">♪</button>
 					</div>
 				</div>
 				<div ng-switch-default>
