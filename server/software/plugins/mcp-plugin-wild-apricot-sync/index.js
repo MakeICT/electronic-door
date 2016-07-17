@@ -187,7 +187,7 @@ module.exports = {
 								var contact = contacts[i];
 								var transaction = updateUser.bind(this, contact);
 								var updateFunc = backend.getUserByProxyID.bind(this, 'WildApricot', contact.Id, transaction);
-								setTimeout(updateFunc, i*100);
+								setTimeout(updateFunc, i*333);
 							}
 						});
 					});
