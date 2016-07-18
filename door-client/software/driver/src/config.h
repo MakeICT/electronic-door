@@ -7,6 +7,7 @@
 class Config
 {
   public:
+    bool IsFirstRun();
     void SaveAddress(byte address);
     byte GetAddress();
 

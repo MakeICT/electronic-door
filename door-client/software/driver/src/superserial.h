@@ -28,6 +28,7 @@
 // Reserved Addresses
 #define ADDR_MASTER     0x00
 #define ADDR_BROADCAST  0xFF
+#define ADDR_CLIENT_DEFAULT 0xFE
 
 
 class SuperSerial 
