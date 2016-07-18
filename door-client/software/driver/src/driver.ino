@@ -97,7 +97,7 @@ Strike door_latch(LATCH_PIN);
 Config conf;
 
 // Load config info saved in EEPROM
-uint8_t address = conf.GetAddress();
+uint8_t address = ADDR_CLIENT_DEFAULT;
 SuperSerial superSerial(&bus, address);
 
 /*-----( Declare Variables )-----*/
@@ -142,7 +142,15 @@ void setup(void) {
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   
   
-  //conf.SaveAddress(0x02);             //TODO: this is temporary; needs to be configurable
+
+  if (conf.IsFirstRun())  {
+    LOG_DEBUG(F("First run detected; initializing configuration"));
+    conf.SaveAddress(ADDR_CLIENT_DEFAULT);
+  }
+  #ifdef CLIENT_ADDRESS
+  conf.SaveAddress(CLIENT_ADDRESS);             //TODO: this is temporary; needs to be configurable
+  #endif
+  address = conf.GetAddress();
   
 
  // superSerial = new SuperSerial(&bus, address);
@@ -163,9 +171,9 @@ void setup(void) {
   else  
   #endif
   {
-  status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
-  speaker.Play(startTune, startTuneDurations, 2);
-  state = S_READY;
+    status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
+    speaker.Play(startTune, startTuneDurations, 2);
+    state = S_READY;
   }
 }
 
