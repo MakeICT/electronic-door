@@ -37,24 +37,29 @@
 /*-----( Declare Constants and Pin Numbers )-----*/
 
 // Pin assignments
-#define RS485_RX          0       // Reserved for hardware serial
-#define RS485_TX          1       // Reserved for hardware serial
-#define RING_PIN          2       // Pin communicating with NeoPixel Ring
-#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
-#define LCD_SERIAL_TX     4       // Serial data for LCD
-#define LATCH_PIN         5       // Digital pin to trigger door strike circuit
-#define SSerialRX         6       // Debug Serial Receive pin
-#define SSerialTX         7       // Debug Serial Transmit pin
-#define SSerialTxControl  8       // RS485 Direction control
-#define SPEAKER_PIN       9       // Tone generation pin
-#define PN532_SS_PIN      10      // SPI Slave Select pin
-#define NFC_SPI_1         11      // Reserved for hardware SPI for NFC reader
-#define NFC_SPI_2         12      // Reserved for hardware SPI for NFC reader
-#define NFC_SPI_3         13      // Reserved for hardware SPI for NFC reader
-#define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
-#define DOOR_SWITCH_PIN   15      // Magnetic switch on door
-#define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
-#define DOOR_BELL_PIN     17      // Door bell pin
+// Port D
+#define RS485_RX          0       // 0  Reserved for hardware serial
+#define RS485_TX          1       // 1  Reserved for hardware serial
+#define RING_PIN          2       // 2  Pin communicating with NeoPixel Ring
+#define NFC_RESET_PIN     3       // 3  Pin to reset RC522 NFC module
+#define LCD_SERIAL_TX     4       // 4  Serial data for LCD
+#define LATCH_PIN         5       // 5  Digital pin to trigger door strike circuit
+#define SSerialRX         6       // 6  Debug Serial Receive pin
+#define SSerialTX         7       // 7  Debug Serial Transmit pin
+
+// Port B
+#define SSerialTxControl  8       // 8  RS485 Direction control
+#define SPEAKER_PIN       9       // 9  Tone generation pin
+#define PN532_SS_PIN      10      // 10 SPI Slave Select pin
+#define NFC_SPI_1         11      // 11 Reserved for hardware SPI for NFC reader
+#define NFC_SPI_2         12      // 12 Reserved for hardware SPI for NFC reader
+#define NFC_SPI_3         13      // 13 Reserved for hardware SPI for NFC reader
+
+// Port C
+#define ALARM_BUTTON_PIN  1       // A0 Big button to arm the alarm
+#define DOOR_SWITCH_PIN   2       // A1 Magnetic switch on door
+#define LCD_SERIAL_RX     4       // A2 Not actually connected but need pin assigned for now
+#define DOOR_BELL_PIN     8       // A3 Door bell pin
 
 
 // Constants for audio playback
@@ -102,9 +107,7 @@ SuperSerial superSerial(&bus, address);
 
 /*-----( Declare Variables )-----*/
 uint8_t byteReceived;
-boolean alarmButton = 0;
 boolean doorState = 0;
-boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 
 //TODO: store start tune and other settings in EEPROM, make configurable
@@ -138,9 +141,8 @@ void setup(void) {
 
 
   // Set input pins
-  pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
-  pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  
+  //DDRC &= 0b11110100;    //set pins C0, C1, and C3 to inputs
+  PORTC &= 0b00000011;   //turn on pullup resistors on pins C0 and C1
   
   //conf.SaveAddress(0x02);             //TODO: this is temporary; needs to be configurable
   
@@ -335,36 +337,48 @@ void ProcessMessage()  {
   }
 }
 
+
+//TODO: this can currently only detect one change at a time
 void CheckInputs()  {
-  if(digitalRead(ALARM_BUTTON_PIN) != alarmButton)  {
-    alarmButton = !alarmButton;
-    if (alarmButton == 1)  {
-      LOG_INFO(F("Arm Alarm Button Pressed\r\n"));
-      byte payload[1] = {alarmButton};
-      superSerial.QueueMessage(F_ALARM_BUTTON, payload, 1);
-      state = S_WAIT_SEND;
+  static uint8_t lastStatePINC = 0;
+  uint8_t statePINC = PINC;
+  if (statePINC != lastStatePINC)  {
+    #ifdef MOD_ALARM_BUTTON
+    if (statePINC & ALARM_BUTTON_PIN != lastStatePINC & ALARM_BUTTON_PIN)  {
+      if (statePINC & ALARM_BUTTON_PIN)  {
+        LOG_INFO(F("Arm Alarm Button Pressed\r\n"));
+        byte payload[1] = {1};
+        superSerial.QueueMessage(F_ALARM_BUTTON, payload, 1);
+        state = S_WAIT_SEND;
+        lastStatePINC = statePINC;
+        return;
+      }
     }
-    return;
-  }
+    #endif
     
-  if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
-    LOG_INFO(F("Door State Changed\r\n"));
-    doorState = !doorState;
-    byte payload[1] = {doorState};
-    superSerial.QueueMessage(F_DOOR_STATE, payload, 1);
-    state = S_WAIT_SEND;
-    return;
-  }
-  #ifdef MOD_DOORBELL
-  if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
-    doorBell = !doorBell;
-    if (doorBell == 1)  {
-      LOG_INFO(F("Door Bell Pressed\r\n"));
-      byte payload[1] = {doorBell};
-      superSerial.QueueMessage(F_DOOR_BELL, payload, 1);
-      state = S_WAIT_SEND;
+    #ifdef MOD_DOORBELL
+    if (statePINC & DOOR_BELL_PIN != lastStatePINC & DOOR_BELL_PIN)  {
+      if (statePINC & DOOR_BELL_PIN)  {
+        LOG_INFO(F("Door Bell Pressed\r\n"));
+        byte payload[1] = {1};
+        superSerial.QueueMessage(F_DOOR_BELL, payload, 1);
+        state = S_WAIT_SEND;
+        lastStatePINC = statePINC;
+        return;
+      }
     }
-    return;
+    #endif
+    
+    #ifdef MOD_DOOR_SWITCH
+    if (statePINC & DOOR_SWITCH_PIN != lastStatePINC & DOOR_SWITCH_PIN)  {
+        LOG_INFO(F("Door State Changed\r\n"));
+        byte payload[1] = {statePINC & DOOR_SWITCH_PIN};
+        superSerial.QueueMessage(F_DOOR_STATE, payload, 1);
+        state = S_WAIT_SEND;
+        lastStatePINC = statePINC;
+        doorState = statePINC & DOOR_SWITCH_PIN;
+        return;
+    }
+    #endif
   }
-  #endif
 }
