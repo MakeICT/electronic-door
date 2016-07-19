@@ -5,7 +5,11 @@ var superSerial = require('../mcp-plugin-super-serial');
 var backend = require('../../backend.js');
 
 function getClientOptions(client){
-	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	try{
+		return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	}catch(exc){
+		backend.error('Failed to get client options in plugin Door Unlocker');
+	}
 }
 
 function fixUnlockDuration(duration){
@@ -98,7 +102,7 @@ module.exports = {
 						}
 						
 						var plugin = searchClient.plugins[module.exports.name];
-						if(plugin){
+						if(plugin && plugin.options){
 							var allOptions = plugin.options;
 							for(var j=0; j<allOptions.length; j++){
 								if(allOptions[j].name == option){
@@ -152,7 +156,11 @@ module.exports = {
 				if(data['command'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
-					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+					try{
+						backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+					}catch(exc){
+						backend.error('Failed to load client plugin options in unlocker');
+					}
 					
 					var nfc = data['payload'].map(function(x) {
 						var hex = x.toString(16);

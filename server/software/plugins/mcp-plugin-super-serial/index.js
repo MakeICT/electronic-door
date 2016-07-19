@@ -34,7 +34,11 @@ var SERIAL_COMMANDS = {
 };
 
 function getSettings(){
-	return backend.regroup(module.exports.options, 'name', 'value');
+	try{
+		return backend.regroup(module.exports.options, 'name', 'value');
+	}catch(exc){
+		backend.error('Failed to load options for Super Serial plugin');
+	}
 }
 
 function lookupCommand(byte){
@@ -168,11 +172,7 @@ var packetQueue = {
 	
 	'onACKTimeout': function(){
 		if(!this.lastPacketInfo){
-			backend.error('SuperSerial: lastPacketInfo is empty? That should never happen :(');
-			console.log('Are you sure that \'this\' is bound correctly? Here it is:');
-			console.log(this);
-			// this should never happen, but here's the most fail-safe-ish thing we can do
-			this._doneWaiting();
+			// dequeue() happened before ACK was received and before this function was called
 			return;
 		}
 		var settings = getSettings();
