@@ -37,7 +37,8 @@ function getSettings(){
 	try{
 		return backend.regroup(module.exports.options, 'name', 'value');
 	}catch(exc){
-		backend.error('Failed to load options for Super Serial plugin');
+		backend.error('Failed to get plugin settings for ' + module.exports.name);
+		backend.error(exc);
 	}
 }
 
@@ -187,7 +188,7 @@ var packetQueue = {
 				this._doSend();
 			}catch(exc){
 				backend.error('Error while attempting to resend packet: ' + exc);
-				backend.debug(exc);
+				backend.error(exc);
 			}
 		}
 	},
@@ -486,11 +487,13 @@ module.exports = {
 							readWriteToggle.writeSync(1);
 						}catch(exc){
 							backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
+							backend.error(exc);
 						}
 					}
 					try{
 						serialPort.on('data', onData);
 					}catch(exc){
+						backend.error("Error while attaching data callback");
 						backend.error(exc);
 					}
 				}

@@ -8,7 +8,8 @@ function getClientOptions(client){
 	try{
 		return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
 	}catch(exc){
-		backend.error('Failed to get client options in plugin Door Unlocker');
+		backend.error('Failed to get client options in plugin ' + module.exports.name);
+		backend.error(exc);
 	}
 }
 
@@ -156,11 +157,7 @@ module.exports = {
 				if(data['command'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
-					try{
-						backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
-					}catch(exc){
-						backend.error('Failed to load client plugin options in unlocker');
-					}
+					var clientOptions = getClientOptions(client);
 					
 					var nfc = data['payload'].map(function(x) {
 						var hex = x.toString(16);
@@ -170,8 +167,6 @@ module.exports = {
 					
 					var unlock = function(user){
 						try{
-							var clientOptions = getClientOptions(client);
-
 							superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(clientOptions['Unlock duration']));
 							backend.log(client.name, user.userID, nfc, 'unlock');
 							var data = {
@@ -189,7 +184,7 @@ module.exports = {
 						backend.log(client.name + ' - ' + reason, userID, nfc, 'deny');
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
-					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
+					backend.checkAuthorizationByNFC(nfc, clientOptions['Authorization tag'], unlock, deny);
 				}
 			}
 		}

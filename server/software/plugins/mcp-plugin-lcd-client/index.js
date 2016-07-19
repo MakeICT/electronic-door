@@ -7,7 +7,12 @@ var superSerial = require('../mcp-plugin-super-serial');
 var lcdResetTimers = {};
 
 function getClientOptions(client){
-	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	try{
+		return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	}catch(exc){
+		backend.error('Failed to get client options in plugin ' + module.exports.name);
+		backend.error(exc);
+	}
 }
 
 function getClientAction(actionName){
@@ -60,7 +65,9 @@ function sendToAll(line1, line2, ignoreIdle){
 		if(!ignoreIdle){
 			var clients = backend.getClients();
 			for(var i=0; i<clients.length; i++){
-				restartIdleTimer(clients[i].clientID);
+				if(clients[i].plugins[module.exports.name]){
+					restartIdleTimer(clients[i].clientID);
+				}
 			}
 		}
 	}catch(exc){
