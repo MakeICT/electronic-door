@@ -17,7 +17,7 @@ void LCD::SendCommand(uint8_t command) {
   lcd.write(command);
 }
 
-void LCD::Print(char* text) {
+void LCD::Print(const char* text) {
   this->Clear();
   this->Home();
   byte p = 0;

@@ -11,7 +11,7 @@ class LCD
   public:
     LCD();
     void SendCommand(uint8_t command);
-    void Print(char* text);
+    void Print(const char* text);
     void Home();
     void On();
     void Off();

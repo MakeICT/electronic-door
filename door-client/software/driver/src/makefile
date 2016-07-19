@@ -9,7 +9,7 @@ OBJDIR = ../build-$(BOARD_TAG)-$(BOARD_SUB)
 ARCHITECTURE  = avr
 BOARD_TAG     = nano
 BOARD_SUB     = atmega328
-MONITOR_PORT  = /dev/ttyUSB0
+MONITOR_PORT  = /dev/ttyUSB1
 
 CXXFLAGS = --std=gnu++11 -fno-threadsafe-statics
 
@@ -28,7 +28,5 @@ CXXFLAGS += -D MOD_LCD
 #This should probably only be used for testing
 #CXXFLAGS +=	-D CLIENT_ADDRESS=1	
 					
-#Set client address
-#CFLAGS := -D CLIENT_ADDRESS=0x09	
 
 include $(ARDMK_DIR)/Arduino.mk

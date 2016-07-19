@@ -129,7 +129,7 @@ void setup(void) {
   // Set input pins
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(LCD_SERIAL_TX, OUTPUT);
+  //pinMode(LCD_SERIAL_TX, OUTPUT);
   
 
  // superSerial = new SuperSerial(&bus, address);
