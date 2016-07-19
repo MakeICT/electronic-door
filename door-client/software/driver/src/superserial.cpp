@@ -24,6 +24,10 @@ void SuperSerial::SetDebugPort(SoftwareSerial* port)  {
   responsePacket.SetDebugPort(debugPort);
 }
 
+void SuperSerial::SetAddress(byte addr)  {
+  this->deviceAddress = addr;
+}
+
 bool SuperSerial::NewMessage()  {
   LOG_DUMP(F("SuperSerial::NewMessage()\r\n"));
   return newMessage;

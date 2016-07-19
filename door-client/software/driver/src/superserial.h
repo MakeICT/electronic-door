@@ -35,6 +35,7 @@ class SuperSerial
 {
   public:
     SuperSerial(rs485*, byte);
+    void SetAddress(byte addr);
     void SetDebugPort(SoftwareSerial*);
     int QueueLength();
     void QueueMessage(byte, byte*, byte);

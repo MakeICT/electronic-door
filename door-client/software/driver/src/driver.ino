@@ -21,19 +21,6 @@
 #include "superserial.h"
 #include "utils.h"
 
-/*-----( Specify Available Features )-----*/
-//moved to makefile
-//#define MOD_SERIAL
-//#define MOD_LIGHT_RING
-//#define MOD_LATCH
-//#define MOD_ALARM_BUTTON
-//#define MOD_DOOR_SWITCH
-//#define MOD_NFC_READER
-////#define MOD_DOORBELL
-//#define MOD_CHIME
-//#define MOD_LCD
-
-
 /*-----( Declare Constants and Pin Numbers )-----*/
 
 // Pin assignments
@@ -97,7 +84,9 @@ Strike door_latch(LATCH_PIN);
 Config conf;
 
 // Load config info saved in EEPROM
-uint8_t address = ADDR_CLIENT_DEFAULT;
+
+
+uint8_t address = ADDR_CLIENT_DEFAULT;     //TODO: this shouldn't be necessary
 SuperSerial superSerial(&bus, address);
 
 /*-----( Declare Variables )-----*/
@@ -140,22 +129,24 @@ void setup(void) {
   // Set input pins
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  
-  
-
-  if (conf.IsFirstRun())  {
-    LOG_DEBUG(F("First run detected; initializing configuration"));
-    conf.SaveAddress(ADDR_CLIENT_DEFAULT);
-  }
-  #ifdef CLIENT_ADDRESS
-  conf.SaveAddress(CLIENT_ADDRESS);             //TODO: this is temporary; needs to be configurable
-  #endif
-  address = conf.GetAddress();
+  pinMode(LCD_SERIAL_TX, OUTPUT);
   
 
  // superSerial = new SuperSerial(&bus, address);
  
   door_latch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
+  
+  if (conf.IsFirstRun())  {
+    LOG_DEBUG(F("First run detected; initializing configuration"));
+    conf.SaveAddress(ADDR_CLIENT_DEFAULT);
+  }
+  //for testing only
+  #ifdef CLIENT_ADDRESS
+  conf.SaveAddress(CLIENT_ADDRESS);
+  #endif
+  
+  address = conf.GetAddress();
+  superSerial.SetAddress(address);
 
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
