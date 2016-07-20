@@ -1,5 +1,6 @@
 var https = require('https');
 var backend = require('../../backend.js');
+var broadcaster = require('../../broadcast.js');
 
 var api = {
 	apiKey: null,
@@ -91,38 +92,52 @@ module.exports = {
 	actions: [
 		{
 			'name': 'Sync Now',
-			'parameters': [],
-			'execute': function(){
+			'parameters': [{
+				'name': 'Delay',
+				'type': 'number',
+				'value': 500
+			}],
+			'execute': function(parameters, session){
 				backend.log('Starting WildApricot sync...');
 				backend.getPluginOptions(this.name, function(settings){
 					backend.debug('Connecting to WildApricot...');
 					api.connect(function(token){
 						backend.debug('Downloading contacts...');
+						
 						api.get('contacts?$async=false', null, function(data){
 							data = JSON.parse(data);
 							if(!data || !data['Contacts'] || data['reason']){
 								data = doThatThing();
 							}
 							var contacts = data['Contacts'];
+							var contactsLeftToSync = contacts.length;
+							backend.debug(contactsLeftToSync + ' contacts to sync');
+							var markOneDone = function(){
+								if(--contactsLeftToSync == 0){
+									backend.log('WildApricot Sync complete!');
+								}
+							};
 							
-							for(var i=0; i<contacts.length; i++){
-								var contact = contacts[i];
+							var updateUser = function(contact, user){
+								if(!user) user = {};
 								
-								var transaction = {
-									data: contact,
-									callback: function(user){
-										if(!user) user = {};
-										user.firstName = this.data.FirstName;
-										user.lastName = this.data.LastName;
-										user.email = this.data.Email;
-										user.status = (this.data.Status == 'Active') ? 'active' : 'inactive';
+								try{
+									user.firstName = contact.FirstName;
+									user.lastName = contact.LastName;
+									user.email = contact.Email;
+									user.status = (contact.Status == 'Active') ? 'active' : 'inactive';
 
-										for(var j=0; j<this.data.FieldValues.length; j++){
-											this.data[this.data.FieldValues[j].FieldName] = this.data.FieldValues[j].Value;
-										}
-										user.joinDate = Math.floor((new Date(this.data['Member since'])).getTime() / 1000);
+									for(var j=0; j<contact.FieldValues.length; j++){
+										contact[contact.FieldValues[j].FieldName] = contact.FieldValues[j].Value;
+									}
+									if(contact['Member since']){
+										user.joinDate = Math.floor((new Date(contact['Member since'])).getTime() / 1000);
 										
-										var level = this.data['MembershipLevel']['Name'];
+										if(contact['MembershipLevel']){
+											var level = contact['MembershipLevel']['Name'];
+										}else{
+											var level = null;
+										}
 										var alreadyEnrolledInCorrectGroup = false;
 										
 										var updateGroups = function(){
@@ -143,20 +158,40 @@ module.exports = {
 														}
 													}
 													if(level && !alreadyEnrolledInCorrectGroup){
-														var doEnrollment = function(){ backend.setGroupEnrollment(user.userID, newGroupName, true); };
+														var doEnrollment = function(){
+															backend.setGroupEnrollment(user.userID, newGroupName, true);
+															markOneDone();
+														};
 														backend.addGroup(newGroupName, 'WildApricot Membership Level', doEnrollment, doEnrollment);
+													}else{
+														markOneDone();
 													}
 												});
 											});
 										};
 										
 										if(!user.userID){
-											backend.addProxyUser('WildApricot', this.data.Id, user, updateGroups, backend.debug);
+											backend.addProxyUser('WildApricot', contact.Id, user, updateGroups, backend.debug);
 										}
 										backend.updateUser(user, updateGroups);
-									},
-								};
-								backend.getUserByProxyID('WildApricot', contact.Id, transaction);
+									}else{
+										markOneDone();
+									}
+								}catch(exc){
+									backend.error('WildApricot Sync failed while attempting to update user :(');
+									console.error(exc);
+									var errorData = {
+										'user': user,
+										'exception': exc,
+									};
+									broadcaster.broadcast(module.exports, 'sync-error', errorData);
+								}
+							};
+							for(var i=0; i<contacts.length; i++){
+								var contact = contacts[i];
+								var transaction = updateUser.bind(this, contact);
+								var updateFunc = backend.getUserByProxyID.bind(this, 'WildApricot', contact.Id, transaction);
+								setTimeout(updateFunc, i*parameters['Delay']);
 							}
 						});
 					});
@@ -170,6 +205,12 @@ module.exports = {
 	},
 
 	onUninstall: function(){},
-	onEnable: function(){},
-	onDisable: function(){}
+	onEnable: function(){
+		broadcaster.subscribe(module.exports);
+	},
+	onDisable: function(){
+		broadcaster.unsubscribe(module.exports);
+	},
+	
+	receiveMessage: function(source, messageID, data){},
 };

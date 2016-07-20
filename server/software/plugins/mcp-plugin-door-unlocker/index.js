@@ -5,7 +5,12 @@ var superSerial = require('../mcp-plugin-super-serial');
 var backend = require('../../backend.js');
 
 function getClientOptions(client){
-	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	try{
+		return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	}catch(exc){
+		backend.error('Failed to get client options in plugin ' + module.exports.name);
+		backend.error(exc);
+	}
 }
 
 function fixUnlockDuration(duration){
@@ -30,11 +35,11 @@ module.exports = {
 	actions: [
 		{
 			'name': 'Unlock all',
-			'parameters': {
+			'parameters': [{
 				'name': 'Duration',
 				'type': 'number',
 				'value': 3
-			},
+			}],
 			'execute': function(parameters){
 				throw 'Not yet implemented';
 				// @TODO: implement "Unlock all" function
@@ -98,7 +103,7 @@ module.exports = {
 						}
 						
 						var plugin = searchClient.plugins[module.exports.name];
-						if(plugin){
+						if(plugin && plugin.options){
 							var allOptions = plugin.options;
 							for(var j=0; j<allOptions.length; j++){
 								if(allOptions[j].name == option){
@@ -152,7 +157,7 @@ module.exports = {
 				if(data['command'] == superSerial.SERIAL_COMMANDS['KEY']){
 					backend.debug('Received NFC key');
 					var client = backend.getClientByID(data['from']);
-					var options = backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+					var clientOptions = getClientOptions(client);
 					
 					var nfc = data['payload'].map(function(x) {
 						var hex = x.toString(16);
@@ -162,8 +167,6 @@ module.exports = {
 					
 					var unlock = function(user){
 						try{
-							var clientOptions = getClientOptions(client);
-
 							superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['UNLOCK'], fixUnlockDuration(clientOptions['Unlock duration']));
 							backend.log(client.name, user.userID, nfc, 'unlock');
 							var data = {
@@ -181,7 +184,7 @@ module.exports = {
 						backend.log(client.name + ' - ' + reason, userID, nfc, 'deny');
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
-					backend.checkAuthorizationByNFC(nfc, options['Authorization tag'], unlock, deny);
+					backend.checkAuthorizationByNFC(nfc, clientOptions['Authorization tag'], unlock, deny);
 				}
 			}
 		}

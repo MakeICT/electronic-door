@@ -5,7 +5,12 @@ var superSerial = require('../mcp-plugin-super-serial');
 var backend = require('../../backend.js');
 
 function getClientOptions(client){
-	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	try{
+		return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
+	}catch(exc){
+		backend.error('Failed to get client options in plugin ' + module.exports.name);
+		backend.error(exc);
+	}
 }
 
 function getClientActionParameter(action, parameterName){
@@ -32,7 +37,7 @@ module.exports = {
 			'parameters': [
 				{
 					'name': 'Tune',
-					'type': 'text',
+					'type': 'tune',
 					'value': '35003500350031003500380020060106060606060106060b110b',
 				},{
 					'name': 'Lights',
@@ -49,7 +54,7 @@ module.exports = {
 		options: [
 			{
 				'name': 'Default tune',
-				'type': 'text',
+				'type': 'tune',
 				'value': '35003500350031003500380020060106060606060106060b110b',
 			},{
 				'name': 'Default lights',
@@ -62,7 +67,7 @@ module.exports = {
 				'name': 'Test sound',
 				'parameters': [{
 					'name': 'Tune',
-					'type': 'text',
+					'type': 'tune',
 					'value': '35003500350031003500380020060106060606060106060b110b',
 				}],
 				'execute': function(parameters, client, callback){
@@ -130,6 +135,7 @@ module.exports = {
 			
 			if(parameters['Tune'] && parameters['Tune'] != ''){
 				superSerial.broadcast(superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(parameters['Tune']));
+				broadcaster.broadcast(module.exports, 'tune', parameters['Tune']);
 			}
 			if(parameters['Lights'] && parameters['Lights'] != ''){
 				superSerial.broadcast(superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(parameters['Lights']));

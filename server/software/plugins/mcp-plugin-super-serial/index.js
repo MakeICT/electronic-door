@@ -34,7 +34,12 @@ var SERIAL_COMMANDS = {
 };
 
 function getSettings(){
-	return backend.regroup(module.exports.options, 'name', 'value');
+	try{
+		return backend.regroup(module.exports.options, 'name', 'value');
+	}catch(exc){
+		backend.error('Failed to get plugin settings for ' + module.exports.name);
+		backend.error(exc);
+	}
 }
 
 function lookupCommand(byte){
@@ -168,11 +173,7 @@ var packetQueue = {
 	
 	'onACKTimeout': function(){
 		if(!this.lastPacketInfo){
-			backend.error('SuperSerial: lastPacketInfo is empty? That should never happen :(');
-			console.log('Are you sure that \'this\' is bound correctly? Here it is:');
-			console.log(this);
-			// this should never happen, but here's the most fail-safe-ish thing we can do
-			this._doneWaiting();
+			// dequeue() happened before ACK was received and before this function was called
 			return;
 		}
 		var settings = getSettings();
@@ -187,7 +188,7 @@ var packetQueue = {
 				this._doSend();
 			}catch(exc){
 				backend.error('Error while attempting to resend packet: ' + exc);
-				backend.debug(exc);
+				backend.error(exc);
 			}
 		}
 	},
@@ -486,11 +487,13 @@ module.exports = {
 							readWriteToggle.writeSync(1);
 						}catch(exc){
 							backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
+							backend.error(exc);
 						}
 					}
 					try{
 						serialPort.on('data', onData);
 					}catch(exc){
+						backend.error("Error while attaching data callback");
 						backend.error(exc);
 					}
 				}

@@ -330,7 +330,7 @@ module.exports = {
 	},
 	
 	// @TODO: Grrrrroooooooossssss - the callback has to be wrapped in an object because of the calling function (WildApricot plugin)
-	getUserByProxyID: function(proxySystem, proxyUserID, transaction) {
+	getUserByProxyID: function(proxySystem, proxyUserID, callback) {
 		var sql =
 			'SELECT ' +
 			'   users.*, ' + 
@@ -342,7 +342,7 @@ module.exports = {
 			'	AND "proxyUsers"."proxyUserID" = $2';
 
 		var huh = function(data){
-			transaction.callback(getOneOrNone()(data));
+			callback(getOneOrNone()(data));
 		}
 			
 		return query(sql, [proxySystem, proxyUserID], huh);

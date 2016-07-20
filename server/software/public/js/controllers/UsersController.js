@@ -40,6 +40,9 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 					response[i].birthdate *= 1000;
 				}
 				$scope.userSearchResults = response;
+				if($scope.userSearchResults.length == 1){
+					$scope.toggleUserDisplay($scope.userSearchResults[0]);
+				}
 			}
 		});
 	};

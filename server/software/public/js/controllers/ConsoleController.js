@@ -13,7 +13,7 @@ app.factory('consoleService', ["$rootScope", function($rootScope) {
 	return consoleService;
 }]);
 
-app.controller('consoleCtrl', function($scope, consoleService){
+app.controller('consoleCtrl', function($scope, consoleService, tunePlayer){
 	$scope.socket = io();
 	$scope.messages = consoleService.messages;
 
@@ -25,6 +25,9 @@ app.controller('consoleCtrl', function($scope, consoleService){
 	});
 	$scope.socket.on('log', function(message){
 		consoleService.addMessage('log', message);
+	});
+	$scope.socket.on('tune', function(message){
+		tunePlayer.play(message);
 	});
 
 	$scope.clearMessages = function(){

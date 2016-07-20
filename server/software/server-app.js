@@ -15,7 +15,7 @@ var server = restify.createServer({
 var io = require('socket.io').listen(server.server);
 broadcaster.subscribe({
 	receiveMessage: function(source, messageID, message){
-		if(messageID == 'log' || messageID == 'error' || messageID == 'debug'){
+		if(messageID == 'log' || messageID == 'error' || messageID == 'debug' || messageID == 'tune'){
 			io.emit(messageID, message.toString());
 		}
 	},
