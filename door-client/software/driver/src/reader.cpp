@@ -88,7 +88,7 @@ boolean Reader::start() {
   //TODO: add reader detection
 
   SPI.begin();        // Init SPI bus
-  this->Initialize();
+  return this->Initialize();
 }
 
 bool Reader::Initialize()  {

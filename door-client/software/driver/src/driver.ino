@@ -66,9 +66,10 @@
 
 // Constants for machine states
 #define S_INITIALIZING      0
-#define S_UNADDRESSED       1
-#define S_WAIT_SEND         2
-#define S_READY             3          
+#define S_NO_SERVER         1
+#define S_UNADDRESSED       2
+#define S_WAIT_SEND         3
+#define S_READY             4          
 
 
 /*-----( Declare objects )-----*/
@@ -78,7 +79,7 @@ rs485 bus(SSerialTxControl);
 //TEMPORARY TEST CODE
 
 Ring status_ring(RING_PIN, NUMPIXELS);
-LCD readout;
+//LCD readout;
 Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
 Config conf;
@@ -95,6 +96,7 @@ boolean alarmButton = 0;
 boolean doorState = 0;
 boolean doorBell = 0;
 uint32_t lastIDSend = 0;
+uint32_t lastHeartBeat = 0;
 
 //TODO: store start tune and other settings in EEPROM, make configurable
 byte startTune[] = {NOTE_C4, NOTE_D4};    
@@ -111,6 +113,8 @@ void ProcessMessage();
 
 SoftwareSerial dbgPort(6,7);
 SoftwareSerial* debugPort = &dbgPort;
+
+LCD readout;
 
 void setup(void) {
   // Initialize debug port and pass references
@@ -202,17 +206,35 @@ void loop(void) {
         LOG_DEBUG(F("Door opened, re-latching\r\n"));
         door_latch.Lock();
       }
+      if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
+        //Set LEDS and LCD to indicate loss of communication
+        readout.Print("  Lost Contact    With  Server  ");
+        status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+        state = S_NO_SERVER;
+      }
     }
-
+    
     case S_UNADDRESSED:
     {
       superSerial.Update();
-      if (!superSerial.DataQueued())
+      if (!superSerial.DataQueued()) {
         state = S_READY;
-      if (superSerial.NewMessage())  {
-        ProcessMessage();
       }
     }
+
+    case S_NO_SERVER:
+    {
+      if (state = S_NO_SERVER)  {
+        superSerial.Update();
+      }
+      if (superSerial.NewMessage())  {
+        ProcessMessage();
+        state = S_WAIT_SEND;
+        superSerial.QueueMessage(F_CLIENT_START, 0, 0);
+      }
+    }
+
+
 
     case S_INITIALIZING:
     {
@@ -262,6 +284,10 @@ void CheckReader()  {
 
 void ProcessMessage()  {
   Message msg = superSerial.GetMessage();
+  
+  //reset heartbeat timeout
+  lastHeartBeat = millis();
+  
   // If address is not set, ignore all functions other than setting address
   if (state == S_UNADDRESSED && msg.function != F_SET_ADDRESS)  {
     return;
@@ -270,6 +296,9 @@ void ProcessMessage()  {
   LOG_INFO(F("Got Message: "));
   switch(msg.function)
   {
+    case F_HEARTBEAT:
+      LOG_INFO(F("Heartbeat Ping\r\n"));
+
     case F_SET_ADDRESS:
       LOG_INFO(F("Set Address\r\n"));
       conf.SaveAddress(msg.payload[0]);

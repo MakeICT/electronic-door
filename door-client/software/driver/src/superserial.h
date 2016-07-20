@@ -20,6 +20,7 @@
 #define F_DENY_CARD     0x0C
 #define F_DOOR_BELL     0x0D
 #define F_CLIENT_START  0x0E
+#define F_HEARTBEAT     0xCC
 
 #define F_NOP           0x0B
 #define F_ACK           0xAA
@@ -29,6 +30,9 @@
 #define ADDR_MASTER     0x00
 #define ADDR_BROADCAST  0xFF
 #define ADDR_CLIENT_DEFAULT 0xFE
+
+// Other Settings
+#define HEARTBEAT_TIMEOUT 60000
 
 
 class SuperSerial 

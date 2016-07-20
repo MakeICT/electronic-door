@@ -9,9 +9,9 @@ OBJDIR = ../build-$(BOARD_TAG)-$(BOARD_SUB)
 ARCHITECTURE  = avr
 BOARD_TAG     = nano
 BOARD_SUB     = atmega328
-MONITOR_PORT  = /dev/ttyUSB1
+MONITOR_PORT  = /dev/ttyUSB1 /dev/ttyUSB0
 
-CXXFLAGS = --std=gnu++11 -fno-threadsafe-statics
+CXXFLAGS += --std=gnu++11 -fno-threadsafe-statics -fno-exceptions -w -x c++ -c -g
 
 #Specify modules available on the client
 CXXFLAGS += -D MOD_SERIAL
