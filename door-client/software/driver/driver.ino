@@ -21,6 +21,16 @@
 #include "superserial.h"
 #include "utils.h"
 
+#define MOD_SERIAL
+#define MOD_LIGHT_RING
+#define MOD_LATCH
+#define MOD_ALARM_BUTTON
+#define MOD_DOOR_SWITCH
+#define MOD_NFC_READER
+//#define MOD_DOORBELL
+#define MOD_CHIME
+#define MOD_LCD
+
 /*-----( Declare Constants and Pin Numbers )-----*/
 
 // Pin assignments
@@ -60,8 +70,8 @@
 #define COLOR_FAILURE1      60,20,0
 #define COLOR_FAILURE2      30,10,0
 #define COLOR_WAITING       120,120,20
-#define COLOR_ERROR1        25,10,0
-#define COLOR_ERROR2        25,10,0
+#define COLOR_ERROR1        120,30,0
+#define COLOR_ERROR2        120,30,0
 #define COLOR               Adafruit_NeoPixel::Color
 
 // Constants for machine states
@@ -70,7 +80,7 @@
 #define S_UNADDRESSED       2
 #define S_WAIT_SEND         3
 #define S_READY             4          
- 
+
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
@@ -156,8 +166,6 @@ void setup(void) {
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
   readout.Print("Initializing...");
-  // notify server that client has started
-  superSerial.QueueMessage(F_CLIENT_START, 0, 0);
   
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
@@ -168,8 +176,11 @@ void setup(void) {
   {
     status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
     speaker.Play(startTune, startTuneDurations, 2);
-    state = S_NO_SERVER;
+    state = S_READY;
   }
+    
+  // notify server that client has started
+  superSerial.QueueMessage(F_CLIENT_START, 0, 0);
 }
 
 
@@ -177,7 +188,7 @@ void loop(void) {
   LOG_DUMP(F("Free RAM: "));
   LOG_DUMP(freeRam());
   LOG_DUMP (F("\r\n"));
-  static byte lastState = state;
+  static uint8_t lastState = 10;
   if (state != lastState)  {
     lastState = state;
     LOG_INFO(F("State changed to: "));
@@ -208,9 +219,11 @@ void loop(void) {
       }
       if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
         //Set LEDS and LCD to indicate loss of communication
+        LOG_ERROR(F("Lost contact with server!\r\n"));
         readout.Print("  Lost Contact    With  Server  ");
         status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
         state = S_NO_SERVER;
+        break;
       }
     }
     
@@ -224,13 +237,16 @@ void loop(void) {
 
     case S_NO_SERVER:
     {
-      if (state = S_NO_SERVER)  {
+      if (state == S_NO_SERVER)  {
         superSerial.Update();
       }
       if (superSerial.NewMessage())  {
-        ProcessMessage();
+        if (state == S_NO_SERVER)  {
+          LOG_DEBUG(F("Contact with server re-established\r\n"));
+          superSerial.QueueMessage(F_CLIENT_START, 0, 0);
+        }
         state = S_WAIT_SEND;
-        superSerial.QueueMessage(F_CLIENT_START, 0, 0);
+        ProcessMessage();
       }
     }
 
