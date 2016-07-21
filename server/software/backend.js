@@ -1050,24 +1050,25 @@ module.exports = {
 		//broadcaster.broadcast(module.exports, 'debug', message);
 	},
 	
-	getLog: function(type, onSuccess, onFailure){
+	getRecentLog: function(limit, onSuccess, onFailure){
+		if(!limit) limit = 100;
+		var sql = 
+			'SELECT ' +
+			'	logs.*, ' +
+			'	users.email, users."firstName", users."lastName", users."nfcID" ' +
+			'FROM logs ' +
+			'	LEFT JOIN users ON logs."userID" = users."userID" ' +
+			'ORDER BY timestamp DESC LIMIT ' + parseInt(limit);
+		return query(sql, [], onSuccess, onFailure);
+	},
+	
+	getBadNFCs: function(type, onSuccess, onFailure){
 		// @TODO: time range? Paging? Something
-		var sql;
-		if(type == 'nfc'){
-			sql = 
+		var sql =  
 				'SELECT * FROM logs LEFT JOIN users ON logs.code = users."nfcID" ' +
 				'WHERE code IS NOT NULL ' +
 				'	AND users."userID" IS NULL ' +
 				'ORDER BY timestamp DESC LIMIT 5';
-		}else{
-			sql = 
-				'SELECT ' +
-				'	logs.*, ' +
-				'	users.* ' +
-				'FROM logs ' +
-				'	LEFT JOIN users ON logs."userID" = users."userID" ' +
-				'ORDER BY timestamp DESC LIMIT 100';
-		}
 		return query(sql, [], onSuccess, onFailure);
 	},
 	

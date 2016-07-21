@@ -30,6 +30,7 @@ module.exports = {
 			'parameters': [],
 			'execute': function(callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
+					backend.log(module.exports.name + ': Sending *arm away*');
 					alarm.armAway(settings['Code']);
 				});
 			},
@@ -38,6 +39,7 @@ module.exports = {
 			'parameters': [],
 			'execute': function(callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
+					backend.log(module.exports.name + ': Sending *arm stay*');
 					alarm.armStay(settings['Code']);
 				});
 				
@@ -47,17 +49,16 @@ module.exports = {
 			'parameters': [],
 			'execute': function(callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
+					backend.log(module.exports.name + ': Sending *disarm*');
 					alarm.disarm(settings['Code']);
 				});
 			},
 		}
 	],
 	
-	onInstall: function(){
-	},
+	onInstall: function(){},
 
-	onUninstall: function(){
-	},
+	onUninstall: function(){},
 	
 	onEnable: function(){
 		backend.getPluginOptions(module.exports.name, function(settings){
@@ -72,26 +73,53 @@ module.exports = {
 					
 					alarm.on('alarm', function(status) {
 						if(status){
-							broadcaster.broadcast(module.exports, "alarm-triggered", {});
+							backend.error(module.exports.name + ': alarm triggered!');
+							backend.getRecentLog(20, function(log){
+								broadcaster.broadcast(module.exports, "alarm-triggered", log);
+							});
 						}
 					});
 					
 					alarm.on('fireAlarm', function(status) {
 						if(status){
+							backend.error(module.exports.name + ': fire alarm triggered!');
 							broadcaster.broadcast(module.exports, "fire-alarm-triggered", {});
 						}
 					});
 					
 					alarm.on('armedAway', function() {
+						backend.error(module.exports.name + ': alarm armed (away)');
 						broadcaster.broadcast(module.exports, "alarm-armed-away", {});
 					});
 					
 					alarm.on('armedStay', function() {
+						backend.error(module.exports.name + ': alarm armed (stay)');
 						broadcaster.broadcast(module.exports, "alarm-armed-stay", {});
 					});
 					
 					alarm.on('disarmed', function() {
+						backend.error(module.exports.name + ': alarm disarmed');
 						broadcaster.broadcast(module.exports, "alarm-disarmed", {});
+					});
+					
+					alarm.on('fault', function(zone) {
+						backend.debug('Fault in zone: ' + zone);
+					});
+					
+					alarm.on('raw', function(sec1, sec2, sec3, sec4) {
+						// These are LCD status updates usually
+						/*
+						backend.debug(module.exports.name + ' (raw): ' + sec1);
+						backend.debug(module.exports.name + ' (raw): ' + sec2);
+						backend.debug(module.exports.name + ' (raw): ' + sec3);
+						backend.debug(module.exports.name + ' (raw): ' + sec4);
+						*/
+					});
+					
+					alarm.on('error', function() {
+						backend.error(module.exports.name + ': socket error. Attempting to reconnect');
+						module.exports.onDisable();
+						module.exports.onEnable();
 					});
 				});
 			}catch(exc){

@@ -117,11 +117,38 @@ module.exports = {
 			}
 			
 			if(subscriptions[messageID]){
-				sendMessage(
-					messageID,
-					'<pre>' + JSON.stringify(data, null, "\t") + '</pre>',
-					subscriptions[messageID]
-				);
+				console.log('Email alerter composing message for ' + messageID);
+				try{
+					var message = '';
+					if(Array.isArray(data) && data.length > 1){
+						message = '<table><tr>';
+						var keys = [];
+						for(var c in data[0]){
+							message += '<th>' + c + '</th>';
+							keys.push(c);
+						}
+						message += '</tr>';
+						for(var i=0; i<data.length; i++){
+							message += '<tr>';
+							for(var j=0; j<keys.length; j++){
+								message += '<td>' + data[i][keys[j]] + '</td>';
+							}
+							message += '</tr>';
+						}
+						message += '</table>';
+					}else{
+						message = '<pre>' + JSON.stringify(data, null, "\t") + '</pre>';
+					}
+					
+					sendMessage(
+						messageID,
+						message,
+						subscriptions[messageID]
+					);
+				}catch(exc){
+					console.error(module.exports.name + ': An error while composing a message');
+					backend.debug(exc);
+				}
 			}
 		});
 	},

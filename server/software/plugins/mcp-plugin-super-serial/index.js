@@ -462,7 +462,26 @@ module.exports = {
 		},
 	],
 	
-	actions: {},
+	actions: [
+		{
+			'name': 'Reset connection',
+			'parameters': [
+				{
+					'name': 'Delay',
+					'type': 'number',
+					'value': '5',
+				}
+			],
+			'execute': function(parameters){
+				module.exports.onDisable();
+				if(parameters['Delay'] && parameters['Delay'] > 1){
+					setTimeout(module.exports.onEnable, parseInt(parameters['Delay']));
+				}else{
+					module.exports.onEnable();
+				}
+			},
+		}
+	],
 	onInstall: function(){},
 	onUninstall: function(){},
 	

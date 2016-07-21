@@ -399,7 +399,11 @@ server.put('/api/clients/:clientID/plugins/:pluginName', function (request, resp
 server.get('/api/log', function(request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getLog(request.params.type, function(data){ response.send(data); });
+		if(request.params.type == 'nfc'){
+			backend.getBadNFCs(function(data){ response.send(data); });
+		}else{
+			backend.getRecentLog(100, function(data){ response.send(data); });
+		}
 	}
 	
 	return next();
