@@ -25,7 +25,7 @@ uint8_t rs485::Send(uint8_t* data, uint8_t len) {
     }
     delay(10);
     if(Serial.available())  {
-      LOG_DEBUG(F("Bus is busy, aborting send to avoid collision/r/n"));
+      LOG_DEBUG(F("Bus is busy, aborting send to avoid collision\r\n"));
       return ERR_BUSY_BUS;
     }
     digitalWrite(serDir, RS485Transmit);  // Enable RS485 Transmit   

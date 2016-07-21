@@ -50,7 +50,7 @@
 // Constants for PN532 NFC reader
 #define NFC_READ_INTERVAL     100     // time in ms between NFC reads
 #define ID_SEND_INTERVAL      1000    // time in ms between sending card IDs
-#define SAME_ID_SEND_INTERVAL 5000  // time in ms between re-sending same card ID
+#define SAME_ID_SEND_INTERVAL 5000    // time in ms between re-sending same card ID
 
 // Constants for NeoPixel ring
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
@@ -70,7 +70,7 @@
 #define S_UNADDRESSED       2
 #define S_WAIT_SEND         3
 #define S_READY             4          
-
+ 
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
@@ -168,7 +168,7 @@ void setup(void) {
   {
     status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
     speaker.Play(startTune, startTuneDurations, 2);
-    state = S_READY;
+    state = S_NO_SERVER;
   }
 }
 
@@ -233,8 +233,6 @@ void loop(void) {
         superSerial.QueueMessage(F_CLIENT_START, 0, 0);
       }
     }
-
-
 
     case S_INITIALIZING:
     {
