@@ -339,10 +339,14 @@ function buildPacket(clientID, command, payload){
 
 function onData(data){
 	var debugData = [];
+	var worthShowing = dataBuffer.length > 0; // if we detected a packet start already, then this is always worth showing
 	for(var i=0; i<data.length; i++){
-		debugData.push(Number(data[i]).toString(16));
+		var val = Number(data[i]);
+		debugData.push(val.toString(16));
+
+		if(val != 0) worthShowing = true; // if any of the values are non-zero, it's worth showing
 	}
-	backend.debug("RAW Serial     : " + debugData);
+	if(worthShowing) backend.debug("RAW Serial     : " + debugData);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
