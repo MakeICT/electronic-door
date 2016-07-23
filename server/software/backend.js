@@ -1062,7 +1062,7 @@ module.exports = {
 		return query(sql, [], onSuccess, onFailure);
 	},
 	
-	getBadNFCs: function(type, onSuccess, onFailure){
+	getBadNFCs: function(onSuccess, onFailure){
 		// @TODO: time range? Paging? Something
 		var sql =  
 				'SELECT * FROM logs LEFT JOIN users ON logs.code = users."nfcID" ' +
