@@ -339,10 +339,14 @@ function buildPacket(clientID, command, payload){
 
 function onData(data){
 	var debugData = [];
+	var worthShowing = dataBuffer.length > 0; // if we detected a packet start already, then this is always worth showing
 	for(var i=0; i<data.length; i++){
-		debugData.push(Number(data[i]).toString(16));
+		var val = Number(data[i]);
+		debugData.push(val.toString(16));
+
+		if(val != 0) worthShowing = true; // if any of the values are non-zero, it's worth showing
 	}
-	backend.debug("RAW Serial     : " + debugData);
+	if(worthShowing) backend.debug("RAW Serial     : " + debugData);
 
 	for(var i=0; i<data.length; i++){
 		var byte = data[i];
@@ -462,7 +466,26 @@ module.exports = {
 		},
 	],
 	
-	actions: {},
+	actions: [
+		{
+			'name': 'Reset connection',
+			'parameters': [
+				{
+					'name': 'Delay',
+					'type': 'number',
+					'value': '5',
+				}
+			],
+			'execute': function(parameters){
+				module.exports.onDisable();
+				if(parameters['Delay'] && parameters['Delay'] > 1){
+					setTimeout(module.exports.onEnable, parseInt(parameters['Delay']));
+				}else{
+					module.exports.onEnable();
+				}
+			},
+		}
+	],
 	onInstall: function(){},
 	onUninstall: function(){},
 	

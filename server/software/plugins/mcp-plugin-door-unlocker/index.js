@@ -185,6 +185,13 @@ module.exports = {
 						superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DENY']);
 					};
 					backend.checkAuthorizationByNFC(nfc, clientOptions['Authorization tag'], unlock, deny);
+				}else if(data['command'] == superSerial.SERIAL_COMMANDS['DOOR']){
+					var client = backend.getClientByID(data['from']);
+					if(data['payload'][0] == 0){
+						backend.log(client.name + ': door opened');
+					}else{
+						backend.log(client.name + ': door closed');
+					}
 				}
 			}
 		}
