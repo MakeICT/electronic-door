@@ -31,6 +31,8 @@
 #define MOD_CHIME
 #define MOD_LCD
 
+#define CLIENT_ADDRESS 0x01
+
 /*-----( Declare Constants and Pin Numbers )-----*/
 
 // Pin assignments

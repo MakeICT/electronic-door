@@ -17,7 +17,7 @@ void rs485::SetDebugPort(SoftwareSerial* port)  {
 }
 
 uint8_t rs485::Send(uint8_t* data, uint8_t len) {
-  LOG_DUMP(F("rs485::Send()\r\n"));
+  LOG_DEBUG(F("rs485::Send()\r\n"));
 //  if (this->lastRcv - millis() > T_MIN_WAIT && !this->Available())  {
   if (true)  {
     while (Serial.available())  {
@@ -86,7 +86,7 @@ uint8_t rs485::Send(uint8_t* data, uint8_t len) {
 }
 
 inline uint8_t rs485::Send(uint8_t data) {
-  LOG_DUMP(F("rs485::Send()\r\n"));
+  LOG_DEBUG(F("rs485::Send()\r\n"));
   return this->Send(&data);
 }
 

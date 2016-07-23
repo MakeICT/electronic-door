@@ -50,31 +50,49 @@ byte Packet::ToArray(byte* array)  {
 
 //Compute MODBUS CRC16 for the packet
 uint16_t Packet::ComputeCRC()  {
-  //this part is borrowed from somewhere....  
+  //this part is borrowed from somewhere.... 
+  LOG_DEBUG(F("0")); 
   byte data[this->Size()-2];
+  LOG_DEBUG(F("1"));
   this->ToArray(data);
+  LOG_DEBUG(F("2"));
   uint16_t crc = 0xFFFF;
+  LOG_DEBUG(F("3"));
  
   for (byte pos = 0; pos < this->Size()-2; pos++) {
+    LOG_DEBUG(F("4"));
     LOG_DUMP(F("CRC'ing byte: "));
+    LOG_DEBUG(F("5"));
     LOG_DUMP(data[pos]);
+    LOG_DEBUG(F("6"));
     LOG_DUMP("\r\n");
+    LOG_DEBUG(F("7"));
     crc ^= (uint16_t)data[pos];          // XOR byte into least sig. byte of crc
+    LOG_DEBUG(F("8"));
  
     for (int i = 8; i != 0; i--) {    // Loop over each bit
+      LOG_DEBUG(F("9"));
       if ((crc & 0x0001) != 0) {      // If the LSB is set
+        LOG_DEBUG(F("a"));
         crc >>= 1;                    // Shift right and XOR 0xA001
+        LOG_DEBUG(F("b"));
         crc ^= 0xA001;
+        LOG_DEBUG(F("c"));
       }
-      else                            // Else LSB is not set
+      else {                           // Else LSB is not set
         crc >>= 1;                    // Just shift right
+        LOG_DEBUG(F("d"));
+      }
     }
   }
   // Note, this number has low and high bytes swapped, so use it accordingly (or swap bytes)
   //return crc;
   LOG_DUMP(F("Computed CRC: "));
+  LOG_DEBUG(F("e"));
   LOG_DUMP(crc);
+  LOG_DEBUG(F("f"));
   LOG_DUMP(F("\r\n"));
+  LOG_DEBUG(F("g"));
   return crc;
 }
 
