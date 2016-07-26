@@ -138,12 +138,14 @@ module.exports = {
 	receiveMessage: function(source, message, data){
 		if(message == "door-unlocked"){
 			backend.getPluginOptions(module.exports.name, function(settings){
+				backend.log(module.exports.name + ': Sending *disarm*');
 				alarm.disarm(settings['Code']);
 			});
 		}else if(message == 'serial-data-received'){
 			if(data['to'] == 0){
 				if(data['command'] == ARM_ALARM){
 					backend.getPluginOptions(module.exports.name, function(settings){
+						backend.log(module.exports.name + ': Sending *arm away*');
 						alarm.armAway(settings['Code']);
 					});
 				}
