@@ -11,6 +11,23 @@ var dataBuffer = [];
 var escapeFlag = false;
 
 var retryDelay = 0;
+var watchdogTimer = null;
+var watchdogAction = function(){
+	backend.error('Super serial watchdog activated');
+	try{
+		var actions = module.exports.actions;
+		for(var i=0; i<actions.length; i++){
+			console.log(actions[i]);
+			if(actions[i].name == 'Reset connection'){
+				actions[i].execute({'Delay': 10})
+				break;
+			}
+		}
+	}catch(exc){
+		backend.error(exc);
+		throw exc;
+	}
+}
 
 var SERIAL_FLAGS = {
 	'ESCAPE':	0xFE,
@@ -379,6 +396,7 @@ function onData(data){
 						backend.debug('=============================');
 						// blah blah blah
 						if(packet.from != 0 && packet.from != 255) packetQueue.onACKReceived(packet);
+						module.exports.resetWatchdog();
 					}else{
 						var handlePacket = function(){
 							if(packet.from != 255){
@@ -407,6 +425,7 @@ function onData(data){
 							if(packet.from != 255){
 								sendACK(packet);
 							}
+							module.exports.resetWatchdog();
 						};
 						if(packet.from == 255 || clients[packet.from]){
 							handlePacket();
@@ -473,7 +492,7 @@ module.exports = {
 				{
 					'name': 'Delay',
 					'type': 'number',
-					'value': '5',
+					'value': '10',
 				}
 			],
 			'execute': function(parameters){
@@ -513,6 +532,8 @@ module.exports = {
 							backend.error(exc);
 						}
 					}
+
+					module.exports.resetWatchdog();
 					try{
 						serialPort.on('data', onData);
 					}catch(exc){
@@ -540,6 +561,13 @@ module.exports = {
 			serialPort = null;
 			backend.log('Super Serial disconnected');
 		}
+		clearTimeout(watchdogTimer);
+	},
+	
+	resetWatchdog: function(){
+		clearTimeout(watchdogTimer);
+		watchdogTimer = setTimeout(watchdogAction, 60000);
+		backend.debug('Super Serial watchdog started');
 	},
 	
 	send: function(clientID, command, payload){
