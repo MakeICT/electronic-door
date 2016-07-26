@@ -17,7 +17,6 @@ var watchdogAction = function(){
 	try{
 		var actions = module.exports.actions;
 		for(var i=0; i<actions.length; i++){
-			console.log(actions[i]);
 			if(actions[i].name == 'Reset connection'){
 				actions[i].execute({'Delay': 10})
 				break;
