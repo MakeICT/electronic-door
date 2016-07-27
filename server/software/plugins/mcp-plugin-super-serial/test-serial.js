@@ -238,19 +238,21 @@ function armAlarm(){
 
 
 
-serialPort = new SerialPort.SerialPort(
-	process.argv[2],
-	{ baudrate: 9600},
-	true,
-	function(error){
-		if(error){
-			console.error('Serial connection error');
-			console.error(error);
-		}else{
-			console.log('Super Serial connected');
-			serialPort.on('data', onData);
-			setTimeout(sendKey, 1000);
-		}
-	}
-);
+serialPort = new SerialPort(process.argv[2], { 'baudrate': 9600, 'autoload': false });
 
+serialPort.on('error', function(error){
+	console.error('Serial connection error: ' + error);
+});
+
+serialPort.on('open', function(error){
+	console.log('Super Serial connected');
+	serialPort.on('data', onData);
+	setInterval(sendKey, 6000);
+});
+
+serialPort.open(function(err) {
+	if(err){
+		console.error('Serial connection error');
+		console.error(error);
+	}
+});
