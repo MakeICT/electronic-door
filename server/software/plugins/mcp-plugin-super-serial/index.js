@@ -508,40 +508,45 @@ module.exports = {
 	onUninstall: function(){},
 	
 	onEnable: function(){
-		packetQueue.clear();
 		var settings = getSettings();
+		
 		if(serialPort){
 			module.exports.onDisable();
 		}
-		serialPort = new SerialPort.SerialPort(
-			settings['Port'],
-			{ baudrate: settings['Baud'], },
-			true,
-			function(error){
-				if(error){
-					backend.error('Serial connection error: ' + error);
-				}else{
-					backend.log('Super Serial connected!');
-					if(settings['RW Toggle Pin']){
-						try{
-							readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
-							readWriteToggle.writeSync(1);
-						}catch(exc){
-							backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
-							backend.error(exc);
-						}
-					}
+		serialPort = new SerialPort(settings['Port'], { 'baudrate': parseInt(settings['Baud']), 'autoOpen': false});
 
-					module.exports.resetWatchdog();
-					try{
-						serialPort.on('data', onData);
-					}catch(exc){
-						backend.error("Error while attaching data callback");
-						backend.error(exc);
-					}
+		serialPort.on('error', function(error){
+			backend.error('Serial connection error: ' + error);
+		});
+		
+		serialPort.on('open', function(error){
+			backend.log('Super Serial connected!');
+			if(settings['RW Toggle Pin']){
+				try{
+					readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
+					readWriteToggle.writeSync(1);
+				}catch(exc){
+					backend.error('Super Serial Failed to toggle GPIO ' + settings['RW Toggle Pin']);
+					backend.error(exc);
 				}
 			}
-		);
+
+			module.exports.resetWatchdog();
+			try{
+				serialPort.on('data', onData);
+			}catch(exc){
+				backend.error('Error while connecting super serial data callback');
+				backend.error(exc);
+			}
+		});
+		
+		serialPort.on('disconnect', function(error){
+			backend.error('Serial Port disconnected: ' + error);
+		});
+		
+		serialPort.open(function(err) {
+			if(err) backend.error('Cannot open Super Serial port: ' + err.message);
+		});
 		
 		reloadClients();
 		broadcaster.subscribe(module.exports);
@@ -549,10 +554,12 @@ module.exports = {
 	
 	onDisable: function(){
 		broadcaster.unsubscribe(module.exports);
+		packetQueue.clear();
 		if(serialPort){
 			try{
 				module.exports.reset();
 			}catch(exc){}
+			
 			try{
 				serialPort.close();
 			}catch(exc){}
@@ -586,10 +593,6 @@ module.exports = {
 	},
 	
 	reset: function(){
-		for(var id in clients){
-			clearTimeout(clients[id].responseTimeout);
-		}
-		
 		dataBuffer = [];
 		escapeFlag = false;
 		retryDelay = 0;
