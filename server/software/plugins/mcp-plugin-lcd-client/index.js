@@ -155,7 +155,12 @@ module.exports = {
 	
 	onEnable: function(){
 		broadcaster.subscribe(module.exports);
-		sendToAll(center('Server plugin'), center('initialized'));
+		// hold your horses on this
+		// plugins have no load-order priority, so the serial plugin may not even be loaded yet...
+		var letThemKnow = function(){
+			sendToAll(center('Server is'), center('initialized!'));
+		};
+		setTimeout(letThemKnow, 3000);
 	},
 	
 	onDisable: function(){
