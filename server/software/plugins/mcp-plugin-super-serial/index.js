@@ -280,8 +280,7 @@ var clients = {};
 function _sendPacket(packet, next){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
-		module.exports.reconnect();
-		setTimeout(function(){ _sendPacket(packet, next); }, 1000);
+		setTimeout(module.exports.reconnect, 3000);
 	}else{
 		var packetWriter = {
 			'packet': packet,
