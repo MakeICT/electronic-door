@@ -208,16 +208,14 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
 }
 
 void SuperSerial::SendPacket(Packet* p)  {
-  LOG_DEBUG(F("SuperSerial::SendPacket()\r\n"));
+  LOG_DUMP(F("SuperSerial::SendPacket()\r\n"));
   
   if (!dataQueued)  {
     currentTransaction = (currentTransaction + 1) % 255;
     this->dataQueued = true;
   }
   p->SetTransID(currentTransaction);
-  LOG_DEBUG(F("x"));
   p->SetCRC(p->ComputeCRC());       // @BUG: sometimes program crashes here.
-  LOG_DEBUG(F("y"));
   byte array[p->EscapedSize()];
 
   p->ToEscapedArray(array);

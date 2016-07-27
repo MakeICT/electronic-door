@@ -8,6 +8,7 @@
 #include <PN532_SPI.h>
 #include <MFRC522.h>    //TODO: only include if necessary
 #include "PN532Interface.h"
+#include <avr/wdt.h>
 
 /*-----( Include project files )-----*/
 #include "packetqueue.h"
@@ -31,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-#define CLIENT_ADDRESS 0x01
+//#define CLIENT_ADDRESS 0x01
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -103,7 +104,7 @@ uint8_t address = ADDR_CLIENT_DEFAULT;     //TODO: this shouldn't be necessary
 SuperSerial superSerial(&bus, address);
 
 /*-----( Declare Variables )-----*/
-uint8_t byteReceived;
+//uint8_t byteReceived;
 boolean alarmButton = 0;
 boolean doorState = 0;
 boolean doorBell = 0;
@@ -183,10 +184,13 @@ void setup(void) {
     
   // notify server that client has started
   superSerial.QueueMessage(F_CLIENT_START, 0, 0);
+  watchdogSetup();
 }
 
 
 void loop(void) {
+  wdt_reset();
+  while(1);
   LOG_DUMP(F("Free RAM: "));
   LOG_DUMP(freeRam());
   LOG_DUMP (F("\r\n"));
@@ -411,4 +415,29 @@ void CheckInputs()  {
     return;
   }
   #endif
+}
+
+void watchdogSetup(void)
+{
+  cli();       // disable all interrupts
+  wdt_reset(); // reset the WDT timer
+  /*
+   WDTCSR configuration:
+   WDIE = 0: Interrupt Enable
+   WDE = 1 :Reset Enable
+   WDP3 = 1 :For 2000ms Time-out
+   WDP2 = 0 :For 2000ms Time-out
+   WDP1 = 0 :For 2000ms Time-out
+   WDP0 = 1 :For 2000ms Time-out
+  */
+  // Enter Watchdog Configuration mode:
+  WDTCSR |= (1<<WDCE) | (1<<WDE);
+  // Set Watchdog settings:
+   WDTCSR = (0<<WDIE) | (1<<WDE) | (1<<WDP3) | (0<<WDP2) | (0<<WDP1) | (1<<WDP0);
+  sei();
+}
+
+ISR(WDT_vect) // Watchdog timer interrupt.
+{
+  //Put any future freeze debugging code here
 }
