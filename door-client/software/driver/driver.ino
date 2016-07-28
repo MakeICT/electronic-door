@@ -190,7 +190,6 @@ void setup(void) {
 
 void loop(void) {
   wdt_reset();
-  while(1);
   LOG_DUMP(F("Free RAM: "));
   LOG_DUMP(freeRam());
   LOG_DUMP (F("\r\n"));
