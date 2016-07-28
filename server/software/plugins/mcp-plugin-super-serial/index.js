@@ -13,18 +13,7 @@ var escapeFlag = false;
 var watchdogTimer = null;
 var watchdogAction = function(){
 	backend.error('Super serial watchdog activated');
-	try{
-		var actions = module.exports.actions;
-		for(var i=0; i<actions.length; i++){
-			if(actions[i].name == 'Reset connection'){
-				actions[i].execute({'Delay': 10})
-				break;
-			}
-		}
-	}catch(exc){
-		backend.error(exc);
-		throw exc;
-	}
+	module.exports.reconnect();
 }
 
 var SERIAL_FLAGS = {
