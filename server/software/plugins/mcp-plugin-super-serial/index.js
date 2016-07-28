@@ -581,8 +581,7 @@ module.exports = {
 	reconnect: function(){
 		backend.debug("Super serial reconnecting");
 		try{
-			module.exports.reset();
-			serialPort.close();
+			module.exports.onDisable();
 		}catch(exc){
 		}finally{
 			serialPort = null;
