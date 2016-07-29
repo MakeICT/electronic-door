@@ -10,22 +10,10 @@ var readWriteToggle;
 var dataBuffer = [];
 var escapeFlag = false;
 
-var retryDelay = 0;
 var watchdogTimer = null;
 var watchdogAction = function(){
 	backend.error('Super serial watchdog activated');
-	try{
-		var actions = module.exports.actions;
-		for(var i=0; i<actions.length; i++){
-			if(actions[i].name == 'Reset connection'){
-				actions[i].execute({'Delay': 10})
-				break;
-			}
-		}
-	}catch(exc){
-		backend.error(exc);
-		throw exc;
-	}
+	module.exports.reconnect();
 }
 
 var SERIAL_FLAGS = {
@@ -280,7 +268,7 @@ var clients = {};
 function _sendPacket(packet, next){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
-		setTimeout(module.exports.reconnect, 3000);
+		module.exports.reconnect();
 	}else{
 		var packetWriter = {
 			'packet': packet,
@@ -520,6 +508,7 @@ module.exports = {
 
 		serialPort.on('error', function(error){
 			backend.error('Serial connection error: ' + error);
+			module.exports.reconnect();
 		});
 		
 		serialPort.on('open', function(error){
@@ -540,6 +529,7 @@ module.exports = {
 			}catch(exc){
 				backend.error('Error while connecting super serial data callback');
 				backend.error(exc);
+				module.exports.reconnect();
 			}
 		});
 		
@@ -548,7 +538,10 @@ module.exports = {
 		});
 		
 		serialPort.open(function(err) {
-			if(err) backend.error('Cannot open Super Serial port: ' + err.message);
+			if(err){
+				backend.error('Cannot open Super Serial port: ' + err.message);
+				module.exports.reconnect();
+			}
 		});
 		
 		reloadClients();
@@ -556,13 +549,10 @@ module.exports = {
 	},
 	
 	onDisable: function(){
+		clearTimeout(watchdogTimer);
 		broadcaster.unsubscribe(module.exports);
-		packetQueue.clear();
+		module.exports.reset();
 		if(serialPort){
-			try{
-				module.exports.reset();
-			}catch(exc){}
-			
 			try{
 				serialPort.close();
 			}catch(exc){}
@@ -570,7 +560,6 @@ module.exports = {
 			serialPort = null;
 			backend.log('Super Serial disconnected');
 		}
-		clearTimeout(watchdogTimer);
 	},
 	
 	resetWatchdog: function(){
@@ -592,18 +581,19 @@ module.exports = {
 	reconnect: function(){
 		backend.debug("Super serial reconnecting");
 		try{
-			module.exports.reset();
-			serialPort.close();
+			module.exports.onDisable();
+		}catch(exc){
+		}finally{
 			serialPort = null;
-		}catch(exc){}
+		}
 		
-		module.exports.onEnable();
+		setTimeout(module.exports.onEnable, 1000);
 	},
 	
 	reset: function(){
 		dataBuffer = [];
 		escapeFlag = false;
-		retryDelay = 0;
+		packetQueue.clear();
 	},
 	
 	receiveMessage: function(source, messageID, data){
