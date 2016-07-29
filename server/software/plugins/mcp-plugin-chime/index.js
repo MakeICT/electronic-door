@@ -6,8 +6,8 @@ var backend = require('../../backend.js');
 var tunes = {
 	'happy-birthday': '',
 	'i-love-you': '',
-	'alarm-armed': '25312531253125312531253125312531253125316060606060606060606060606060606060606060',
-	'alarm-disarmed': '250025202020',
+	'alarm-armed': '25312531253125312531253125312531253125314040404040404040404040404040404040404040',
+	'alarm-disarmed': '310031080208',
 };
 
 function getClientOptions(client){
@@ -151,8 +151,6 @@ module.exports = {
 			}
 		}else if(messageID == 'alarm-armed-stay' || messageID == 'alarm-armed-away'){
 			superSerial.broadcast(superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(tunes['alarm-armed']));
-		}else if(messageID == 'alarm-disarmed'){
-			superSerial.broadcast(superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(tunes['alarm-disarmed']));
 		}
 	},
 };
