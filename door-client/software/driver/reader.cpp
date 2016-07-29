@@ -61,7 +61,7 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
   if (!this->IsAlive())  {
     LOG_ERROR(F("NFC Reader has stopped responding\r\n"));
     if (!this->Initialize())  {
-      return false;
+      return 2;
     }
   }
   //TODO: detect if reader is still functioning correctly; if not, reset

@@ -276,7 +276,17 @@ void CheckReader()  {
   uint8_t uid[7] = {0};
   uint8_t id_length;
   bool sameID = true;
-  if(card_reader.poll(uid, &id_length))  {
+  uint8_t retries = 0;
+  
+  uint8_t result = card_reader.poll(uid, &id_length);
+  while (result == 2)  {
+    result = card_reader.poll(uid, &id_length); 
+    if (retries++ > 2)  {
+      LOG_DEBUG(F("NFC reader unrecoverable.  Commiting suicide.\r\n"));
+      while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
+    }
+  }
+  if (result == 1)  {
     for (int i = 0; i < 6; i++)  {
       if (uid[i] != lastuid[i]){
         sameID = false;
@@ -303,7 +313,9 @@ void CheckReader()  {
       LOG_DEBUG(F("Not re-sending same ID more than once in configured timeout.\r\n"));
     }
   }
-  //TODO: Detect unrecoverable reader error
+  else  {
+    //Do nothing if no new card read
+  }
 }
 
 void ProcessMessage()  {
