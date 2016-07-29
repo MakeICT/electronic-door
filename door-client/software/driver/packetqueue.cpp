@@ -40,7 +40,7 @@ byte Packet::ToArray(byte* array)  {
   array[index++] = this->message.function;
   array[index++] = this->message.length;
     
-  for(int i = 0;i < this->message.length; i++)  {
+  for(int i = 0; i < this->message.length; i++)  {
     array[index++] = this->message.payload[i];
   }
   array[index++] = this->CRC() >> 8;

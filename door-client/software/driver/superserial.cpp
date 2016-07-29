@@ -10,6 +10,8 @@ SuperSerial::SuperSerial (rs485* b, byte addr) {
   this->responsePacket.SetDestAddr(ADDR_MASTER);
   this->responsePacket.SetSrcAddr(this->deviceAddress);
   this->currentTransaction = 0;
+  this->retryCount = 0;
+  this->lastPacketSend = 0;
   
   //TODO: make this configurable
   this->retryTimeout = 100;
@@ -180,20 +182,19 @@ bool SuperSerial::GetPacket() {
         if (receivedBytes != 0)
           LOG_DEBUG(F("Packet too short, discarding\r\n"));
       }
-      }
-      else  {
-        // add received byte to data buffer
-        if  (bufferIndex >= MAX_PACKET_SIZE - 1)  {
-          LOG_ERROR(F("Serial recieve buffer overflow!"));
-        }
-        dataBuffer[bufferIndex++] = byteReceived;
-        LOG_DUMP(F("rcv: "));
-        LOG_DUMP(byteReceived);
-        LOG_DUMP(F("\r\n"));
-        escaping = false;
-      }
-
     }
+    else  {
+      // add received byte to data buffer
+      if  (bufferIndex >= MAX_PACKET_SIZE - 1)  {
+        LOG_ERROR(F("Serial recieve buffer overflow!"));
+      }
+      dataBuffer[bufferIndex++] = byteReceived;
+      LOG_DUMP(F("rcv: "));
+      LOG_DUMP(byteReceived);
+      LOG_DUMP(F("\r\n"));
+      escaping = false;
+    }
+  }
   return false;
 }
 
@@ -210,7 +211,7 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
 void SuperSerial::SendPacket(Packet* p)  {
   LOG_DUMP(F("SuperSerial::SendPacket()\r\n"));
   
-  if (!dataQueued)  {
+  if (!this->dataQueued)  {
     currentTransaction = (currentTransaction + 1) % 255;
     this->dataQueued = true;
   }

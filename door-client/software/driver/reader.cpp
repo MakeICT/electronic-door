@@ -7,7 +7,9 @@ void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
 
 #ifdef READER_PN532
 
-PN532_SPI pn532spi(SPI, 10);      //TODO: make this configurable
+#define RESET_PIN 10
+
+PN532_SPI pn532spi(SPI, RESET_PIN);      //TODO: make this configurable
 PN532 nfc(pn532spi);
 
 Reader::Reader() {
@@ -21,6 +23,14 @@ boolean Reader::start() {
 bool Reader::Initialize()  {
   LOG_DEBUG(F("Initializing PN532 NFC reader\r\n"));
   for (int i=0; i<3; i++)  {
+    if (i==2)  {
+      //Do a hard reset on 3rd attempt.  Maybe it will help?
+      LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
+      digitalWrite(RESET_PIN, 0);
+      delay(1000);
+      digitalWrite(RESET_PIN, 1);
+      delay(100);
+    }
     nfc.begin();
     if (this->IsAlive())  {
       //configure board to read RFID tags
@@ -70,7 +80,7 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
     else if (uidLength == 7)  {
       // Mifare Ultralight
     }
-    
+
     return 1;
   } 
   else return 0;

@@ -189,6 +189,9 @@ void setup(void) {
 
 
 void loop(void) {
+  static uint8_t limit = 0;
+  if (limit++ == 0)
+    LOG_DEBUG(F("."));
   wdt_reset();
   LOG_DUMP(F("Free RAM: "));
   LOG_DUMP(freeRam());
@@ -248,6 +251,8 @@ void loop(void) {
       if (superSerial.NewMessage())  {
         if (state == S_NO_SERVER)  {
           LOG_DEBUG(F("Contact with server re-established\r\n"));
+          //reset lights to idle
+          status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
           superSerial.QueueMessage(F_CLIENT_START, 0, 0);
         }
         state = S_WAIT_SEND;
@@ -422,12 +427,12 @@ void watchdogSetup(void)
   wdt_reset(); // reset the WDT timer
   /*
    WDTCSR configuration:
-   WDIE = 0: Interrupt Enable
-   WDE = 1 :Reset Enable
-   WDP3 = 1 :For 2000ms Time-out
-   WDP2 = 0 :For 2000ms Time-out
-   WDP1 = 0 :For 2000ms Time-out
-   WDP0 = 1 :For 2000ms Time-out
+   WDIE = 0 :Interrupt Enable
+   WDE  = 1 :Reset Enable
+   WDP3 = 1 :For 8000ms Time-out
+   WDP2 = 0 :For 8000ms Time-out
+   WDP1 = 0 :For 8000ms Time-out
+   WDP0 = 1 :For 8000ms Time-out
   */
   // Enter Watchdog Configuration mode:
   WDTCSR |= (1<<WDCE) | (1<<WDE);

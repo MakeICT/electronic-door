@@ -57,7 +57,7 @@ class SuperSerial
     Packet queuedPacket;
     Packet responsePacket;
     
-    byte currentTransaction;
+    uint8_t currentTransaction;
     uint32_t lastPacketSend;
     uint8_t retryTimeout;
     uint8_t maxRetries;
