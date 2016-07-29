@@ -285,34 +285,38 @@ function _sendPacket(packet, next){
 		var packetWriter = {
 			'packet': packet,
 			'go': function(){
-				serialPort.write(this.packet, function(error, results){
-					if(error){
-						backend.error('Packet write error');
-						backend.error(error);
-					}else{
-						backend.debug('Writing packet : ' + module.exports.byteArrayToHexString(packet));
-					}
-				});
-				var packet = this.packet;
-				serialPort.drain(function(error){
-					if(error){
-						backend.error('Packet write error');
-						backend.error(error);
-					}
-					if(readWriteToggle){
-						var settings = getSettings();
+				try{
+					serialPort.write(this.packet, function(error, results){
+						if(error){
+							backend.error('Packet write error');
+							backend.error(error);
+						}else{
+							backend.debug('Writing packet : ' + module.exports.byteArrayToHexString(packet));
+						}
+					});
+					var packet = this.packet;
+					serialPort.drain(function(error){
+						if(error){
+							backend.error('Packet write error');
+							backend.error(error);
+						}
+						if(readWriteToggle){
+							var settings = getSettings();
 
-						var doToggle = function(){
-							readWriteToggle.writeSync(1);
+							var doToggle = function(){
+								readWriteToggle.writeSync(1);
+								if(next) next();
+							};
+							
+							var delay = Math.ceil(1 / settings['Baud'] * packet.length * 10000);
+							setTimeout(doToggle, delay);
+						}else{
 							if(next) next();
-						};
-						
-						var delay = Math.ceil(1 / settings['Baud'] * packet.length * 10000);
-						setTimeout(doToggle, delay);
-					}else{
-						if(next) next();
-					}
-				});
+						}
+					});
+				}catch(exc){
+					module.exports.reconnect();
+				}
 			},
 		};
 		if(readWriteToggle){
@@ -587,7 +591,12 @@ module.exports = {
 	
 	reconnect: function(){
 		backend.debug("Super serial reconnecting");
-		module.exports.reset();
+		try{
+			module.exports.reset();
+			serialPort.close();
+			serialPort = null;
+		}catch(exc){}
+		
 		module.exports.onEnable();
 	},
 	

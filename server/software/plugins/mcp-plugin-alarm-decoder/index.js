@@ -5,6 +5,7 @@ var ad2usb = require('./node_modules/ad2usb');
 var alarm;
 
 var ARM_ALARM = 0x06;
+var reconnectTimer;
 
 module.exports = {
 	name: 'Alarm Decoder',
@@ -65,6 +66,8 @@ module.exports = {
 			try{
 				ad2usb.errorHandler = function(error){
 					backend.error('Alarm Decoder failed: ' + error.code);
+					clearTimeout(reconnectTimer);
+					reconnectTimer = setTimeout(module.exports.onEnable, 5000);
 				};
 				
 				alarm = ad2usb.connect(settings['IP'], settings['Port'], function() {
@@ -124,12 +127,14 @@ module.exports = {
 				});
 			}catch(exc){
 				backend.log('Failed to start AlarmDecoder Plugin', null, null, 'error');
-				console.log(exc);
+				clearTimeout(reconnectTimer);
+				reconnectTimer = setTimeout(module.exports.onEnable, 5000);
 			}
 		});
 	},
 	
 	onDisable: function(){
+		clearTimeout(reconnectTimer);
 		alarm.socket.destroy();
 		alarm = null;
 		broadcaster.unsubscribe(module.exports);
