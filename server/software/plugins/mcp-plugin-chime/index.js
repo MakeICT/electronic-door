@@ -3,6 +3,12 @@ var superSerial = require('../mcp-plugin-super-serial');
 
 // this is only needed for backend.regroup convenience
 var backend = require('../../backend.js');
+var tunes = {
+	'happy-birthday': '',
+	'i-love-you': '',
+	'alarm-armed': '25312531253125312531253125312531253125314040404040404040404040404040404040404040',
+	'alarm-disarmed': '310031080208',
+};
 
 function getClientOptions(client){
 	try{
@@ -140,6 +146,8 @@ module.exports = {
 			if(parameters['Lights'] && parameters['Lights'] != ''){
 				superSerial.broadcast(superSerial.SERIAL_COMMANDS['LIGHTS'], superSerial.hexStringToByteArray(parameters['Lights']));
 			}
+		}else if(messageID == 'alarm-armed-stay' || messageID == 'alarm-armed-away'){
+			superSerial.broadcast(superSerial.SERIAL_COMMANDS['TONE'], superSerial.hexStringToByteArray(tunes['alarm-armed']));
 		}
 	},
 };
