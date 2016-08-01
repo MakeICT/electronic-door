@@ -335,9 +335,15 @@ void ProcessMessage()  {
     case F_HEARTBEAT:
       LOG_INFO(F("Heartbeat Ping\r\n"));
 
-    case F_SET_ADDRESS:
-      LOG_INFO(F("Set Address\r\n"));
-      conf.SaveAddress(msg.payload[0]);
+    case F_SET_CONFIG:
+      LOG_INFO(F("Set Config\r\n"));
+      switch(msg.payload[0])
+      {
+        case 0:
+        LOG_INFO(F("Set Address\r\n"));
+        conf.SaveAddress(msg.payload[1]);
+        
+      }
       state = S_READY;
       break;
       
