@@ -279,14 +279,15 @@ void CheckReader()  {
   static uint8_t readFailures = 0;
   
   uint8_t result = card_reader.poll(uid, &id_length);
-  while (result == 2)  {
-    result = card_reader.poll(uid, &id_length); 
-    if (readFailures++ > 2)  {
-      LOG_DEBUG(F("NFC read failed 3 times.  Commiting suicide.\r\n"));
-      while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
+    while (result == 2)  {
+      if (++readFailures > 2)  {
+        LOG_DEBUG(F("NFC read failed 3 times.  Commiting suicide.\r\n"));
+        while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
+      }
+      result = card_reader.poll(uid, &id_length);
     }
-  }
-  if (result == 1)  {s
+
+  if (result == 1)  {
     for (int i = 0; i < 6; i++)  {
       if (uid[i] != lastuid[i]){
         sameID = false;
