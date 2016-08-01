@@ -7,8 +7,6 @@ void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
 
 #ifdef READER_PN532
 
-#define RESET_PIN 10
-
 PN532_SPI pn532spi(SPI, RESET_PIN);      //TODO: make this configurable
 PN532 nfc(pn532spi);
 
@@ -22,27 +20,26 @@ boolean Reader::start() {
 
 bool Reader::Initialize()  {
   LOG_DEBUG(F("Initializing PN532 NFC reader\r\n"));
-  for (int i=0; i<3; i++)  {
-    if (i==2)  {
-      //Do a hard reset on 3rd attempt.  Maybe it will help?
-      LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
-      digitalWrite(RESET_PIN, 0);
-      delay(1000);
-      digitalWrite(RESET_PIN, 1);
-      delay(100);
-    }
+  for (int i=1; i<4; i++)  {
+    LOG_DEBUG(F("Initialization attempt: "));
+    LOG_DEBUG(i);
+    LOG_DEBUG(F("\r\n"));
+
     nfc.begin();
     if (this->IsAlive())  {
       //configure board to read RFID tags
       nfc.SAMConfig();
-      nfc.setPassiveActivationRetries(2);  //reduce retries to prevent hang
+      nfc.setPassiveActivationRetries(2);  //reduce card read retries to prevent hang
       LOG_DEBUG(F("Reader initialized successfully\r\n"));
       return true;
     }
+    else  {
+      LOG_DEBUG(F("Failed to initialise reader\r\n"));
+    }
   }
-  LOG_ERROR(F("Could not initialize reader\r\n"));
+  LOG_ERROR(F("Could not initialize reader after 3 attempts\r\n"));
   return false;
-  //TODO: implement self-test if available.
+  //@TODO: implement self-test if available.
 }
 
 bool Reader::IsAlive()  {
@@ -89,6 +86,8 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
 
 #ifdef READER_RC522
 
+#define RESET_PIN 3
+
 MFRC522 mfrc522(10, 3);   // TODO: make this configurable
 Reader::Reader() {
 
@@ -103,15 +102,29 @@ boolean Reader::start() {
 
 bool Reader::Initialize()  {
   LOG_DEBUG(F("Initializing MFRC522 NFC reader\r\n"));
-  for (int i=0; i<3; i++)  {
+  for (int i=1; i<4; i++)  {
+    LOG_DEBUG(F("Initialization attempt: "));
+    LOG_DEBUG(i);
+    LOG_DEBUG(F("\r\n"));
+    if (i==3)  {
+      //Do a hard reset on 3rd attempt.  Maybe it will help?
+      LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
+      digitalWrite(RESET_PIN, 0);
+      delay(1000);
+      digitalWrite(RESET_PIN, 1);
+      delay(100);
+    }
     mfrc522.PCD_Init();
     if (this->IsAlive())  {
       //break;
       LOG_DEBUG(F("Reader initialized successfully\r\n"));
       return true;
     }
+    else  {
+      LOG_DEBUG(F("Failed to initialise reader\r\n"));
+    }
   }
-  LOG_ERROR(F("Could not initialize reader\r\n"));
+  LOG_ERROR(F("Could not initialize reader after 3 attempts\r\n"));
   return false;
   // Self-test always fails.  Possibly due to counterfeit chips
   //~ if (!mfrc522.PCD_PerformSelfTest())  {
@@ -140,7 +153,7 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
   if (!this->IsAlive())  {
     LOG_ERROR(F("NFC Reader has stopped responding\r\n"));
     if (!this->Initialize())  {
-      return false;
+      return 2;
     }
   }
   // Look for new cards
@@ -155,13 +168,13 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
       }
       //identify picctype
       //byte piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-      return true;
+      return 1;
     }
     else  {
       LOG_ERROR(F("Failed to read card UID!\r\n"));
     }
   }
-  return false;
+  return 0;
 }
 #endif
  
