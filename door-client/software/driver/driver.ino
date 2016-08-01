@@ -286,7 +286,7 @@ void CheckReader()  {
       while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
     }
   }
-  if (result == 1)  {s
+  if (result == 1)  {
     for (int i = 0; i < 6; i++)  {
       if (uid[i] != lastuid[i]){
         sameID = false;
