@@ -110,7 +110,9 @@ bool Reader::Initialize()  {
       //Do a hard reset on 3rd attempt.  Maybe it will help?
       LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
       digitalWrite(RESET_PIN, 0);
-      delay(1000);
+      SPI.end();
+      SPI.begin();
+      delay(100);   //longer than necessary
       digitalWrite(RESET_PIN, 1);
       delay(100);
     }
