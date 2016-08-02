@@ -148,6 +148,8 @@ void setup(void) {
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
   
+  doorState = digitalRead(DOOR_SWITCH_PIN);
+  
 
  // superSerial = new SuperSerial(&bus, address);
  
@@ -279,13 +281,13 @@ void CheckReader()  {
   static uint8_t readFailures = 0;
   
   uint8_t result = card_reader.poll(uid, &id_length);
-    while (result == 2)  {
-      if (++readFailures > 2)  {
-        LOG_DEBUG(F("NFC read failed 3 times.  Commiting suicide.\r\n"));
-        while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
-      }
-      result = card_reader.poll(uid, &id_length);
+  while (result == 2)  {
+    if (++readFailures > 2)  {
+      LOG_DEBUG(F("NFC read failed 3 times.  Commiting suicide.\r\n"));
+      while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
     }
+    result = card_reader.poll(uid, &id_length);
+  }
 
   if (result == 1)  {
     for (int i = 0; i < 6; i++)  {
