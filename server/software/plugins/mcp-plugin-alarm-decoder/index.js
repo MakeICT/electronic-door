@@ -6,6 +6,19 @@ var alarm;
 
 var ARM_ALARM = 0x06;
 var reconnectTimer;
+var statusChecker = {
+	'status': null,
+	'timer': null,
+	'setStatus': function(status){
+		clearTimeout(statusChecker.timer);
+		statusChecker.status = status;
+		statusChecker.timer = setTimeout(statusChecker.itsForReal, 5000);
+	},
+	'itsForReal': function(){
+		backend.error(module.exports.name + ': ' + statusChecker.status);
+		broadcaster.broadcast(module.exports, statusChecker.status, {});
+	},
+};
 
 module.exports = {
 	name: 'Alarm Decoder',
@@ -91,18 +104,15 @@ module.exports = {
 					});
 					
 					alarm.on('armedAway', function() {
-						backend.error(module.exports.name + ': alarm armed (away)');
-						broadcaster.broadcast(module.exports, "alarm-armed-away", {});
+						statusChecker.setStatus('alarm-armed-away');
 					});
 					
 					alarm.on('armedStay', function() {
-						backend.error(module.exports.name + ': alarm armed (stay)');
-						broadcaster.broadcast(module.exports, "alarm-armed-stay", {});
+						statusChecker.setStatus('alarm-armed-stay');
 					});
 					
 					alarm.on('disarmed', function() {
-						backend.error(module.exports.name + ': alarm disarmed');
-						broadcaster.broadcast(module.exports, "alarm-disarmed", {});
+						statusChecker.setStatus('alarm-armed-disarmed');
 					});
 					
 					alarm.on('fault', function(zone) {
