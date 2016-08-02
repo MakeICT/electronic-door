@@ -43,7 +43,7 @@
 #define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
 #define LCD_SERIAL_TX     4       // Serial data for LCD
 #define LATCH_PIN         5       // Digital pin to trigger door strike circuit
-#define SSerialRX         6       // Debug Serial Receive pin
+#define SSerialRX         6       // Debug Serial Receive pin (Not used)
 #define SSerialTX         7       // Debug Serial Transmit pin
 #define SSerialTxControl  8       // RS485 Direction control
 #define SPEAKER_PIN       9       // Tone generation pin
@@ -136,7 +136,7 @@ void setup(void) {
   bus.SetDebugPort(debugPort);
   card_reader.SetDebugPort(debugPort);
   
-  Serial.begin(9600);   //TODO:  What is this doing here?
+  Serial.begin(9600);   //@TODO:  What is this doing here?
   
   LOG_INFO(F("########################################\r\n"));
   LOG_INFO(F("#            Start Program             #\r\n"));
@@ -276,17 +276,17 @@ void CheckReader()  {
   uint8_t uid[7] = {0};
   uint8_t id_length;
   bool sameID = true;
-  uint8_t retries = 0;
+  static uint8_t readFailures = 0;
   
   uint8_t result = card_reader.poll(uid, &id_length);
   while (result == 2)  {
     result = card_reader.poll(uid, &id_length); 
-    if (retries++ > 2)  {
-      LOG_DEBUG(F("NFC reader unrecoverable.  Commiting suicide.\r\n"));
+    if (readFailures++ > 2)  {
+      LOG_DEBUG(F("NFC read failed 3 times.  Commiting suicide.\r\n"));
       while(1);   //hang program and force watchdog reset; (this is probably not the best thing)
     }
   }
-  if (result == 1)  {
+  if (result == 1)  {s
     for (int i = 0; i < 6; i++)  {
       if (uid[i] != lastuid[i]){
         sameID = false;
