@@ -16,6 +16,7 @@ class Audio
 {
   public:
     Audio(byte);
+    void Play(struct tune newTune);
     void Play(byte melody[], byte durations[], byte length);
     void Update();
     

@@ -32,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-//#define CLIENT_ADDRESS 0x01
+#define CLIENT_ADDRESS 0x01
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -91,10 +91,10 @@ rs485 bus(SSerialTxControl);
 //SuperSerial* superSerial;
 //TEMPORARY TEST CODE
 
-Ring status_ring(RING_PIN, NUMPIXELS);
+Ring statusRing(RING_PIN, NUMPIXELS);
 //LCD readout;
 Audio speaker(SPEAKER_PIN);
-Strike door_latch(LATCH_PIN);
+Strike doorLatch(LATCH_PIN);
 Config conf;
 
 uint8_t address = ADDR_CLIENT_DEFAULT;     //@TODO: this shouldn't be necessary
@@ -132,6 +132,8 @@ void setup(void) {
   superSerial.SetDebugPort(debugPort);
   bus.SetDebugPort(debugPort);
   card_reader.SetDebugPort(debugPort);
+  conf.SetDebugPort(debugPort);
+  conf.Init();
   
   Serial.begin(9600);   //@TODO:  What is this doing here?
   
@@ -148,7 +150,7 @@ void setup(void) {
 
  // superSerial = new SuperSerial(&bus, address);
  
-  door_latch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
+  doorLatch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
   
   //for testing only
   #ifdef CLIENT_ADDRESS
@@ -166,13 +168,16 @@ void setup(void) {
   
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
-    status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+    //statusRing.SetMode(conf.Get);
+    statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
   else  
   #endif
   {
-    status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
-    speaker.Play(startTune, startTuneDurations, 2);
+    statusRing.SetMode(conf.GetDefaultLightSequence());
+    //statusRing.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
+    speaker.Play(conf.GetStartTune());
+    //speaker.Play(startTune, startTuneDurations, 2);
     state = S_READY;
   }
     
@@ -215,15 +220,16 @@ void loop(void) {
       
     case S_WAIT_SEND:
     {
-      if (!doorState && !door_latch.HoldingOpen() && !door_latch.Locked())  {
+      if (!doorState && !doorLatch.HoldingOpen() && !doorLatch.Locked())  {
         LOG_DEBUG(F("Door opened, re-latching\r\n"));
-        door_latch.Lock();
+        doorLatch.Lock();
       }
       if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
         //Set LEDS and LCD to indicate loss of communication
         LOG_ERROR(F("Lost contact with server!\r\n"));
         readout.Print("  Lost Contact    With  Server  ");
-        status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+        //statusRing.SetMode(conf.GetDenyLightSequence());
+        statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
         state = S_NO_SERVER;
         break;
       }
@@ -246,7 +252,8 @@ void loop(void) {
         if (state == S_NO_SERVER)  {
           LOG_DEBUG(F("Contact with server re-established\r\n"));
           //reset lights to idle
-          status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
+          statusRing.SetMode(conf.GetDefaultLightSequence());
+          //statusRing.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
           superSerial.QueueMessage(F_CLIENT_START, 0, 0);
         }
         state = S_WAIT_SEND;
@@ -257,8 +264,8 @@ void loop(void) {
     case S_INITIALIZING:
     {
       speaker.Update();
-      status_ring.Update();
-      door_latch.Update();
+      statusRing.Update();
+      doorLatch.Update();
     }  
   }
 }
@@ -299,7 +306,8 @@ void CheckReader()  {
       superSerial.QueueMessage(F_SEND_ID, uid, 7);
       state = S_WAIT_SEND;
       lastIDSend = millis();
-      status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
+      //statusRing.SetMode();
+      statusRing.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
       arrayCopy(uid, lastuid, 7, 0);
       LOG_DUMP(F("Sending scanned ID.\r\n"));
     }
@@ -389,7 +397,8 @@ void ProcessMessage()  {
       
     case F_DENY_CARD:
       LOG_INFO(F("Card Denied\r\n"));
-      status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000);
+      statusRing.SetMode(conf.GetDenyLightSequence());
+      //statusRing.SetMode(M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000);
       break;
       
     case F_UNLOCK_DOOR:
@@ -398,16 +407,17 @@ void ProcessMessage()  {
         LOG_DEBUG(F("Unlocking for "));
         LOG_DEBUG((msg.payload[0] << 8) + msg.payload[1]);
         LOG_DEBUG(F(" seconds.\r\n"));
-        door_latch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
+        doorLatch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
       }
       else
         LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
-      status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
+        //statusRing.SetMode(conf.GetUnlockLightSequence());
+        //statusRing.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
       break;
       
     case F_LOCK_DOOR:
       LOG_INFO(F("Lock Door\r\n"));
-      door_latch.Lock();
+      doorLatch.Lock();
       break;
       
     case F_PLAY_TUNE:
@@ -424,7 +434,7 @@ void ProcessMessage()  {
     case F_SET_LIGHTS:
     {
       LOG_INFO(F("Set Lights\r\n"));
-      status_ring.SetMode(msg.payload[0], 
+      statusRing.SetMode(msg.payload[0], 
                           COLOR(msg.payload[1],msg.payload[2],msg.payload[3]),
                           COLOR(msg.payload[4],msg.payload[5],msg.payload[6]),
                          (msg.payload[7]<<8) + msg.payload[8], (msg.payload[9]<<8)+msg.payload[10]);

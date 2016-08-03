@@ -6,6 +6,10 @@ Audio::Audio(byte pin)  {
   pinMode(audioPin, OUTPUT);
 }
 
+void Audio::Play(struct tune newTune)  {
+  this->Play(newTune.notes, newTune.durations, newTune.length);
+}
+
 void Audio::Play(byte melody[], byte durations[], byte length)  {
   playing = true;
   currentNoteStartTime = millis();

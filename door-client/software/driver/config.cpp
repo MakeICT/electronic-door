@@ -13,9 +13,13 @@
 #define COLOR               Adafruit_NeoPixel::Color
 
 Config::Config()  {
+
+}
+
+void Config::Init()  {
   defaultConfig.deviceAddress = 0xFE;
   defaultConfig.defaultLightSequence = (lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
-  defaultConfig.unlockLightSequence = (lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 0};
+  defaultConfig.unlockLightSequence = (lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
   defaultConfig.denyLightSequence = (lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
   uint8_t defaultTune[] = {NOTE_C4, NOTE_D4};
   uint8_t defaultDurations[] = {4,4};
@@ -77,7 +81,7 @@ uint8_t Config::GetVersion()  {
 }
 
 void Config::SetAddress(uint8_t addr)  {
-  EEPROM.update(0, addr);
+  currentConfig.deviceAddress = addr;
 }
 
 uint8_t Config::GetAddress()  {

@@ -29,6 +29,7 @@ class Config
   public:
     Config();
     
+    void Init();
     void SetDebugPort(SoftwareSerial* dbgPort);
     bool IsFirstRun();
     

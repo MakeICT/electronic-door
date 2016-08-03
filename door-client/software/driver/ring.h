@@ -19,6 +19,7 @@ class Ring {
     Ring(uint8_t, uint8_t);
     void lightAll(uint32_t);
     
+    void SetMode(struct lightMode newMode);
     void SetMode(byte m, uint32_t c1, uint32_t c2, int p, int d);
     void Solid(uint32_t c, int d);
     void Flash(uint32_t c1, uint32_t c2, int p, int d); 
