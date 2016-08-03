@@ -286,7 +286,10 @@ server.post('/api/plugins/:plugin/actions/:action', function (request, response,
 					break;
 				}
 			}
-			action.execute(request.body, session);
+			var callback = function(result){
+				session.response.send(result);
+			};
+			action.execute(request.body, callback);
 		}catch(exc){
 			backend.error(exc);
 			response.send({'error': 'Failed to perform plugin action', 'detail': exc});

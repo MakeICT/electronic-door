@@ -11,27 +11,25 @@ function doCommand(cmd){
 
 module.exports = {
 	name: 'System Tools',
-	options: [
-		{
-			'name': 'Log line limit',
-			'type': 'number',
-			'value': null,
-		},
-	],
+	options: [],
 	actions: [
 		{
 			'name': 'Download log',
-			'parameters': [],
-			'execute': function(parameters, session){
+			'parameters': [{
+				'name': 'Log line limit',
+				'type': 'number',
+				'value': null,
+			}],
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					tmp.file(function(err, tmpFilePath, fd, cleanupCallback){
 						var filename = encodeURIComponent(tmpFilePath.substring(tmpFilePath.lastIndexOf('/')+1));
-						session.response.send({ 'url': '/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler?f=' + filename });
+						if(callback) callback({ 'url': '/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler?f=' + filename });
 						
 						var args = '-u master-control-program --no-pager'.split(' ');
-						if(settings['Log line limit']){
+						if(parameters['Log line limit']){
 							args.push('-n');
-							args.push(settings['Log line limit']);
+							args.push(parameters['Log line limit']);
 						}
 						var proc = child_process.spawn('journalctl', args);
 						runningProcs[filename] = {
@@ -57,23 +55,26 @@ module.exports = {
 		},{
 			'name': 'Restart MCP',
 			'parameters': [],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				backend.log('MCP will now restart');
 				doCommand('systemctl restart master-control-program');
+				if(callback) callback();
 			},
 		},{
 			'name': 'Reboot server',
 			'parameters': [],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				backend.log('System will now reboot');
 				doCommand('reboot');
+				if(callback) callback();
 			},
 		},{
 			'name': 'Shutdown server',
 			'parameters': [],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				backend.log('System will now power off');
 				doCommand('poweroff');
+				if(callback) callback();
 			},
 		}
 	],

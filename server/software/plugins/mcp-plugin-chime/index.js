@@ -51,8 +51,9 @@ module.exports = {
 					'value': '0300ff0000000000020FFF',
 				}
 			],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				throw 'Not yet implemented';
+				if(callback) callback();
 			},
 		}
 	],

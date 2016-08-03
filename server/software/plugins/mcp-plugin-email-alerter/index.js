@@ -69,6 +69,7 @@ module.exports = {
 			'parameters': [],
 			'execute': function(parameters, callback){
 				sendMessage('Test message from MCP', 'Test body goes <i>here</i>.');
+				if(callback) callback();
 			},
 		},{
 			'name': 'Add subscription',
@@ -77,8 +78,9 @@ module.exports = {
 				'type': 'text',
 				'default': null,
 			}],
-			'execute': function(parameters, session, callback){
+			'execute': function(parameters, callback){
 				backend.addPluginOption(module.exports.name, parameters['Trigger'], 'text', callback, callback);
+				if(callback) callback();
 			},
 		},{
 			'name': 'Delete subscription',
@@ -87,7 +89,7 @@ module.exports = {
 				'type': 'text',
 				'default': null,
 			}],
-			'execute': function(parameters, session, callback){
+			'execute': function(parameters, callback){
 				for(var i=0; i<module.exports.options.length; i++){
 					if(module.exports.options[i].name == parameters['Trigger']){
 						throw 'That is not a trigger!';

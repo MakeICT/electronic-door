@@ -42,29 +42,32 @@ module.exports = {
 		{
 			'name': 'Arm away',
 			'parameters': [],
-			'execute': function(callback){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					backend.log(module.exports.name + ': Sending *arm away*');
 					alarm.armAway(settings['Code']);
+					if(callback) callback();
 				});
 			},
 		},{
 			'name': 'Arm stay',
 			'parameters': [],
-			'execute': function(callback){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					backend.log(module.exports.name + ': Sending *arm stay*');
 					alarm.armStay(settings['Code']);
+					if(callback) callback();
 				});
 				
 			},
 		},{
 			'name': 'Disarm',
 			'parameters': [],
-			'execute': function(callback){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					backend.log(module.exports.name + ': Sending *disarm*');
 					alarm.disarm(settings['Code']);
+					if(callback) callback();
 				});
 			},
 		}

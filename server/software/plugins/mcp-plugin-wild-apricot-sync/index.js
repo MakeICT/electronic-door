@@ -97,7 +97,7 @@ module.exports = {
 				'type': 'number',
 				'value': 500
 			}],
-			'execute': function(parameters, session){
+			'execute': function(parameters, callback){
 				backend.log('Starting WildApricot sync...');
 				backend.getPluginOptions(this.name, function(settings){
 					backend.debug('Connecting to WildApricot...');
@@ -206,6 +206,8 @@ module.exports = {
 						});
 					});
 				});
+
+				if(callback) callback();
 			},
 		},
 	],

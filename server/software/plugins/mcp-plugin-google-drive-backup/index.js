@@ -48,13 +48,7 @@ module.exports = {
 		}
 	],
 
-	onEnable: function(session){
-		backend.getPluginOptions(module.exports.name, function(settings){
-			if(!settings['token'] && session){
-				module.exports.actions.Authorize(session);
-			}
-		});
-	},
+	onEnable: function(session){},
 	
 	// @TODO: add action to set/clear authorization token
 	actions: [
@@ -75,7 +69,7 @@ module.exports = {
 					'value': null,
 				}
 			],
-			'execute': function(parameters, session){
+			'execute': function(parameters, callback){
 				backend.debug('Authorizing with Google');
 				backend.setPluginOption(module.exports.name, 'Client ID', parameters['Client ID'], function(){
 					backend.setPluginOption(module.exports.name, 'Client secret', parameters['Client secret'], function(){
@@ -85,13 +79,7 @@ module.exports = {
 									access_type: 'offline',
 									scope: 'https://www.googleapis.com/auth/drive',
 								});
-								if(session){
-									try{
-										session.response.send({'url' : url});
-									}catch(exc){
-										console.log(exc);
-									}
-								}
+								if(callback) callback({'url' : url});
 							});
 						});
 					});
@@ -100,20 +88,19 @@ module.exports = {
 		},{
 			'name': 'De-authorize',
 			'parameters': [],
-			'execute': function(parameters, session){
+			'execute': function(parameters, callback){
 				backend.debug('De-authorizing Google Drive Backup plugin from Google API');
 				backend.setPluginOption(module.exports.name, 'token', null);
-				if(session) session.response.send();
+				if(callback) callback();
 			},
 		},{
 			'name': 'Backup Now',
 			'parameters': [],
-			'execute': function(parameters, session){
+			'execute': function(parameters, callback){
 				buildAuthClient(function(oauth2Client){				
 					backend.getPluginOptions(module.exports.name, function(settings){
 						if(!settings['token']){
-							backend.error('Not authorized with Google yet');
-							return;
+							throw 'Not authorized with Google yet';
 						}
 						backend.log('Backup started');
 					
@@ -170,8 +157,7 @@ module.exports = {
 						});
 					});
 				});
-				
-				if(session) session.response.send();
+				if(callback) callback();
 			},
 		},
 	],

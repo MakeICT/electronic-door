@@ -515,13 +515,14 @@ module.exports = {
 					'value': '10',
 				}
 			],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				module.exports.onDisable();
 				if(parameters['Delay'] && parameters['Delay'] > 1){
 					setTimeout(module.exports.onEnable, parseInt(parameters['Delay']));
 				}else{
 					module.exports.onEnable();
 				}
+				if(callback) callback();
 			},
 		}
 	],

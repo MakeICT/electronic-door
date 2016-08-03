@@ -19,11 +19,13 @@ module.exports = {
 				'type': 'text',
 				'value': 'fooooo',
 			}],
-			'execute': function(parameters, session){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(pluginOptions){
 					backend.log('Dummy plugin action: Foo');
 					backend.log('    Plugin option  : ' + pluginOptions['Plugin option']);
 					backend.log('    Foo parameter  : ' + parameters['Foo option']);
+					
+					if(callback) callback();
 				});
 			},
 		}
