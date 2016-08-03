@@ -19,7 +19,7 @@ var connectionResetter = {
 		connectionResetter.timer = setInterval(connectionResetter.loop, 2000);
 	},
 	'stop': function(){
-		clearTimeout(connectionResetter.timer);
+		clearInterval(connectionResetter.timer);
 	},
 	'loop': function(){
 		if(connectionResetter.trigger){
