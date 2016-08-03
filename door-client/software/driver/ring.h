@@ -53,4 +53,13 @@ class Ring {
     byte tempIndex;
 };
 
+struct lightMode  {
+  uint8_t mode;
+  uint32_t color1;
+  uint32_t color2;
+  uint16_t period;
+  uint16_t duration;
+};
+
+
 #endif

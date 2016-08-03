@@ -97,10 +97,7 @@ Audio speaker(SPEAKER_PIN);
 Strike door_latch(LATCH_PIN);
 Config conf;
 
-// Load config info saved in EEPROM
-
-
-uint8_t address = ADDR_CLIENT_DEFAULT;     //TODO: this shouldn't be necessary
+uint8_t address = ADDR_CLIENT_DEFAULT;     //@TODO: this shouldn't be necessary
 SuperSerial superSerial(&bus, address);
 
 /*-----( Declare Variables )-----*/
@@ -153,13 +150,10 @@ void setup(void) {
  
   door_latch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
   
-  if (conf.IsFirstRun())  {
-    LOG_DEBUG(F("First run detected; initializing configuration"));
-    conf.SaveAddress(ADDR_CLIENT_DEFAULT);
-  }
   //for testing only
   #ifdef CLIENT_ADDRESS
-  conf.SaveAddress(CLIENT_ADDRESS);
+  conf.SetAddress(CLIENT_ADDRESS);
+  conf.SaveCurrentConfig();
   #endif
   
   address = conf.GetAddress();
@@ -325,7 +319,7 @@ void ProcessMessage()  {
   lastHeartBeat = millis();
   
   // If address is not set, ignore all functions other than setting address
-  if (state == S_UNADDRESSED && msg.function != F_SET_ADDRESS)  {
+  if (state == S_UNADDRESSED && msg.function != F_SET_CONFIG)  {
     return;
   }
   //Process functions
@@ -339,10 +333,32 @@ void ProcessMessage()  {
       LOG_INFO(F("Set Config\r\n"));
       switch(msg.payload[0])
       {
-        case 0:
+        case 0x00:
         LOG_INFO(F("Set Address\r\n"));
-        conf.SaveAddress(msg.payload[1]);
+        conf.SetAddress(msg.payload[1]);
+        conf.SaveCurrentConfig();
+        superSerial.SetAddress(msg.payload[1]);
+        break;
         
+        case 0x01:
+        LOG_INFO(F("Set Start Tune\r\n"));
+        
+        break;
+        
+        case 0x0A:
+        LOG_INFO(F("Set Default Light Pattern\r\n"));
+        
+        break;
+        
+        case 0x0B:
+        LOG_INFO(F("Set Unlock Light Pattern\r\n"));
+        
+        break;
+        
+        case 0x0C:
+        LOG_INFO(F("Set Deny Light Pattern\r\n"));
+        
+        break;
       }
       state = S_READY;
       break;

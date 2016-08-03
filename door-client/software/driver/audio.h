@@ -6,6 +6,12 @@
 #include "notes.h"
 //#include <NewTone.h>
 
+struct tune  {
+  uint8_t length;
+  uint8_t* notes;
+  uint8_t* durations;
+};
+
 class Audio
 {
   public:
