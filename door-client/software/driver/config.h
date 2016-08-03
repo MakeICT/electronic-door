@@ -43,7 +43,7 @@ class Config
     void SetAddress(uint8_t address);
     uint8_t GetAddress();
     
-    void SetStartTune(struct tune startTune);
+    void SetStartTune(struct tune newTune);
     struct tune GetStartTune();
     
     void SetDefaultLightSequence(struct lightMode sequence);
@@ -52,8 +52,8 @@ class Config
     void SetUnlockLightSequence(struct lightMode sequence);
     struct lightMode GetUnlockLightSequence();
 
-    void GetDenyLightSequence(struct lightMode sequence);
-    struct lightMode SetDenyLightSequence();
+    void SetDenyLightSequence(struct lightMode sequence);
+    struct lightMode GetDenyLightSequence();
     
     void SaveLightSequence(uint8_t identifier, struct lightMode sequence);
     struct lightMode GetLightSequence(uint8_t identifier);

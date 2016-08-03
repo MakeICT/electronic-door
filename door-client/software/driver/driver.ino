@@ -341,24 +341,48 @@ void ProcessMessage()  {
         break;
         
         case 0x01:
-        LOG_INFO(F("Set Start Tune\r\n"));
+        {
+          LOG_INFO(F("Set Start Tune\r\n"));
+          uint8_t tune_length = (msg.length-1)/2;
+          uint8_t startTuneNotes[tune_length];
+          uint8_t startTuneDurations[tune_length];
+          for(uint8_t i = 0; i < tune_length; i++)  {
+            startTuneNotes[i] = msg.payload[i+1];
+            startTuneDurations[i] = msg.payload[i+1 + tune_length];
+          }
+          conf.SetStartTune((tune) {tune_length, startTuneNotes, startTuneDurations});
+          conf.SaveCurrentConfig();
+        } 
         
         break;
         
         case 0x0A:
-        LOG_INFO(F("Set Default Light Pattern\r\n"));
-        
-        break;
-        
         case 0x0B:
-        LOG_INFO(F("Set Unlock Light Pattern\r\n"));
-        
-        break;
-        
         case 0x0C:
-        LOG_INFO(F("Set Deny Light Pattern\r\n"));
-        
-        break;
+        {
+          struct lightMode newMode =  {msg.payload[1], 
+                                      COLOR(msg.payload[2],msg.payload[3],msg.payload[4]),
+                                      COLOR(msg.payload[5],msg.payload[6],msg.payload[7]),
+                                      (msg.payload[8]<<8) + msg.payload[9], (msg.payload[10]<<8)+msg.payload[11]};
+                                      
+          if (msg.payload[0] == 0x0A)  {
+            LOG_INFO(F("Set Default Light Pattern\r\n"));
+            conf.SetDefaultLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0B)  {
+            LOG_INFO(F("Set Unlock Light Pattern\r\n"));
+            conf.SetUnlockLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0C)  {
+            LOG_INFO(F("Set Deny Light Pattern\r\n"));
+            conf.SetDenyLightSequence(newMode);
+          }
+          conf.SaveCurrentConfig();
+          break;
+        }
+        default:
+          LOG_INFO(F("Invalid configuration identifier\r\n"));
+          break;
       }
       state = S_READY;
       break;

@@ -84,6 +84,14 @@ uint8_t Config::GetAddress()  {
   return currentConfig.deviceAddress;
 }
 
+void Config::SetStartTune(struct tune newTune)  {
+  this->currentConfig.startupTune = newTune;
+}
+
+struct tune Config::GetStartTune()  {
+  return this->currentConfig.startupTune;
+}
+
 void Config::SetDefaultLightSequence(struct lightMode sequence)  {
   this->currentConfig.defaultLightSequence = sequence;
 }
@@ -100,10 +108,10 @@ struct lightMode Config::GetUnlockLightSequence()  {
   return this->currentConfig.unlockLightSequence;
 }
 
-void Config::GetDenyLightSequence(struct lightMode sequence)  {
+void Config::SetDenyLightSequence(struct lightMode sequence)  {
   this->currentConfig.denyLightSequence = sequence;
 }
 
-struct lightMode Config::SetDenyLightSequence()  {
+struct lightMode Config::GetDenyLightSequence()  {
   return this->currentConfig.denyLightSequence;
 }
