@@ -9,7 +9,9 @@
 #include "ring.h"
 #include "audio.h"
 
-#define CONFIG_VERSION 0x00
+#define CONFIG_VERSION  0x00
+#define MEM_ADDR_VER    0x00
+#define MEM_ADDR_CONFIG 0x01
 
 #define LS_DEFAULT  0
 #define LS_UNLOCK   1
@@ -19,6 +21,8 @@ struct configuration  {
   uint8_t configVersion;
   uint8_t deviceAddress;
   struct lightMode defaultLightSequence;
+  struct lightMode waitLightSequence;
+  struct lightMode errorLightSequence;
   struct lightMode unlockLightSequence;
   struct lightMode denyLightSequence;
   struct tune startupTune;
@@ -38,7 +42,6 @@ class Config
     void SaveCurrentConfig();
     void SaveDefaults();
     
-    void SetVersion(uint8_t);
     uint8_t GetVersion();
         
     void SetAddress(uint8_t address);
@@ -49,6 +52,12 @@ class Config
     
     void SetDefaultLightSequence(struct lightMode sequence);
     struct lightMode GetDefaultLightSequence();
+    
+    void SetWaitLightSequence(struct lightMode sequence);
+    struct lightMode GetWaitLightSequence();
+    
+    void SetErrorLightSequence(struct lightMode sequence);
+    struct lightMode GetErrorLightSequence();
 
     void SetUnlockLightSequence(struct lightMode sequence);
     struct lightMode GetUnlockLightSequence();
@@ -60,6 +69,8 @@ class Config
     struct lightMode GetLightSequence(uint8_t identifier);
     
   private:
+    void SetVersion(uint8_t);
+  
     SoftwareSerial* debugPort;
     uint8_t lightModeStructLength;
     struct configuration defaultConfig;

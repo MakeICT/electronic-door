@@ -18,12 +18,14 @@ Config::Config()  {
 
 void Config::Init()  {
   defaultConfig.deviceAddress = 0xFE;
-  defaultConfig.defaultLightSequence = (lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
-  defaultConfig.unlockLightSequence = (lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
-  defaultConfig.denyLightSequence = (lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
+  defaultConfig.defaultLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
+  defaultConfig.waitLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000};
+  defaultConfig.errorLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0};
+  defaultConfig.unlockLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
+  defaultConfig.denyLightSequence = (struct lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
   uint8_t defaultTune[] = {NOTE_C4, NOTE_D4};
   uint8_t defaultDurations[] = {4,4};
-  defaultConfig.startupTune = (tune) {2, defaultTune, defaultDurations};
+  defaultConfig.startupTune = (struct tune) {2, defaultTune, defaultDurations};
     
   this->LoadSavedConfig();
   if(this->IsFirstRun() || currentConfig.configVersion != CONFIG_VERSION)  {
@@ -56,7 +58,7 @@ bool Config::IsFirstRun()  {
 }
 
 void Config::LoadSavedConfig()  {
-  this->currentConfig = EEPROM.get(0, currentConfig);
+  this->currentConfig = EEPROM.get(MEM_ADDR_CONFIG, currentConfig);
 }
 
 void Config::LoadDefaults()  {
@@ -64,16 +66,15 @@ void Config::LoadDefaults()  {
 }
 
 void Config::SaveCurrentConfig()  {
-  EEPROM.put(0, currentConfig);
+  EEPROM.put(MEM_ADDR_CONFIG, currentConfig);
 }
 
 void Config::SaveDefaults() {
-  uint16_t addr = 1;
-  EEPROM.put(addr, defaultConfig);
+  EEPROM.put(MEM_ADDR_CONFIG, defaultConfig);
 }
 
 void Config::SetVersion(uint8_t version)  {
-  EEPROM.update(0, version);
+  EEPROM.update(MEM_ADDR_VER, version);
 }
 
 uint8_t Config::GetVersion()  {
@@ -102,6 +103,22 @@ void Config::SetDefaultLightSequence(struct lightMode sequence)  {
 
 struct lightMode Config::GetDefaultLightSequence()  {
   return this->currentConfig.defaultLightSequence;
+}
+
+void Config::SetWaitLightSequence(struct lightMode sequence)  {
+  this->currentConfig.waitLightSequence = sequence;
+}
+
+struct lightMode Config::GetWaitLightSequence()  {
+  return this->currentConfig.waitLightSequence;
+}
+
+void Config::SetErrorLightSequence(struct lightMode sequence)  {
+  this->currentConfig.errorLightSequence = sequence;
+}
+
+struct lightMode Config::GetErrorLightSequence()  {
+  return this->currentConfig.errorLightSequence;
 }
 
 void Config::SetUnlockLightSequence(struct lightMode sequence)  {

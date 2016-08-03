@@ -168,8 +168,8 @@ void setup(void) {
   
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
-    //statusRing.SetMode(conf.Get);
-    statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+    statusRing.SetMode(conf.GetErrorLightSequence());
+    //statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
   else  
   #endif
@@ -228,8 +228,8 @@ void loop(void) {
         //Set LEDS and LCD to indicate loss of communication
         LOG_ERROR(F("Lost contact with server!\r\n"));
         readout.Print("  Lost Contact    With  Server  ");
-        //statusRing.SetMode(conf.GetDenyLightSequence());
-        statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+        statusRing.SetMode(conf.GetErrorLightSequence());
+        //statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
         state = S_NO_SERVER;
         break;
       }
@@ -306,8 +306,8 @@ void CheckReader()  {
       superSerial.QueueMessage(F_SEND_ID, uid, 7);
       state = S_WAIT_SEND;
       lastIDSend = millis();
-      //statusRing.SetMode();
-      statusRing.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
+      statusRing.SetMode(conf.GetWaitLightSequence());
+      //statusRing.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
       arrayCopy(uid, lastuid, 7, 0);
       LOG_DUMP(F("Sending scanned ID.\r\n"));
     }
@@ -342,7 +342,9 @@ void ProcessMessage()  {
       switch(msg.payload[0])
       {
         case 0x00:
-        LOG_INFO(F("Set Address\r\n"));
+        LOG_INFO(F("Set Address:"));
+        LOG_INFO(msg.payload[1]);
+        LOG_INFO(F("\r\n"));
         conf.SetAddress(msg.payload[1]);
         conf.SaveCurrentConfig();
         superSerial.SetAddress(msg.payload[1]);
@@ -367,6 +369,8 @@ void ProcessMessage()  {
         case 0x0A:
         case 0x0B:
         case 0x0C:
+        case 0x0D:
+        case 0x0E:
         {
           struct lightMode newMode =  {msg.payload[1], 
                                       COLOR(msg.payload[2],msg.payload[3],msg.payload[4]),
@@ -377,11 +381,19 @@ void ProcessMessage()  {
             LOG_INFO(F("Set Default Light Pattern\r\n"));
             conf.SetDefaultLightSequence(newMode);
           }
-          else if (msg.payload[0] == 0x0B)  {
+          if (msg.payload[0] == 0x0B)  {
+            LOG_INFO(F("Set Wait Light Pattern\r\n"));
+            conf.SetWaitLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0C)  {
+            LOG_INFO(F("Set Error Light Pattern\r\n"));
+            conf.SetErrorLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0D)  {
             LOG_INFO(F("Set Unlock Light Pattern\r\n"));
             conf.SetUnlockLightSequence(newMode);
           }
-          else if (msg.payload[0] == 0x0C)  {
+          else if (msg.payload[0] == 0x0E)  {
             LOG_INFO(F("Set Deny Light Pattern\r\n"));
             conf.SetDenyLightSequence(newMode);
           }
