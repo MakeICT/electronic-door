@@ -6,7 +6,18 @@ Audio::Audio(byte pin)  {
   pinMode(audioPin, OUTPUT);
 }
 
+void Audio::SetDebugPort(SoftwareSerial* dbgPort)  {
+  this->debugPort = dbgPort;
+}
+
 void Audio::Play(struct tune newTune)  {
+  //LOG_DEBUG("\r\n");
+  //for (int i=0; i<newTune.length; i++)  {    
+    //LOG_DEBUG(newTune.notes[i]);
+    //LOG_DEBUG("  ");
+    //LOG_DEBUG(newTune.durations[i]);
+    //LOG_DEBUG("\r\n");
+  //}
   this->Play(newTune.notes, newTune.durations, newTune.length);
 }
 
@@ -14,24 +25,24 @@ void Audio::Play(byte melody[], byte durations[], byte length)  {
   playing = true;
   currentNoteStartTime = millis();
   noteIndex = 0;
-  notes = melody;
-  noteLengths = durations;
-  tuneLength = length;
-  tone(audioPin, notes_array[notes[noteIndex]], (noteLengths[noteIndex]*20));
+  currentTune.length = length;
+  arrayCopy(melody, currentTune.notes, length);
+  arrayCopy(durations, currentTune.durations, length);
+  tone(audioPin, notes_array[currentTune.notes[noteIndex]], (currentTune.durations[noteIndex]*20));
 }
 
 void Audio::Update()  {
   if (playing)  {
     uint32_t currentTime = millis();
-    if(currentTime - currentNoteStartTime < (noteLengths[noteIndex] * 20)) {
+    if(currentTime - currentNoteStartTime < (currentTune.durations[noteIndex] * 20)) {
       return;
     }
     else  {
       currentNoteStartTime = currentTime;
       
-      if(++noteIndex < tuneLength)  {
+      if(++noteIndex < currentTune.length)  {
         noTone(audioPin);
-        tone(audioPin, notes_array[notes[noteIndex]], (noteLengths[noteIndex]*20));
+        tone(audioPin, notes_array[currentTune.notes[noteIndex]], (currentTune.durations[noteIndex]*20));
       }
       else  {
         noTone(audioPin);

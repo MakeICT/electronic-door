@@ -99,11 +99,8 @@ boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 uint32_t lastHeartBeat = 0;
 
-//TODO: store start tune and other settings in EEPROM, make configurable
-byte startTune[] = {NOTE_C4, NOTE_D4};    
-byte startTuneDurations[] = {4,4};
-byte userTune[USER_TUNE_LENGTH];
-byte userTuneDurations[USER_TUNE_LENGTH];
+//byte userTune[USER_TUNE_LENGTH];
+//byte userTuneDurations[USER_TUNE_LENGTH];
 byte state = S_INITIALIZING;
 
 /*-----( Declare Functions )-----*/
@@ -124,6 +121,7 @@ void setup(void) {
   bus.SetDebugPort(debugPort);
   card_reader.SetDebugPort(debugPort);
   conf.SetDebugPort(debugPort);
+  speaker.SetDebugPort(debugPort);
   conf.Init();
   
   Serial.begin(9600);   //@TODO:  What is this doing here?
@@ -339,13 +337,12 @@ void ProcessMessage()  {
         {
           LOG_INFO(F("Start Tune\r\n"));
           uint8_t tune_length = (msg.length-1)/2;
-          uint8_t startTuneNotes[tune_length];
-          uint8_t startTuneDurations[tune_length];
+          struct tune temp = {.length = tune_length};
           for(uint8_t i = 0; i < tune_length; i++)  {
-            startTuneNotes[i] = msg.payload[i+1];
-            startTuneDurations[i] = msg.payload[i+1 + tune_length];
+            temp.notes[i] = msg.payload[i+1];
+            temp.durations[i] = msg.payload[i+1 + tune_length];
           }
-          conf.SetStartTune((tune) {tune_length, startTuneNotes, startTuneDurations});
+          conf.SetStartTune(temp);
           conf.SaveCurrentConfig();
         } 
         
@@ -420,6 +417,8 @@ void ProcessMessage()  {
     {
       LOG_INFO(F("Play Tune\r\n"));
       byte tune_length = (msg.length)/2;
+      uint8_t userTune[tune_length];
+      uint8_t userTuneDurations[tune_length];
       for(byte i = 0; i < tune_length; i++)  {
         userTune[i] = msg.payload[i];
         userTuneDurations[i] = msg.payload[i + tune_length];

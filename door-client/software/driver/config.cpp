@@ -14,23 +14,35 @@ Config::Config()  {
 }
 
 void Config::Init()  {
+  LOG_DEBUG(sizeof(struct configuration));
   defaultConfig.deviceAddress = 0xFE;
   defaultConfig.defaultLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
   defaultConfig.waitLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000};
   defaultConfig.errorLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0};
   defaultConfig.unlockLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
   defaultConfig.denyLightSequence = (struct lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
-  uint8_t defaultTune[] = {NOTE_C4, NOTE_D4};
-  uint8_t defaultDurations[] = {4,4};
-  defaultConfig.startupTune = (struct tune) {2, defaultTune, defaultDurations};
-    
+  defaultConfig.startupTune.length = 2;
+  defaultConfig.startupTune.notes[0] = NOTE_C4;
+  defaultConfig.startupTune.notes[1] = NOTE_D4;
+  defaultConfig.startupTune.durations[0] = 4;
+  defaultConfig.startupTune.durations[1] = 4;
+
   this->LoadSavedConfig();
+  
+  //uint8_t* testPointer = (uint8_t*) &currentConfig;
+  //LOG_DEBUG(F("\r\n"));
+  //for (uint8_t i = 0; i < sizeof(struct configuration); i++)  {
+    //LOG_DEBUG(*(testPointer + i));
+    //LOG_DEBUG(F("\r\n"));
+  //}
+  
   if(this->IsFirstRun() || currentConfig.configVersion != CONFIG_VERSION)  {
     if (this->IsFirstRun())  {
-      LOG_DEBUG(F("First run detected; initializing configuration"));
+      LOG_DEBUG(F("First run detected; initializing configuration\r\n"));
     }
     else  {
-      LOG_DEBUG(F("Saved configuration is outdated; reverting to default"));
+      //LOG_DEBUG(currentConfig.configVersion);
+      LOG_DEBUG(F("Saved configuration is outdated; reverting to default\r\n"));
     }
     this->LoadDefaults();
     this->SetVersion(CONFIG_VERSION);
@@ -55,7 +67,7 @@ bool Config::IsFirstRun()  {
 }
 
 void Config::LoadSavedConfig()  {
-  this->currentConfig = EEPROM.get(MEM_ADDR_CONFIG, currentConfig);
+  EEPROM.get(MEM_ADDR_CONFIG, currentConfig);
 }
 
 void Config::LoadDefaults()  {
@@ -71,7 +83,7 @@ void Config::SaveDefaults() {
 }
 
 void Config::SetVersion(uint8_t version)  {
-  EEPROM.update(MEM_ADDR_VER, version);
+  currentConfig.configVersion = version;
 }
 
 uint8_t Config::GetVersion()  {

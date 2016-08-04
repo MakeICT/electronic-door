@@ -9,13 +9,8 @@
 #include "ring.h"
 #include "audio.h"
 
-#define CONFIG_VERSION  0x00
-#define MEM_ADDR_VER    0x00
-#define MEM_ADDR_CONFIG 0x01
-
-#define LS_DEFAULT  0
-#define LS_UNLOCK   1
-#define LS_DENY     2  
+#define CONFIG_VERSION  0x03
+#define MEM_ADDR_CONFIG 0x00
 
 struct configuration  {
   uint8_t configVersion;
@@ -72,7 +67,6 @@ class Config
     void SetVersion(uint8_t);
   
     SoftwareSerial* debugPort;
-    uint8_t lightModeStructLength;
     struct configuration defaultConfig;
     struct configuration currentConfig;
 };
