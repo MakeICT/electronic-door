@@ -405,9 +405,10 @@ void ProcessMessage()  {
         LOG_DEBUG(F(" seconds.\r\n"));
         doorLatch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
       }
-      else
+      else  {
         LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
-        //statusRing.SetMode(conf.GetUnlockLightSequence());
+      }
+      statusRing.SetMode(conf.GetUnlockLightSequence());
       break;
       
     case F_LOCK_DOOR:
