@@ -8,7 +8,7 @@
 #include <SoftwareSerial.h>  //DEBUG
 
 // Command bytes
-#define F_SET_ADDRESS   0x00
+#define F_SET_CONFIG    0x00
 #define F_UNLOCK_DOOR   0x01
 #define F_LOCK_DOOR     0x02
 #define F_SEND_ID       0x03

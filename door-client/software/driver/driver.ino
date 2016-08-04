@@ -32,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-//#define CLIENT_ADDRESS 0x01
+#define CLIENT_ADDRESS 0x01
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -67,15 +67,6 @@
 
 // Constants for NeoPixel ring
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
-#define COLOR_IDLE          0,100,120
-#define COLOR_SUCCESS1      0,60,20
-#define COLOR_SUCCESS2      0,30,10
-#define COLOR_FAILURE1      60,20,0
-#define COLOR_FAILURE2      30,10,0
-#define COLOR_WAITING       120,120,20
-#define COLOR_ERROR1        120,30,0
-#define COLOR_ERROR2        120,30,0
-#define COLOR               Adafruit_NeoPixel::Color
 
 // Constants for machine states
 #define S_INITIALIZING      0
@@ -91,16 +82,13 @@ rs485 bus(SSerialTxControl);
 //SuperSerial* superSerial;
 //TEMPORARY TEST CODE
 
-Ring status_ring(RING_PIN, NUMPIXELS);
+Ring statusRing(RING_PIN, NUMPIXELS);
 //LCD readout;
 Audio speaker(SPEAKER_PIN);
-Strike door_latch(LATCH_PIN);
+Strike doorLatch(LATCH_PIN);
 Config conf;
 
-// Load config info saved in EEPROM
-
-
-uint8_t address = ADDR_CLIENT_DEFAULT;     //TODO: this shouldn't be necessary
+uint8_t address = ADDR_CLIENT_DEFAULT;     //@TODO: this shouldn't be necessary
 SuperSerial superSerial(&bus, address);
 
 /*-----( Declare Variables )-----*/
@@ -111,11 +99,8 @@ boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 uint32_t lastHeartBeat = 0;
 
-//TODO: store start tune and other settings in EEPROM, make configurable
-byte startTune[] = {NOTE_C4, NOTE_D4};    
-byte startTuneDurations[] = {4,4};
-byte userTune[USER_TUNE_LENGTH];
-byte userTuneDurations[USER_TUNE_LENGTH];
+//byte userTune[USER_TUNE_LENGTH];
+//byte userTuneDurations[USER_TUNE_LENGTH];
 byte state = S_INITIALIZING;
 
 /*-----( Declare Functions )-----*/
@@ -135,6 +120,9 @@ void setup(void) {
   superSerial.SetDebugPort(debugPort);
   bus.SetDebugPort(debugPort);
   card_reader.SetDebugPort(debugPort);
+  conf.SetDebugPort(debugPort);
+  speaker.SetDebugPort(debugPort);
+  conf.Init();
   
   Serial.begin(9600);   //@TODO:  What is this doing here?
   LOG_INFO(F("/r/n/r/n"));
@@ -153,15 +141,12 @@ void setup(void) {
 
  // superSerial = new SuperSerial(&bus, address);
  
-  door_latch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
+  doorLatch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
   
-  if (conf.IsFirstRun())  {
-    LOG_DEBUG(F("First run detected; initializing configuration"));
-    conf.SaveAddress(ADDR_CLIENT_DEFAULT);
-  }
   //for testing only
   #ifdef CLIENT_ADDRESS
-  conf.SaveAddress(CLIENT_ADDRESS);
+  conf.SetAddress(CLIENT_ADDRESS);
+  conf.SaveCurrentConfig();
   #endif
   
   address = conf.GetAddress();
@@ -174,13 +159,13 @@ void setup(void) {
   
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
-    status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+    statusRing.SetMode(conf.GetErrorLightSequence());
   }
   else  
   #endif
   {
-    status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
-    speaker.Play(startTune, startTuneDurations, 2);
+    statusRing.SetMode(conf.GetDefaultLightSequence());
+    speaker.Play(conf.GetStartTune());
     state = S_READY;
   }
     
@@ -223,15 +208,15 @@ void loop(void) {
       
     case S_WAIT_SEND:
     {
-      if (!doorState && !door_latch.HoldingOpen() && !door_latch.Locked())  {
+      if (!doorState && !doorLatch.HoldingOpen() && !doorLatch.Locked())  {
         LOG_DEBUG(F("Door opened, re-latching\r\n"));
-        door_latch.Lock();
+        doorLatch.Lock();
       }
       if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
         //Set LEDS and LCD to indicate loss of communication
         LOG_ERROR(F("Lost contact with server!\r\n"));
         readout.Print("  Lost Contact    With  Server  ");
-        status_ring.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
+        statusRing.SetMode(conf.GetErrorLightSequence());
         state = S_NO_SERVER;
         break;
       }
@@ -254,7 +239,7 @@ void loop(void) {
         if (state == S_NO_SERVER)  {
           LOG_DEBUG(F("Contact with server re-established\r\n"));
           //reset lights to idle
-          status_ring.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
+          statusRing.SetMode(conf.GetDefaultLightSequence());
           superSerial.QueueMessage(F_CLIENT_START, 0, 0);
         }
         state = S_WAIT_SEND;
@@ -265,8 +250,8 @@ void loop(void) {
     case S_INITIALIZING:
     {
       speaker.Update();
-      status_ring.Update();
-      door_latch.Update();
+      statusRing.Update();
+      doorLatch.Update();
     }  
   }
 }
@@ -288,7 +273,7 @@ void CheckReader()  {
     }
     result = card_reader.poll(uid, &id_length);
   }
-
+  
   if (result == 1)  {
     for (int i = 0; i < 6; i++)  {
       if (uid[i] != lastuid[i]){
@@ -308,7 +293,7 @@ void CheckReader()  {
       superSerial.QueueMessage(F_SEND_ID, uid, 7);
       state = S_WAIT_SEND;
       lastIDSend = millis();
-      status_ring.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
+      statusRing.SetMode(conf.GetWaitLightSequence());
       arrayCopy(uid, lastuid, 7, 0);
       LOG_DUMP(F("Sending scanned ID.\r\n"));
     }
@@ -328,7 +313,7 @@ void ProcessMessage()  {
   lastHeartBeat = millis();
   
   // If address is not set, ignore all functions other than setting address
-  if (state == S_UNADDRESSED && msg.function != F_SET_ADDRESS)  {
+  if (state == S_UNADDRESSED && msg.function != F_SET_CONFIG)  {
     return;
   }
   //Process functions
@@ -338,15 +323,78 @@ void ProcessMessage()  {
     case F_HEARTBEAT:
       LOG_INFO(F("Heartbeat Ping\r\n"));
 
-    case F_SET_ADDRESS:
-      LOG_INFO(F("Set Address\r\n"));
-      conf.SaveAddress(msg.payload[0]);
-      state = S_READY;
+    case F_SET_CONFIG:
+      LOG_INFO(F("Set Config:"));
+      switch(msg.payload[0])
+      {
+        case 0x00:
+        LOG_INFO(F("Address:"));
+        LOG_INFO(msg.payload[1]);
+        LOG_INFO(F("\r\n"));
+        conf.SetAddress(msg.payload[1]);
+        conf.SaveCurrentConfig();
+        superSerial.SetAddress(msg.payload[1]);
+        break;
+        
+        case 0x01:
+        {
+          LOG_INFO(F("Start Tune\r\n"));
+          uint8_t tune_length = (msg.length-1)/2;
+          struct tune temp = {.length = tune_length};
+          for(uint8_t i = 0; i < tune_length; i++)  {
+            temp.notes[i] = msg.payload[i+1];
+            temp.durations[i] = msg.payload[i+1 + tune_length];
+          }
+          conf.SetStartTune(temp);
+          conf.SaveCurrentConfig();
+        } 
+        
+        break;
+        
+        case 0x0A:
+        case 0x0B:
+        case 0x0C:
+        case 0x0D:
+        case 0x0E:
+        {
+          struct lightMode newMode =  {msg.payload[1], 
+                                      COLOR(msg.payload[2],msg.payload[3],msg.payload[4]),
+                                      COLOR(msg.payload[5],msg.payload[6],msg.payload[7]),
+                                      (msg.payload[8]<<8) + msg.payload[9], (msg.payload[10]<<8)+msg.payload[11]};
+                                      
+          if (msg.payload[0] == 0x0A)  {
+            LOG_INFO(F("Default Light Pattern\r\n"));
+            conf.SetDefaultLightSequence(newMode);
+          }
+          if (msg.payload[0] == 0x0B)  {
+            LOG_INFO(F("Wait Light Pattern\r\n"));
+            conf.SetWaitLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0C)  {
+            LOG_INFO(F("Error Light Pattern\r\n"));
+            conf.SetErrorLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0D)  {
+            LOG_INFO(F("Unlock Light Pattern\r\n"));
+            conf.SetUnlockLightSequence(newMode);
+          }
+          else if (msg.payload[0] == 0x0E)  {
+            LOG_INFO(F("Deny Light Pattern\r\n"));
+            conf.SetDenyLightSequence(newMode);
+          }
+          conf.SaveCurrentConfig();
+          break;
+        }
+        default:
+          LOG_INFO(F("Invalid configuration identifier\r\n"));
+          break;
+      }
+      //state = S_READY;
       break;
       
     case F_DENY_CARD:
       LOG_INFO(F("Card Denied\r\n"));
-      status_ring.SetMode(M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000);
+      statusRing.SetMode(conf.GetDenyLightSequence());
       break;
       
     case F_UNLOCK_DOOR:
@@ -355,22 +403,25 @@ void ProcessMessage()  {
         LOG_DEBUG(F("Unlocking for "));
         LOG_DEBUG((msg.payload[0] << 8) + msg.payload[1]);
         LOG_DEBUG(F(" seconds.\r\n"));
-        door_latch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
+        doorLatch.Unlock(((msg.payload[0] << 8) + msg.payload[1]));
       }
-      else
+      else  {
         LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
-      status_ring.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
+      }
+      statusRing.SetMode(conf.GetUnlockLightSequence());
       break;
       
     case F_LOCK_DOOR:
       LOG_INFO(F("Lock Door\r\n"));
-      door_latch.Lock();
+      doorLatch.Lock();
       break;
       
     case F_PLAY_TUNE:
     {
       LOG_INFO(F("Play Tune\r\n"));
       byte tune_length = (msg.length)/2;
+      uint8_t userTune[tune_length];
+      uint8_t userTuneDurations[tune_length];
       for(byte i = 0; i < tune_length; i++)  {
         userTune[i] = msg.payload[i];
         userTuneDurations[i] = msg.payload[i + tune_length];
@@ -381,7 +432,7 @@ void ProcessMessage()  {
     case F_SET_LIGHTS:
     {
       LOG_INFO(F("Set Lights\r\n"));
-      status_ring.SetMode(msg.payload[0], 
+      statusRing.SetMode(msg.payload[0], 
                           COLOR(msg.payload[1],msg.payload[2],msg.payload[3]),
                           COLOR(msg.payload[4],msg.payload[5],msg.payload[6]),
                          (msg.payload[7]<<8) + msg.payload[8], (msg.payload[9]<<8)+msg.payload[10]);

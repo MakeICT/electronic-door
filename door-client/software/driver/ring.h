@@ -14,11 +14,14 @@
 #define M_CHASE  4
 #define M_HEART  5
 
+#define COLOR    Adafruit_NeoPixel::Color
+
 class Ring {
   public:
     Ring(uint8_t, uint8_t);
     void lightAll(uint32_t);
     
+    void SetMode(struct lightMode newMode);
     void SetMode(byte m, uint32_t c1, uint32_t c2, int p, int d);
     void Solid(uint32_t c, int d);
     void Flash(uint32_t c1, uint32_t c2, int p, int d); 
@@ -52,5 +55,14 @@ class Ring {
     byte tempPeriod;
     byte tempIndex;
 };
+
+struct lightMode  {
+  uint8_t mode;
+  uint32_t color1;
+  uint32_t color2;
+  uint16_t period;
+  uint16_t duration;
+};
+
 
 #endif

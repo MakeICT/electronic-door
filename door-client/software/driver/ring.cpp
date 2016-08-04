@@ -17,6 +17,10 @@ void Ring::lightAll(uint32_t c) {
   }
 }
 
+void Ring::SetMode(struct lightMode newMode)  {
+  this->SetMode(newMode.mode, newMode.color1, newMode.color2, newMode.period, newMode.duration);
+}
+
 void Ring::SetMode(byte m, uint32_t c1, uint32_t c2, int p, int d)  {
    if (d > 0)  {
      tempMode = m;
