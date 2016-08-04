@@ -35,7 +35,6 @@ class Config
     void LoadSavedConfig();
     void LoadDefaults();
     void SaveCurrentConfig();
-    void SaveDefaults();
     
     uint8_t GetVersion();
         
@@ -67,7 +66,6 @@ class Config
     void SetVersion(uint8_t);
   
     SoftwareSerial* debugPort;
-    struct configuration defaultConfig;
     struct configuration currentConfig;
 };
 

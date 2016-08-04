@@ -14,19 +14,6 @@ Config::Config()  {
 }
 
 void Config::Init()  {
-  LOG_DEBUG(sizeof(struct configuration));
-  defaultConfig.deviceAddress = 0xFE;
-  defaultConfig.defaultLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
-  defaultConfig.waitLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000};
-  defaultConfig.errorLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0};
-  defaultConfig.unlockLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
-  defaultConfig.denyLightSequence = (struct lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
-  defaultConfig.startupTune.length = 2;
-  defaultConfig.startupTune.notes[0] = NOTE_C4;
-  defaultConfig.startupTune.notes[1] = NOTE_D4;
-  defaultConfig.startupTune.durations[0] = 4;
-  defaultConfig.startupTune.durations[1] = 4;
-
   this->LoadSavedConfig();
   
   //uint8_t* testPointer = (uint8_t*) &currentConfig;
@@ -71,15 +58,21 @@ void Config::LoadSavedConfig()  {
 }
 
 void Config::LoadDefaults()  {
-  this->currentConfig = this->defaultConfig;
+  currentConfig.deviceAddress = 0xFE;
+  currentConfig.defaultLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
+  currentConfig.waitLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000};
+  currentConfig.errorLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0};
+  currentConfig.unlockLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
+  currentConfig.denyLightSequence = (struct lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
+  currentConfig.startupTune.length = 2;
+  currentConfig.startupTune.notes[0] = NOTE_C4;
+  currentConfig.startupTune.notes[1] = NOTE_D4;
+  currentConfig.startupTune.durations[0] = 4;
+  currentConfig.startupTune.durations[1] = 4;
 }
 
 void Config::SaveCurrentConfig()  {
   EEPROM.put(MEM_ADDR_CONFIG, currentConfig);
-}
-
-void Config::SaveDefaults() {
-  EEPROM.put(MEM_ADDR_CONFIG, defaultConfig);
 }
 
 void Config::SetVersion(uint8_t version)  {
