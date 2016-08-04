@@ -14,6 +14,8 @@
 #define M_CHASE  4
 #define M_HEART  5
 
+#define COLOR    Adafruit_NeoPixel::Color
+
 class Ring {
   public:
     Ring(uint8_t, uint8_t);

@@ -67,15 +67,6 @@
 
 // Constants for NeoPixel ring
 #define NUMPIXELS           16      // Number of NeoPixels in Ring
-#define COLOR_IDLE          0,100,120
-#define COLOR_SUCCESS1      0,60,20
-#define COLOR_SUCCESS2      0,30,10
-#define COLOR_FAILURE1      60,20,0
-#define COLOR_FAILURE2      30,10,0
-#define COLOR_WAITING       120,120,20
-#define COLOR_ERROR1        120,30,0
-#define COLOR_ERROR2        120,30,0
-#define COLOR               Adafruit_NeoPixel::Color
 
 // Constants for machine states
 #define S_INITIALIZING      0
@@ -169,15 +160,12 @@ void setup(void) {
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
     statusRing.SetMode(conf.GetErrorLightSequence());
-    //statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
   }
   else  
   #endif
   {
     statusRing.SetMode(conf.GetDefaultLightSequence());
-    //statusRing.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
     speaker.Play(conf.GetStartTune());
-    //speaker.Play(startTune, startTuneDurations, 2);
     state = S_READY;
   }
     
@@ -229,7 +217,6 @@ void loop(void) {
         LOG_ERROR(F("Lost contact with server!\r\n"));
         readout.Print("  Lost Contact    With  Server  ");
         statusRing.SetMode(conf.GetErrorLightSequence());
-        //statusRing.SetMode(M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0);
         state = S_NO_SERVER;
         break;
       }
@@ -253,7 +240,6 @@ void loop(void) {
           LOG_DEBUG(F("Contact with server re-established\r\n"));
           //reset lights to idle
           statusRing.SetMode(conf.GetDefaultLightSequence());
-          //statusRing.SetMode(M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000 , 0);
           superSerial.QueueMessage(F_CLIENT_START, 0, 0);
         }
         state = S_WAIT_SEND;
@@ -307,7 +293,6 @@ void CheckReader()  {
       state = S_WAIT_SEND;
       lastIDSend = millis();
       statusRing.SetMode(conf.GetWaitLightSequence());
-      //statusRing.SetMode(M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000);
       arrayCopy(uid, lastuid, 7, 0);
       LOG_DUMP(F("Sending scanned ID.\r\n"));
     }
@@ -338,11 +323,11 @@ void ProcessMessage()  {
       LOG_INFO(F("Heartbeat Ping\r\n"));
 
     case F_SET_CONFIG:
-      LOG_INFO(F("Set Config\r\n"));
+      LOG_INFO(F("Set Config:"));
       switch(msg.payload[0])
       {
         case 0x00:
-        LOG_INFO(F("Set Address:"));
+        LOG_INFO(F("Address:"));
         LOG_INFO(msg.payload[1]);
         LOG_INFO(F("\r\n"));
         conf.SetAddress(msg.payload[1]);
@@ -352,7 +337,7 @@ void ProcessMessage()  {
         
         case 0x01:
         {
-          LOG_INFO(F("Set Start Tune\r\n"));
+          LOG_INFO(F("Start Tune\r\n"));
           uint8_t tune_length = (msg.length-1)/2;
           uint8_t startTuneNotes[tune_length];
           uint8_t startTuneDurations[tune_length];
@@ -378,23 +363,23 @@ void ProcessMessage()  {
                                       (msg.payload[8]<<8) + msg.payload[9], (msg.payload[10]<<8)+msg.payload[11]};
                                       
           if (msg.payload[0] == 0x0A)  {
-            LOG_INFO(F("Set Default Light Pattern\r\n"));
+            LOG_INFO(F("Default Light Pattern\r\n"));
             conf.SetDefaultLightSequence(newMode);
           }
           if (msg.payload[0] == 0x0B)  {
-            LOG_INFO(F("Set Wait Light Pattern\r\n"));
+            LOG_INFO(F("Wait Light Pattern\r\n"));
             conf.SetWaitLightSequence(newMode);
           }
           else if (msg.payload[0] == 0x0C)  {
-            LOG_INFO(F("Set Error Light Pattern\r\n"));
+            LOG_INFO(F("Error Light Pattern\r\n"));
             conf.SetErrorLightSequence(newMode);
           }
           else if (msg.payload[0] == 0x0D)  {
-            LOG_INFO(F("Set Unlock Light Pattern\r\n"));
+            LOG_INFO(F("Unlock Light Pattern\r\n"));
             conf.SetUnlockLightSequence(newMode);
           }
           else if (msg.payload[0] == 0x0E)  {
-            LOG_INFO(F("Set Deny Light Pattern\r\n"));
+            LOG_INFO(F("Deny Light Pattern\r\n"));
             conf.SetDenyLightSequence(newMode);
           }
           conf.SaveCurrentConfig();
@@ -404,13 +389,12 @@ void ProcessMessage()  {
           LOG_INFO(F("Invalid configuration identifier\r\n"));
           break;
       }
-      state = S_READY;
+      //state = S_READY;
       break;
       
     case F_DENY_CARD:
       LOG_INFO(F("Card Denied\r\n"));
       statusRing.SetMode(conf.GetDenyLightSequence());
-      //statusRing.SetMode(M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000);
       break;
       
     case F_UNLOCK_DOOR:
@@ -424,7 +408,6 @@ void ProcessMessage()  {
       else
         LOG_DEBUG(F("Door Open, so not unlatching\r\n"));
         //statusRing.SetMode(conf.GetUnlockLightSequence());
-        //statusRing.SetMode(M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 200, 3000);
       break;
       
     case F_LOCK_DOOR:

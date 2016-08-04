@@ -1,7 +1,5 @@
 #include "config.h"
 
-// Constants for NeoPixel ring
-#define NUMPIXELS           16      // Number of NeoPixels in Ring
 #define COLOR_IDLE          0,100,120
 #define COLOR_SUCCESS1      0,60,20
 #define COLOR_SUCCESS2      0,30,10
@@ -10,7 +8,6 @@
 #define COLOR_WAITING       120,120,20
 #define COLOR_ERROR1        120,30,0
 #define COLOR_ERROR2        120,30,0
-#define COLOR               Adafruit_NeoPixel::Color
 
 Config::Config()  {
 
