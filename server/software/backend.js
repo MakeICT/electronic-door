@@ -394,14 +394,11 @@ module.exports = {
 
 		this.getUserByEmail(user.email, function(existingUser){
 			if(existingUser){
-				backend.debug('user exists!');
 				attachProxyUser();
 			}else{
-				backend.debug('creating user!');
+				backend.log('Creating user ' + user.email);
 				var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
-				backend.debug(user);
 				var params = [user.email, user.firstName, user.lastName, user.joinDate];
-				backend.debug('flag b');
 				return query(sql, params, attachProxyUser, onFailure);
 			}
 		});

@@ -10,11 +10,41 @@ var readWriteToggle;
 var dataBuffer = [];
 var escapeFlag = false;
 
-var watchdogTimer = null;
-var watchdogAction = function(){
-	backend.error('Super serial watchdog activated');
-	module.exports.reconnect();
-}
+var connectionResetter = {
+	'timer': null,
+	'trigger': false,
+	'start': function(){
+		connectionResetter.stop();
+		connectionResetter.trigger = false;
+		connectionResetter.timer = setInterval(connectionResetter.loop, 2000);
+	},
+	'stop': function(){
+		clearInterval(connectionResetter.timer);
+	},
+	'loop': function(){
+		if(connectionResetter.trigger){
+			connectionResetter.onTrigger();
+		}
+	},
+	'onTrigger': function(){
+		module.exports.reconnect();
+	},
+};
+
+var watchdog = {
+	'timer': null,
+	'stop': function(){
+		clearTimeout(watchdog.timer);
+	},
+	'reset': function(){
+		clearTimeout(watchdog.timer);
+		watchdog.timer = setTimeout(watchdog.onTrigger, 60000);
+	},
+	'onTrigger': function(){
+		backend.error('Super serial watchdog activated');
+		connectionResetter.trigger = true;
+	},
+};
 
 var SERIAL_FLAGS = {
 	'ESCAPE':	0xFE,
@@ -268,7 +298,7 @@ var clients = {};
 function _sendPacket(packet, next){
 	if(serialPort == null || !serialPort.isOpen()){
 		backend.error('Super Serial not connected. Attempting to reconnect...');
-		module.exports.reconnect();
+		connectionResetter.trigger = true;
 	}else{
 		var packetWriter = {
 			'packet': packet,
@@ -303,7 +333,7 @@ function _sendPacket(packet, next){
 						}
 					});
 				}catch(exc){
-					module.exports.reconnect();
+					connectionResetter.trigger = true;
 				}
 			},
 		};
@@ -386,7 +416,7 @@ function onData(data){
 						backend.debug('=============================');
 						// blah blah blah
 						if(packet.from != 0 && packet.from != 255) packetQueue.onACKReceived(packet);
-						module.exports.resetWatchdog();
+						watchdog.reset();
 					}else{
 						var handlePacket = function(){
 							if(packet.from != 255){
@@ -415,7 +445,7 @@ function onData(data){
 							if(packet.from != 255){
 								sendACK(packet);
 							}
-							module.exports.resetWatchdog();
+							watchdog.reset();
 						};
 						if(packet.from == 255 || clients[packet.from]){
 							handlePacket();
@@ -485,13 +515,14 @@ module.exports = {
 					'value': '10',
 				}
 			],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				module.exports.onDisable();
 				if(parameters['Delay'] && parameters['Delay'] > 1){
 					setTimeout(module.exports.onEnable, parseInt(parameters['Delay']));
 				}else{
 					module.exports.onEnable();
 				}
+				if(callback) callback();
 			},
 		}
 	],
@@ -499,6 +530,8 @@ module.exports = {
 	onUninstall: function(){},
 	
 	onEnable: function(){
+		console.log('Super Serial enabled');
+		connectionResetter.start();
 		var settings = getSettings();
 		
 		if(serialPort){
@@ -507,8 +540,8 @@ module.exports = {
 		serialPort = new SerialPort(settings['Port'], { 'baudrate': parseInt(settings['Baud']), 'autoOpen': false});
 
 		serialPort.on('error', function(error){
-			backend.error('Serial connection error: ' + error);
-			module.exports.reconnect();
+			backend.error('Serial Port error: ' + error);
+			connectionResetter.trigger = true;
 		});
 		
 		serialPort.on('open', function(error){
@@ -523,24 +556,25 @@ module.exports = {
 				}
 			}
 
-			module.exports.resetWatchdog();
+			watchdog.reset();
 			try{
 				serialPort.on('data', onData);
 			}catch(exc){
 				backend.error('Error while connecting super serial data callback');
 				backend.error(exc);
-				module.exports.reconnect();
+				connectionResetter.trigger = true;
 			}
 		});
 		
 		serialPort.on('disconnect', function(error){
 			backend.error('Serial Port disconnected: ' + error);
+			connectionResetter.trigger = true;
 		});
 		
 		serialPort.open(function(err) {
 			if(err){
 				backend.error('Cannot open Super Serial port: ' + err.message);
-				module.exports.reconnect();
+				connectionResetter.trigger = true;
 			}
 		});
 		
@@ -549,7 +583,9 @@ module.exports = {
 	},
 	
 	onDisable: function(){
-		clearTimeout(watchdogTimer);
+		console.log('Super Serial disabled');
+		watchdog.stop();
+		connectionResetter.stop();
 		broadcaster.unsubscribe(module.exports);
 		module.exports.reset();
 		if(serialPort){
@@ -560,12 +596,6 @@ module.exports = {
 			serialPort = null;
 			backend.log('Super Serial disconnected');
 		}
-	},
-	
-	resetWatchdog: function(){
-		clearTimeout(watchdogTimer);
-		watchdogTimer = setTimeout(watchdogAction, 60000);
-		backend.debug('Super Serial watchdog started');
 	},
 	
 	send: function(clientID, command, payload){

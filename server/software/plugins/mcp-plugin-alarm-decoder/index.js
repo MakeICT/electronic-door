@@ -6,6 +6,19 @@ var alarm;
 
 var ARM_ALARM = 0x06;
 var reconnectTimer;
+var statusChecker = {
+	'status': null,
+	'timer': null,
+	'setStatus': function(status){
+		clearTimeout(statusChecker.timer);
+		statusChecker.status = status;
+		statusChecker.timer = setTimeout(statusChecker.itsForReal, 5000);
+	},
+	'itsForReal': function(){
+		backend.error(module.exports.name + ': ' + statusChecker.status);
+		broadcaster.broadcast(module.exports, statusChecker.status, {});
+	},
+};
 
 module.exports = {
 	name: 'Alarm Decoder',
@@ -29,29 +42,32 @@ module.exports = {
 		{
 			'name': 'Arm away',
 			'parameters': [],
-			'execute': function(callback){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					backend.log(module.exports.name + ': Sending *arm away*');
 					alarm.armAway(settings['Code']);
+					if(callback) callback();
 				});
 			},
 		},{
 			'name': 'Arm stay',
 			'parameters': [],
-			'execute': function(callback){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					backend.log(module.exports.name + ': Sending *arm stay*');
 					alarm.armStay(settings['Code']);
+					if(callback) callback();
 				});
 				
 			},
 		},{
 			'name': 'Disarm',
 			'parameters': [],
-			'execute': function(callback){
+			'execute': function(parameters, callback){
 				backend.getPluginOptions(module.exports.name, function(settings){
 					backend.log(module.exports.name + ': Sending *disarm*');
 					alarm.disarm(settings['Code']);
+					if(callback) callback();
 				});
 			},
 		}
@@ -91,18 +107,15 @@ module.exports = {
 					});
 					
 					alarm.on('armedAway', function() {
-						backend.error(module.exports.name + ': alarm armed (away)');
-						broadcaster.broadcast(module.exports, "alarm-armed-away", {});
+						statusChecker.setStatus('alarm-armed-away');
 					});
 					
 					alarm.on('armedStay', function() {
-						backend.error(module.exports.name + ': alarm armed (stay)');
-						broadcaster.broadcast(module.exports, "alarm-armed-stay", {});
+						statusChecker.setStatus('alarm-armed-stay');
 					});
 					
 					alarm.on('disarmed', function() {
-						backend.error(module.exports.name + ': alarm disarmed');
-						broadcaster.broadcast(module.exports, "alarm-disarmed", {});
+						statusChecker.setStatus('alarm-armed-disarmed');
 					});
 					
 					alarm.on('fault', function(zone) {

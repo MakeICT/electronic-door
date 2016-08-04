@@ -92,14 +92,16 @@ module.exports = {
 					'value': 'World!',
 				},
 			],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				sendToAll(parameters['Line 1'], parameters['Line 2']);
+				if(callback) callback();
 			},
 		},{
 			'name': 'Clear all LCDs',
 			'parameters': [],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				sendToAll('', '');
+				if(callback) callback();
 			},
 		}
 	],

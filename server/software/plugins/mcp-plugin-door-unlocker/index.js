@@ -40,16 +40,18 @@ module.exports = {
 				'type': 'number',
 				'value': 3
 			}],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				throw 'Not yet implemented';
+				if(callback) callback();
 				// @TODO: implement "Unlock all" function
 //					broadcaster.broadcast(module.exports, "door-unlocked", { client: 'all', user: null });
 			},
 		},{
 			'name': 'Lock all',
 			'parameters': [],
-			'execute': function(parameters){
+			'execute': function(parameters, callback){
 				throw 'Not yet implemented';
+				if(callback) callback();
 				// @TODO: implement "Lock all" function
 			},
 		}
