@@ -7,7 +7,7 @@ void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
 
 #ifdef READER_PN532
 
-PN532_SPI pn532spi(SPI, RESET_PIN);      //TODO: make this configurable
+PN532_SPI pn532spi(SPI, 10);      //TODO: make this configurable
 PN532 nfc(pn532spi);
 
 Reader::Reader() {

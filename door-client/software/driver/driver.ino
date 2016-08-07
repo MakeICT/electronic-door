@@ -32,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-#define CLIENT_ADDRESS 0x01
+#define CLIENT_ADDRESS 0x03
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -275,7 +275,7 @@ void CheckReader()  {
   }
   
   if (result == 1)  {
-    for (int i = 0; i < 6; i++)  {
+    for (int i = 0; i < 6; i++)  { //@TODO: this might be wrong
       if (uid[i] != lastuid[i]){
         sameID = false;
         break;
