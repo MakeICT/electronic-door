@@ -125,7 +125,7 @@ void setup(void) {
   conf.Init();
   
   Serial.begin(9600);   //@TODO:  What is this doing here?
-  LOG_INFO(F("/r/n/r/n"));
+  LOG_INFO(F("\r\n\r\n"));
   LOG_INFO(F("########################################\r\n"));
   LOG_INFO(F("#            Start Program             #\r\n"));
   LOG_INFO(F("########################################\r\n"));

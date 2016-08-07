@@ -4,104 +4,41 @@ void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
   this->debugPort = dbgPort;
 }
 
+// TODO: make this configurable
+#define RESET_PIN 3
+#define SS_PIN    10
 
 #ifdef READER_PN532
-
-PN532_SPI pn532spi(SPI, 10);      //TODO: make this configurable
+PN532_SPI pn532spi(SPI, SS_PIN);
 PN532 nfc(pn532spi);
+#endif
+
+#ifdef READER_RC522
+MFRC522 mfrc522(SS_PIN, RESET_PIN);
+#endif
+
 
 Reader::Reader() {
 
 }
 
 boolean Reader::start() {
+  //TODO: add reader detection?
+  #ifdef READER_RC522
+  SPI.begin();      //init SPI bus
+  #endif
   this->Initialize();
 }
 
 bool Reader::Initialize()  {
-  LOG_DEBUG(F("Initializing PN532 NFC reader\r\n"));
-  for (int i=1; i<4; i++)  {
-    LOG_DEBUG(F("Initialization attempt: "));
-    LOG_DEBUG(i);
-    LOG_DEBUG(F("\r\n"));
-
-    nfc.begin();
-    if (this->IsAlive())  {
-      //configure board to read RFID tags
-      nfc.SAMConfig();
-      nfc.setPassiveActivationRetries(2);  //reduce card read retries to prevent hang
-      LOG_DEBUG(F("Reader initialized successfully\r\n"));
-      return true;
-    }
-    else  {
-      LOG_DEBUG(F("Failed to initialise reader\r\n"));
-    }
-  }
-  LOG_ERROR(F("Could not initialize reader after 3 attempts\r\n"));
-  return false;
-  //@TODO: implement self-test if available.
-}
-
-bool Reader::IsAlive()  {
-  uint32_t v = nfc.getFirmwareVersion();
-  if (!v) {
-    return false;
-  }
-  else  {
-    return true;
-  }
-}
-
-uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
-{
-  // Check if reader is still working
-  if (!this->IsAlive())  {
-    LOG_ERROR(F("NFC Reader has stopped responding\r\n"));
-    if (!this->Initialize())  {
-      return 2;
-    }
-  }
-  //TODO: detect if reader is still functioning correctly; if not, reset
-  uint8_t success;
-  for (byte i = 0; i <8; i++)
-    uid[i] = 0;  // Buffer to store the returned UID
-  uint8_t uidLength;                        // Length of the UID 
- 
-  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50);
-  if (success)
-  {
-    if (uidLength == 4)  {
-      // We probably have a Mifare Classic card ... 
-    }
+  LOG_DEBUG(F("Initializing NFC reader: "));
+  #ifdef READER_PN532
+  LOG_DEBUG(F("PN532\r\n"));
+  #endif
+  #ifdef READER_RC522
+  LOG_DEBUG(F("MFRC522\r\n"));
+  #endif
   
-    else if (uidLength == 7)  {
-      // Mifare Ultralight
-    }
-
-    return 1;
-  } 
-  else return 0;
-}
-#endif
-
-#ifdef READER_RC522
-
-#define RESET_PIN 3
-
-MFRC522 mfrc522(10, 3);   // TODO: make this configurable
-Reader::Reader() {
-
-}
-
-boolean Reader::start() {
-  //TODO: add reader detection
-
-  SPI.begin();        // Init SPI bus
-  return this->Initialize();
-}
-
-bool Reader::Initialize()  {
-  LOG_DEBUG(F("Initializing MFRC522 NFC reader\r\n"));
   for (int i=1; i<4; i++)  {
     LOG_DEBUG(F("Initialization attempt: "));
     LOG_DEBUG(i);
@@ -110,15 +47,26 @@ bool Reader::Initialize()  {
       //Do a hard reset on 3rd attempt.  Maybe it will help?
       LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
       digitalWrite(RESET_PIN, 0);
+      #ifdef READER_RC522
       SPI.end();
       SPI.begin();
+      #endif
       delay(100);   //longer than necessary
       digitalWrite(RESET_PIN, 1);
       delay(100);
     }
+    #ifdef READER_RC522
     mfrc522.PCD_Init();
+    #endif
+    #ifdef READER_PN532
+    nfc.begin();
+    #endif
     if (this->IsAlive())  {
-      //break;
+      #ifdef READER_PN532
+      //configure board to read RFID tags
+      nfc.SAMConfig();
+      nfc.setPassiveActivationRetries(2);  //reduce card read retries to prevent hang
+      #endif
       LOG_DEBUG(F("Reader initialized successfully\r\n"));
       return true;
     }
@@ -140,8 +88,16 @@ bool Reader::Initialize()  {
 }
 
 bool Reader::IsAlive()  {
+  #ifdef READER_PN532
+  uint32_t v = nfc.getFirmwareVersion();
+  if (!v)
+  #endif
+  
+  #ifdef READER_RC522
   byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-  if ((v == 0x00) || (v == 0xFF)) {
+  if ((v == 0x00) || (v == 0xFF))
+  #endif
+  {
     return false;
   }
   else  {
@@ -158,7 +114,30 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
       return 2;
     }
   }
-  // Look for new cards
+  //TODO: detect if reader is still functioning correctly; if not, reset
+  uint8_t success;
+  for (byte i = 0; i <8; i++)
+    uid[i] = 0;  // Buffer to store the returned UID
+    
+  #ifdef READER_PN532
+  uint8_t uidLength;                        // Length of the UID 
+ 
+  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50);
+  if (success)
+  {
+    if (uidLength == 4)  {
+      // We probably have a Mifare Classic card ... 
+    }
+  
+    else if (uidLength == 7)  {
+      // Mifare Ultralight
+    }
+
+    return 1;
+  } 
+  #endif
+  #ifdef READER_RC522
+    // Look for new cards
   if (mfrc522.PICC_IsNewCardPresent())  {
     LOG_DEBUG(F("New NFC card detected\r\n"));
     // Select one of the cards
@@ -176,8 +155,6 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
       LOG_ERROR(F("Failed to read card UID!\r\n"));
     }
   }
-  return 0;
+  #endif
+  else return 0;
 }
-#endif
- 
- 
