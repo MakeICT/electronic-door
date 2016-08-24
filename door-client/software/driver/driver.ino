@@ -28,7 +28,7 @@
 #define MOD_ALARM_BUTTON
 #define MOD_DOOR_SWITCH
 #define MOD_NFC_READER
-//#define MOD_DOORBELL
+#define MOD_DOORBELL
 #define MOD_CHIME
 #define MOD_LCD
 
@@ -160,6 +160,7 @@ void setup(void) {
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
     statusRing.SetMode(conf.GetErrorLightSequence());
+    readout.Print("NFC Reader      not detected!");
   }
   else  
   #endif
@@ -274,8 +275,9 @@ void CheckReader()  {
     result = card_reader.poll(uid, &id_length);
   }
   
+  readFailures = 0;   //reset failure counter on successful read
   if (result == 1)  {
-    for (int i = 0; i < 6; i++)  { //@TODO: this might be wrong
+    for (int i = 0; i < 7; i++)  {
       if (uid[i] != lastuid[i]){
         sameID = false;
         break;
@@ -479,7 +481,7 @@ void CheckInputs()  {
     if (doorBell == 1)  {
       LOG_INFO(F("Door Bell Pressed\r\n"));
       byte payload[1] = {doorBell};
-      superSerial.QueueMessage(F_DOOR_BELL, payload, 1);
+      superSerial.QueueMessage(F_DOOR_BELL, payload, 1); 
       state = S_WAIT_SEND;
     }
     return;
