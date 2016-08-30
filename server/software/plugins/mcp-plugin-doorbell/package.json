@@ -1,0 +1,13 @@
+{
+  "name": "mcp-plugin-doorbell",
+  "version": "1.0.0",
+  "description": "Ring-a-ding-ding",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Christian Kindel <christian@makeict.org>",
+  "license": "GPL",
+  "dependencies": {
+  }
+}

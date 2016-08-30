@@ -32,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-#define CLIENT_ADDRESS 0x03
+//#define CLIENT_ADDRESS 0x02
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -134,6 +134,7 @@ void setup(void) {
   // Set input pins
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(DOOR_BELL_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
   
   doorState = digitalRead(DOOR_SWITCH_PIN);
@@ -450,6 +451,18 @@ void ProcessMessage()  {
       break;
     }
     
+    case F_PLAY_DOORBELL:
+    {
+      LOG_INFO(F("Play Doorbell\r\n"));
+      struct tune testA = {26, {0x35,0x00,0x35,0x00,0x35,0x00,0x31,0x00,0x35,0x00,0x38,0x00,0x20}, 
+                               {0x06,0x01,0x06,0x06,0x06,0x06,0x06,0x01,0x06,0x06,0x0b,0x11,0x0b}};
+      struct lightMode testL = {M_FLASH, COLOR(120,0,120), COLOR(120,120,120), 200, 3000};                       
+      readout.Print("    You rang?                   ");
+      speaker.Play(testA);
+      statusRing.SetMode(testL);
+      break;
+    }
+    
     default:
       LOG_WARNING(F("Unrecognized Command\r\n"));
   }
@@ -478,7 +491,7 @@ void CheckInputs()  {
   #ifdef MOD_DOORBELL
   if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
     doorBell = !doorBell;
-    if (doorBell == 1)  {
+    if (doorBell == 0)  {
       LOG_INFO(F("Door Bell Pressed\r\n"));
       byte payload[1] = {doorBell};
       superSerial.QueueMessage(F_DOOR_BELL, payload, 1); 

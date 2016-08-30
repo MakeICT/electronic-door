@@ -10,8 +10,8 @@
 #include <MFRC522.h>    //TODO: only include if necessary
 #include "PN532.h"
 
-#define READER_PN532
-//#define READER_RC522
+//#define READER_PN532
+#define READER_RC522
 
 
 class Reader {

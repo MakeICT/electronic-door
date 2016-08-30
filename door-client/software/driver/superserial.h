@@ -17,6 +17,7 @@
 #define F_DOOR_STATE    0x07
 #define F_ALARM_BUTTON  0x06
 #define F_SET_LIGHTS    0x08
+#define F_PLAY_DOORBELL 0x09
 #define F_DENY_CARD     0x0C
 #define F_DOOR_BELL     0x0D
 #define F_CLIENT_START  0x0E
