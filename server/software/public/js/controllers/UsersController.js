@@ -127,6 +127,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 			if(ajaxChecker.checkAjax(response)){
 				$scope.nfcLog = null;
 				user.keyActive = true;
+				user.nfcID = nfcID;
 			}
 		});
 	};
