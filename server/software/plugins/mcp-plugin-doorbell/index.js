@@ -1,5 +1,6 @@
 var backend = require('../../backend.js');
 var superSerial = require('../mcp-plugin-super-serial');
+var broadcaster = require('../../broadcast.js');
 
 function getClientOptions(client){
 	return backend.regroup(client.plugins[module.exports.name].options, 'name', 'value');
