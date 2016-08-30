@@ -60,8 +60,16 @@ module.exports = {
 
 	onInstall: function(){},
 	onUninstall: function(){},
-	onEnable: function(){},
+	onEnable: function(){
+    broadcaster.subscribe(module.exports);
+  },
 	onDisable: function(){},
 	
 	handleRequest: function(request, response){},
+  
+  receiveMessage: function(source, messageID, data){
+    if (messageID == superSerial.SERIAL_COMMANDS['DOORBELL_PRESSED'])  {
+      superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DOORBELL']);
+    }
+	},
 };

@@ -63,6 +63,7 @@ var SERIAL_COMMANDS = {
 	'LIGHTS':	0x08,
   'DOORBELL': 0x09,
 	'DENY':		0x0C,
+  'DOORBELL_PRESSED': 0x0D,
 	         
 	'ACK':		0xAA,
 	'ERROR':	0xFA,
