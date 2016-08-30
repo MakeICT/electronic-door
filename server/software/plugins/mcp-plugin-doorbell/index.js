@@ -70,6 +70,7 @@ module.exports = {
   
   receiveMessage: function(source, messageID, data){
     if (messageID == 'serial-data-received')  {
+      backend.log("Was that a bell I heard?");
       backend.log(data);
       //superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DOORBELL']);
     }
