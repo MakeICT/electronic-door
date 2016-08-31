@@ -69,10 +69,20 @@ module.exports = {
 	handleRequest: function(request, response){},
   
   receiveMessage: function(source, messageID, data){
-    if (message == 'serial-data-received')  {
+    if (messageID == 'serial-data-received')  {
       backend.log("Was that a bell I heard?");
       backend.log(data);
-      //superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DOORBELL']);
+      if (data['command'] == superSerial.SERIAL_COMMANDS['DOORBELL_PRESSED']) {
+		var data = {
+           'client': data['from']
+        };
+        broadcaster.broadcast(module.exports, 'doorbell-rung', data);
+      }	
+    }
+    else if (messageID == 'doorbell-rung')  { 
+        backend.log("Yes, that was a bell!");
+        var client = backend.getClientByID(data['client']);
+        superSerial.send(client.clientID, superSerial.SERIAL_COMMANDS['DOORBELL']);
     }
 	},
 };
