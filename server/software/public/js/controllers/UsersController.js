@@ -132,6 +132,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		$http.put('/api/users/' + user.userID, { nfcID: nfcID }).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.nfcLog = null;
+				user.nfcHistory = null;
 				user.keyActive = true;
 				user.nfcID = nfcID;
 			}
