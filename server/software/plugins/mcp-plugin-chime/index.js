@@ -4,9 +4,9 @@ var superSerial = require('../mcp-plugin-super-serial');
 // this is only needed for backend.regroup convenience
 var backend = require('../../backend.js');
 var tunes = {
-	'happy-birthday': '',
+	'happy-birthday': '313133313635003131333138360031313a38363533003c3c3a3638360c0c18181818180c0c18181818180c0c181818181818181818181818',
 	'i-love-you': '',
-	'alarm-armed': '25312531253125312531253125312531253125314040404040404040404040404040404040404040',
+	'alarm-armed': '00310031003100310031003100310031003100314040404040404040404040404040404040404040',
 	'alarm-disarmed': '310031080208',
 };
 
@@ -135,7 +135,7 @@ module.exports = {
 				var birthdate = new Date(data.user.birthdate*1000);
 
 				if(now.getMonth() == birthdate.getMonth() && now.getDate() == birthdate.getDate()){
-					parameters['Tune'] = '313133313635003131333138360031313a38363533003c3c3a3638360c0c18181818180c0c18181818180c0c181818181818181818181818';
+					parameters['Tune'] = tunes['happy-birthday'];
 					backend.log('Happy birthday!', data.user.userID);
 				}
 			}
