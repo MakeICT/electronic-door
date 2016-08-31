@@ -119,6 +119,12 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 					$scope.nfcLog = response;
 				}
 			});
+			$http.get('/api/users/' + user.userID + '/nfcHistory').success(function(response){
+				if(ajaxChecker.checkAjax(response)){
+					console.log(response);
+					user.nfcHistory = response;
+				}
+			});
 		}
 	};
 	

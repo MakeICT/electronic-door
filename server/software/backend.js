@@ -1062,11 +1062,25 @@ module.exports = {
 	getBadNFCs: function(onSuccess, onFailure){
 		// @TODO: time range? Paging? Something
 		var sql =  
-				'SELECT * FROM logs LEFT JOIN users ON logs.code = users."nfcID" ' +
+				'SELECT code, MAX(timestamp) AS timestamp FROM logs ' +
+				'	LEFT JOIN users ON logs.code = users."nfcID" ' +
 				'WHERE code IS NOT NULL ' +
 				'	AND users."userID" IS NULL ' +
+				'GROUP BY code ' +
 				'ORDER BY timestamp DESC LIMIT 5';
 		return query(sql, [], onSuccess, onFailure);
+	},
+	
+	getNFCHistory: function(userID, onSuccess, onFailure){
+		// @TODO: time range? Paging? Something
+		var sql =  
+				'SELECT code, timestamp FROM logs ' +
+				'	JOIN users ON logs."userID" = users."userID" ' +
+				'WHERE code IS NOT NULL ' +
+				'	AND users."userID" = $1 ' +
+				'	AND "logType" = \'assign\' ' +
+				'ORDER BY timestamp DESC LIMIT 5';
+		return query(sql, [userID], onSuccess, onFailure);
 	},
 	
 	enrollUser: function(userID, nfcID, onSuccess, onFailure){
