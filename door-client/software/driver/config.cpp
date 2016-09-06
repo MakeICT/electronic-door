@@ -1,8 +1,8 @@
 #include "config.h"
 
 #define COLOR_IDLE          0,100,120
-#define COLOR_SUCCESS1      0,60,20
-#define COLOR_SUCCESS2      0,30,10
+#define COLOR_SUCCESS1      0,80,20
+#define COLOR_SUCCESS2      0,40,10
 #define COLOR_FAILURE1      60,20,0
 #define COLOR_FAILURE2      30,10,0
 #define COLOR_WAITING       120,120,20
@@ -62,7 +62,7 @@ void Config::LoadDefaults()  {
   currentConfig.defaultLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_IDLE), COLOR(COLOR_IDLE), 1000, 0};
   currentConfig.waitLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_WAITING), COLOR(COLOR_WAITING), 0, 3000};
   currentConfig.errorLightSequence = (struct lightMode) {M_SOLID, COLOR(COLOR_ERROR1), COLOR(COLOR_ERROR2), 100, 0};
-  currentConfig.unlockLightSequence = (struct lightMode) {M_PULSE, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
+  currentConfig.unlockLightSequence = (struct lightMode) {M_FLASH, COLOR(COLOR_SUCCESS1), COLOR(COLOR_SUCCESS2), 500, 3000};
   currentConfig.denyLightSequence = (struct lightMode) {M_FLASH, COLOR(COLOR_FAILURE1), COLOR(COLOR_FAILURE2), 200, 3000};
   currentConfig.startupTune.length = 2;
   currentConfig.startupTune.notes[0] = NOTE_C4;
