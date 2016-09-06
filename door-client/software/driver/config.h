@@ -9,7 +9,7 @@
 #include "ring.h"
 #include "audio.h"
 
-#define CONFIG_VERSION  0x03
+#define CONFIG_VERSION  0x04
 #define MEM_ADDR_CONFIG 0x00
 
 struct configuration  {
