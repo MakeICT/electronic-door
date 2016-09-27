@@ -265,17 +265,12 @@ module.exports = {
 				'	LEFT JOIN "groupAuthorizationTags" ON "groups"."groupID" = "groupAuthorizationTags"."groupID" ' +
 				'		AND "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID" ' +
 				'ORDER BY groups.name, "authorizationTags".name';
-				
 			var process = function(data){
 				var groups = [];
 				for(var i=0; i<data.length; i++){
 					if(i == 0 || groups[groups.length-1].groupID != data[i].groupID){
-						groups.push({
-							'groupID': data[i].groupID,
-							'name': data[i].name,
-							'description': data[i].description,
-							'authorizations': []
-						});
+						data[i].authorizations = [];
+						groups.push(data[i]);
 					}
 					groups[groups.length-1].authorizations.push({
 						'name': data[i].tagName,

@@ -43,7 +43,6 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 	};
 	
 	$scope.removeGroup = function(group){
-		console.log(group);
 		$http.delete('/api/groups/' + group.groupID).success(function(response){
 			$scope.groups.splice($scope.groups.indexOf(group), 1);
 		}).error(function(error){
