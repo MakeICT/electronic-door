@@ -62,6 +62,7 @@ var SERIAL_COMMANDS = {
 	'DOOR':		0x07,
 	'LIGHTS':	0x08,
 	'DENY':		0x0C,
+	'PING': 	0xCC,
 	         
 	'ACK':		0xAA,
 	'ERROR':	0xFA,
@@ -93,6 +94,9 @@ function lookupSerialFlag(byte){
 }
 
 function reloadClients(callback){
+	for(clientID in clients){
+		clients[clientID].disablePings();
+	}
 	var knownClients = backend.getClients();
 	for(var i=0; i<knownClients.length; i++){
 		var c = knownClients[i];
@@ -100,6 +104,7 @@ function reloadClients(callback){
 			clients[c.clientID] = new SerialClient(c);
 		}
 	}
+	if(callback) callback();
 }
 
 function Packet(rawBytesOrTransactionID, from, to, command, payload){
@@ -272,7 +277,12 @@ var packetQueue = {
 
 function SerialClient(clientInfo){
 	this.info = clientInfo;
+	this.clientID = clientInfo.clientID;
 	this.nextTransactionID = 0;
+
+	this.pingsEnabled = false;
+	this.pingTimeout = null;
+	this.pongTimeout = null;
 	
 	this.getNextTransactionID = function(resetID){
 		if(resetID !== undefined){
@@ -289,9 +299,60 @@ function SerialClient(clientInfo){
 	
 	this.hasReceivedPacket = function(packet){
 		return packet.transactionID < this.nextTransactionID;
-	}
+	};
+	
+	
+	this.sendPing = function(){
+		backend.debug('=============================');
+		backend.debug('** PING ** ' + this.clientID);
+		backend.debug('=============================');
+		module.exports.send(this.clientID, SERIAL_COMMANDS['PING']);
+		var settings = getSettings();
+		var pingPeriod = parseInt(settings['Ping period']);
 
+		if(pingPeriod && pingPeriod > 0){
+			this.pingTimeout = setTimeout(this.sendPing.bind(this), pingPeriod);
+		}
+	};
+	
+	this.enablePings = function(){
+		clearTimeout(this.pingTimeout);
+		this.pingsEnabled = true;
+
+		var settings = getSettings();
+		var pingPeriod = parseInt(settings['Ping period']);
+		if(pingPeriod){
+			this.pingTimeout = setTimeout(this.sendPing.bind(this), pingPeriod);
+		}
+	};
+	
+	this.disablePings = function(){
+		clearTimeout(this.pingTimeout);
+		this.pingsEnabled = false;
+	};
+	
+	this.packetReceived = function(packet){
+		clearTimeout(this.pingTimeout);
+		clearTimeout(this.pongTimeout);
+		if(this.pingsEnabled){
+			var settings = getSettings();
+			var pingPeriod = parseInt(settings['Ping period']);
+			var pongPeriod = parseInt(settings['Pong alert timeout']);
+
+			if(pingPeriod && pingPeriod > 0){
+				this.pingTimeout = setTimeout(this.sendPing.bind(this), pingPeriod);
+			}
+			if(pongPeriod && pongPeriod > 0){
+				this.pongTimeout = setTimeout(this.broadcastPongTimeout.bind(this), pongPeriod);
+			}
+		}
+	};
+	
+	this.broadcastPongTimeout = function(){
+		broadcaster.broadcast(module.exports, 'serial-pong-timeout', this.info);
+	};
 }
+
 var clients = {};
 
 // This is the lowest-level packet-writing function
@@ -415,13 +476,17 @@ function onData(data){
 						backend.debug('ACK received for ' + packet.transactionID + ', from ' + packet.from);
 						backend.debug('=============================');
 						// blah blah blah
-						if(packet.from != 0 && packet.from != 255) packetQueue.onACKReceived(packet);
+						if(packet.from != 0 && packet.from != 255){
+							packetQueue.onACKReceived(packet);
+							clients[packet.from].packetReceived(packet);
+						}
 						watchdog.reset();
 					}else{
 						var handlePacket = function(){
 							if(packet.from != 255){
 								var client = clients[packet.from];
-								var received = client.hasReceivedPacket(packet)
+								var received = client.hasReceivedPacket(packet);
+								client.packetReceived(packet);
 							}else{
 								var received = false;
 							}
@@ -440,13 +505,16 @@ function onData(data){
 								backend.debug('  Command : ' + packet.command);
 								backend.debug('  Payload : ' + packet.payload);
 								backend.debug('=============================');
+								
 								broadcaster.broadcast(module.exports, 'serial-data-received', packet);
 							}
+							
 							if(packet.from != 255){
 								sendACK(packet);
 							}
 							watchdog.reset();
 						};
+						
 						if(packet.from == 255 || clients[packet.from]){
 							handlePacket();
 						}else{
@@ -464,6 +532,7 @@ function onData(data){
 		}
 	}
 };
+
 
 function breakupBytes(byteArray){
 	var output = [];
@@ -502,6 +571,14 @@ module.exports = {
 			'name': 'RW Toggle Pin',
 			'type': 'number',
 			'value': 18,
+		}, {
+			'name': 'Ping period',
+			'type': 'number',
+			'value': 30000,
+		}, {
+			'name': 'Pong alert timeout',
+			'type': 'number',
+			'value': 60000,
 		},
 	],
 	
@@ -530,7 +607,6 @@ module.exports = {
 	onUninstall: function(){},
 	
 	onEnable: function(){
-		console.log('Super Serial enabled');
 		connectionResetter.start();
 		var settings = getSettings();
 		
@@ -555,7 +631,9 @@ module.exports = {
 					backend.error(exc);
 				}
 			}
-
+			for(var clientID in clients){
+				clients[clientID].enablePings();
+			}
 			watchdog.reset();
 			try{
 				serialPort.on('data', onData);
@@ -578,12 +656,12 @@ module.exports = {
 			}
 		});
 		
+		
 		reloadClients();
 		broadcaster.subscribe(module.exports);
 	},
 	
 	onDisable: function(){
-		console.log('Super Serial disabled');
 		watchdog.stop();
 		connectionResetter.stop();
 		broadcaster.unsubscribe(module.exports);
