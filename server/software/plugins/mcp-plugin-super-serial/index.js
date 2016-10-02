@@ -663,6 +663,9 @@ module.exports = {
 	
 	onDisable: function(){
 		watchdog.stop();
+		for(var clientID in clients){
+			clients[clientID].disablePings();
+		}
 		connectionResetter.stop();
 		broadcaster.unsubscribe(module.exports);
 		module.exports.reset();
