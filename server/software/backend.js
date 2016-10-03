@@ -37,6 +37,21 @@ function getOneOrNone(callback){
 	}
 }
 
+function rmdir(path) {
+	if(fs.existsSync(path)) {
+		fs.readdirSync(path).forEach(function(file,index){
+			var curPath = path + '/' + file;
+			if(fs.lstatSync(curPath).isDirectory()) { // recurse
+				rmdir(curPath);
+			} else { // delete file
+				fs.unlinkSync(curPath);
+			}
+		});
+		
+		fs.rmdirSync(path);
+	}
+};
+
 function filterFields(obj, allowedFields){
 	for(var k in obj){
 		if(allowedFields.indexOf(k) < 0){
@@ -455,6 +470,45 @@ module.exports = {
 		return query('UPDATE plugins SET enabled = FALSE WHERE name = $1', [pluginName], updateRAM, onFailure);
 	},
 	
+	deletePlugin: function(pluginName, deleteFilesToo, onSuccess, onFailure){
+		backend.log('Delete plugin ' + pluginName);
+		
+		var plugin = backend.getPluginByName(pluginName);
+		var pluginID = plugin.pluginID;
+		
+		var queries = [
+			'DELETE FROM plugins WHERE "pluginID" = $1',
+			'DELETE FROM "pluginOptions" WHERE "pluginID" = $1',
+			'DELETE FROM "clientPluginOptions" WHERE "pluginID" = $1',
+		];
+		
+		var doNextStep = function(){
+			if(queries.length == 0){
+				for(var i=0; i<plugins.length; i++){
+					if(plugins[i].pluginID == pluginID){
+						plugins.splice(i, 1);
+						break;
+					}
+				}
+				for(var i=0; i<clients.length; i++){
+					delete clients[i].plugins[pluginName];
+				}
+				
+				if(deleteFilesToo){
+					backend.log('Deleting plugin files: ' + plugin.path);
+					rmdir(plugin.path);
+				}
+				
+				if(onSuccess) return onSuccess();
+				
+				return;
+			}else{
+				return query(queries.pop(), [pluginID], doNextStep, onFailure);
+			}
+		};
+		doNextStep(0);
+	},
+	
 	addPluginOption: function(pluginName, optionName, type, onSuccess, onFailure){
 		return query(
 			'SELECT "pluginID" FROM plugins WHERE name = $1',
@@ -783,6 +837,7 @@ module.exports = {
 			for(var i=0; i<pluginFolders.length; i++){
 				var plugin = require('./plugins/' + pluginFolders[i] + '/index.js');
 				plugin.actionNames = Object.keys(plugin.actions);
+				plugin.path = './plugins/' + pluginFolders[i];
 				var found = false;
 				for(var j=0; j<pluginList.length; j++){
 					if(pluginList[j].name == plugin.name){

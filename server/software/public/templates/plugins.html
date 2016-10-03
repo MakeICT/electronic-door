@@ -1,8 +1,26 @@
 <h2>Plugins</h2>
 <div ng-repeat="plugin in plugins" class="card well">
 	<div class="card-header" style="position: relative;">
-	<h3 class="card-title">{{plugin.name}}</h3>
-		<span simple-toggle class="btn btn-default btn-sm" style="position: absolute; right: 0;" ng-model="isOpened">⚙</span>
+		<div class="row">
+			<div class="col-md-12 col-sm-12">
+				<span simple-toggle class="btn btn-default btn-sm pull-right" ng-model="isOpened" title="Settings">⚙</span>
+				
+				<div class="btn-group pull-right" role="group">
+					<span data-toggle="dropdown" ng-model="dropdown" class="btn btn-default text-danger btn-sm pull-right" ng-if="isOpened" title="Remove plugin">✖</span>
+					<ul class="dropdown-menu" style="width:100%">
+						<li ng-click="deletePlugin(plugin, false)">
+							<a>Keep files</a>
+						</li>
+						<li ng-click="deletePlugin(plugin, true)">
+							<a>Delete files too</a>
+						</li>
+					</ul>
+				</div>
+
+				<h4 class="pull-left" ng-click="isOpened = !isOpened">{{plugin.name}}</h4>
+			</div>
+		</div>
+
 		<div class="btn-group">
 			<label class="btn btn-sm" ng-class="plugin.enabled ? 'btn-default' : 'btn-danger'" ng-model="plugin.enabled" uib-btn-radio="false" ng-click="togglePlugin(plugin, false)">Off</label>
 			<label class="btn btn-sm" ng-class="plugin.enabled ? 'btn-success' : 'btn-default'" ng-model="plugin.enabled" uib-btn-radio="true" ng-click="togglePlugin(plugin, true)">On</label>

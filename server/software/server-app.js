@@ -223,6 +223,56 @@ server.put('/api/plugins/:plugin/enabled', function (request, response, next) {
 	return next();
 });
 
+server.del('/api/plugins/:plugin', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		try{
+			backend.deletePlugin(
+				request.params.plugin,
+				false,
+				function(result){
+					response.send(result);
+				},
+				function(error){
+					backend.error(error);
+					response.send(error);
+				}
+			);
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to delete plugin', 'detail': exc});
+		}
+	}
+	
+	return next();
+});
+
+server.del('/api/plugins/:plugin/files', function(request, response, next){
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		try{
+			backend.deletePlugin(
+				request.params.plugin,
+				true,
+				function(result){
+					response.send(result);
+				},
+				function(error){
+					backend.error(error);
+					response.send(error);
+				}
+			);
+		}catch(exc){
+			backend.error(exc);
+			response.send({'error': 'Failed to delete plugin', 'detail': exc});
+		}
+	}
+	
+	return next();
+});
+
+
+
 server.get('/api/plugins/:name/options', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){

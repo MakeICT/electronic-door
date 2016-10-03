@@ -80,4 +80,14 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 	$scope.playTune = function(tune){
 		tunePlayer.play(tune);
 	};
+	
+	$scope.deletePlugin = function(plugin, deleteFilesToo){
+		var url = '/api/plugins/' + plugin.name;
+		if(deleteFilesToo) url += '/files'
+		$http.delete(url).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+				// @TODO: give feedback
+			}
+		});
+	};
 });
