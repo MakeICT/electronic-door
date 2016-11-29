@@ -107,8 +107,7 @@ module.exports = {
 						api.get('contacts?$async=false', null, function(data){
 							data = JSON.parse(data);
 							if(!data || !data['Contacts'] || data['reason']){
-								backend.error('WildApricot failed to download contacts.');
-								backend.error(data);
+								backend.error('WildApricot failed to download contacts: '  + JSON.stringify(data));
 								return;
 							}
 							var contacts = data['Contacts'];
