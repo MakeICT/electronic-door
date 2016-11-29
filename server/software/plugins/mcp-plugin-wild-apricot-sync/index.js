@@ -107,7 +107,9 @@ module.exports = {
 						api.get('contacts?$async=false', null, function(data){
 							data = JSON.parse(data);
 							if(!data || !data['Contacts'] || data['reason']){
-								data = doThatThing();
+								backend.error('WildApricot failed to download contacts.');
+								backend.error(data);
+								return;
 							}
 							var contacts = data['Contacts'];
 							var contactsLeftToSync = contacts.length;
