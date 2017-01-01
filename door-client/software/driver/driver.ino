@@ -496,6 +496,15 @@ void CheckInputs()  {
       byte payload[1] = {doorBell};
       superSerial.QueueMessage(F_DOOR_BELL, payload, 1); 
       state = S_WAIT_SEND;
+    
+      //Temporary hard-coded doorbell
+      struct tune testA = {26, {0x35,0x00,0x35,0x00,0x35,0x00,0x31,0x00,0x35,0x00,0x38,0x00,0x20}, 
+                               {0x06,0x01,0x06,0x06,0x06,0x06,0x06,0x01,0x06,0x06,0x0b,0x11,0x0b}};
+      struct lightMode testL = {M_FLASH, COLOR(120,0,120), COLOR(120,120,120), 200, 3000};                       
+      readout.Print("    You rang?                   ");
+      speaker.Play(testA);
+      statusRing.SetMode(testL);
+
     }
     return;
   }
