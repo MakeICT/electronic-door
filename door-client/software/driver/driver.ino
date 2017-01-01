@@ -94,7 +94,11 @@ SuperSerial superSerial(&bus, address);
 /*-----( Declare Variables )-----*/
 //uint8_t byteReceived;
 boolean alarmButton = 0;
+#ifdef MOD_DOOR_SWITCH
 boolean doorState = 0;
+#else
+boolean doorState = 1;
+#endif
 boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 uint32_t lastHeartBeat = 0;
@@ -136,7 +140,9 @@ void setup(void) {
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
   
+  #ifdef MOD_DOOR_SWITCH
   doorState = digitalRead(DOOR_SWITCH_PIN);
+  #endif
   
 
  // superSerial = new SuperSerial(&bus, address);
@@ -466,7 +472,8 @@ void CheckInputs()  {
     }
     return;
   }
-    
+  
+  #ifdef MOD_DOOR_SWITCH
   if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
     LOG_INFO(F("Door State Changed\r\n"));
     doorState = !doorState;
@@ -475,6 +482,8 @@ void CheckInputs()  {
     state = S_WAIT_SEND;
     return;
   }
+  #endif
+  
   #ifdef MOD_DOORBELL
   if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
     doorBell = !doorBell;
