@@ -1,6 +1,7 @@
 app.factory('clientService', function($http, ajaxChecker) {
     var clientService = {
 		'clients': [],
+		'loaded': false,
 		'onLoadListeners': [],
 		'addOnLoadListener': function(callback){
 			clientService.onLoadListeners.push(callback);
@@ -29,6 +30,7 @@ app.factory('clientService', function($http, ajaxChecker) {
 					for(var i=0; i<clientService.onLoadListeners.length; i++){
 						clientService.onLoadListeners[i]();
 					}
+					clientService.loaded = true;
 				}
 			});
 		},

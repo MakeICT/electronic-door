@@ -119,6 +119,12 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 					$scope.nfcLog = response;
 				}
 			});
+			$http.get('/api/users/' + user.userID + '/nfcHistory').success(function(response){
+				if(ajaxChecker.checkAjax(response)){
+					console.log(response);
+					user.nfcHistory = response;
+				}
+			});
 		}
 	};
 	
@@ -126,7 +132,9 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 		$http.put('/api/users/' + user.userID, { nfcID: nfcID }).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.nfcLog = null;
+				user.nfcHistory = null;
 				user.keyActive = true;
+				user.nfcID = nfcID;
 			}
 		});
 	};

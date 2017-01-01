@@ -3,6 +3,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 		'plugins': {},
 		'clientPlugins': [],
 		'onLoadListeners': [],
+		'loaded': false,
 		'addOnLoadListener': function(callback){
 			pluginService.onLoadListeners.push(callback);
 		},
@@ -28,9 +29,11 @@ app.factory('pluginService', function($http, ajaxChecker) {
 							pluginService.clientPlugins.push(plugin);
 						}
 					}
+
 					for(var i=0; i<pluginService.onLoadListeners.length; i++){
 						pluginService.onLoadListeners[i]();
 					}
+					pluginService.loaded = true;
 				}
 			});
 		},

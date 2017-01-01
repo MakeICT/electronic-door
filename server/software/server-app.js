@@ -65,6 +65,17 @@ server.get('/api/users/:userID/groups', function (request, response, next) {
 	return next();
 });
 
+server.get('/api/users/:userID/nfcHistory', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.getNFCHistory(request.params.userID, function(history){
+			response.send(history);
+		});
+	}
+	
+	return next();
+});
+
 server.put('/api/users/:userID/groups/:groupName', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){

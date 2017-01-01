@@ -4,21 +4,8 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	$scope.pluginActions = [];
 	$scope.clientActions = [];
 	
-	$scope.pluginsLoaded = false;
-	$scope.clientsLoaded = false;
-
-	pluginService.addOnLoadListener(function(){
-		$scope.pluginsLoaded = true;
-		$scope.load();
-	});
-	
-	clientService.addOnLoadListener(function(){
-		$scope.clientsLoaded = true;
-		$scope.load();
-	});
-	
 	$scope.load = function(){
-		if(!$scope.pluginsLoaded || !$scope.clientsLoaded) return;
+		if(!pluginService.loaded || !clientService.loaded) return;
 		
 		for(var pluginName in pluginService.plugins){
 			var plugin = pluginService.plugins[pluginName];
@@ -65,14 +52,10 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	
 	$scope.createJob = function(job){
 		$http.post('/api/scheduledJobs', job).success(function(response){
-			console.log('response');
-			console.log(response);
-			
 			if(ajaxChecker.checkAjax(response)){
 				$scope.reload();
 			}
 		}).catch(function(err){
-			console.log('error!');
 			console.error(err);
 		});
 	};
@@ -91,7 +74,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 
 	$scope.determineJobActions = function(){
-		if(!$scope.pluginsLoaded || !$scope.clientsLoaded) return;
+		if(!pluginService.loaded || !clientService.loaded) return;
 		
 		for(var i=0; i<$scope.scheduledJobs.length; i++){
 			var job = $scope.scheduledJobs[i];
@@ -121,9 +104,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	$scope.deleteJob = function(job){
 		$http.delete('/api/scheduledJobs/' + job.jobID).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
-				console.log(response);
 				for(var i=0; i<$scope.scheduledJobs.length; i++){
-					console.log($scope.scheduledJobs[i]);
 					if($scope.scheduledJobs[i] == job){
 						$scope.scheduledJobs.splice(i, 1);
 					}
@@ -143,10 +124,12 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 					'enabled': false
 				});
 			}
-			$scope.determineJobActions();
+			$scope.load();
 		});
 		
 	};
 	
+	pluginService.addOnLoadListener($scope.load);
+	clientService.addOnLoadListener($scope.load);
 	$scope.reload();
 });
