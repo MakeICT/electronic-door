@@ -27,7 +27,7 @@ boolean Reader::start() {
   #ifdef READER_RC522
   SPI.begin();      //init SPI bus
   #endif
-  this->Initialize();
+  return this->Initialize();
 }
 
 bool Reader::Initialize()  {
