@@ -38,7 +38,7 @@ bool Reader::Initialize()  {
   #ifdef READER_RC522
   LOG_DEBUG(F("MFRC522\r\n"));
   #endif
-  
+
   for (int i=1; i<4; i++)  {
     LOG_DEBUG(F("Initialization attempt: "));
     LOG_DEBUG(i);
@@ -55,11 +55,13 @@ bool Reader::Initialize()  {
       digitalWrite(RESET_PIN, 1);
       delay(100);
     }
-    #ifdef READER_RC522
+    #if defined(READER_RC522)
     mfrc522.PCD_Init();
-    #endif
-    #ifdef READER_PN532
+    #elif defined(READER_PN532)
     nfc.begin();
+    #else
+    LOG_DEBUG(F("No reader specified!\r\n"));
+    return false;
     #endif
     if (this->IsAlive())  {
       #ifdef READER_PN532
@@ -92,7 +94,7 @@ bool Reader::IsAlive()  {
   uint32_t v = nfc.getFirmwareVersion();
   if (!v)
   #endif
-  
+
   #ifdef READER_RC522
   byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
   if ((v == 0x00) || (v == 0xFF))
@@ -115,28 +117,25 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
     }
   }
   //TODO: detect if reader is still functioning correctly; if not, reset
-  uint8_t success;
   for (byte i = 0; i <8; i++)
     uid[i] = 0;  // Buffer to store the returned UID
-    
-  #ifdef READER_PN532
-  uint8_t uidLength;                        // Length of the UID 
- 
-  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50);
+
+  #if defined(READER_PN532)
+  //uint8_t uidLength;                        // Length of the UID
+  uint8_t success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, len, 50);
   if (success)
   {
     if (uidLength == 4)  {
-      // We probably have a Mifare Classic card ... 
+      // We probably have a Mifare Classic card ...
     }
-  
+
     else if (uidLength == 7)  {
       // Mifare Ultralight
     }
-
+    LOG_DEBUG(F("Successfully read card serial\r\n"));
     return 1;
-  } 
-  #endif
-  #ifdef READER_RC522
+  }
+  #elif defined(READER_RC522)
     // Look for new cards
   if (mfrc522.PICC_IsNewCardPresent())  {
     LOG_DEBUG(F("New NFC card detected\r\n"));
@@ -147,12 +146,14 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
       for (byte i = 0; i < mfrc522.uid.size; i++) {
         uid[i] = mfrc522.uid.uidByte[i];
       }
+      *len = mfrc522.uid.size;
       //identify picctype
       //byte piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
       return 1;
     }
     else  {
       LOG_ERROR(F("Failed to read card UID!\r\n"));
+      return 0;
     }
   }
   #endif

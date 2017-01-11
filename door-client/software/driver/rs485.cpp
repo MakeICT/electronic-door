@@ -93,7 +93,7 @@ inline uint8_t rs485::Send(uint8_t data) {
 byte rs485::Receive() {
   LOG_DUMP(F("rs485::Receive\r\n"));
   this->lastRcv = millis();
-  byte byteReceived;
+  byte byteReceived = 0;
   Serial.readBytes(&byteReceived, 1);    // Read received byte
   return byteReceived;
 }
