@@ -7,12 +7,14 @@
 
 #include <SPI.h>
 #include <PN532_SPI.h>
-#include <MFRC522.h>    //TODO: only include if necessary
-#include "PN532.h"
 
-#define READER_PN532
-//#define READER_RC522
+//TODO: only include if necessary
 
+//#define READER_PN532
+//#include "PN532.h"
+
+#define READER_RC522
+#include <MFRC522.h>
 
 class Reader {
   public:
