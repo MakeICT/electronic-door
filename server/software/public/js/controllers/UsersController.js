@@ -196,7 +196,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 		});
 	};
 
-	if($location.search().q.length > 0){
+	if($location.search().q && $location.search().q.length > 0){
 		$scope.search.query = $location.search().q;
 		$scope.searchForUser();
 	}
