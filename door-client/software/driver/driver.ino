@@ -32,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-#define CLIENT_ADDRESS 0x99
+#define CLIENT_ADDRESS 0x09
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -453,7 +453,7 @@ void ProcessMessage()  {
 
     default:
       LOG_WARNING(F("Unrecognized Command: "));
-      LOG_WARNING(F(msg.function));
+      LOG_WARNING(msg.function);
       LOG_WARNING(F("\r\n"));
   }
 }
