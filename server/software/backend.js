@@ -243,9 +243,9 @@ module.exports = {
 						var field = term.substring(0, term.indexOf(':'));
 						var value = term.substring(field.length+1);
 						if(field == 'group'){
-							params.push('%' + value + '%');
+							params.push(value);
 							sql += '	AND (SELECT 0 < COUNT(0) FROM "userGroups" JOIN "groups" ON "userGroups"."groupID" = groups."groupID"  ' +
-							'		WHERE LOWER(groups.name) LIKE $' + params.length +
+							'		WHERE LOWER(groups.name)=$' + params.length +
 							'			AND "userGroups"."userID" = users."userID" ' +
 							'	)';
 						}else{
