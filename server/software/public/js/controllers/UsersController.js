@@ -1,4 +1,4 @@
-app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxChecker, consoleService){
+app.controller('usersCtrl', function($scope, $http, $location, authenticationService, ajaxChecker, consoleService){
 	$scope.userSearchResults = [];
 	$scope.currentUser = null;
 	$scope.newUser = {
@@ -31,7 +31,7 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 
 		var url = '/api/users?';
 		for(var p in params){
-			url += p + '=' + params[p] + '&';
+			url += encodeURIComponent(p) + '=' + encodeURIComponent(params[p]) + '&';
 		}
 		$http.get(url).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
@@ -195,4 +195,9 @@ app.controller('usersCtrl', function($scope, $http, authenticationService, ajaxC
 			consoleService.addMessage('error', exc);
 		});
 	};
+
+	if($location.search().q.length > 0){
+		$scope.search.query = $location.search().q;
+		$scope.searchForUser();
+	}
 });

@@ -25,9 +25,10 @@
 <div class="container-fluid groups-table">
 	<div class="row hidden-xs">
 		<h4 class="col-md-3 col-sm-3">Name</h4>
-		<h4 class="col-md-3 col-sm-3">Description</h4>
+		<h4 class="col-md-1 col-sm-3">Users</h4>
+		<h4 class="col-md-4 col-sm-3">Description</h4>
 		<h4 class="col-md-3 col-sm-3">Authorizations</h4>
-		<h4 class="col-md-3 col-sm-3">Administrators</h4>
+		<h4 class="col-md-1 col-sm-3">Administrators</h4>
 	</div>
 	<div ng-repeat="group in groups" class="row">
 		<h3 class="col-xs-12 visible-xs">{{group.name}}</h3>
@@ -39,7 +40,10 @@
 				<div class="col-md-10 col-sm-10"><strong>{{group.name}}</strong></div>
 			</div>
 		</div>
-		<div class="col-md-3 col-sm-3">{{group.description}}</div>
+		<div class="col-md-1 col-sm-3">
+			<a href="/users?q=group%3A%22{{group.name|encodeURIComponent}}%22">{{group.count}}</a>
+		</div>
+		<div class="col-md-4 col-sm-3">{{group.description}}</div>
 		<div class="col-md-3 col-sm-3" style="text-align: left">
 			<div class="btn-group pull-right" role="group">
 				<button type="button" class="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown" ng-model="dropdown" title="Add an authorization">+</button>
@@ -57,7 +61,7 @@
 			</div>
 			<div ng-if="approvedAuths.length==0" class="text-center">No authorizations</div>
 		</div>
-		<div class="col-md-3 col-sm-3">&nbsp;</div>
+		<div class="col-md-1 col-sm-3">&nbsp;</div>
 		<div class="col-xs-12 visible-xs">
 			<button class="btn btn-danger btn-sm" ng-click="removeGroup(group)">Remove {{group.name}}</button>
 		</div>

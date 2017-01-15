@@ -17,7 +17,6 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 	};
 		
 	$scope.saveNewGroup = function(){
-		console.log($scope.newGroup);
 		if(!$scope.newGroup || $scope.newGroup.name == ''){
 			$scope.error = {
 				'message': 'Group name must be specified',
@@ -58,4 +57,8 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 			$scope.groups = response;
 		}
 	});
+});
+
+app.filter('encodeURIComponent', function() {
+	return window.encodeURIComponent;
 });
