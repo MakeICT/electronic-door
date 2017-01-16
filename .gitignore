@@ -11,8 +11,9 @@ lcd/.build
 *.pyc
 *.swo
 *.swn
-*.s##
-*.b##
+*.s#*
+*.b#*
 *.brd.lck
 *.sch.lck
 .cli_history
+*.gitignore
