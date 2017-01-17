@@ -162,8 +162,9 @@ module.exports = {
 		}else if(message == 'serial-data-received'){
 			if(data['to'] == 0){
 				if(data['command'] == ARM_ALARM){
+					var client = backend.getClientByID(data['from']);
 					backend.getPluginOptions(module.exports.name, function(settings){
-						backend.log(module.exports.name + ': Sending *arm away*');
+						backend.log(module.exports.name + ': Sending *arm away* from ' + client.name);
 						alarm.armAway(settings['Code']);
 					});
 				}
