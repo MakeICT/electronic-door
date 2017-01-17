@@ -72,13 +72,10 @@ app.factory('authenticationService', function($http, ajaxChecker) {
 		'authenticated': false,
 		'login': function(credentials, onPass, onFail, beQuiet) {
 			$http.post('/api/login', credentials).success(function(response){
-				console.log('Be quiet = ' + beQuiet);
 				if(ajaxChecker.checkAjax(response, beQuiet)){
 					authService.authenticated = true;
 					if(onPass) onPass();
 				}else{
-					console.log('It failed');
-					console.log(onFail);
 					if(onFail) onFail(response);
 				}
 			});
