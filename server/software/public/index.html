@@ -72,12 +72,13 @@
 				<div ng-view></div>
 				
 				<div ng-controller="consoleCtrl" style="min-height: 2.5em">
-					<div id="message-log" ng-if="messages.length > 0">
+					<div id="message-log" ng-show="messages.length > 0">
 						<div style="position: fixed; right: 2em; bottom: .25em" class="btn-group">
+							<button class="btn btn-default btn-xs {{autoScrollEnabled ? 'active' : ''}}" ng-click="toggleScroll()" ng-if="logWindowDisplayed">Autoscroll</button>
 							<button class="btn btn-default btn-xs" ng-click="clearMessages()">Clear</button>
 							<button class="btn btn-default btn-xs" ng-click="logWindowDisplayed = !logWindowDisplayed">{{logWindowDisplayed ? '▼' : '▲'}}</button>
 						</div>
-						<div uib-collapse="!logWindowDisplayed" class="message-list">
+						<div uib-collapse="!logWindowDisplayed" class="message-list" id="message-log-list">
 							<div class="message" ng-repeat="message in messages">[{{message.timestamp}}] <span ng-class="message.type">{{message.text}}</span></div>
 						</div>					
 						<div ng-if="!logWindowDisplayed">
@@ -86,8 +87,6 @@
 					</div>
 				</div>
 			</div>
-		
-		
 		</div>
 		<br/><br/>
 	</body>
