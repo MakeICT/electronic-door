@@ -1,0 +1,42 @@
+(.../eagle-7.5.0/ulp/pcb-gcode/pcb-gcode.ulp)
+(Copyright 2005 - 2012 by John Johnson)
+(See readme.txt for licensing terms.)
+(This file generated from the board:)
+(.../makeict-security-server-V2016-3-29.brd)
+(Current profile is .../ulp/pcb-gcode/profiles/emc.pp  )
+(This file generated 8/26/16 3:15 PM)
+(Settings from pcb-machine.h)
+(spindle on time = 3.0000)
+(spindle speed = 15000.0000)
+(milling depth = -0.0640)
+(tool change at 0.0000 0.0000 0.5000 )
+(feed rate xy = F1.50  )
+(feed rate z  = F1.00  )
+(Z Axis Settings)
+(  High     Up        Down     Drill)
+(0.5000 	0.0500 	-0.0025 	-0.0640 )
+(Settings from pcb-defaults.h)
+(isolate min = 0.0010)
+(isolate max = 0.0300)
+(isolate step = 0.0075)
+(Generated top outlines, top drill, )
+(Unit of measure: inch)
+(Inch Mode)
+G20
+(Absolute Coordinates)
+G90
+S15000
+G00 Z0.5000 
+G00 X0.0000 Y0.0000 
+M03
+G04 P3.000000
+G00 Z0.0500 
+G00 X-0.0250 Y-0.0250 
+G01 Z-0.0640 F1.00  
+G01 X-0.0250 Y0.9750 F1.50  
+G01 X2.2500 Y0.9750 
+G01 X2.2500 Y-0.0250 
+G01 X-0.0250 Y-0.0250 
+G00 Z0.5000 
+M05
+M02

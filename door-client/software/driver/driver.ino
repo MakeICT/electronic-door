@@ -32,7 +32,7 @@
 #define MOD_CHIME
 #define MOD_LCD
 
-#define CLIENT_ADDRESS 0x03
+#define CLIENT_ADDRESS 0x99
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -73,7 +73,7 @@
 #define S_NO_SERVER         1
 #define S_UNADDRESSED       2
 #define S_WAIT_SEND         3
-#define S_READY             4          
+#define S_READY             4
 
 
 /*-----( Declare objects )-----*/
@@ -94,11 +94,7 @@ SuperSerial superSerial(&bus, address);
 /*-----( Declare Variables )-----*/
 //uint8_t byteReceived;
 boolean alarmButton = 0;
-#ifdef MOD_DOOR_SWITCH
-boolean doorState = 0;
-#else
-boolean doorState = 1;
-#endif
+boolean doorState = 1;                      //set as door closed to work without switch
 boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 uint32_t lastHeartBeat = 0;
@@ -127,7 +123,7 @@ void setup(void) {
   conf.SetDebugPort(debugPort);
   speaker.SetDebugPort(debugPort);
   conf.Init();
-  
+
   Serial.begin(9600);   //@TODO:  What is this doing here?
   LOG_INFO(F("\r\n\r\n"));
   LOG_INFO(F("########################################\r\n"));
@@ -139,22 +135,22 @@ void setup(void) {
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
-  
+
   #ifdef MOD_DOOR_SWITCH
   doorState = digitalRead(DOOR_SWITCH_PIN);
   #endif
-  
+
 
  // superSerial = new SuperSerial(&bus, address);
- 
+
   doorLatch.Lock();  // In case the program crashed, make sure door doesn't stay unlocked
-  
+
   //for testing only
   #ifdef CLIENT_ADDRESS
   conf.SetAddress(CLIENT_ADDRESS);
   conf.SaveCurrentConfig();
   #endif
-  
+
   address = conf.GetAddress();
   superSerial.SetAddress(address);
 
@@ -162,20 +158,20 @@ void setup(void) {
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
   readout.Print("Initializing...");
-  
+
   #ifdef MOD_NFC_READER
   if(!card_reader.start())  {
     statusRing.SetMode(conf.GetErrorLightSequence());
     readout.Print("NFC Reader      not detected!");
   }
-  else  
+  else
   #endif
   {
     statusRing.SetMode(conf.GetDefaultLightSequence());
     speaker.Play(conf.GetStartTune());
     state = S_READY;
   }
-    
+
   // notify server that client has started
   superSerial.QueueMessage(F_CLIENT_START, 0, 0);
   watchdogSetup();
@@ -212,7 +208,7 @@ void loop(void) {
       #endif
       CheckInputs();
     }
-      
+
     case S_WAIT_SEND:
     {
       if (!doorState && !doorLatch.HoldingOpen() && !doorLatch.Locked())  {
@@ -228,7 +224,7 @@ void loop(void) {
         break;
       }
     }
-    
+
     case S_UNADDRESSED:
     {
       superSerial.Update();
@@ -259,7 +255,7 @@ void loop(void) {
       speaker.Update();
       statusRing.Update();
       doorLatch.Update();
-    }  
+    }
   }
 }
 
@@ -271,7 +267,7 @@ void CheckReader()  {
   uint8_t id_length;
   bool sameID = true;
   static uint8_t readFailures = 0;
-  
+
   uint8_t result = card_reader.poll(uid, &id_length);
   while (result == 2)  {
     if (++readFailures > 2)  {
@@ -280,7 +276,7 @@ void CheckReader()  {
     }
     result = card_reader.poll(uid, &id_length);
   }
-  
+
   readFailures = 0;   //reset failure counter on successful read
   if (result == 1)  {
     for (int i = 0; i < 7; i++)  {
@@ -288,7 +284,7 @@ void CheckReader()  {
         sameID = false;
         break;
       }
-    }    
+    }
     #if LOG_LVL>2
     LOG_INFO(F("Scanned ID: "));
     for(int i=0; i<7; i++)  {
@@ -316,10 +312,10 @@ void CheckReader()  {
 
 void ProcessMessage()  {
   Message msg = superSerial.GetMessage();
-  
+
   //reset heartbeat timeout
   lastHeartBeat = millis();
-  
+
   // If address is not set, ignore all functions other than setting address
   if (state == S_UNADDRESSED && msg.function != F_SET_CONFIG)  {
     return;
@@ -343,7 +339,7 @@ void ProcessMessage()  {
         conf.SaveCurrentConfig();
         superSerial.SetAddress(msg.payload[1]);
         break;
-        
+
         case 0x01:
         {
           LOG_INFO(F("Start Tune\r\n"));
@@ -355,21 +351,20 @@ void ProcessMessage()  {
           }
           conf.SetStartTune(temp);
           conf.SaveCurrentConfig();
-        } 
-        
+        }
         break;
-        
+
         case 0x0A:
         case 0x0B:
         case 0x0C:
         case 0x0D:
         case 0x0E:
         {
-          struct lightMode newMode =  {msg.payload[1], 
+          struct lightMode newMode =  {msg.payload[1],
                                       COLOR(msg.payload[2],msg.payload[3],msg.payload[4]),
                                       COLOR(msg.payload[5],msg.payload[6],msg.payload[7]),
-                                      (msg.payload[8]<<8) + msg.payload[9], (msg.payload[10]<<8)+msg.payload[11]};
-                                      
+                                     (msg.payload[8]<<8) + msg.payload[9], (msg.payload[10]<<8)+msg.payload[11]};
+
           if (msg.payload[0] == 0x0A)  {
             LOG_INFO(F("Default Light Pattern\r\n"));
             conf.SetDefaultLightSequence(newMode);
@@ -399,12 +394,12 @@ void ProcessMessage()  {
       }
       //state = S_READY;
       break;
-      
+
     case F_DENY_CARD:
       LOG_INFO(F("Card Denied\r\n"));
       statusRing.SetMode(conf.GetDenyLightSequence());
       break;
-      
+
     case F_UNLOCK_DOOR:
       LOG_INFO(F("Unlock Door\r\n"));
       if (doorState)  {
@@ -418,12 +413,12 @@ void ProcessMessage()  {
       }
       statusRing.SetMode(conf.GetUnlockLightSequence());
       break;
-      
+
     case F_LOCK_DOOR:
       LOG_INFO(F("Lock Door\r\n"));
       doorLatch.Lock();
       break;
-      
+
     case F_PLAY_TUNE:
     {
       LOG_INFO(F("Play Tune\r\n"));
@@ -434,13 +429,13 @@ void ProcessMessage()  {
         userTune[i] = msg.payload[i];
         userTuneDurations[i] = msg.payload[i + tune_length];
       }
-      speaker.Play(userTune, userTuneDurations, tune_length);   
+      speaker.Play(userTune, userTuneDurations, tune_length);
       break;
     }
     case F_SET_LIGHTS:
     {
       LOG_INFO(F("Set Lights\r\n"));
-      statusRing.SetMode(msg.payload[0], 
+      statusRing.SetMode(msg.payload[0],
                           COLOR(msg.payload[1],msg.payload[2],msg.payload[3]),
                           COLOR(msg.payload[4],msg.payload[5],msg.payload[6]),
                          (msg.payload[7]<<8) + msg.payload[8], (msg.payload[9]<<8)+msg.payload[10]);
@@ -455,9 +450,11 @@ void ProcessMessage()  {
       readout.Print(printString);
       break;
     }
-    
+
     default:
-      LOG_WARNING(F("Unrecognized Command\r\n"));
+      LOG_WARNING(F("Unrecognized Command: "));
+      LOG_WARNING(F(msg.function));
+      LOG_WARNING(F("\r\n"));
   }
 }
 
@@ -472,7 +469,7 @@ void CheckInputs()  {
     }
     return;
   }
-  
+
   #ifdef MOD_DOOR_SWITCH
   if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
     LOG_INFO(F("Door State Changed\r\n"));
@@ -483,14 +480,14 @@ void CheckInputs()  {
     return;
   }
   #endif
-  
+
   #ifdef MOD_DOORBELL
   if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
     doorBell = !doorBell;
     if (doorBell == 1)  {
       LOG_INFO(F("Door Bell Pressed\r\n"));
       byte payload[1] = {doorBell};
-      superSerial.QueueMessage(F_DOOR_BELL, payload, 1); 
+      superSerial.QueueMessage(F_DOOR_BELL, payload, 1);
       state = S_WAIT_SEND;
     }
     return;
