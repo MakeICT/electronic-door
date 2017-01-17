@@ -63,7 +63,7 @@
 
 			<div class="btn-group" ng-repeat="auth in approvedAuths = (group.authorizations|filter:{'authorized':true}|orderBy:'name')">
 				<div class="btn btn-addon btn-danger btn-xs" ng-click="setGroupAuthorization(group, auth.name, false)">x</div>
-				<div class="btn btn-default btn-xs authorizationName">{{auth.name}}</div>
+				<a class="btn btn-default btn-xs authorizationName" href="/users?q=tag%3A%22{{auth.name|encodeURIComponent}}%22">{{auth.name}}</a>
 			</div>
 			<div ng-if="approvedAuths.length==0" class="text-center">No authorizations</div>
 		</div>

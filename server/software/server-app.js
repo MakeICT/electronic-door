@@ -46,8 +46,9 @@ function checkIfLoggedIn(request, response, suppressErrorResponse){
 server.get('/api/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		var termSeparator = /[\w]+:("[^"]+"|[\w]+)|"[^"]+"|[\w]+/g;
+		var termSeparator = /[\w-]+:("[^"]+"|[\w-]+)|"[^"]+"|[\w-]+/g;
 		var terms = request.params.q.match(termSeparator);
+		console.log(terms);
 		backend.getUsers(terms, request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
 			response.send(users);
 		});
