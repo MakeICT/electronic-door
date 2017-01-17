@@ -39,15 +39,17 @@ app.config(function($locationProvider, $routeProvider) {
 app.factory('ajaxChecker', function() {
     var ajaxChecker = {
 		'errorListeners': [],
-		'checkAjax': function(response){
+		'checkAjax': function(response, quietError){
 			if(response.error){
-				ajaxChecker.error = {
-					'message': response.error,
-					'detail': response.detail,
-				};
+				if(!quietError){
+					ajaxChecker.error = {
+						'message': response.error,
+						'detail': response.detail,
+					};
 
-				for(var i=0; i<ajaxChecker.errorListeners.length; i++){
-					ajaxChecker.errorListeners[i](ajaxChecker.error);
+					for(var i=0; i<ajaxChecker.errorListeners.length; i++){
+						ajaxChecker.errorListeners[i](ajaxChecker.error);
+					}
 				}
 				
 				return false;
@@ -68,12 +70,15 @@ app.factory('ajaxChecker', function() {
 app.factory('authenticationService', function($http, ajaxChecker) {
     var authService = {
 		'authenticated': false,
-		'login': function(credentials, onPass, onFail) {
+		'login': function(credentials, onPass, onFail, beQuiet) {
 			$http.post('/api/login', credentials).success(function(response){
-				if(ajaxChecker.checkAjax(response)){
+				console.log('Be quiet = ' + beQuiet);
+				if(ajaxChecker.checkAjax(response, beQuiet)){
 					authService.authenticated = true;
 					if(onPass) onPass();
 				}else{
+					console.log('It failed');
+					console.log(onFail);
 					if(onFail) onFail(response);
 				}
 			});
@@ -169,7 +174,7 @@ app.controller('controller', function($scope, $http, $location, authenticationSe
 		$scope.error = error;
 	});
 	
-	authenticationService.login(null, function(){ $scope.authenticated = true; });
+	authenticationService.login(null, function(){ $scope.authenticated = true; }, null, true);
 });
 
 app.filter('timestampToHumanReadableDate', function(){

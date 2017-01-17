@@ -40,8 +40,8 @@
 			</button>
 			<div ng-if="!authenticated" class="login-form">
 				<p><em>You're in trouble, program. Why don't you make it easy on yourself?<br/>Who's your user?</em></p>
-				<input type="email" class="form-control input-sm" placeholder="Email" ng-model="$parent.loginForm.email" ng-keyup="$event.keyCode == 13 && login()">
-				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="$parent.loginForm.password" ng-keyup="$event.keyCode == 13 && login()" ng-trim="false">
+				<input type="email" class="form-control input-sm" placeholder="Email" ng-model="$parent.loginForm.email" ng-keyup="$event.keyCode == 13 && login()" autofocus="true" />
+				<input type="password" class="form-control input-sm" placeholder="Password" ng-model="$parent.loginForm.password" ng-keyup="$event.keyCode == 13 && login()" ng-trim="false" />
 				<button class="btn btn-default" ng-click="login()">Sign in</button>
 			</div>
 			<div ng-if="authenticated">
