@@ -46,7 +46,9 @@ function checkIfLoggedIn(request, response, suppressErrorResponse){
 server.get('/api/users', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
-		backend.getUsers(request.params.q.split(' '), request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
+		var termSeparator = /[\w]+:("[^"]+"|[\w]+)|"[^"]+"|[\w]+/g;
+		var terms = request.params.q.match(termSeparator);
+		backend.getUsers(terms, request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
 			response.send(users);
 		});
 	}
@@ -59,6 +61,17 @@ server.get('/api/users/:userID/groups', function (request, response, next) {
 	if(session){
 		backend.getUserGroups(request.params.userID, function(groups){
 			response.send(groups);
+		});
+	}
+	
+	return next();
+});
+
+server.get('/api/users/:userID/nfcHistory', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.getNFCHistory(request.params.userID, function(history){
+			response.send(history);
 		});
 	}
 	

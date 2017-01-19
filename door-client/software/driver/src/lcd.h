@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "definitions.h"
 
 //Pin definitions
 

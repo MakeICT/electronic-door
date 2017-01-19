@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "definitions.h"
 #include "utils.h"
 #include "packetqueue.h"
 
@@ -18,7 +19,7 @@
 #define ERR_BUSY_BUS      0xE3
 
 // Times
-#define T_MIN_WAIT      10
+#define T_MIN_WAIT        10
 
 class rs485 {
   public:
@@ -28,7 +29,7 @@ class rs485 {
     inline uint8_t Send(uint8_t data);
     int Available();
     void SetDebugPort(SoftwareSerial*);
-    
+
   private:
     uint8_t serDir;
     SoftwareSerial* debugPort;

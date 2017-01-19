@@ -2,6 +2,7 @@
 #define STRIKE_H
 
 #include <Arduino.h>
+#include "definitions.h"
 #include "utils.h"
 
 #define STRIKE_HIGH_TIME  1000
@@ -20,7 +21,7 @@ class Strike  {
     bool locked;
     bool holdingOpen;
     uint32_t unlockTime;
-    uint32_t unlockDuration;    
+    uint32_t unlockDuration;
 };
 
 #endif

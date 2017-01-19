@@ -5,6 +5,7 @@
 #include <EEPROM.h>
 #include <SoftwareSerial.h>
 
+#include "definitions.h"
 #include "utils.h"
 #include "ring.h"
 #include "audio.h"
@@ -27,29 +28,29 @@ class Config
 {
   public:
     Config();
-    
+
     void Init();
     void SetDebugPort(SoftwareSerial* dbgPort);
     bool IsFirstRun();
-    
+
     void LoadSavedConfig();
     void LoadDefaults();
     void SaveCurrentConfig();
-    
+
     uint8_t GetVersion();
-        
+
     void SetAddress(uint8_t address);
     uint8_t GetAddress();
-    
+
     void SetStartTune(struct tune newTune);
     struct tune GetStartTune();
-    
+
     void SetDefaultLightSequence(struct lightMode sequence);
     struct lightMode GetDefaultLightSequence();
-    
+
     void SetWaitLightSequence(struct lightMode sequence);
     struct lightMode GetWaitLightSequence();
-    
+
     void SetErrorLightSequence(struct lightMode sequence);
     struct lightMode GetErrorLightSequence();
 
@@ -58,13 +59,13 @@ class Config
 
     void SetDenyLightSequence(struct lightMode sequence);
     struct lightMode GetDenyLightSequence();
-    
+
     void SaveLightSequence(uint8_t identifier, struct lightMode sequence);
     struct lightMode GetLightSequence(uint8_t identifier);
-    
+
   private:
     void SetVersion(uint8_t);
-  
+
     SoftwareSerial* debugPort;
     struct configuration currentConfig;
 };

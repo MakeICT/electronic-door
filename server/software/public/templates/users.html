@@ -108,6 +108,9 @@
 						</div>
 					</div>
 					<table class="table" ng-if="nfcLog && nfcLog.length > 0">
+						<tr>
+							<th colspan="2">Recent rejections:</th>
+						</tr>
 						<tr ng-repeat="log in nfcLog">
 							<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
 							<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
@@ -115,6 +118,18 @@
 					</table>
 					<div ng-if="nfcLog && nfcLog.length == 0">
 						No unassigned scans are available.
+					</div>
+					<table class="table" ng-if="user.nfcHistory && user.nfcHistory.length > 0">
+						<tr>
+							<th colspan="2">Past NFC assignments:</th>
+						</tr>
+						<tr ng-repeat="log in user.nfcHistory">
+							<td>{{log.timestamp|timestampToHumanReadableDate:true}}</td>
+							<td><button class="btn btn-sm btn-default" ng-click="enrollUser(user, log.code)">{{log.code}}</button></td>
+						</tr>
+					</table>
+					<div ng-if="user.nfcHistory && user.nfcHistory.length == 0">
+						User has no NFC assignment history.
 					</div>
 				</div>
 			</div>

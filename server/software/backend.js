@@ -231,19 +231,35 @@ module.exports = {
 				sql += '	AND "joinDate" >= $' + params.length;
 			}
 
-			if(searchTerms !== undefined){
+			if(searchTerms){
 				if(searchTerms.constructor !== Array){
 					searchTerms = [searchTerms];
 				}
 
 				for(var i=0; i<searchTerms.length; i++){
-					var q = '%' + searchTerms[i].toLowerCase() + '%';
-					params.push(q);
-					sql += '	AND (LOWER("firstName") LIKE $' + params.length +
-						'			OR LOWER("lastName") LIKE $' + params.length +
-						'			OR LOWER("email") LIKE $' + params.length +
-						'			OR LOWER("nfcID") LIKE $' + params.length +
-						'		)';
+					var term = searchTerms[i].toLowerCase().replace(/"/g, '');
+					if(term.indexOf(':') > -1){
+						var termParts = term.split(':');
+						var field = term.substring(0, term.indexOf(':'));
+						var value = term.substring(field.length+1);
+						if(field == 'group'){
+							params.push(value);
+							sql += '	AND (SELECT 0 < COUNT(0) FROM "userGroups" JOIN "groups" ON "userGroups"."groupID" = groups."groupID"  ' +
+							'		WHERE LOWER(groups.name)=$' + params.length +
+							'			AND "userGroups"."userID" = users."userID" ' +
+							'	)';
+						}else{
+							module.exports.error('Unknown search verb: ' + term);
+						}
+					}else{
+						var q = '%' + term + '%';
+						params.push(q);
+						sql += '	AND (LOWER("firstName") LIKE $' + params.length +
+							'			OR LOWER("lastName") LIKE $' + params.length +
+							'			OR LOWER("email") LIKE $' + params.length +
+							'			OR LOWER("nfcID") LIKE $' + params.length +
+							'		)';
+					}
 				}
 			}
 			
@@ -259,23 +275,22 @@ module.exports = {
 				'SELECT ' +
 				'	groups.*, ' +
 				'	"authorizationTags".name AS "tagName", ' +
-				'	"groupAuthorizationTags"."groupID" IS NOT NULL AS enrolled ' +
+				'	"groupAuthorizationTags"."groupID" IS NOT NULL AS enrolled, ' +
+				'	COUNT(users.*) AS count ' +
 				'FROM groups ' +
 				'	CROSS JOIN "authorizationTags" ' +
 				'	LEFT JOIN "groupAuthorizationTags" ON "groups"."groupID" = "groupAuthorizationTags"."groupID" ' +
 				'		AND "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID" ' +
+				'	LEFT JOIN "userGroups" ON "userGroups"."groupID" = "groups"."groupID" ' +
+				'	LEFT JOIN "users" ON "userGroups"."userID" = "users"."userID" ' +
+				'GROUP BY groups."groupID", "authorizationTags".name, "groupAuthorizationTags"."groupID" ' +
 				'ORDER BY groups.name, "authorizationTags".name';
-				
 			var process = function(data){
 				var groups = [];
 				for(var i=0; i<data.length; i++){
 					if(i == 0 || groups[groups.length-1].groupID != data[i].groupID){
-						groups.push({
-							'groupID': data[i].groupID,
-							'name': data[i].name,
-							'description': data[i].description,
-							'authorizations': []
-						});
+						data[i].authorizations = [];
+						groups.push(data[i]);
 					}
 					groups[groups.length-1].authorizations.push({
 						'name': data[i].tagName,
@@ -1062,11 +1077,25 @@ module.exports = {
 	getBadNFCs: function(onSuccess, onFailure){
 		// @TODO: time range? Paging? Something
 		var sql =  
-				'SELECT * FROM logs LEFT JOIN users ON logs.code = users."nfcID" ' +
+				'SELECT code, MAX(timestamp) AS timestamp FROM logs ' +
+				'	LEFT JOIN users ON logs.code = users."nfcID" ' +
 				'WHERE code IS NOT NULL ' +
 				'	AND users."userID" IS NULL ' +
+				'GROUP BY code ' +
 				'ORDER BY timestamp DESC LIMIT 5';
 		return query(sql, [], onSuccess, onFailure);
+	},
+	
+	getNFCHistory: function(userID, onSuccess, onFailure){
+		// @TODO: time range? Paging? Something
+		var sql =  
+				'SELECT code, timestamp FROM logs ' +
+				'	JOIN users ON logs."userID" = users."userID" ' +
+				'WHERE code IS NOT NULL ' +
+				'	AND users."userID" = $1 ' +
+				'	AND "logType" = \'assign\' ' +
+				'ORDER BY timestamp DESC LIMIT 5';
+		return query(sql, [userID], onSuccess, onFailure);
 	},
 	
 	enrollUser: function(userID, nfcID, onSuccess, onFailure){

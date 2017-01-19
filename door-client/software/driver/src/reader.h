@@ -2,17 +2,25 @@
 #define READER_H
 
 #include <Arduino.h>
+#include "definitions.h"
 #include "utils.h"
 #include <SoftwareSerial.h>
 
 #include <SPI.h>
-#include <PN532_SPI.h>
-#include <MFRC522.h>    //TODO: only include if necessary
+
+
+//TODO: only include if necessary
+
+//#define READER_PN532
+#ifdef READER_PN532
 #include "PN532.h"
+#include <PN532_SPI.h>
+#endif
 
-#define READER_PN532
-//#define READER_RC522
-
+// #define READER_RC522
+#ifdef READER_RC522
+#include <MFRC522.h>
+#endif
 
 class Reader {
   public:

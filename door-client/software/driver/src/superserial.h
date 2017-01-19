@@ -2,9 +2,10 @@
 #define SUPERSERIAL_H
 
 #include <Arduino.h>
+#include "definitions.h"
+#include "utils.h"
 #include "packetqueue.h"
 #include "rs485.h"
-#include "utils.h"
 #include <SoftwareSerial.h>  //DEBUG
 
 // Command bytes
@@ -17,7 +18,6 @@
 #define F_DOOR_STATE    0x07
 #define F_ALARM_BUTTON  0x06
 #define F_SET_LIGHTS    0x08
-#define F_PLAY_DOORBELL 0x09
 #define F_DENY_CARD     0x0C
 #define F_DOOR_BELL     0x0D
 #define F_CLIENT_START  0x0E
@@ -36,7 +36,7 @@
 #define HEARTBEAT_TIMEOUT 60000
 
 
-class SuperSerial 
+class SuperSerial
 {
   public:
     SuperSerial(rs485*, byte);
@@ -48,22 +48,22 @@ class SuperSerial
     bool DataQueued();
     void Update();
     Message GetMessage();
-    
+
   private:
     bool newMessage;
     bool dataQueued;
-    
+
     //Message/Packet Buffers
     Packet receivedPacket;
     Packet queuedPacket;
     Packet responsePacket;
-    
+
     uint8_t currentTransaction;
     uint32_t lastPacketSend;
     uint8_t retryTimeout;
     uint8_t maxRetries;
     uint8_t retryCount;
-    
+
     rs485* bus;
     byte deviceAddress;
     SoftwareSerial* debugPort;
@@ -74,4 +74,3 @@ class SuperSerial
 };
 
 #endif
-

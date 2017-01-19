@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "definitions.h"
 #include "utils.h"
 #include "notes.h"
 //#include <NewTone.h>
@@ -22,7 +23,7 @@ class Audio
     void Play(struct tune newTune);
     void Play(byte melody[], byte durations[], byte length);
     void Update();
-    
+
   private:
     SoftwareSerial* debugPort;
     byte audioPin;

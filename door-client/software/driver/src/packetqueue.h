@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "definitions.h"
 #include "utils.h"
 
 
@@ -15,15 +16,15 @@
 #define P_F_LENGTH        2
 #define P_H_F_LENGTH      7
 
-class Message { 
+class Message {
   public:
     //Initializer
     Message();
     Message(byte function, byte length, byte* payload);
-    
+
     //Set functions
     void SetMsg(byte function, byte length, byte* payload);
-    
+
     //Message data
     byte function;
     byte length;
@@ -35,7 +36,7 @@ class Packet {
     //Initializers
     Packet();
     Packet(byte function, byte* payload, byte length);
-    
+
     //Get functions
     byte SrcAddr();
     byte DestAddr();
@@ -47,14 +48,14 @@ class Packet {
     byte Size();
     byte Escapes();
     byte EscapedSize();
-    
+
     //Set functions
     void SetSrcAddr(byte addr);
     void SetDestAddr(byte addr);
     void SetTransID(byte transID);
     void SetMsg(byte function, byte* payload, byte length, byte offset=0);
     void SetDebugPort(SoftwareSerial*);
-    
+
     //Functions
     uint16_t ComputeCRC();
     bool VerifyCRC();
@@ -62,18 +63,18 @@ class Packet {
     byte ToArray(byte* array);
     byte ToEscapedArray(byte* array);
     void Escape();
-    
+
   private:
     SoftwareSerial* debugPort;
     byte size;
     byte escapedSize;
-    
+
     //Header and footer info
     byte sourceAddr;
     byte destAddr;
     byte transactionID;
     uint16_t crc;
-    
+
     //Message content
     Message message;
   };

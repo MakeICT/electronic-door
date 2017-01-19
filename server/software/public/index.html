@@ -35,9 +35,6 @@
 		<div ng-controller="controller">
 			<div class="header"></div>
 			
-			<div ng-if="authenticated" id="status-header">
-				[ <a href="/logout">Logout</a> ]
-			</div>
 			<button ng-if="error" class="btn btn-sm btn-danger" ng-click="clearError()" title="{{error.detail}}">
 				{{error.message}} &nbsp;|&nbsp; X
 			</button>
