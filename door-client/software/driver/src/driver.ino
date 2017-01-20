@@ -70,7 +70,11 @@ SuperSerial superSerial(&bus, address);
 /*-----( Declare Variables )-----*/
 //uint8_t byteReceived;
 boolean alarmButton = 0;
-boolean doorState = 1;                      //set as door closed to work without switch
+#ifdef MOD_DOOR_SWITCH
+boolean doorState = 0;
+#else
+boolean doorState = 1;
+#endif
 boolean doorBell = 0;
 uint32_t lastIDSend = 0;
 uint32_t lastHeartBeat = 0;
@@ -115,7 +119,6 @@ void setup(void) {
   #ifdef MOD_DOOR_SWITCH
   doorState = digitalRead(DOOR_SWITCH_PIN);
   #endif
-
 
  // superSerial = new SuperSerial(&bus, address);
 
@@ -465,6 +468,15 @@ void CheckInputs()  {
       byte payload[1] = {doorBell};
       superSerial.QueueMessage(F_DOOR_BELL, payload, 1);
       state = S_WAIT_SEND;
+
+      //Temporary hard-coded doorbell
+      struct tune testA = {26, {0x35,0x00,0x35,0x00,0x35,0x00,0x31,0x00,0x35,0x00,0x38,0x00,0x20},
+                               {0x06,0x01,0x06,0x06,0x06,0x06,0x06,0x01,0x06,0x06,0x0b,0x11,0x0b}};
+      struct lightMode testL = {M_FLASH, COLOR(120,0,120), COLOR(120,120,120), 200, 3000};
+      readout.Print("    You rang?                   ");
+      speaker.Play(testA);
+      statusRing.SetMode(testL);
+
     }
     return;
   }

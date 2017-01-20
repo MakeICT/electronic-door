@@ -3,8 +3,8 @@
 #define COLOR_IDLE          0,100,120
 #define COLOR_SUCCESS1      0,80,20
 #define COLOR_SUCCESS2      0,40,10
-#define COLOR_FAILURE1      60,20,0
-#define COLOR_FAILURE2      30,10,0
+#define COLOR_FAILURE1      60,0,0
+#define COLOR_FAILURE2      30,0,0
 #define COLOR_WAITING       120,120,20
 #define COLOR_ERROR1        120,30,0
 #define COLOR_ERROR2        120,30,0
@@ -15,14 +15,14 @@ Config::Config()  {
 
 void Config::Init()  {
   this->LoadSavedConfig();
-  
+
   //uint8_t* testPointer = (uint8_t*) &currentConfig;
   //LOG_DEBUG(F("\r\n"));
   //for (uint8_t i = 0; i < sizeof(struct configuration); i++)  {
     //LOG_DEBUG(*(testPointer + i));
     //LOG_DEBUG(F("\r\n"));
   //}
-  
+
   if(this->IsFirstRun() || currentConfig.configVersion != CONFIG_VERSION)  {
     if (this->IsFirstRun())  {
       LOG_DEBUG(F("First run detected; initializing configuration\r\n"));
@@ -50,7 +50,7 @@ bool Config::IsFirstRun()  {
   }
   else  {
     return false;
-  } 
+  }
 }
 
 void Config::LoadSavedConfig()  {

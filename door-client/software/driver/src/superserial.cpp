@@ -12,7 +12,7 @@ SuperSerial::SuperSerial (rs485* b, byte addr) {
   this->currentTransaction = 0;
   this->retryCount = 0;
   this->lastPacketSend = 0;
-  
+
   //TODO: make this configurable
   this->retryTimeout = 100;
   this->maxRetries = 3;
@@ -48,7 +48,7 @@ void SuperSerial::Update()  {
     LOG_DEBUG(F("Current transaction: "));
     LOG_DEBUG(currentTransaction);
     LOG_DEBUG(F("\r\n"));
-    if (this->retryCount < this->maxRetries)  {  
+    if (this->retryCount < this->maxRetries)  {
       LOG_DEBUG(F("Timed out waiting for response: resending last packet\r\n"));
       this->retryCount++;
       this->SendPacket(&queuedPacket);
@@ -131,6 +131,7 @@ bool SuperSerial::GetPacket() {
             this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
           LOG_DEBUG(F("Verifying new packet sent to this device\r\n"));
           if (receivedPacket.VerifyCRC())  {    //verify CRC
+            LOG_DEBUG(receivedBytes - P_H_F_LENGTH);
             if (this->receivedPacket.MsgLength() == (receivedBytes - P_H_F_LENGTH)) {
               LOG_INFO(F("Got valid packet\r\n"));
               if (this->receivedPacket.DestAddr() == ADDR_BROADCAST)  {
@@ -152,7 +153,7 @@ bool SuperSerial::GetPacket() {
               else  {
                 if (this->receivedPacket.Msg().function == F_ACK)  {
                   LOG_ERROR(F("Received ack for non-current transaction\r\n"));
-                }              
+                }
                 else  {
                 LOG_DEBUG(F("Sending ACK.\r\n"));
                   this->currentTransaction = this->receivedPacket.TransID();
@@ -210,7 +211,7 @@ void SuperSerial::QueueMessage(byte function, byte* payload, byte length)  {
 
 void SuperSerial::SendPacket(Packet* p)  {
   LOG_DUMP(F("SuperSerial::SendPacket()\r\n"));
-  
+
   if (!this->dataQueued)  {
     currentTransaction = (currentTransaction + 1) % 255;
     this->dataQueued = true;
@@ -230,9 +231,9 @@ inline void SuperSerial::SendControl(byte function, byte transID)  {
   responsePacket.SetMsg(function, NULL, 0);
   responsePacket.SetTransID(transID);
   responsePacket.SetCRC(responsePacket.ComputeCRC());
-  
+
   byte array[responsePacket.EscapedSize()];
-  
+
   responsePacket.ToEscapedArray(array);
   int result = bus->Send(array, responsePacket.EscapedSize());
   //~ while (result != 0)  {

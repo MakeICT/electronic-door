@@ -8,9 +8,6 @@
 
 #include <SPI.h>
 
-
-//TODO: only include if necessary
-
 //#define READER_PN532
 #ifdef READER_PN532
 #include "PN532.h"
@@ -19,7 +16,7 @@
 
 // #define READER_RC522
 #ifdef READER_RC522
-#include <MFRC522.h>
+#include "MFRC522.h"
 #endif
 
 class Reader {

@@ -1,25 +1,19 @@
 #include "reader.h"
 
-void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
-  this->debugPort = dbgPort;
-}
-
-// TODO: make this configurable
-#define RESET_PIN 3
-#define SS_PIN    10
-
 #ifdef READER_PN532
-PN532_SPI pn532spi(SPI, SS_PIN);
+PN532_SPI pn532spi(SPI, NFC_SS_PIN);
 PN532 nfc(pn532spi);
 #endif
 
 #ifdef READER_RC522
-MFRC522 mfrc522(SS_PIN, RESET_PIN);
+MFRC522 mfrc522(NFC_SS_PIN, NFC_RESET_PIN );
 #endif
 
+void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
+  this->debugPort = dbgPort;
+}
 
 Reader::Reader() {
-
 }
 
 boolean Reader::start() {
@@ -46,13 +40,13 @@ bool Reader::Initialize()  {
     if (i==3)  {
       //Do a hard reset on 3rd attempt.  Maybe it will help?
       LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
-      digitalWrite(RESET_PIN, 0);
+      digitalWrite(NFC_RESET_PIN, 0);
       #ifdef READER_RC522
       SPI.end();
       SPI.begin();
       #endif
       delay(100);   //longer than necessary
-      digitalWrite(RESET_PIN, 1);
+      digitalWrite(NFC_RESET_PIN, 1);
       delay(100);
     }
     #if defined(READER_RC522)
@@ -125,11 +119,11 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
   uint8_t success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, len, 50);
   if (success)
   {
-    if (uidLength == 4)  {
+    if (len == 4)  {
       // We probably have a Mifare Classic card ...
     }
 
-    else if (uidLength == 7)  {
+    else if (len == 7)  {
       // Mifare Ultralight
     }
     LOG_DEBUG(F("Successfully read card serial\r\n"));
