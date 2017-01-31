@@ -24,26 +24,6 @@
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
-// Pin assignments
-#define RS485_RX          0       // Reserved for hardware serial
-#define RS485_TX          1       // Reserved for hardware serial
-#define RING_PIN          2       // Pin communicating with NeoPixel Ring
-#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
-#define LCD_SERIAL_TX     4       // Serial data for LCD
-#define LATCH_PIN         5       // Digital pin to trigger door strike circuit
-#define SSerialRX         6       // Debug Serial Receive pin (Not used)
-#define SSerialTX         7       // Debug Serial Transmit pin
-#define SSerialTxControl  8       // RS485 Direction control
-#define SPEAKER_PIN       9       // Tone generation pin
-#define PN532_SS_PIN      10      // SPI Slave Select pin
-#define NFC_SPI_1         11      // Reserved for hardware SPI for NFC reader
-#define NFC_SPI_2         12      // Reserved for hardware SPI for NFC reader
-#define NFC_SPI_3         13      // Reserved for hardware SPI for NFC reader
-#define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
-#define DOOR_SWITCH_PIN   15      // Magnetic switch on door
-#define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
-#define DOOR_BELL_PIN     17      // Door bell pin
-
 // Constants for machine states
 #define S_INITIALIZING      0
 #define S_NO_SERVER         1
@@ -75,7 +55,7 @@ boolean doorState = 0;
 #else
 boolean doorState = 1;
 #endif
-boolean doorBell = 0;
+boolean doorBell = 1;
 uint32_t lastIDSend = 0;
 uint32_t lastHeartBeat = 0;
 
@@ -114,6 +94,7 @@ void setup(void) {
   // Set input pins
   pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(DOOR_BELL_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
 
   #ifdef MOD_DOOR_SWITCH

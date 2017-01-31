@@ -36,8 +36,8 @@
 #define CLIENT_ADDRESS 0x09
 
 // NFC Reader selection
-#define READER_RC522
-//#define READER_PN532
+//#define READER_RC522
+#define READER_PN532
 
 // Constants for audio playback
 #define USER_TUNE_LENGTH    30      // Max number of notes in entry melody
