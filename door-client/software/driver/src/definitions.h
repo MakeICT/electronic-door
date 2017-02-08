@@ -12,24 +12,22 @@
 // Pin assignments
 #define RS485_RX          0       // Reserved for hardware serial
 #define RS485_TX          1       // Reserved for hardware serial
-#define SSerialTxControl  2       // RS485 Direction control
-#define SPEAKER_PIN       3       // Tone generation pin
-#define LATCH_PIN         4       // Digital pin to trigger door strike circuit
-#define RING_PIN          5       // Pin communicating with NeoPixel Ring
-#define LCD_RESET         6       // LCD reset pin
-#define LCD_DC            7       // LCD DC? pin
-#define LCD_CS            8       // LCD Chip Select Pin
-#define NFC_RESET_PIN     9       // Pin to reset RC522 NFC module
-#define NFC_CS_PIN        10      // NFC reader Chip Select pin
-#define SPI_MOSI          11      // Reserved for hardware SPI for NFC reader
-#define SPI_MISO          12      // Reserved for hardware SPI for NFC reader
-#define SPI_CLK           13      // Reserved for hardware SPI for NFC reader
+#define RING_PIN          2       // Pin communicating with NeoPixel Ring
+#define NFC_RESET_PIN     3       // Pin to reset RC522 NFC module
+#define LCD_SERIAL_TX     4       // Serial data for LCD
+#define LATCH_PIN         5       // Digital pin to trigger door strike circuit
+#define SSerialRX         6       // Debug Serial Receive pin (Not used)
+#define SSerialTX         7       // Debug Serial Transmit pin
+#define SSerialTxControl  8       // RS485 Direction control
+#define SPEAKER_PIN       9       // Tone generation pin
+#define NFC_CS_PIN        10      // SPI Slave Select pin
+#define NFC_SPI_1         11      // Reserved for hardware SPI for NFC reader
+#define NFC_SPI_2         12      // Reserved for hardware SPI for NFC reader
+#define NFC_SPI_3         13      // Reserved for hardware SPI for NFC reader
 #define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
 #define DOOR_SWITCH_PIN   15      // Magnetic switch on door
-#define DOOR_BELL_PIN     16      // Door bell pin
-#define DEBUG_RX          17      // Debug Serial Receive pin [NOT IN USE]
-#define DEBUG_TX          18      // Debug Serial Transmit pin
-#define TOUCH_CS          19      // Touch screen Chip Select pin
+#define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
+#define DOOR_BELL_PIN     17      // Door bell pin
 
 //Set log level
 #define LOG_LVL 0
