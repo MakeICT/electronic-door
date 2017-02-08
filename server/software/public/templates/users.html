@@ -5,6 +5,10 @@
 	</button>
 </h2>
 <div uib-collapse="!newUser.isExpanded">
+	<p>Sorry, friend. This feature has been disabled because too many users are manually added with an incorrect email address.</p>
+	<p>Please ask the member to sign up properly <a href="http://makeict.org/join" target="_blank">makeict.org/join</a>.</p>
+	<p>New users will show up after a manual sync or the nightly sync which runs automatically.</p>
+	<!--
 	<h4><a href="mailto:{{user.email}}">{{user.email}}</a></h4>
 	<form>
 		<table class="table table-striped user-details">
@@ -35,6 +39,7 @@
 		<button class="btn btn-link btn-sm" ng-click="resetNewUser()">Reset</button>
 		<button class="btn btn-primary btn-sm" ng-click="saveNewUser()">Save</button>
 	</form>
+	-->
 </div>
 <input id="userSearchBox" autofocus placeholder="Enter search terms" type="text" class="form-control input-sm" ng-model="search.query" ng-change="searchForUser()" ng-model-options="{debounce: 1500}"/>
 <h3 ng-if="userSearchResults === null">⌛ Searching...</h3>

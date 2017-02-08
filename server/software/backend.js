@@ -248,6 +248,15 @@ module.exports = {
 							'		WHERE LOWER(groups.name)=$' + params.length +
 							'			AND "userGroups"."userID" = users."userID" ' +
 							'	)';
+						}else if(field == 'tag'){
+							params.push(value);
+							sql += '	AND (SELECT 0 < COUNT(0) FROM "userGroups" ' +
+							'				JOIN "groups" ON "userGroups"."groupID" = groups."groupID"  ' +
+							'				JOIN "groupAuthorizationTags" ON "userGroups"."groupID" = "groupAuthorizationTags"."groupID"  ' +
+							'				JOIN "authorizationTags" ON "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID"  ' +
+							'		WHERE LOWER("authorizationTags"."name")=$' + params.length +
+							'			AND "userGroups"."userID" = users."userID" ' +
+							'	)';
 						}else{
 							module.exports.error('Unknown search verb: ' + term);
 						}
