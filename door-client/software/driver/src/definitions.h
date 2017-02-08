@@ -20,7 +20,7 @@
 #define SSerialTX         7       // Debug Serial Transmit pin
 #define SSerialTxControl  8       // RS485 Direction control
 #define SPEAKER_PIN       9       // Tone generation pin
-#define PN532_SS_PIN      10      // SPI Slave Select pin
+#define NFC_CS_PIN      10      // SPI Slave Select pin
 #define NFC_SPI_1         11      // Reserved for hardware SPI for NFC reader
 #define NFC_SPI_2         12      // Reserved for hardware SPI for NFC reader
 #define NFC_SPI_3         13      // Reserved for hardware SPI for NFC reader
