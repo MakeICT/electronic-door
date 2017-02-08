@@ -453,7 +453,7 @@ void ProcessMessage()  {
 
     default:
       LOG_WARNING(F("Unrecognized Command: "));
-      LOG_WARNING(F(msg.function));
+      LOG_WARNING(msg.function);
       LOG_WARNING(F("\r\n"));
   }
 }

@@ -10,11 +10,11 @@
 
 //TODO: only include if necessary
 
-//#define READER_PN532
-//#include "PN532.h"
+#define READER_PN532
+#include "PN532.h"
 
-#define READER_RC522
-#include <MFRC522.h>
+//#define READER_RC522
+//#include <MFRC522.h>
 
 class Reader {
   public:

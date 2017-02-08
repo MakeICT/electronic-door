@@ -121,7 +121,7 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
     uid[i] = 0;  // Buffer to store the returned UID
 
   #if defined(READER_PN532)
-  //uint8_t uidLength;                        // Length of the UID
+  uint8_t uidLength;                        // Length of the UID
   uint8_t success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, len, 50);
   if (success)
   {
