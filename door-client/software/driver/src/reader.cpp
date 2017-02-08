@@ -1,12 +1,12 @@
 #include "reader.h"
 
 #ifdef READER_PN532
-PN532_SPI pn532spi(SPI, NFC_SS_PIN);
+PN532_SPI pn532spi(SPI, NFC_CS_PIN);
 PN532 nfc(pn532spi);
 #endif
 
 #ifdef READER_RC522
-MFRC522 mfrc522(NFC_SS_PIN, NFC_RESET_PIN );
+MFRC522 mfrc522(NFC_CS_PIN, NFC_RESET_PIN );
 #endif
 
 void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
