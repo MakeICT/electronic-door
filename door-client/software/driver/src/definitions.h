@@ -32,7 +32,7 @@
 #define TOUCH_CS          19      // Touch screen Chip Select pin
 
 //Set log level
-#define LOG_LVL 4
+#define LOG_LVL 0
 
 //Force client address
 #define CLIENT_ADDRESS 0x09

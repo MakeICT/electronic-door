@@ -3,7 +3,7 @@
 
 #include "definitions.h"
 
-#define LOG_LVL 4
+//#define LOG_LVL 4
 
 #define LOG_ERROR(t)
 #define LOG_WARNING(t)
