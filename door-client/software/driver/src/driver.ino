@@ -22,29 +22,6 @@
 #include "superserial.h"
 #include "utils.h"
 
-#include "SPI.h"
-//#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9340.h"
-
-#if defined(__SAM3X8E__)
-    #undef __FlashStringHelper::F(string_literal)
-    #define F(string_literal) string_literal
-#endif
-
-// These are the pins used for the UNO
-// for Due/Mega/Leonardo use the hardware SPI pins (which are different)
-#define _sclk 13
-#define _miso 12
-#define _mosi 11
-#define _cs 8
-#define _dc 7
-#define _rst 6
-
-// Using software SPI is really not suggested, its incredibly slow
-//Adafruit_ILI9340 tft = Adafruit_ILI9340(_cs, _dc, _mosi, _sclk, _rst, _miso);
-// Use hardware SPI
-Adafruit_ILI9340 tft = Adafruit_ILI9340(_cs, _dc, _rst);
-
 /*-----( Declare Constants and Pin Numbers )-----*/
 
 // Constants for machine states
@@ -119,13 +96,6 @@ void setup(void) {
   pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DOOR_BELL_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
-
-  tft.begin();
-  tft.setRotation(3);
-  tft.fillScreen(ILI9340_BLACK);
-  tft.setCursor(0, 0);
-  tft.setTextColor(ILI9340_GREEN);  tft.setTextSize(3);
-  tft.println("Client Started!");
 
   #ifdef MOD_DOOR_SWITCH
   doorState = digitalRead(DOOR_SWITCH_PIN);
@@ -208,12 +178,7 @@ void loop(void) {
       if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
         //Set LEDS and LCD to indicate loss of communication
         LOG_ERROR(F("Lost contact with server!\r\n"));
-        //readout.Print("  Lost Contact    With  Server  ");
-        tft.fillScreen(ILI9340_RED);
-        tft.setCursor(0, 0);
-        tft.setTextColor(ILI9340_BLACK);  tft.setTextSize(5);
-        tft.println("Lost\nContact\nWith\nServer");
-
+        readout.Print("  Lost Contact    With  Server  ");
         statusRing.SetMode(conf.GetErrorLightSequence());
         state = S_NO_SERVER;
         break;
