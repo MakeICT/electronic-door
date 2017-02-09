@@ -11,6 +11,10 @@ Ring::Ring (uint8_t LED_pin, uint8_t number_of_LEDs) {
   index = 0;
 }
 
+bool Ring::Init()  {
+  return true;
+};
+
 void Ring::lightAll(uint32_t c) {
   for(int i=0;i<num_LEDs;i++){
   pixels.setPixelColor(i, c);
@@ -68,14 +72,14 @@ void Ring::Update()  {
     currentColor1= tempColor1;
     currentColor2 = tempColor2;
     currentPeriod = tempPeriod;
-  }    
+  }
   else  {
     currentMode = mode;
     currentColor1= color1;
     currentColor2 = color2;
     currentPeriod = period;
   }
-    
+
   switch (currentMode)
   {
     case M_FLASH:
@@ -90,7 +94,7 @@ void Ring::Update()  {
         pixels.show();
       }
       break;
-    
+
     case M_PULSE:
       if (currentMillis - last_change > currentPeriod / 200) {
         lightAll(currentColor1);
@@ -101,7 +105,7 @@ void Ring::Update()  {
         pixels.show();
       }
       break;
-      
+
     case M_CHASE:
       if (currentMillis - last_change > currentPeriod)  {
         pixels.setBrightness(255);
@@ -112,8 +116,8 @@ void Ring::Update()  {
         pixels.setPixelColor(num_LEDs-1 -(index), currentColor1);
         pixels.show();
       }
-      break;  
-      
+      break;
+
     case M_HEART:
       if (currentMillis - last_change > currentPeriod) {
         pixels.setBrightness(255);
@@ -125,7 +129,6 @@ void Ring::Update()  {
         state = !state;
         pixels.show();
       }
-      break; 
+      break;
   }
 }
-

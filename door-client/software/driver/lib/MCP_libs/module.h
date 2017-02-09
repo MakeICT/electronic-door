@@ -9,8 +9,8 @@
 class Module {
   public:
     void SetDebugPort(SoftwareSerial*);
-    bool Init();
-    void Update();
+    virtual bool Init()=0;
+    virtual void Update()=0;
 
   private:
     SoftwareSerial* debugPort;
