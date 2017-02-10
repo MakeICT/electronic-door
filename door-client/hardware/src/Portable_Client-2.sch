@@ -17218,9 +17218,9 @@ Source: http://products.nichicon.co.jp/en/pdf/XJA043/e-ud.pdf</description>
 <label x="226.06" y="134.62" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="LCD/TOUCH" gate="A" pin="12"/>
-<wire x1="10.16" y1="147.32" x2="20.32" y2="147.32" width="0.1524" layer="91"/>
-<label x="15.24" y="147.32" size="1.778" layer="95"/>
+<pinref part="LCD/TOUCH" gate="A" pin="10"/>
+<wire x1="10.16" y1="142.24" x2="20.32" y2="142.24" width="0.1524" layer="91"/>
+<label x="15.24" y="142.24" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="D9" class="0">
@@ -17230,21 +17230,21 @@ Source: http://products.nichicon.co.jp/en/pdf/XJA043/e-ud.pdf</description>
 <label x="226.06" y="132.08" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="NFC" gate="A" pin="2"/>
-<wire x1="58.42" y1="132.08" x2="68.58" y2="132.08" width="0.1524" layer="91"/>
-<label x="63.5" y="132.08" size="1.778" layer="95"/>
+<pinref part="LCD/TOUCH" gate="A" pin="11"/>
+<wire x1="10.16" y1="144.78" x2="20.32" y2="144.78" width="0.1524" layer="91"/>
+<label x="15.24" y="144.78" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="D10" class="0">
 <segment>
-<wire x1="58.42" y1="147.32" x2="68.58" y2="147.32" width="0.1524" layer="91"/>
-<pinref part="NFC" gate="A" pin="8"/>
-<label x="63.5" y="147.32" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="U1" gate="A" pin="PB2"/>
 <wire x1="236.22" y1="129.54" x2="226.06" y2="129.54" width="0.1524" layer="91"/>
 <label x="226.06" y="129.54" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="LCD/TOUCH" gate="A" pin="12"/>
+<wire x1="10.16" y1="147.32" x2="20.32" y2="147.32" width="0.1524" layer="91"/>
+<label x="15.24" y="147.32" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="D17" class="0">
@@ -17439,9 +17439,9 @@ Source: http://products.nichicon.co.jp/en/pdf/XJA043/e-ud.pdf</description>
 <label x="274.32" y="121.92" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="LCD/TOUCH" gate="A" pin="11"/>
-<wire x1="10.16" y1="144.78" x2="20.32" y2="144.78" width="0.1524" layer="91"/>
-<label x="15.24" y="144.78" size="1.778" layer="95"/>
+<pinref part="NFC" gate="A" pin="2"/>
+<wire x1="58.42" y1="132.08" x2="68.58" y2="132.08" width="0.1524" layer="91"/>
+<label x="63.5" y="132.08" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="D7" class="0">
@@ -17451,9 +17451,9 @@ Source: http://products.nichicon.co.jp/en/pdf/XJA043/e-ud.pdf</description>
 <label x="274.32" y="119.38" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="LCD/TOUCH" gate="A" pin="10"/>
-<wire x1="10.16" y1="142.24" x2="20.32" y2="142.24" width="0.1524" layer="91"/>
-<label x="15.24" y="142.24" size="1.778" layer="95"/>
+<pinref part="NFC" gate="A" pin="8"/>
+<wire x1="58.42" y1="147.32" x2="68.58" y2="147.32" width="0.1524" layer="91"/>
+<label x="63.5" y="147.32" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="A6" class="0">
