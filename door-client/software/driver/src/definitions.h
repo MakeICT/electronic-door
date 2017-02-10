@@ -16,7 +16,7 @@
 #define SPEAKER_PIN       3       // Tone generation pin
 #define LATCH_PIN         4       // Digital pin to trigger door strike circuit
 #define RING_PIN          5       // Pin communicating with NeoPixel Ring
-#define LCD_RESET         6       // LCD reset pin
+#define LCD_RST           6       // LCD reset pin
 #define LCD_DC            7       // LCD DC? pin
 #define LCD_CS            8       // LCD Chip Select Pin
 #define NFC_RESET_PIN     9       // Pin to reset RC522 NFC module
