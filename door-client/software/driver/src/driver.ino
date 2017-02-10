@@ -36,17 +36,17 @@
 
 /*-----( Declare objects )-----*/
 Reader card_reader;
-rs485 bus(SSerialTxControl);
+rs485 bus(ESP_CHPD);
 //SuperSerial* superSerial;
 //TEMPORARY TEST CODE
 
-Ring statusRing(RING_PIN, NUMPIXELS);
+Ring statusRing(RING, NUMPIXELS);
 //LCD readout;
-Audio speaker(SPEAKER_PIN);
-Strike doorLatch(LATCH_PIN);
+Audio speaker(SPEAKER);
+Strike doorLatch(LATCH);
 Config conf;
 GLCD glcd(LCD_CS, LCD_DC, LCD_RST);
-WiFi wifi(SSerialTxControl);
+WiFi wifi(ESP_CHPD);
 
 uint8_t address = ADDR_CLIENT_DEFAULT;     //@TODO: this shouldn't be necessary
 SuperSerial superSerial(&bus, address);
@@ -96,13 +96,13 @@ void setup(void) {
 
 
   // Set input pins
-  pinMode(DOOR_SWITCH_PIN, INPUT_PULLUP);
-  pinMode(ALARM_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(DOOR_BELL_PIN, INPUT_PULLUP);
+  pinMode(DOOR_SWITCH, INPUT_PULLUP);
+  pinMode(ALARM_BUTTON, INPUT_PULLUP);
+  pinMode(DOOR_BELL, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
 
   #ifdef MOD_DOOR_SWITCH
-  doorState = digitalRead(DOOR_SWITCH_PIN);
+  doorState = digitalRead(DOOR_SWITCH);
   #endif
 
  // superSerial = new SuperSerial(&bus, address);
@@ -423,7 +423,7 @@ void ProcessMessage()  {
 }
 
 void CheckInputs()  {
-  if(digitalRead(ALARM_BUTTON_PIN) != alarmButton)  {
+  if(digitalRead(ALARM_BUTTON) != alarmButton)  {
     alarmButton = !alarmButton;
     if (alarmButton == 1)  {
       LOG_INFO(F("Arm Alarm Button Pressed\r\n"));
@@ -435,7 +435,7 @@ void CheckInputs()  {
   }
 
   #ifdef MOD_DOOR_SWITCH
-  if(digitalRead(DOOR_SWITCH_PIN) != doorState)  {
+  if(digitalRead(DOOR_SWITCH) != doorState)  {
     LOG_INFO(F("Door State Changed\r\n"));
     doorState = !doorState;
     byte payload[1] = {doorState};
@@ -446,7 +446,7 @@ void CheckInputs()  {
   #endif
 
   #ifdef MOD_DOORBELL
-  if(digitalRead(DOOR_BELL_PIN) != doorBell)  {
+  if(digitalRead(DOOR_BELL) != doorBell)  {
     doorBell = !doorBell;
     if (doorBell == 1)  {
       LOG_INFO(F("Door Bell Pressed\r\n"));

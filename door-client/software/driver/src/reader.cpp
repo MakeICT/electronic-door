@@ -1,12 +1,12 @@
 #include "reader.h"
 
 #ifdef READER_PN532
-PN532_SPI pn532spi(SPI, NFC_CS_PIN);
+PN532_SPI pn532spi(SPI, NFC_CS);
 PN532 nfc(pn532spi);
 #endif
 
 #ifdef READER_RC522
-MFRC522 mfrc522(NFC_CS_PIN, NFC_RESET_PIN );
+MFRC522 mfrc522(NFC_CS_PIN, NFC_RST );
 #endif
 
 void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
@@ -37,13 +37,13 @@ bool Reader::Init() {
     if (i==3)  {
       //Do a hard reset on 3rd attempt.  Maybe it will help?
       LOG_DEBUG(F("Failed to initialize reader 2 times. Commencing hard reset.\r\n"));
-      digitalWrite(NFC_RESET_PIN, 0);
+      digitalWrite(NFC_RST, 0);
       #ifdef READER_RC522
       SPI.end();
       SPI.begin();
       #endif
       delay(100);   //longer than necessary
-      digitalWrite(NFC_RESET_PIN, 1);
+      digitalWrite(NFC_RST, 1);
       delay(100);
     }
     #if defined(READER_RC522)
