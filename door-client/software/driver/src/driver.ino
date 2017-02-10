@@ -120,7 +120,7 @@ void setup(void) {
   readout.Print("Initializing...");
 
   #ifdef MOD_NFC_READER
-  if(!card_reader.start())  {
+  if(!card_reader.Init())  {
     statusRing.SetMode(conf.GetErrorLightSequence());
     readout.Print("NFC Reader      not detected!");
   }

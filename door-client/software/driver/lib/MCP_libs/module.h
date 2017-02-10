@@ -11,6 +11,7 @@ class Module {
     void SetDebugPort(SoftwareSerial*);
     virtual bool Init()=0;
     virtual void Update()=0;
+    bool initialized=false;
 
   private:
     SoftwareSerial* debugPort;
