@@ -21,12 +21,8 @@
 #include "config.h"
 #include "superserial.h"
 #include "utils.h"
-
-#include "SPI.h"
-//#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9340.h"
-
-Adafruit_ILI9340 tft = Adafruit_ILI9340(LCD_CS, LCD_DC, LCD_RST);
+#include "glcd_module.h"
+#include "wifi_module.h"
 
 /*-----( Declare Constants and Pin Numbers )-----*/
 
@@ -49,6 +45,8 @@ Ring statusRing(RING_PIN, NUMPIXELS);
 Audio speaker(SPEAKER_PIN);
 Strike doorLatch(LATCH_PIN);
 Config conf;
+GLCD glcd(LCD_CS, LCD_DC, LCD_RST);
+WiFi wifi(SSerialTxControl);
 
 uint8_t address = ADDR_CLIENT_DEFAULT;     //@TODO: this shouldn't be necessary
 SuperSerial superSerial(&bus, address);
@@ -78,8 +76,6 @@ void ProcessMessage();
 SoftwareSerial dbgPort(6,7);
 SoftwareSerial* debugPort = &dbgPort;
 
-LCD readout;
-
 void setup(void) {
   // Initialize debug port and pass references
   dbgPort.begin(57600);
@@ -89,6 +85,8 @@ void setup(void) {
   conf.SetDebugPort(debugPort);
   speaker.SetDebugPort(debugPort);
   conf.Init();
+  wifi.Init();
+  glcd.Init();
 
   Serial.begin(9600);   //@TODO:  What is this doing here?
   LOG_INFO(F("\r\n\r\n"));
@@ -123,12 +121,12 @@ void setup(void) {
   LOG_INFO(F("Address: "));
   LOG_INFO(address);
   LOG_INFO(F("\r\n"));
-  readout.Print("Initializing...");
+  //readout.Print("Initializing...");
 
   #ifdef MOD_NFC_READER
   if(!card_reader.Init())  {
     statusRing.SetMode(conf.GetErrorLightSequence());
-    readout.Print("NFC Reader      not detected!");
+    //readout.Print("NFC Reader      not detected!");
   }
   else
   #endif
@@ -184,7 +182,7 @@ void loop(void) {
       if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
         //Set LEDS and LCD to indicate loss of communication
         LOG_ERROR(F("Lost contact with server!\r\n"));
-        readout.Print("  Lost Contact    With  Server  ");
+        //readout.Print("  Lost Contact    With  Server  ");
         statusRing.SetMode(conf.GetErrorLightSequence());
         state = S_NO_SERVER;
         break;
@@ -413,7 +411,7 @@ void ProcessMessage()  {
       char printString[msg.length + 1];
       arrayCopy(msg.payload, (byte*) printString, msg.length);
       printString[msg.length+1] = '\0';
-      readout.Print(printString);
+      //readout.Print(printString);
       break;
     }
 
@@ -460,7 +458,7 @@ void CheckInputs()  {
       struct tune testA = {26, {0x35,0x00,0x35,0x00,0x35,0x00,0x31,0x00,0x35,0x00,0x38,0x00,0x20},
                                {0x06,0x01,0x06,0x06,0x06,0x06,0x06,0x01,0x06,0x06,0x0b,0x11,0x0b}};
       struct lightMode testL = {M_FLASH, COLOR(120,0,120), COLOR(120,120,120), 200, 3000};
-      readout.Print("    You rang?                   ");
+      //readout.Print("    You rang?                   ");
       speaker.Play(testA);
       statusRing.SetMode(testL);
 
