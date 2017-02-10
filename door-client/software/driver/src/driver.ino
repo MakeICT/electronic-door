@@ -103,13 +103,6 @@ void setup(void) {
   pinMode(DOOR_BELL_PIN, INPUT_PULLUP);
   //pinMode(LCD_SERIAL_TX, OUTPUT);
 
-  tft.begin();
-  tft.setRotation(3);
-  tft.fillScreen(ILI9340_BLACK);
-  tft.setCursor(0, 0);
-  tft.setTextColor(ILI9340_GREEN);  tft.setTextSize(3);
-  tft.println("Client Started!");
-
   #ifdef MOD_DOOR_SWITCH
   doorState = digitalRead(DOOR_SWITCH_PIN);
   #endif
@@ -133,7 +126,7 @@ void setup(void) {
   readout.Print("Initializing...");
 
   #ifdef MOD_NFC_READER
-  if(!card_reader.start())  {
+  if(!card_reader.Init())  {
     statusRing.SetMode(conf.GetErrorLightSequence());
     readout.Print("NFC Reader      not detected!");
   }
@@ -191,12 +184,7 @@ void loop(void) {
       if (currentMillis - lastHeartBeat > HEARTBEAT_TIMEOUT)  {
         //Set LEDS and LCD to indicate loss of communication
         LOG_ERROR(F("Lost contact with server!\r\n"));
-        //readout.Print("  Lost Contact    With  Server  ");
-        tft.fillScreen(ILI9340_RED);
-        tft.setCursor(0, 0);
-        tft.setTextColor(ILI9340_BLACK);  tft.setTextSize(5);
-        tft.println("Lost\nContact\nWith\nServer");
-
+        readout.Print("  Lost Contact    With  Server  ");
         statusRing.SetMode(conf.GetErrorLightSequence());
         state = S_NO_SERVER;
         break;

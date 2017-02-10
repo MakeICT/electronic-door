@@ -16,15 +16,12 @@ void Reader::SetDebugPort(SoftwareSerial* dbgPort)  {
 Reader::Reader() {
 }
 
-boolean Reader::start() {
+bool Reader::Init() {
   //TODO: add reader detection?
   #ifdef READER_RC522
-  SPI.begin();      //init SPI bus
+  if(!this->initialized)
+    SPI.begin();      //init SPI bus
   #endif
-  return this->Initialize();
-}
-
-bool Reader::Initialize()  {
   LOG_DEBUG(F("Initializing NFC reader: "));
   #ifdef READER_PN532
   LOG_DEBUG(F("PN532\r\n"));
@@ -64,6 +61,7 @@ bool Reader::Initialize()  {
       nfc.setPassiveActivationRetries(2);  //reduce card read retries to prevent hang
       #endif
       LOG_DEBUG(F("Reader initialized successfully\r\n"));
+      this->initialized = true;
       return true;
     }
     else  {
@@ -82,6 +80,11 @@ bool Reader::Initialize()  {
     //~ return true;
   //~ }
 }
+
+void Reader::Update()  {
+
+}
+
 
 bool Reader::IsAlive()  {
   #ifdef READER_PN532
@@ -106,7 +109,7 @@ uint8_t Reader::poll(uint8_t uid[], uint8_t* len)
   // Check if reader is still working
   if (!this->IsAlive())  {
     LOG_ERROR(F("NFC Reader has stopped responding\r\n"));
-    if (!this->Initialize())  {
+    if (!this->Init())  {
       return 2;
     }
   }

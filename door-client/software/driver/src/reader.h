@@ -1,6 +1,7 @@
 #ifndef READER_H
 #define READER_H
 
+#include "module.h"
 #include <Arduino.h>
 #include "definitions.h"
 #include "utils.h"
@@ -19,16 +20,16 @@
 #include "MFRC522.h"
 #endif
 
-class Reader {
+class Reader : public Module{
   public:
+    bool Init();
+    void Update();
     Reader();
     uint8_t poll(uint8_t*, uint8_t*);
-    boolean start();
     void SetDebugPort(SoftwareSerial* dbgPort);
 
   private:
     SoftwareSerial* debugPort;
-    bool Initialize();
     bool IsAlive();
 };
 

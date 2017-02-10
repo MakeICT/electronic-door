@@ -26,20 +26,20 @@
 #define SPI_CLK           13      // Reserved for hardware SPI for NFC reader
 #define ALARM_BUTTON_PIN  14      // Big button to arm the alarm
 #define DOOR_SWITCH_PIN   15      // Magnetic switch on door
-#define DOOR_BELL_PIN     16      // Door bell pin
-#define DEBUG_RX          17      // Debug Serial Receive pin [NOT IN USE]
+#define LCD_SERIAL_RX     16      // Not actually connected but need pin assigned for now
+#define DOOR_BELL_PIN     17      // Door bell pin
 #define DEBUG_TX          18      // Debug Serial Transmit pin
 #define TOUCH_CS          19      // Touch screen Chip Select pin
 
 //Set log level
-#define LOG_LVL 0
+#define LOG_LVL           4
 
 //Force client address
-#define CLIENT_ADDRESS 0x09
+#define CLIENT_ADDRESS    0x09
 
 // NFC Reader selection
-#define READER_RC522
-//#define READER_PN532
+//#define READER_RC522
+#define READER_PN532
 
 // Constants for audio playback
 #define USER_TUNE_LENGTH    30      // Max number of notes in entry melody

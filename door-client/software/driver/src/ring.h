@@ -1,6 +1,7 @@
 #ifndef RING_H
 #define RING_H
 
+#include "module.h"
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
@@ -17,9 +18,10 @@
 
 #define COLOR    Adafruit_NeoPixel::Color
 
-class Ring {
+class Ring : public Module {
   public:
     Ring(uint8_t, uint8_t);
+    bool Init();
     void lightAll(uint32_t);
 
     void SetMode(struct lightMode newMode);
