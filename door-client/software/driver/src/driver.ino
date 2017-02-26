@@ -1,4 +1,5 @@
 /*-----( Include needed libraries )-----*/
+#include <avr/wdt.h>
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 //#include <SPI.h>
@@ -8,7 +9,9 @@
 //#include <PN532_SPI.h>
 //#include <MFRC522.h>    //TODO: only include if necessary
 //#include "PN532Interface.h"
-#include <avr/wdt.h>
+
+
+
 
 /*-----( Include project files )-----*/
 #include "packetqueue.h"
@@ -76,6 +79,7 @@ LCD readout;
 
 void setup(void) {
   // Initialize debug port and pass references
+  watchdogSetup();
   dbgPort.begin(57600);
   superSerial.SetDebugPort(debugPort);
   bus.SetDebugPort(debugPort);
@@ -134,7 +138,7 @@ void setup(void) {
 
   // notify server that client has started
   superSerial.QueueMessage(F_CLIENT_START, 0, 0);
-  watchdogSetup();
+
 }
 
 
@@ -480,7 +484,7 @@ void watchdogSetup(void)
   // Enter Watchdog Configuration mode:
   WDTCSR |= (1<<WDCE) | (1<<WDE);
   // Set Watchdog settings:
-   WDTCSR = (0<<WDIE) | (1<<WDE) | (1<<WDP3) | (0<<WDP2) | (0<<WDP1) | (1<<WDP0);
+  WDTCSR = (0<<WDIE) | (1<<WDE) | (1<<WDP3) | (0<<WDP2) | (0<<WDP1) | (1<<WDP0);
   sei();
 }
 
