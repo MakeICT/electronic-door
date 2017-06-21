@@ -127,10 +127,13 @@ module.exports = {
 									user.lastName = contact.LastName;
 									user.email = contact.Email;
 									user.status = (contact.Status == 'Active') ? 'active' : 'inactive';
-
+									
 									for(var j=0; j<contact.FieldValues.length; j++){
 										contact[contact.FieldValues[j].FieldName] = contact.FieldValues[j].Value;
 									}
+									if(contact['Suspended member'] == true){
+										user.status = 'inactive';
+									}							
 									if(contact['Member since']){
 										user.joinDate = Math.floor((new Date(contact['Member since'])).getTime() / 1000);
 										
