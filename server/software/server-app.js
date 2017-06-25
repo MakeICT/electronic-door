@@ -414,12 +414,28 @@ server.put('/api/clients/:clientID/plugins/:pluginName', function (request, resp
 });
 
 server.get('/api/log', function(request, response, next) {
+	//backend.log(JSON.stringify(request.query));
+	console.log(JSON.stringify(request.params));
+	filterParams = null;
+	if(request.query)
+	{
+		for(p in request.query)
+		{
+			if(p == '$filter')
+				filterParams = request.query.$filter;
+			else {
+				console.log("unknown parameter");
+				response.send("Invalid Filter");
+				return next();
+			}
+		}
+	}
 	var session = checkIfLoggedIn(request, response);
 	if(session){
 		if(request.params.type == 'nfc'){
 			backend.getBadNFCs(function(data){ response.send(data); });
 		}else{
-			backend.getRecentLog(100, function(data){ response.send(data); });
+			backend.getFilteredLog(100, filterParams, function(data){ response.send(data); });
 		}
 	}
 	

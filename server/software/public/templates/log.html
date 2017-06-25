@@ -1,4 +1,19 @@
-<h2>Activity Log <button ng-click="loadLog()" class="btn btn-sm btn-primary">↺</button></h2>
+<h2>
+Activity Log 
+<button ng-click="loadLog('')" class="btn btn-sm btn-primary">↺</button>
+</h2>
+<span>
+<div align='right'>
+<h3>
+Filter:
+<button ng-click="loadLog('')" class="btn btn-sm btn-primary">all</button>
+<button ng-click="loadLog('$filter=logType%20eq%20message')" class="btn btn-sm btn-primary">message</button>
+<button ng-click="loadLog('$filter=logType%20eq%20unlock')" class="btn btn-sm btn-primary">unlock</button>
+<button ng-click="loadLog('$filter=logType%20eq%20error')" class="btn btn-sm btn-primary">error</button>
+<button ng-click="loadLog('$filter=logType%20eq%20deny')" class="btn btn-sm btn-primary">deny</button>
+</h3>
+</div>
+</span>
 <div ng-if="!log">
 	Loading...
 </div>

@@ -104,7 +104,7 @@ module.exports = {
 					api.connect(function(token){
 						backend.debug('Downloading contacts...');
 						
-						api.get('contacts?$async=false', null, function(data){
+						api.get("Contacts?$async=false&$filter='Profile%20last%20updated'%20ge%202017-06-22T06:00:00Z", null, function(data){
 							data = JSON.parse(data);
 							if(!data || !data['Contacts'] || data['reason']){
 								backend.error('WildApricot failed to download contacts: '  + JSON.stringify(data));
@@ -128,6 +128,7 @@ module.exports = {
 									user.email = contact.Email;
 									user.status = (contact.Status == 'Active') ? 'active' : 'inactive';
 									
+									backend.log(JSON.stringify(contact));
 									for(var j=0; j<contact.FieldValues.length; j++){
 										contact[contact.FieldValues[j].FieldName] = contact.FieldValues[j].Value;
 									}

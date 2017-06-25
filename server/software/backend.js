@@ -1071,6 +1071,53 @@ module.exports = {
 		//broadcaster.broadcast(module.exports, 'debug', message);
 	},
 	
+	getFilteredLog: function(limit, filters, onSuccess, onFailure){
+		if(!limit) limit = 100;
+		filterString = '      ';
+		console.log(filters);
+		if(filters) {
+			console.log("filters");
+			filterString = "WHERE ";
+			if(Array.isArray(filters)) {
+				console.log(filters.length);
+			 	for (f in filters) {
+					console.log(filters[f]);
+					list = filters[f].split(" ");
+					//if(list.length != 3)
+						
+					if(list[1] == 'eq') operator = '=';
+					if(list[1] == 'ge') operator = '>=';
+					if(list[1] == 'le') operator = '<=';
+					
+					filterString += 'logs."' + list[0] + '"' + operator +'\'' + list[2] + '\' ';
+					if(f+1 < filters.length)
+						filterString += 'AND ';
+					console.log(filterString);
+				}
+			}
+			else {
+					list=filters.split(" ");
+					if(list[1] == 'eq') operator = '=';
+					if(list[1] == 'ge') operator = '>=';
+					if(list[1] == 'le') operator = '<=';
+					
+					filterString += 'logs."' + list[0] + '"' + operator +'\'' + list[2] + '\' ';
+					console.log(filterString);
+			}
+		}
+		console.log("end filters");
+		var sql = 
+			'SELECT ' +
+			'	logs.*, ' +
+			'	users.email, users."firstName", users."lastName", users."nfcID" ' +
+			'FROM logs ' +
+			'	LEFT JOIN users ON logs."userID" = users."userID" ' +
+			filterString +
+			'ORDER BY timestamp DESC LIMIT ' + parseInt(limit);
+		console.log(sql);
+		return query(sql, [], onSuccess, onFailure);
+	},
+	
 	getRecentLog: function(limit, onSuccess, onFailure){
 		if(!limit) limit = 100;
 		var sql = 
