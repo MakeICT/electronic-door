@@ -1,4 +1,5 @@
 server/software/credentials/
+server/software/mcp/env
 node_modules/
 
 master-control-program.service
@@ -17,3 +18,4 @@ lcd/.build
 *.sch.lck
 .cli_history
 *.gitignore
+
