@@ -23,13 +23,16 @@ class Plugin(plugins.ThreadedPlugin):
 		self._prompt()
 		while self.keepRunning:
 			if self._dataOnSTDIN():
-				cmd = input()
+				try:
+					cmd = input()
+				except EOFError:
+					cmd = 'exit'
+
 				if cmd == 'exit':
 					self.systemEvent.emit(events.Exit(self))
 				else:
 					print('Unknown command: %s' % cmd)
-					
-				self._prompt()
+					self._prompt()
 			else:
 				time.sleep(1)
 

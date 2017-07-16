@@ -33,17 +33,19 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 		for(var p in params){
 			url += encodeURIComponent(p) + '=' + encodeURIComponent(params[p]) + '&';
 		}
-		$http.get(url).success(function(response){
+		$http.get(url).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
-				for(var i=0; i<response.length; i++){
-					response[i].joinDate *= 1000;
-					response[i].birthdate *= 1000;
+				for(var i=0; i<response.data.length; i++){
+					response.data[i].joinDate *= 1000;
+					response.data[i].birthdate *= 1000;
 				}
-				$scope.userSearchResults = response;
+				$scope.userSearchResults = response.data;
 				if($scope.userSearchResults.length == 1){
 					$scope.toggleUserDisplay($scope.userSearchResults[0]);
 				}
 			}
+		}, function(error){
+			console.log(error);
 		});
 	};
 
@@ -59,7 +61,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	};
 
 	$scope.saveNewUser = function(){
-		$http.post('/api/users', $scope.newUser).success(function(response){
+		$http.post('/api/users', $scope.newUser).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.resetNewUser();
 			}
@@ -67,7 +69,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	};
 	
 	$scope.setGroupEnrollment = function(user, groupName, enrolled){
-		$http.put('/api/users/' + user.userID + '/groups/' + encodeURIComponent(groupName), enrolled).success(function(response){
+		$http.put('/api/users/' + user.userID + '/groups/' + encodeURIComponent(groupName), enrolled).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<user.groups.length; i++){
 					if(user.groups[i].name == groupName){
@@ -90,7 +92,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	$scope.resetPassword = function(user){
 		user.passwordSaved = false;
 		var url = '/api/users/' + user.userID + '/password';
-		$http.put(url, {'password': user.password}).success(function(response){
+		$http.put(url, {'password': user.password}).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				user.passwordSaved = true;
 			}
@@ -99,7 +101,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	
 	$scope.toggleUserStatus = function(user){
 		var newStatus = (user.status == 'inactive' ? 'active' : 'inactive');
-		$http.put('/api/users/' + user.userID, {'status': newStatus}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'status': newStatus}).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				user.status = newStatus;
 			}
@@ -108,28 +110,27 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	
 	$scope.toggleKeyEnrollment = function(user){
 		if(user.keyActive){
-			$http.put('/api/users/' + user.userID, {'nfcID': null}).success(function(response){
+			$http.put('/api/users/' + user.userID, {'nfcID': null}).then(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					user.keyActive = false;
 				}
 			});
 		}else{
-			$http.get('/api/log?type=nfc').success(function(response){
+			$http.get('/api/log?type=nfc').then(function(response){
 				if(ajaxChecker.checkAjax(response)){
-					$scope.nfcLog = response;
+					$scope.nfcLog = response.data;
 				}
 			});
-			$http.get('/api/users/' + user.userID + '/nfcHistory').success(function(response){
+			$http.get('/api/users/' + user.userID + '/nfcHistory').then(function(response){
 				if(ajaxChecker.checkAjax(response)){
-					console.log(response);
-					user.nfcHistory = response;
+					user.nfcHistory = response.data;
 				}
 			});
 		}
 	};
 	
 	$scope.enrollUser = function(user, nfcID){
-		$http.put('/api/users/' + user.userID, { nfcID: nfcID }).success(function(response){
+		$http.put('/api/users/' + user.userID, { nfcID: nfcID }).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.nfcLog = null;
 				user.nfcHistory = null;
@@ -142,9 +143,9 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	$scope.toggleUserDisplay = function(user){
 		user.isExpanded = !user.isExpanded;
 		if(!user.groups){
-			$http.get('/api/users/' + user.userID + '/groups').success(function(response){
+			$http.get('/api/users/' + user.userID + '/groups').then(function(response){
 				if(ajaxChecker.checkAjax(response)){
-					user.groups = response;
+					user.groups = response.data;
 				}
 			});
 		}
@@ -153,7 +154,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	$scope.saveUserJoinDate = function(user){
 		user.joinDateSaving = true;
 		var timestamp = (new Date(user.joinDate)).getTime() / 1000 | 0;
-		$http.put('/api/users/' + user.userID, {'joinDate': timestamp}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'joinDate': timestamp}).then(function(response){
 			ajaxChecker.checkAjax(response);
 			user.joinDateSaving = false;
 		}).catch(function(exc){
@@ -166,7 +167,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 		user.birthdateSaving = true;
 		console.log(user);
 		var timestamp = (new Date(user.birthdate)).getTime() / 1000 | 0;
-		$http.put('/api/users/' + user.userID, {'birthdate': timestamp}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'birthdate': timestamp}).then(function(response){
 			ajaxChecker.checkAjax(response);
 			user.birthdateSaving = false;
 		}).catch(function(exc){
@@ -181,7 +182,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 			'lastName': user.lastName,
 		};
 		
-		$http.put('/api/users/' + user.userID, update).success(function(response){
+		$http.put('/api/users/' + user.userID, update).then(function(response){
 			ajaxChecker.checkAjax(response);
 		}).catch(function(exc){
 			consoleService.addMessage('error', exc);
@@ -189,7 +190,7 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 	};
 
 	$scope.saveUserEmail = function(user){
-		$http.put('/api/users/' + user.userID, {'email': user.email}).success(function(response){
+		$http.put('/api/users/' + user.userID, {'email': user.email}).then(function(response){
 			ajaxChecker.checkAjax(response);
 		}).catch(function(exc){
 			consoleService.addMessage('error', exc);

@@ -43,7 +43,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.saveJob = function(job){
-		$http.put('/api/scheduledJobs/' + job.jobID, job).success(function(response){
+		$http.put('/api/scheduledJobs/' + job.jobID, job).then(function(response){
 			ajaxChecker.checkAjax(response);
 		}).catch(function(err){
 			consoleService.addMessage('error', err.data.code + ': ' + err.data.message);
@@ -51,7 +51,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.createJob = function(job){
-		$http.post('/api/scheduledJobs', job).success(function(response){
+		$http.post('/api/scheduledJobs', job).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.reload();
 			}
@@ -64,7 +64,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 		if(enabled === undefined){
 			enabled = !job.enabled;
 		}
-		$http.put('/api/scheduledJobs/' + job.jobID + '/enabled', {value:enabled}).success(function(response){
+		$http.put('/api/scheduledJobs/' + job.jobID + '/enabled', {value:enabled}).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				job.enabled = enabled;
 			};
@@ -102,7 +102,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.deleteJob = function(job){
-		$http.delete('/api/scheduledJobs/' + job.jobID).success(function(response){
+		$http.delete('/api/scheduledJobs/' + job.jobID).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<$scope.scheduledJobs.length; i++){
 					if($scope.scheduledJobs[i] == job){
@@ -114,9 +114,9 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.reload = function(){
-		$http.get('/api/scheduledJobs').success(function(response){
+		$http.get('/api/scheduledJobs').then(function(response){
 			if(ajaxChecker.checkAjax(response)){
-				$scope.scheduledJobs = response;
+				$scope.scheduledJobs = response.data;
 				$scope.scheduledJobs.push({
 					'jobID': null,
 					'description': '',

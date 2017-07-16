@@ -8,22 +8,22 @@ app.factory('pluginService', function($http, ajaxChecker) {
 			pluginService.onLoadListeners.push(callback);
 		},
 		'load': function(){
-			$http.get('/api/plugins').success(function(response){
+			$http.get('/api/plugins').then(function(response){
 				if(ajaxChecker.checkAjax(response)){
-					var plugins = response;
+					var plugins = response.data;
 					for(var i=0; i<plugins.length; i++){
 						var plugin = plugins[i];
 
 						pluginService.plugins[plugin.name] = plugin;
 						var attachOptions = function(response){
-							pluginService.plugins[response.plugin].options = [];
-							for(var i in response.options){
-								if(response.options[i].type != 'hidden'){
-									pluginService.plugins[response.plugin].options[i] = response.options[i];
+							pluginService.plugins[response.data.plugin].options = [];
+							for(var i in response.data.options){
+								if(response.data.options[i].type != 'hidden'){
+									pluginService.plugins[response.data.plugin].options[i] = response.data.options[i];
 								}
 							}
 						};
-						$http.get('/api/plugins/' + plugin.name + '/options').success(attachOptions);
+						$http.get('/api/plugins/' + plugin.name + '/options').then(attachOptions);
 						
 						if(plugin.clientDetails){
 							pluginService.clientPlugins.push(plugin);
@@ -48,7 +48,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 	$scope.plugins = pluginService.plugins;
 	
 	$scope.togglePlugin = function(plugin, enabled){
-		$http.put('/api/plugins/' + plugin.name + '/enabled', {value:enabled}).success(function(response){
+		$http.put('/api/plugins/' + plugin.name + '/enabled', {value:enabled}).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
@@ -56,7 +56,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 	};
 
 	$scope.savePluginOption = function(plugin, option){
-		$http.put('/api/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).success(function(response){
+		$http.put('/api/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
@@ -70,7 +70,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 			params[param.name] = param.value;
 		}
 		
-		$http.post('/api/plugins/' + plugin.name + '/actions/' + action.name, params).success(function(response){
+		$http.post('/api/plugins/' + plugin.name + '/actions/' + action.name, params).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}
