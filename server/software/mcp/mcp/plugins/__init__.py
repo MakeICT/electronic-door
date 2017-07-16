@@ -5,15 +5,12 @@ from importlib.machinery import SourceFileLoader
 
 from PySide import QtCore
 
-import plugins
+import plugins, utils, events
 
 loadedPlugins = []
 
 class AbstractPlugin(QtCore.QObject):
 	systemEvent = QtCore.Signal(object)
-
-	def __init__(self):
-		super().__init__()
 
 	def getName(self):
 		return type(self).__module__
@@ -33,6 +30,17 @@ class AbstractPlugin(QtCore.QObject):
 
 	def __str__(self):
 		return '<%s>' % self.getName()
+
+class ThreadedPlugin(AbstractPlugin):
+	def __init__(self):
+		super().__init__()
+		self.thread = utils.SimpleThread(self.run)
+
+	def handleSystemEvent(self, event):
+		if isinstance(event, events.Ready):
+			if event.originator == QtCore.QCoreApplication.instance():
+				self.thread.start()
+
 
 def loadAllFromPath(base='plugins'):
 	global loadedPlugins

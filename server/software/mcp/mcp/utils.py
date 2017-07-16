@@ -10,9 +10,14 @@ class TrackedThread(QtCore.QThread):
 	
 	@staticmethod
 	def waitForAll():
-		print('Waiting for threads to finish (%d)' % len(TrackedThread.threads))
-		for t in TrackedThread.threads:
-			t.wait()
+		timedOut = False
+		if len(TrackedThread.threads) > 0:
+			print('Waiting for %d threads to finish' % len(TrackedThread.threads))
+			for t in TrackedThread.threads:
+				timedOut = t.wait(30000) or timedOut
+
+		return not timedOut
+
 
 class SimpleThread(TrackedThread):
 	def __init__(self, callback):

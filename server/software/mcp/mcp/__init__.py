@@ -41,15 +41,6 @@ class Setting():
 		self.minimum = minimum
 		self.maximum = maximum
 
-
-
-def sigint_handler(signum, stack):
-	#print('signal handler')
-	sys.exit(1)
-	#QtCore.QCoreApplication.quit()
-
 if __name__ == '__main__':
 	app = MCP(sys.argv)
-	signal.signal(signal.SIGINT, sigint_handler)
-
 	app.start()

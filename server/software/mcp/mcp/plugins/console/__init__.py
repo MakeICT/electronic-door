@@ -8,11 +8,7 @@ from PySide import QtCore
 
 import plugins, utils, events
 
-class Plugin(plugins.AbstractPlugin):
-	def __init__(self):
-		super().__init__()
-		self.thread = utils.SimpleThread(self.run)
-
+class Plugin(plugins.ThreadedPlugin):
 	def _dataOnSTDIN(self):
 		# https://stackoverflow.com/questions/3762881/how-do-i-check-if-stdin-has-some-data
 		return select.select([sys.stdin,],[],[],0.0)[0]
@@ -38,8 +34,7 @@ class Plugin(plugins.AbstractPlugin):
 				time.sleep(1)
 
 	def handleSystemEvent(self, event):
-		if isinstance(event, events.Ready):
-			if event.originator == QtCore.QCoreApplication.instance():
-				self.thread.start()
-		elif isinstance(event, events.Exit):
+		super().handleSystemEvent(event)
+		
+		if isinstance(event, events.Exit):
 			self.keepRunning = False
