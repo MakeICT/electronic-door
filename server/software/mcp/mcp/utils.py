@@ -14,7 +14,7 @@ class TrackedThread(QtCore.QThread):
 		if len(TrackedThread.threads) > 0:
 			print('Waiting for %d threads to finish' % len(TrackedThread.threads))
 			for t in TrackedThread.threads:
-				timedOut = t.wait(30000) or timedOut
+				timedOut = t.wait(1000) or timedOut
 
 		return not timedOut
 

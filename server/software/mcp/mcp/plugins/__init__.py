@@ -5,12 +5,16 @@ from importlib.machinery import SourceFileLoader
 
 from PySide import QtCore
 
-import plugins, utils, events
+import plugins, utils, events, backend
 
 loadedPlugins = []
 
 class AbstractPlugin(QtCore.QObject):
 	systemEvent = QtCore.Signal(object)
+
+	def __init__(self):
+		super().__init__()
+		self.db = backend.Backend(self.getName())
 
 	def getName(self):
 		return type(self).__module__
@@ -62,6 +66,7 @@ def loadAllFromPath(base='plugins'):
 			path = os.path.join(base, p)
 
 			# load the module
+			print('Loading %s' % p)
 			mod = SourceFileLoader("plugins.%s" % p, os.path.join(path, "__init__.py")).load_module()
 			modules[p] = mod
 
