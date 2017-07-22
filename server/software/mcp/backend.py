@@ -39,6 +39,15 @@ def setCredentials(**kwargs):
 			query.bind(username='tester', realName='Testy McTestFace')
 			query.exec()
 '''
+class Option():
+	def __init__(self, name, dataType, defaultValue, allowedValues=None, minimum=None, maximum=None):
+		self.name = name
+		self.type = dataType
+		self.defaultValue = defaultValue
+		self.allowedValues = allowedValues
+		self.minimum = minimum
+		self.maximum = maximum
+
 class Query(QtSql.QSqlQuery):
 	def __init__(self, sql, db=None):
 		if db is not None:
@@ -127,6 +136,34 @@ class Backend(QtCore.QObject):
 			return False
 		else:
 			return bcrypt.checkpw(passwordAttempt.encode('utf-8'), savedPassword.encode('utf-8'))
+
+	def getPluginOption(self, pluginName, optionName):
+		query = self.Query('''
+			SELECT value
+			FROM plugins
+				JOIN "pluginOptions" ON plugins."pluginID" = "pluginOptions"."pluginID"
+				LEFT JOIN "pluginOptionValues" ON "pluginOptions"."pluginOptionID" = "pluginOptionValues"."pluginOptionID"
+			WHERE plugins.name = ?
+				AND "pluginOptions".name = ?
+			ORDER BY ordinal
+		''')
+		query.bind(pluginName, optionName)
+		query.exec_()
+		return query.getNextRecord()['value']
+
+	def setPluginOption(self, pluginName, optionName, optionValue, **kwargs):
+		query = self.Query('''
+			UPDATE "pluginOptionValues" SET value = 'asdf'
+			WHERE "pluginOptionID" = (
+				SELECT "pluginOptionID" FROM "pluginOptions"
+				WHERE name = 'pluginOptionName'
+					AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = 'asdf')
+			)
+		''')
+		query.bind(**kwargs)
+		query.exec_()
+		if query.numRowsAffected() == 0:
+			raise Exception('Could not set "%s" option of plugin "%s"' % (optionName, pluginName))
 
 if __name__ == '__main__':
 	import sys

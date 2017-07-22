@@ -6,7 +6,7 @@ import time
 
 from PySide import QtCore
 
-import plugins, utils, events
+from mcp import utils, events, plugins
 
 class Plugin(plugins.ThreadedPlugin):
 	def _dataOnSTDIN(self):

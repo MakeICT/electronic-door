@@ -15,6 +15,8 @@ app.factory('pluginService', function($http, ajaxChecker) {
 						var plugin = plugins[i];
 
 						pluginService.plugins[plugin.name] = plugin;
+/*
+// Removing this and sending plugin options on GET /api/plugins
 						var attachOptions = function(response){
 							pluginService.plugins[response.data.plugin].options = [];
 							for(var i in response.data.options){
@@ -24,7 +26,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 							}
 						};
 						$http.get('/api/plugins/' + plugin.name + '/options').then(attachOptions);
-						
+*/
 						if(plugin.clientDetails){
 							pluginService.clientPlugins.push(plugin);
 						}
@@ -56,7 +58,7 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 	};
 
 	$scope.savePluginOption = function(plugin, option){
-		$http.put('/api/plugins/' + plugin.name + '/options/' + option.name, {value:option.value}).then(function(response){
+		$http.put('/api/plugins/' + plugin.name + '/options/' + option.name, option.value).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}

@@ -4,13 +4,13 @@ from functools import partial, wraps
 from flask import Flask, request
 from flask_socketio import SocketIO
 
-import plugins, events
+from mcp import plugins, events, backend
 
 _routes = {}
 def route(rule, **options):
 	@wraps(rule)
 	def decorator(viewFunc):
-		print('Wrapping %s => %s' % (rule, viewFunc))
+#		print('Wrapping %s => %s' % (rule, viewFunc))
 		@wraps(viewFunc)		
 		def wrapper(*args, **kwargs):
 			return viewFunc(*args, **kwargs)
@@ -36,8 +36,13 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 			fixedFunc = partial(viewFunc, self=self)
 			if 'endpoint' not in options:
 				options['endpoint'] = viewFunc.__name__
-			print('Connecting %s' % (route))
+			#print('Connecting %s' % (route))
 			self.app.add_url_rule(route, view_func=fixedFunc, **options)
+
+	def defineOptions(self):
+		self.options.append(
+			backend.Option(name='port', dataType=int, defaultValue=None, minimum=0, maximum=65535),
+		)
 
 	def run(self):
 		self.socketio.run(self.app)

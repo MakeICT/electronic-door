@@ -1,13 +1,12 @@
 # -- coding: utf-8 --
 
-import requests, uuid, os
+import os
 import json, html
 
+from mcp import utils, events, plugins
+from mcp.plugins import flasky
+
 import flask
-
-import plugins, utils, events
-from plugins import flasky
-
 
 '''
 	@requires flask, flask_socketio, eventlet, bcrypt
@@ -28,11 +27,11 @@ class Plugin(flasky.FlaskPlugin):
 	@flasky.route('/', endpoint='root')
 	@flasky.route('/<path>')
 	def getPage(self, path=None):
-		print('Requested: %s' % path)
 		return self.app.send_static_file('index.html')
 
 	@flasky.route('/api/login', methods=['POST'])
 	def login(self):
+		return ''
 		try:
 			inputData = self._getRequestData()
 			if inputData == '':
@@ -60,11 +59,44 @@ class Plugin(flasky.FlaskPlugin):
 
 		return json.dumps(results)
 
+	@flasky.route('/api/plugins', methods=['GET'])
+	def getPlugins(self):
+		data = []
+		for plugin in plugins.loadedPlugins:
+			options = []
+			for s in plugin.getOptions():
+				option = s.__dict__.copy()
+				option['type'] = option['type'].__name__
+				options.append(option)
+
+			data.append({
+				'name': plugin.getName(),
+				'enabled': plugin.isEnabled(),
+				'options': options,
+			})
+
+		return json.dumps(data)
+
+	@flasky.route('/api/plugins/<pluginName>/options/<optionName>', methods=['PUT'])
+	def setPluginOption(self, pluginName, optionName):
+		try:
+			optionValue = self._getRequestData()
+			plugin = plugins.getPluginByName(pluginName)
+			plugin.setOption(optionName, optionValue)
+			return ''
+		except Exception as exc:
+			print(exc)
+			return self.errorToJSON('Could not save plugin option', exc)
+
+
+
+
 	# API catch-all
 	# This shouldn't really be here - Unimplemented API calls should 404, but the frontend mostly does silent fails on 404's
 	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
 	def apiRequest(self, path):
+		inputData = self._getRequestData()
 		return self.errorToJSON(
 			'API endpoint not implemented',
-			'"%s" API not yet implemented :(' % path
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 		)

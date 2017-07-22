@@ -4,7 +4,7 @@
 import sys, signal
 from PySide import QtCore
 
-import plugins, events, utils, backend
+from . import plugins, events, utils, backend
 
 class MCP(QtCore.QCoreApplication):
 	systemEvent = QtCore.Signal(object)
@@ -32,14 +32,6 @@ class MCP(QtCore.QCoreApplication):
 	def __str__(self):
 		return '<MCP>'
 
-class Setting():
-	def __init__(self, name, dataType, defaultValue, allowedValues=None, minimum=None, maximum=None):
-		self.name = name
-		self.type = dataType
-		self.defaultValue = defaultValue
-		self.allowedValues = allowedValues
-		self.minimum = minimum
-		self.maximum = maximum
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
