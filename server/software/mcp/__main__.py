@@ -32,7 +32,6 @@ class MCP(QtCore.QCoreApplication):
 	def __str__(self):
 		return '<MCP>'
 
-
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print('Please specify a credentials file.')

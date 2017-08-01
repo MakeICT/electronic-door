@@ -50,6 +50,7 @@ class Option():
 
 class Query(QtSql.QSqlQuery):
 	def __init__(self, sql, db=None):
+		self.sql = sql
 		if db is not None:
 			super().__init__(db)
 		else:
@@ -59,7 +60,9 @@ class Query(QtSql.QSqlQuery):
 	def bind(self, *values, **kwargs):
 		if len(values) > 0:
 			if isinstance(values[0], dict):
-				for k,v in values.items():
+				for k,v in values[0].items():
+					if k[0] != ':':
+						k = ':%s' % k
 					self.bindValue(k, v)
 			else:
 				for v in values:
@@ -68,8 +71,8 @@ class Query(QtSql.QSqlQuery):
 					else:
 						self.addBindValue(v)
 
-		for k,v in kwargs.items():
-			self.bindValue(k, v)
+		if len(kwargs) > 0:
+			self.bind(kwargs)
 
 	def exec_(self):
 		if not super().exec_():
@@ -112,8 +115,14 @@ class Backend(QtCore.QObject):
 			print('Failed to connect to database :(')
 			raise Exception(self.db.lastError())
 
-	def Query(self, sql):
-		return Query(sql, self.db)
+	def Query(self, sql, *args, **kwargs):
+		q = Query(sql, self.db)
+		if len(args) > 0:
+			q.bind(*args)
+		if len(kwargs) > 0:
+			q.bind(**kwargs)
+
+		return q
 
 	def addUser(self, userDict):
 		query = self.Query('INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES (:email, :firstName, :lastName, :joinDate)')
@@ -151,19 +160,51 @@ class Backend(QtCore.QObject):
 		query.exec_()
 		return query.getNextRecord()['value']
 
-	def setPluginOption(self, pluginName, optionName, optionValue, **kwargs):
+	def setPluginOption(self, pluginName, optionName, optionValue):
 		query = self.Query('''
-			UPDATE "pluginOptionValues" SET value = 'asdf'
-			WHERE "pluginOptionID" = (
-				SELECT "pluginOptionID" FROM "pluginOptions"
-				WHERE name = 'pluginOptionName'
-					AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = 'asdf')
-			)
+			INSERT INTO "pluginOptionValues" (value, "pluginOptionID")
+			VALUES (
+				:optionValue,
+				(
+					SELECT "pluginOptionID" FROM "pluginOptions"
+					WHERE name = :optionName
+						AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = :pluginName)
+				)
+			) ON CONFLICT ("pluginOptionID") DO UPDATE SET value = EXCLUDED.value
 		''')
-		query.bind(**kwargs)
+		query.bind({'pluginName': pluginName, 'optionName': optionName, 'optionValue': optionValue})
 		query.exec_()
 		if query.numRowsAffected() == 0:
 			raise Exception('Could not set "%s" option of plugin "%s"' % (optionName, pluginName))
+
+	def addPlugin(self, pluginName, options=[]):
+		self.db.transaction()
+		query = None
+		try:
+			query = self.Query('INSERT INTO plugins (name) VALUES (?)', pluginName)
+			query.exec_()
+			if query.numRowsAffected() == 1:
+				pluginID = self.getPluginIDByName(pluginName)
+
+				query = self.Query('INSERT INTO "pluginOptions" (name, type, ordinal, "pluginID") VALUES (:name, :type, :ordinal, :pluginID)', pluginID=pluginID)
+				for ordinal, option in enumerate(options):
+					params = {'name': option.name, 'type': option.type, 'ordinal': 10+ordinal}
+					query.bind(params)
+					query.exec_()
+			
+			self.db.commit()
+			return self.getPluginIDByName(pluginName)
+		except Exception as exc:
+			self.db.rollback()
+			raise(exc)
+
+	def getPluginIDByName(self, name):
+		query = self.Query('SELECT "pluginID" from plugins WHERE name = ?', name)
+		query.exec_()
+		if query.size() > 0:
+			return query.getNextRecord()['pluginID']
+		else:
+			return None
 
 if __name__ == '__main__':
 	import sys

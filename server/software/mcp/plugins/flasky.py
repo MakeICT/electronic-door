@@ -41,7 +41,7 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 
 	def defineOptions(self):
 		self.options.append(
-			backend.Option(name='port', dataType=int, defaultValue=None, minimum=0, maximum=65535),
+			backend.Option(name='port', dataType='number', defaultValue=None, minimum=0, maximum=65535),
 		)
 
 	def run(self):

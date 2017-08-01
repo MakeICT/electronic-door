@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS "pluginOptions" (
 CREATE TABLE IF NOT EXISTS "pluginOptionValues" (
 	"pluginOptionID" INT NOT NULL,
 	"value" TEXT,
+	UNIQUE("pluginOptionID"),
 	FOREIGN KEY("pluginOptionID") REFERENCES "pluginOptions"("pluginOptionID") ON DELETE CASCADE
 );
 
@@ -110,6 +111,7 @@ CREATE TABLE IF NOT EXISTS "clientPluginOptionValues" (
 	"clientID" INT NOT NULL,
 	"clientPluginOptionID" INT NOT NULL,
 	"optionValue" VARCHAR(128) NOT NULL,
+	UNIQUE("clientID", "clientPluginOptionID"),
 	FOREIGN KEY("clientID") REFERENCES clients("clientID") ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY("clientPluginOptionID") REFERENCES "clientPluginOptions"("clientPluginOptionID")
 );

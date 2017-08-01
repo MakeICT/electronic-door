@@ -66,7 +66,6 @@ class Plugin(flasky.FlaskPlugin):
 			options = []
 			for s in plugin.getOptions():
 				option = s.__dict__.copy()
-				option['type'] = option['type'].__name__
 				options.append(option)
 
 			data.append({

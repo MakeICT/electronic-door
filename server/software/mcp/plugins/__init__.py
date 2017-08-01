@@ -27,6 +27,11 @@ class AbstractPlugin(QtCore.QObject):
 		self.enabled = False
 		self.options = []
 		self.defineOptions()
+
+		self.pluginID = self.db.getPluginIDByName(self.getName())
+		if self.pluginID is None:
+			self.pluginID = self.db.addPlugin(self.getName(), self.getOptions())
+			
 		self.loadOptions()
 
 	def loadOptions(self):
@@ -35,19 +40,20 @@ class AbstractPlugin(QtCore.QObject):
 
 	def getName(self):
 		# strip top-level module name
-		name = type(self).__module__
-		return re.sub('^[^\\.]*\\.', '', name)
+		name = re.sub('^[^\\.]*\\.', '', type(self).__module__)
+		return name
 
 	def getOptions(self):
 		return self.options
 
 	def getOption(self, name):
-		for options in self.options:
-			if options.name == name:
-				return options
+		for option in self.options:
+			if option.name == name:
+				return option
 
 	def setOption(self, name, value):
 		self.db.setPluginOption(self.getName(), name, value)
+		self.getOption(name).value = value
 
 	def defineOptions(self):
 		pass
