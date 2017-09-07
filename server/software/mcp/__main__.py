@@ -4,7 +4,7 @@
 import sys, signal
 from PySide import QtCore
 
-from . import plugins, events, utils, backend
+import plugins, events, utils, backend
 
 class MCP(QtCore.QCoreApplication):
 	systemEvent = QtCore.Signal(object)

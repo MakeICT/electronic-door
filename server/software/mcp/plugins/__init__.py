@@ -6,8 +6,7 @@ from importlib.machinery import SourceFileLoader
 
 from PySide import QtCore
 
-import plugins
-from .. import utils, events, backend
+import plugins, utils, events, backend
 
 import json
 

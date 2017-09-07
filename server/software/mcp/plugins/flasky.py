@@ -4,7 +4,7 @@ from functools import partial, wraps
 from flask import Flask, request
 from flask_socketio import SocketIO
 
-from mcp import plugins, events, backend
+import plugins, events, backend
 
 _routes = {}
 def route(rule, **options):

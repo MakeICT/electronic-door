@@ -3,8 +3,8 @@
 import os
 import json, html
 
-from mcp import utils, events, plugins
-from mcp.plugins import flasky
+import utils, events, plugins
+from plugins import flasky
 
 import flask
 
