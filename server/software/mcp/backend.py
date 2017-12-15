@@ -1,5 +1,6 @@
 from PySide import QtCore, QtSql
 import bcrypt
+import re
 
 '''
 	@requires libqt4-sql-psql
@@ -23,17 +24,21 @@ def setCredentials(**kwargs):
 	Binding examples:
 		Example 1 (positional binds with list):
 			query = Query('INSERT INTO users (username, realName) VALUES (?, ?)')
-			query.bind(['tester', 'Testy McTestface'])
+			argList = ['tester', 'Testy McTestface']
+			query.bind(argList)
 			query.exec()
+
 		Example 2 (positional binds without list):
 			query = Query('INSERT INTO users (username, realName) VALUES (?, ?)')
 			query.bind('tester', 'Testy McTestface')
 			query.exec()
+
 		Example 3 (explicit dict):
 			query = Query('INSERT INTO users (username, realName) VALUES (:username, :realName)')
 			args = {'username': 'tester', 'realName': 'Testy McTestFace'}
 			query.bind(args)
 			query.exec()
+
 		Example 3 (argument dict):
 			query = Query('INSERT INTO users (username, realName) VALUES (:username, :realName)')
 			query.bind(username='tester', realName='Testy McTestFace')
@@ -123,6 +128,38 @@ class Backend(QtCore.QObject):
 			q.bind(**kwargs)
 
 		return q
+
+	def getUsers(self, searchTerms):
+		sql = 'SELECT * FROM users WHERE TRUE'
+		
+		# three possible matches
+		# 	1. tag:value OR tag:"value with spaces"
+		# 	2. "value with spaces"
+		# 	3. value
+		termSeparater = re.compile('([\w-]+:("[^"]+"|[\w-]+)|"[^"]+"|[\w-]+)')		
+		matches = termSeparater.findall(searchTerms)
+		params = []
+
+		for t in matches:
+			term = t[0]
+
+			q = '%' + term + '%'
+
+			for i in range(4):
+				params.append(q)
+
+			sql += '''
+				AND (LOWER("firstName") LIKE ?
+					OR LOWER("lastName") LIKE ?
+					OR LOWER("email") LIKE ?
+					OR LOWER("nfcID") LIKE ?
+				)'''
+
+		query = self.Query(sql)
+		query.bind(params)
+		query.exec_()
+
+		return query.getAllRecords()
 
 	def addUser(self, userDict):
 		query = self.Query('INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES (:email, :firstName, :lastName, :joinDate)')
@@ -236,3 +273,8 @@ if __name__ == '__main__':
 
 	print('Done!')
 	app = QtCore.QCoreApplication([])
+
+
+
+
+

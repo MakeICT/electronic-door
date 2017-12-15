@@ -5,6 +5,7 @@ import json, html
 
 import utils, events, plugins
 from plugins import flasky
+from backend import Backend
 
 import flask
 
@@ -15,6 +16,8 @@ class Plugin(flasky.FlaskPlugin):
 	def __init__(self):
 		root_dir = os.path.dirname(os.path.abspath(__file__))
 		super().__init__(os.path.join(root_dir, 'static'))
+
+		self.db = Backend()
 
 	def errorToJSON(self, msg, detail):
 		response = {
@@ -47,15 +50,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/users/', methods=['GET'])
 	def getUsers(self):
-		# @TODO: replace this with a real call to the DB
-		# @TODO: accept search parameters
-		results =[{
-			"firstName": 'Test 1',
-			"lastName": 'McTestFace'
-		},{
-			"firstName": 'Test 2',
-			"lastName": 'McTestFace'
-		}]
+		inputData = self._getRequestArgs()
+
+		results = self.db.getUsers(inputData['q'])
 
 		return json.dumps(results)
 

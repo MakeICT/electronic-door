@@ -55,6 +55,11 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 
 	def _getRequestData(self):
 		return request.data.decode('utf-8')
+
+	def _getRequestArgs(self):
+		return request.args
+
+	
 	# Flask uses Werkzeug, and can only be shutdown with a request context
 	# So when we want to shutdown flask, we have to send ourself a kill request
 	# but we pass a key to make sure it's really us
