@@ -23,10 +23,10 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 				'detail': '...so type something in.',
 			};
 		}else{
-			$http.post('/api/groups', $scope.newGroup).then(function(response){
+			$http.post('/api/groups/', $scope.newGroup).then(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					$scope.newGroup = {'name': null, 'description': null };
-					$http.get('/api/groups').then(function(response){
+					$http.get('/api/groups/').then(function(response){
 						if(ajaxChecker.checkAjax(response)){
 							$scope.groups = response.data;
 						}
@@ -52,7 +52,7 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 		});
 	};
 
-	$http.get('/api/groups').then(function(response){
+	$http.get('/api/groups/').then(function(response){
 		if(ajaxChecker.checkAjax(response)){
 			$scope.groups = response.data;
 		}

@@ -51,7 +51,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.createJob = function(job){
-		$http.post('/api/scheduledJobs', job).then(function(response){
+		$http.post('/api/scheduledJobs/', job).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.reload();
 			}
@@ -114,7 +114,7 @@ app.controller('schedulerCtrl', function($scope, $http, ajaxChecker, pluginServi
 	};
 	
 	$scope.reload = function(){
-		$http.get('/api/scheduledJobs').then(function(response){
+		$http.get('/api/scheduledJobs/').then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.scheduledJobs = response.data;
 				$scope.scheduledJobs.push({

@@ -8,7 +8,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 			pluginService.onLoadListeners.push(callback);
 		},
 		'load': function(){
-			$http.get('/api/plugins').then(function(response){
+			$http.get('/api/plugins/').then(function(response){
 				if(ajaxChecker.checkAjax(response)){
 					var plugins = response.data;
 					for(var i=0; i<plugins.length; i++){

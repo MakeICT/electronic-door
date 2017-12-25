@@ -71,7 +71,7 @@ app.factory('authenticationService', function($http, ajaxChecker) {
     var authService = {
 		'authenticated': false,
 		'login': function(credentials, onPass, onFail, beQuiet) {
-			$http.post('/api/login', credentials).then(function(response){
+			$http.post('/api/login/', credentials).then(function(response){
 				if(ajaxChecker.checkAjax(response, beQuiet)){
 					authService.authenticated = true;
 					if(onPass) onPass();
