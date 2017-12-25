@@ -9,6 +9,15 @@ from backend import Backend
 
 import flask
 
+# convenience method
+def errorToJSON(msg, detail):
+	response = {
+		'error': msg,
+		'detail': '%s' % detail
+	}
+
+	return json.dumps(response)
+
 '''
 	@requires flask, flask_socketio, eventlet, bcrypt
 '''
@@ -19,45 +28,160 @@ class Plugin(flasky.FlaskPlugin):
 
 		self.db = Backend()
 
-	def errorToJSON(self, msg, detail):
-		response = {
-			'error': msg,
-			'detail': '%s' % detail
-		}
-
-		return json.dumps(response)
-
+	'''
+		Static files for WWW browsers
+	'''
 	@flasky.route('/', endpoint='root')
 	@flasky.route('/<path>')
 	def getPage(self, path=None):
 		return self.app.send_static_file('index.html')
 
-	@flasky.route('/api/login', methods=['POST'])
-	def login(self):
+
+
+
+
+	'''
+		API: Authentication
+	'''
+	@flasky.route('/api/login/', methods=['POST', 'DEL'])
+	def api_login(self):
 		return ''
-		try:
-			inputData = self._getRequestData()
-			if inputData == '':
-				raise Exception('No credentials provided')
-			inputData = json.loads(inputData)
-			if self.db.checkPassword(inputData['email'], inputData['password']):
-				return ''
-			else:
-				raise Exception('Bad username or password')
-		except Exception as exc:
-			return self.errorToJSON('Login failed', exc)
+		#@TODO: test/implement logins
+		if flask.request.method == 'POST':
+			# login
+			try:
+				inputData = self._getRequestData()
+				if inputData == '':
+					raise Exception('No credentials provided')
+				inputData = json.loads(inputData)
+				if self.db.checkPassword(inputData['email'], inputData['password']):
+					return ''
+				else:
+					raise Exception('Bad username or password')
+			except Exception as exc:
+				return errorToJSON('Login failed', exc)
+		else:
+			# logout
+			pass
 
 
-	@flasky.route('/api/users/', methods=['GET'])
-	def getUsers(self):
-		inputData = self._getRequestArgs()
 
-		results = self.db.getUsers(inputData['q'])
 
-		return json.dumps(results)
+	'''
+		API: Users
+	'''
+	@flasky.route('/api/users/', methods=['GET', 'PUT'])
+	def api_userList(self):
+		if flask.request.method == 'GET':
+			inputData = self._getRequestArgs()
+			results = self.db.getUsers(inputData['q'])
 
-	@flasky.route('/api/plugins', methods=['GET'])
-	def getPlugins(self):
+			return json.dumps(results)
+
+		elif flask.request.method == 'PUT':
+			#@TODO: Implement user creation
+			# create a user
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/users/<userID>/', methods=['POST'])
+	def api_updateUser(self, userID):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/users/<userID>/password/', methods=['PUT'])
+	def api_updateUserPassword(self, userID):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/users/<userID>/groups/', methods=['GET'])
+	def api_getUserGroups(self, userID):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/users/<userID>/groups/<groupName>/', methods=['GET'])
+	def api_getUserGroupStatus(self, userID, groupName):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/users/<userID>/nfcHistory/', methods=['GET'])
+	def api_getUserNFCHistory(self, userID):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+
+
+
+
+	'''
+		API: Groups
+	'''
+	@flasky.route('/api/groups/', methods=['GET', 'PUT'])
+	def api_groupList(self):
+		#@TODO: Implement this function
+		if flask.request.method == 'GET':
+			# get groups
+			pass
+		elif flask.request.method == 'PUT':
+			# add group
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/groups/<groupID>/', methods=['POST'])
+	def api_updateGroup(self, groupID):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/groups/<groupID>/authorizations/<authTag>/', methods=['PUT', 'DELETE'])
+	def api_groupAuthTags(self, groupID, authTag):
+		#@TODO: Implement this function
+		if flask.request.method == 'PUT':
+			# add auth tag to group
+			pass
+		elif flask.request.method == 'DELETE':
+			# remove auth tag from group
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+
+
+
+
+	'''
+		API: Plugins
+	'''
+	@flasky.route('/api/plugins/', methods=['GET'])
+	def api_getPlugins(self):
 		data = []
 		for plugin in plugins.loadedPlugins:
 			options = []
@@ -73,26 +197,174 @@ class Plugin(flasky.FlaskPlugin):
 
 		return json.dumps(data)
 
-	@flasky.route('/api/plugins/<pluginName>/options/<optionName>', methods=['PUT'])
-	def setPluginOption(self, pluginName, optionName):
-		try:
-			optionValue = self._getRequestData()
-			plugin = plugins.getPluginByName(pluginName)
-			plugin.setOption(optionName, optionValue)
-			return ''
-		except Exception as exc:
-			print(exc)
-			return self.errorToJSON('Could not save plugin option', exc)
-
-
-
-
-	# API catch-all
-	# This shouldn't really be here - Unimplemented API calls should 404, but the frontend mostly does silent fails on 404's
-	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
-	def apiRequest(self, path):
-		inputData = self._getRequestData()
-		return self.errorToJSON(
+	@flasky.route('/api/plugins/<pluginName>/enabled/', methods=['GET'])
+	def api_getPluginStatus(self, pluginName):
+		#@TODO: Implement this function
+		return errorToJSON(
 			'API endpoint not implemented',
 			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 		)
+		
+	@flasky.route('/api/plugins/<pluginName>/options/<optionName>/', methods=['GET', 'PUT'])
+	def api_pluginOptionValue(self, pluginName, optionName):
+		if flask.request.method == 'GET':
+			#@TODO: plugin option retrieval
+			# lookup plugin option
+			return errorToJSON(
+				'API endpoint not implemented',
+				'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+			)
+
+		elif flask.request.method == 'PUT':
+			# set plugin option
+			try:
+				optionValue = self._getRequestData()
+				plugin = plugins.getPluginByName(pluginName)
+				plugin.setOption(optionName, optionValue)
+				return ''
+			except Exception as exc:
+				print(exc)
+				return self.errorToJSON('Could not save plugin option', exc)
+		
+	@flasky.route('/api/plugins/<pluginName>/actions/<action>/', methods=['POST'])
+	def api_executePluginAction(self, pluginName):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+	@flasky.route('/api/plugins/<pluginName>/handler/', methods=['GET'])
+	def api_routeRequestToPlugin(self, pluginName):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+
+
+
+
+	'''
+		API: Clients
+	'''
+	@flasky.route('/api/clients/', methods=['GET'])
+	def api_getClients(self):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/clients/<clientID>/', methods=['GET', 'PUT'])
+	def api_clientDetails(self, clientID):
+		#@TODO: Implement this function
+		if flask.request.method == 'GET':
+			# get client details
+			pass
+		elif flask.request.method == 'PUT':
+			# update client details
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['POST', 'DEL'])
+	def api_clientPluginAssociation(self, clientID, pluginName):
+		#@TODO: Implement this function
+		if flask.request.method == 'POST':
+			# add plugin to client
+			pass
+		elif flask.request.method == 'DELETE':
+			# remove plugin from client
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/actions/<actionName>/', methods=['POST'])
+	def api_executePluginActionOnClient(self, clientID, pluginName, actionName):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['PUT'])
+	def api_updatePluginSettingsOnClient(self, clientID, pluginName):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+
+
+
+
+	'''
+		API: Logs and jobs
+	'''
+	@flasky.route('/api/log/', methods=['GET'])
+	def api_getLog(self):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/scheduledJobs/', methods=['GET', 'POST'])
+	def api_scheduledJobList(self):
+		#@TODO: Implement this function
+		if flask.request.method == 'GET':
+			# get scheduled jobs
+			pass
+		elif flask.request.method == 'POST':
+			# create scheduled job
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/scheduledJobs/<jobID>/', methods=['PUT', 'DELETE'])
+	def api_updateScheduledJob(self, jobID):
+		#@TODO: Implement this function
+		if flask.request.method == 'PUT':
+			# update scheduled job
+			pass
+		elif flask.request.method == 'DELETE':
+			# remove scheduled job
+			pass
+
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+		
+	@flasky.route('/api/scheduledJobs/<jobID>/enabled/', methods=['PUT'])
+	def api_setScheduledJobEnabledStatus(self, jobID):
+		#@TODO: Implement this function
+		return errorToJSON(
+			'API endpoint not implemented',
+			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+		)
+
+
+'''
+	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
+	def apiRequest(self, path):
+		print('*************')
+		print('\t%s: %s' % (flask.request.method, flask.request.path))
+
+		return errorToJSON(
+			'Unknown endpoint',
+			'%s: %s' % (flask.request.method, flask.request.path)
+		)
+'''
