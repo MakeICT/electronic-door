@@ -1,3 +1,5 @@
+import os
+
 import requests, uuid
 from functools import partial, wraps
 
@@ -26,6 +28,7 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 		super().__init__()
 
 		self.app = Flask(__name__, static_url_path='', static_folder=staticFolder)
+		self.app.secret_key = os.urandom(24)
 		self.socketio = SocketIO(self.app)
 		self.killKey = str(uuid.uuid4()) # See _killServer
 
@@ -36,7 +39,7 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 			fixedFunc = partial(viewFunc, self=self)
 			if 'endpoint' not in options:
 				options['endpoint'] = viewFunc.__name__
-			#print('Connecting %s' % (route))
+
 			self.app.add_url_rule(route, view_func=fixedFunc, **options)
 
 	def defineOptions(self):

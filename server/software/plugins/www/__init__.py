@@ -18,6 +18,14 @@ def errorToJSON(msg, detail):
 
 	return json.dumps(response)
 
+def unauthorizedJSON(auth=''):
+	response = {
+		'error': 'You are not authorized',
+		'detail': 'User is not authorized (%s)' % auth
+	}
+
+	return json.dumps(response)
+
 '''
 	@requires flask, flask_socketio, eventlet, bcrypt
 '''
@@ -39,13 +47,11 @@ class Plugin(flasky.FlaskPlugin):
 
 
 
-
 	'''
 		API: Authentication
 	'''
 	@flasky.route('/api/login/', methods=['POST', 'DEL'])
 	def api_login(self):
-		return ''
 		#@TODO: test/implement logins
 		if flask.request.method == 'POST':
 			# login
@@ -53,16 +59,31 @@ class Plugin(flasky.FlaskPlugin):
 				inputData = self._getRequestData()
 				if inputData == '':
 					raise Exception('No credentials provided')
-				inputData = json.loads(inputData)
-				if self.db.checkPassword(inputData['email'], inputData['password']):
-					return ''
 				else:
-					raise Exception('Bad username or password')
+					inputData = json.loads(inputData)
+
+					if self.db.checkPassword(inputData['email'], inputData['password']):
+						flask.session['user'] = self.db.getUserByEmail(inputData['email'])
+						return ''
+					else:
+						raise Exception('Bad username or password')
+
 			except Exception as exc:
 				return errorToJSON('Login failed', exc)
 		else:
 			# logout
-			pass
+			flask.session.pop('user', None)
+			return ''
+
+	# convenience function to check user authorization
+	def checkUserAuth(self, authTag=None):
+		if 'user' in flask.session and flask.session['user'] is not None:
+			if authTag is None:
+				return True
+			else:
+				return self.db.checkUserAuth(flask.session['user']['userID'], authTag)
+
+
 
 
 
@@ -72,6 +93,9 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/users/', methods=['GET', 'PUT'])
 	def api_userList(self):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		if flask.request.method == 'GET':
 			inputData = self._getRequestArgs()
 			results = self.db.getUsers(inputData['q'])
@@ -90,6 +114,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/users/<userID>/', methods=['POST'])
 	def api_updateUser(self, userID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -98,6 +125,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/users/<userID>/password/', methods=['PUT'])
 	def api_updateUserPassword(self, userID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -106,6 +136,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/users/<userID>/groups/', methods=['GET'])
 	def api_getUserGroups(self, userID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -114,6 +147,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/users/<userID>/groups/<groupName>/', methods=['GET'])
 	def api_getUserGroupStatus(self, userID, groupName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -122,6 +158,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/users/<userID>/nfcHistory/', methods=['GET'])
 	def api_getUserNFCHistory(self, userID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -137,6 +176,9 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/groups/', methods=['GET', 'PUT'])
 	def api_groupList(self):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		if flask.request.method == 'GET':
 			# get groups
@@ -152,6 +194,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/groups/<groupID>/', methods=['POST'])
 	def api_updateGroup(self, groupID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -160,6 +205,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/groups/<groupID>/authorizations/<authTag>/', methods=['PUT', 'DELETE'])
 	def api_groupAuthTags(self, groupID, authTag):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		if flask.request.method == 'PUT':
 			# add auth tag to group
@@ -182,6 +230,9 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/plugins/', methods=['GET'])
 	def api_getPlugins(self):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		data = []
 		for plugin in plugins.loadedPlugins:
 			options = []
@@ -199,6 +250,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/plugins/<pluginName>/enabled/', methods=['GET'])
 	def api_getPluginStatus(self, pluginName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -207,6 +261,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/plugins/<pluginName>/options/<optionName>/', methods=['GET', 'PUT'])
 	def api_pluginOptionValue(self, pluginName, optionName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		if flask.request.method == 'GET':
 			#@TODO: plugin option retrieval
 			# lookup plugin option
@@ -228,6 +285,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/plugins/<pluginName>/actions/<action>/', methods=['POST'])
 	def api_executePluginAction(self, pluginName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -236,6 +296,9 @@ class Plugin(flasky.FlaskPlugin):
 
 	@flasky.route('/api/plugins/<pluginName>/handler/', methods=['GET'])
 	def api_routeRequestToPlugin(self, pluginName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -251,6 +314,9 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/clients/', methods=['GET'])
 	def api_getClients(self):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -259,6 +325,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/clients/<clientID>/', methods=['GET', 'PUT'])
 	def api_clientDetails(self, clientID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		if flask.request.method == 'GET':
 			# get client details
@@ -274,6 +343,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['POST', 'DEL'])
 	def api_clientPluginAssociation(self, clientID, pluginName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		if flask.request.method == 'POST':
 			# add plugin to client
@@ -289,6 +361,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/actions/<actionName>/', methods=['POST'])
 	def api_executePluginActionOnClient(self, clientID, pluginName, actionName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -297,6 +372,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['PUT'])
 	def api_updatePluginSettingsOnClient(self, clientID, pluginName):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -312,6 +390,9 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/log/', methods=['GET'])
 	def api_getLog(self):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',
@@ -320,6 +401,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/scheduledJobs/', methods=['GET', 'POST'])
 	def api_scheduledJobList(self):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		if flask.request.method == 'GET':
 			# get scheduled jobs
@@ -335,6 +419,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/scheduledJobs/<jobID>/', methods=['PUT', 'DELETE'])
 	def api_updateScheduledJob(self, jobID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		if flask.request.method == 'PUT':
 			# update scheduled job
@@ -350,6 +437,9 @@ class Plugin(flasky.FlaskPlugin):
 		
 	@flasky.route('/api/scheduledJobs/<jobID>/enabled/', methods=['PUT'])
 	def api_setScheduledJobEnabledStatus(self, jobID):
+		if not self.checkUserAuth():
+			return unauthorizedJSON()
+
 		#@TODO: Implement this function
 		return errorToJSON(
 			'API endpoint not implemented',

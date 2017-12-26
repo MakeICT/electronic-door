@@ -243,6 +243,27 @@ class Backend(QtCore.QObject):
 		else:
 			return None
 
+	def getUserByEmail(self, email):
+		q = self.Query('SELECT * FROM users WHERE email = ?', email)
+		q.exec_()
+		return q.getNextRecord()
+
+	def checkUserAuth(self, userID, authTag):
+		sql = '''
+			SELECT COUNT(0) > 0 AS authorized
+			FROM "groupAuthorizationTags" 
+				JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID"
+				JOIN users ON "userGroups"."userID" = "users"."userID"
+			WHERE users."userID" = ?
+				AND users.status = \'active\'
+				AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = ?)
+		'''
+
+		query = self.Query(sql, userID, authTag)
+		query.exec_()
+		return query.getNextRecord['authorized'] > 0
+
+
 if __name__ == '__main__':
 	import sys
 	with open(sys.argv[1], 'r') as dbCredsFile:

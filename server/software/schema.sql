@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS "jobParameters" (
 	PRIMARY KEY("jobID", "parameterName")
 );
 
-INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$2a$08$iV9ABq9Y9o87IKJVAWAa8OvWEU5KORp5b5SIgcfTvnCKlzK/5u28G', EXTRACT('epoch' FROM current_timestamp));
+INSERT INTO "users" ("firstName", "lastName", "email", "status", "passwordHash", "joinDate") VALUES ('Temporary', 'Administrator', 'admin@makeict.org', 'active', '$2b$08$FYpsM1ROlhURWTlfWplk/.yMFUDO853aEvUzmqClY/.36EcP7/j0.', EXTRACT('epoch' FROM current_timestamp));
 INSERT INTO "groups" ("name") VALUES ('administrators');
 INSERT INTO "userGroups" ("userID", "groupID") ( SELECT "userID", "groupID"	FROM "users" JOIN "groups" ON 1=1);
 INSERT INTO "authorizationTags" ("name") VALUES ('mcp-web-admin');
