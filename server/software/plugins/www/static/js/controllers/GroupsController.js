@@ -5,7 +5,14 @@ app.controller('groupsCtrl', function($scope, $http, authenticationService, ajax
 	};
 
 	$scope.setGroupAuthorization = function(group, authTag, authorized){
-		$http.put('/api/groups/' + group.groupID + '/authorizations/' + authTag, authorized).then(function(response){
+		var method;
+		if(authorized){
+			method = $http.put;
+		}else{
+			method = $http.delete;
+		}
+
+		method('/api/groups/' + group.groupID + '/authorizations/' + authTag).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				for(var i=0; i<group.authorizations.length; i++){
 					if(group.authorizations[i].name == authTag){

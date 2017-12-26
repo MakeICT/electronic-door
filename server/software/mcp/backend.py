@@ -263,6 +263,78 @@ class Backend(QtCore.QObject):
 		query.exec_()
 		return query.getNextRecord['authorized'] > 0
 
+	def getAuthTags(self):
+		query = self.Query('SELECT * FROM "authorizationTags" ORDER BY name')
+		query.exec_()
+
+		tags = []
+		while query.next():
+			tags.append(self.getCurrentRecord()['name'])
+
+		return tags
+
+	def getGroups(self):
+		sql = '''
+			SELECT
+				groups.*,
+				COUNT(users.*) AS count
+			FROM groups
+				LEFT JOIN "userGroups" ON "userGroups"."groupID" = "groups"."groupID"
+				LEFT JOIN "users" ON "userGroups"."userID" = "users"."userID"
+			GROUP BY groups."groupID"
+			ORDER BY groups.name
+		'''
+
+		query = self.Query(sql)
+		query.exec_()
+		groups = query.getAllRecords()
+
+		sql = '''
+			SELECT
+				"authorizationTags".name,
+				(
+					SELECT COUNT(0) > 0
+					FROM "groupAuthorizationTags"
+					WHERE "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID"
+						AND "groups"."groupID" = "groupAuthorizationTags"."groupID"
+				) AS authorized
+			FROM "authorizationTags" CROSS JOIN "groups"
+			WHERE "groups"."groupID" = ?
+			ORDER BY "authorizationTags".name;
+		'''
+		authTagQuery = self.Query(sql)
+
+		for group in groups:
+			authTagQuery.bind(group['groupID'])
+			authTagQuery.exec_()
+			group['authorizations'] = authTagQuery.getAllRecords()
+
+		return groups
+
+	def addGroup(self, name, description):
+		query = self.Query('INSERT INTO groups (name, description) VALUES (?, ?)', name, description)
+		query.exec_()
+
+		query = self.Query('SELECT "groupID" FROM groups WHERE name = ?', name)
+		query.exec_()
+		
+		return query.getNextRecord()['groupID']
+
+	def setGroupAuthorization(self, groupID, authTag, onOrOff):
+		if onOrOff:
+			sql = '''
+				INSERT INTO "groupAuthorizationTags" ("groupID", "tagID")
+				VALUES (?, (SELECT "tagID" FROM "authorizationTags" WHERE name = ?))
+			'''
+		else:
+			sql = '''
+				DELETE FROM "groupAuthorizationTags"
+				WHERE "groupID" = ?
+					AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = ?)
+			'''
+
+		self.Query(sql, groupID, authTag).exec_()
+
 
 if __name__ == '__main__':
 	import sys

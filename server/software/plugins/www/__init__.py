@@ -18,6 +18,7 @@ def errorToJSON(msg, detail):
 
 	return json.dumps(response)
 
+# convenience method
 def unauthorizedJSON(auth=''):
 	response = {
 		'error': 'You are not authorized',
@@ -36,6 +37,10 @@ class Plugin(flasky.FlaskPlugin):
 
 		self.db = Backend()
 
+	def _getRequestData(self):
+		return json.loads(super()._getRequestData())
+
+
 	'''
 		Static files for WWW browsers
 	'''
@@ -52,16 +57,13 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/login/', methods=['POST', 'DEL'])
 	def api_login(self):
-		#@TODO: test/implement logins
 		if flask.request.method == 'POST':
 			# login
 			try:
 				inputData = self._getRequestData()
-				if inputData == '':
+				if inputData is None or inputData == '':
 					raise Exception('No credentials provided')
 				else:
-					inputData = json.loads(inputData)
-
 					if self.db.checkPassword(inputData['email'], inputData['password']):
 						flask.session['user'] = self.db.getUserByEmail(inputData['email'])
 						return ''
@@ -70,6 +72,7 @@ class Plugin(flasky.FlaskPlugin):
 
 			except Exception as exc:
 				return errorToJSON('Login failed', exc)
+
 		else:
 			# logout
 			flask.session.pop('user', None)
@@ -91,7 +94,7 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 		API: Users
 	'''
-	@flasky.route('/api/users/', methods=['GET', 'PUT'])
+	@flasky.route('/api/users/', methods=['GET', 'POST'])
 	def api_userList(self):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
@@ -174,25 +177,25 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 		API: Groups
 	'''
-	@flasky.route('/api/groups/', methods=['GET', 'PUT'])
+	@flasky.route('/api/groups/', methods=['GET', 'POST'])
 	def api_groupList(self):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
 		#@TODO: Implement this function
 		if flask.request.method == 'GET':
-			# get groups
-			pass
-		elif flask.request.method == 'PUT':
-			# add group
-			pass
+			return json.dumps(self.db.getGroups())
 
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
+		elif flask.request.method == 'POST':
+			try:
+				data = self._getRequestData()
+				groupID = self.db.addGroup(data['name'], data['description'])
+				return groupID
+
+			except Exception as exc:
+				return errorToJSON('Failed to create new group :(', exc)
 		
-	@flasky.route('/api/groups/<groupID>/', methods=['POST'])
+	@flasky.route('/api/groups/<groupID>/', methods=['PUT'])
 	def api_updateGroup(self, groupID):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
@@ -208,19 +211,9 @@ class Plugin(flasky.FlaskPlugin):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		#@TODO: Implement this function
-		if flask.request.method == 'PUT':
-			# add auth tag to group
-			pass
-		elif flask.request.method == 'DELETE':
-			# remove auth tag from group
-			pass
+		self.db.setGroupAuthorization(groupID, authTag, flask.request.method == 'PUT')
 
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
-
+		return ''
 
 
 
@@ -447,14 +440,9 @@ class Plugin(flasky.FlaskPlugin):
 		)
 
 
-'''
 	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
 	def apiRequest(self, path):
-		print('*************')
-		print('\t%s: %s' % (flask.request.method, flask.request.path))
-
 		return errorToJSON(
 			'Unknown endpoint',
 			'%s: %s' % (flask.request.method, flask.request.path)
 		)
-'''
