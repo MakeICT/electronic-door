@@ -6,6 +6,8 @@ from functools import partial, wraps
 from flask import Flask, request
 from flask_socketio import SocketIO
 
+import json
+
 import plugins, events, backend
 
 _routes = {}
@@ -56,10 +58,13 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 		if isinstance(event, events.Exit):
 			res = requests.get('http://localhost:5000/_KILL_SERVER/%s' % self.killKey)
 
-	def _getRequestData(self):
+	def getRequestData(self):
 		return request.data.decode('utf-8')
 
-	def _getRequestArgs(self):
+	def getRequestDataObject(self):
+		return json.loads(self.getRequestData())
+
+	def getRequestArgs(self):
 		return request.args
 
 	

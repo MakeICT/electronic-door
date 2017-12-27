@@ -257,7 +257,7 @@ class Backend(QtCore.QObject):
 		return query.getNextRecord()['value']
 
 	def setPluginOption(self, pluginName, optionName, optionValue):
-		query = self.Query('''
+		sql = '''
 			INSERT INTO "pluginOptionValues" (value, "pluginOptionID")
 			VALUES (
 				:optionValue,
@@ -266,10 +266,14 @@ class Backend(QtCore.QObject):
 					WHERE name = :optionName
 						AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = :pluginName)
 				)
-			) ON CONFLICT ("pluginOptionID") DO UPDATE SET value = EXCLUDED.value
-		''')
-		query.bind({'pluginName': pluginName, 'optionName': optionName, 'optionValue': optionValue})
+			) ON CONFLICT ("pluginOptionID") DO UPDATE SET value = EXCLUDED.value'''
+
+		params = {'pluginName': pluginName, 'optionName': optionName, 'optionValue': optionValue}
+
+		query = self.Query(sql)
+		query.bind(params)
 		query.exec_()
+
 		if query.numRowsAffected() == 0:
 			raise Exception('Could not set "%s" option of plugin "%s"' % (optionName, pluginName))
 

@@ -37,8 +37,6 @@ class Plugin(flasky.FlaskPlugin):
 
 		self.db = Backend()
 
-	def _getRequestData(self):
-		return json.loads(super()._getRequestData())
 
 
 	'''
@@ -63,7 +61,7 @@ class Plugin(flasky.FlaskPlugin):
 		if flask.request.method == 'POST':
 			# login
 			try:
-				inputData = self._getRequestData()
+				inputData = self.getRequestDataObject()
 				if inputData is None or inputData == '':
 					raise Exception('No credentials provided')
 				else:
@@ -103,7 +101,7 @@ class Plugin(flasky.FlaskPlugin):
 			return unauthorizedJSON()
 
 		if flask.request.method == 'GET':
-			inputData = self._getRequestArgs()
+			inputData = self.getRequestArgs()
 			results = self.db.getUsers(inputData['q'])
 
 			return json.dumps(results)
@@ -191,7 +189,7 @@ class Plugin(flasky.FlaskPlugin):
 
 		elif flask.request.method == 'POST':
 			try:
-				data = self._getRequestData()
+				data = self.getRequestDataObject()
 				groupID = self.db.addGroup(data['name'], data['description'])
 				return groupID
 
@@ -255,29 +253,21 @@ class Plugin(flasky.FlaskPlugin):
 			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 		)
 		
-	@flasky.route('/api/plugins/<pluginName>/options/<optionName>/', methods=['GET', 'PUT'])
-	def api_pluginOptionValue(self, pluginName, optionName):
+	@flasky.route('/api/plugins/<pluginName>/options/<optionName>/', methods=['PUT'])
+	def api_savePluginOptionValue(self, pluginName, optionName):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		if flask.request.method == 'GET':
-			#@TODO: plugin option retrieval
-			# lookup plugin option
-			return errorToJSON(
-				'API endpoint not implemented',
-				'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-			)
+		try:
+			optionValue = self.getRequestData()
+			plugin = plugins.getPluginByName(pluginName)
+			plugin.setOption(optionName, optionValue)
 
-		elif flask.request.method == 'PUT':
-			# set plugin option
-			try:
-				optionValue = self._getRequestData()
-				plugin = plugins.getPluginByName(pluginName)
-				plugin.setOption(optionName, optionValue)
-				return ''
-			except Exception as exc:
-				print(exc)
-				return self.errorToJSON('Could not save plugin option', exc)
+			return ''
+
+		except Exception as exc:
+			print(exc)
+			return errorToJSON('Could not save plugin option', exc)
 		
 	@flasky.route('/api/plugins/<pluginName>/actions/<action>/', methods=['POST'])
 	def api_executePluginAction(self, pluginName):
@@ -328,7 +318,7 @@ class Plugin(flasky.FlaskPlugin):
 				'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 			)
 		elif flask.request.method == 'PUT':
-			data = self._getRequestData()
+			data = self.getRequestDataObject()
 			self.db.updateClient(data['oldID'], data)
 			# update client details
 			return ''
@@ -435,6 +425,12 @@ class Plugin(flasky.FlaskPlugin):
 		)
 
 
+
+
+	'''
+		API: Catch-all
+		@TODO: this should be deleted, let unrecognized requests 404, and let the client handle it appropriately
+	'''
 	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
 	def apiRequest(self, path):
 		return errorToJSON(
