@@ -129,6 +129,11 @@ class Backend(QtCore.QObject):
 
 		return q
 
+
+
+	'''
+		Users
+	'''
 	def getUsers(self, searchTerms):
 		sql = 'SELECT * FROM users WHERE TRUE'
 		params = []
@@ -206,6 +211,37 @@ class Backend(QtCore.QObject):
 		else:
 			return bcrypt.checkpw(passwordAttempt.encode('utf-8'), savedPassword.encode('utf-8'))
 
+	def checkUserAuth(self, userID, authTag):
+		sql = '''
+			SELECT COUNT(0) > 0 AS authorized
+			FROM "groupAuthorizationTags" 
+				JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID"
+				JOIN users ON "userGroups"."userID" = "users"."userID"
+			WHERE users."userID" = ?
+				AND users.status = \'active\'
+				AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = ?)
+		'''
+
+		query = self.Query(sql, userID, authTag)
+		query.exec_()
+		return query.getNextRecord['authorized'] > 0
+
+	def getAuthTags(self):
+		query = self.Query('SELECT * FROM "authorizationTags" ORDER BY name')
+		query.exec_()
+
+		tags = []
+		while query.next():
+			tags.append(self.getCurrentRecord()['name'])
+
+		return tags
+
+
+
+
+	'''
+		Plugins
+	'''
 	def getPluginOption(self, pluginName, optionName):
 		query = self.Query('''
 			SELECT value
@@ -271,31 +307,12 @@ class Backend(QtCore.QObject):
 		q.exec_()
 		return q.getNextRecord()
 
-	def checkUserAuth(self, userID, authTag):
-		sql = '''
-			SELECT COUNT(0) > 0 AS authorized
-			FROM "groupAuthorizationTags" 
-				JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID"
-				JOIN users ON "userGroups"."userID" = "users"."userID"
-			WHERE users."userID" = ?
-				AND users.status = \'active\'
-				AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = ?)
-		'''
 
-		query = self.Query(sql, userID, authTag)
-		query.exec_()
-		return query.getNextRecord['authorized'] > 0
 
-	def getAuthTags(self):
-		query = self.Query('SELECT * FROM "authorizationTags" ORDER BY name')
-		query.exec_()
 
-		tags = []
-		while query.next():
-			tags.append(self.getCurrentRecord()['name'])
-
-		return tags
-
+	'''
+		Groups
+	'''
 	def getGroups(self):
 		sql = '''
 			SELECT
@@ -357,6 +374,49 @@ class Backend(QtCore.QObject):
 			'''
 
 		self.Query(sql, groupID, authTag).exec_()
+
+
+
+
+	'''
+		Clients
+	'''
+	def getClients(self):
+		sql = 'SELECT * FROM clients'
+
+		query = self.Query(sql)
+		query.exec_()
+		return query.getAllRecords()
+
+	def updateClient(self, clientID, clientInfo):
+		okKeys = ['clientID', 'name']
+
+		sql = 'UPDATE clients SET '
+		params = []
+		for key in clientInfo.keys():
+			if key in okKeys:
+				sql += '"' + key + '" = ?, '
+				params.append(clientInfo[key])
+
+		sql = sql[0:-2] + ' WHERE "clientID" = ?'
+		params.append(clientID)
+
+		query = self.Query(sql)
+		query.bind(params)
+		query.exec_()
+
+	def associateClientPlugin(self, clientID, pluginName):
+		sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES (?, (SELECT * FROM plugins WHERE name = ?))'
+		query = self.Query(sql)
+		query.bind(clientID, pluginName)
+		query.exec_()
+		
+	def disassociateClientPlugin(self, clientID, pluginName):
+		sql = 'DELETE FROM "clientPluginAssociations" WHERE "clientID" = ? AND "pluginID" = (SELECT * FROM plugins WHERE name = ?)'
+		query = self.Query(sql)
+		query.bind(clientID, pluginName)
+		query.exec_()
+
 
 
 if __name__ == '__main__':

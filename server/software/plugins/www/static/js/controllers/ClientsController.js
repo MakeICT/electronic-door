@@ -1,5 +1,5 @@
 app.factory('clientService', function($http, ajaxChecker) {
-    var clientService = {
+	var clientService = {
 		'clients': [],
 		'loaded': false,
 		'onLoadListeners': [],
@@ -65,6 +65,7 @@ app.controller('clientsCtrl', function($scope, $http, authenticationService, aja
 	};
 	
 	$scope.createClientPluginAssociation = function(client){
+		if(!client.newPlugin) return;
 		$http.post('/api/clients/' + client.clientID + '/plugins/' + client.newPlugin).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				clientService.reload();

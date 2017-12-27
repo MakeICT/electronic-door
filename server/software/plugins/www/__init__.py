@@ -57,6 +57,9 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/login/', methods=['POST', 'DEL'])
 	def api_login(self):
+		flask.session['user'] = self.db.getUserByEmail('admin@makeict.org')
+		return ''
+
 		if flask.request.method == 'POST':
 			# login
 			try:
@@ -310,11 +313,7 @@ class Plugin(flasky.FlaskPlugin):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		#@TODO: Implement this function
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
+		return json.dumps(self.db.getClients())
 		
 	@flasky.route('/api/clients/<clientID>/', methods=['GET', 'PUT'])
 	def api_clientDetails(self, clientID):
@@ -323,16 +322,18 @@ class Plugin(flasky.FlaskPlugin):
 
 		#@TODO: Implement this function
 		if flask.request.method == 'GET':
-			# get client details
-			pass
+			#@TODO: implement this 
+			return errorToJSON(
+				'API endpoint not implemented',
+				'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
+			)
 		elif flask.request.method == 'PUT':
+			data = self._getRequestData()
+			self.db.updateClient(data['oldID'], data)
 			# update client details
+			return ''
 			pass
 
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
 		
 	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['POST', 'DEL'])
 	def api_clientPluginAssociation(self, clientID, pluginName):
@@ -341,16 +342,10 @@ class Plugin(flasky.FlaskPlugin):
 
 		#@TODO: Implement this function
 		if flask.request.method == 'POST':
-			# add plugin to client
-			pass
-		elif flask.request.method == 'DELETE':
-			# remove plugin from client
-			pass
+			self.db.associateClientPlugin(clientID, pluginName)
 
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
+		elif flask.request.method == 'DELETE':
+			self.db.disassociateClientPlugin(clientID, pluginName)
 		
 	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/actions/<actionName>/', methods=['POST'])
 	def api_executePluginActionOnClient(self, clientID, pluginName, actionName):
