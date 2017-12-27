@@ -131,29 +131,52 @@ class Backend(QtCore.QObject):
 
 	def getUsers(self, searchTerms):
 		sql = 'SELECT * FROM users WHERE TRUE'
-		
-		# three possible matches
-		# 	1. tag:value OR tag:"value with spaces"
-		# 	2. "value with spaces"
-		# 	3. value
-		termSeparater = re.compile('([\w-]+:("[^"]+"|[\w-]+)|"[^"]+"|[\w-]+)')		
-		matches = termSeparater.findall(searchTerms)
 		params = []
 
-		for t in matches:
-			term = t[0]
+		termSeparater = re.compile('((("[\w -]+")|([\w-]+)):)?(([\w-]+)|("([\w -]+)"))')
+		matches = termSeparater.findall(searchTerms)
 
-			q = '%' + term + '%'
+		for m in matches:
+			if m[1] != '':
+				tag = m[1].replace('"', '')
+			else:
+				tag = None
 
-			for i in range(4):
+			q = m[4].replace('"', '')
+
+			if tag is None:
+				q = '%' + q + '%'
+
+				for i in range(4):
+					params.append(q)
+
+				sql += '''
+					AND (LOWER("firstName") LIKE ?
+						OR LOWER("lastName") LIKE ?
+						OR LOWER("email") LIKE ?
+						OR LOWER("nfcID") LIKE ?
+					)'''
+
+			elif tag == 'group':
 				params.append(q)
+				sql += '''
+					AND (SELECT 0 < COUNT(0) FROM "userGroups" JOIN "groups" ON "userGroups"."groupID" = groups."groupID"
+						WHERE LOWER(groups.name) = ? AND "userGroups"."userID" = users."userID"
+					)'''
 
-			sql += '''
-				AND (LOWER("firstName") LIKE ?
-					OR LOWER("lastName") LIKE ?
-					OR LOWER("email") LIKE ?
-					OR LOWER("nfcID") LIKE ?
-				)'''
+			elif tag == 'tag':
+				params.append(q)
+				sql += '''
+					AND (SELECT 0 < COUNT(0) FROM "userGroups"
+								JOIN "groups" ON "userGroups"."groupID" = groups."groupID"
+								JOIN "groupAuthorizationTags" ON "userGroups"."groupID" = "groupAuthorizationTags"."groupID"
+								JOIN "authorizationTags" ON "authorizationTags"."tagID" = "groupAuthorizationTags"."tagID"
+						WHERE LOWER("authorizationTags"."name") = ?
+							AND "userGroups"."userID" = users."userID"
+					)'''
+
+			else:
+				print('Unknown search verb: %s' % tag)
 
 		query = self.Query(sql)
 		query.bind(params)
