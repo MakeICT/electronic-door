@@ -60,8 +60,8 @@ app.controller('pluginsCtrl', function($scope, $http, authenticationService, aja
 			var param = action.parameters[i];
 			params[param.name] = param.value;
 		}
-		
-		$http.post('/api/plugins/' + plugin.name + '/actions/' + action.name, params).then(function(response){
+
+		$http.post('/api/plugins/' + plugin.name + '/actions/' + action.name + '/', params).then(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				// @TODO: give feedback
 			}

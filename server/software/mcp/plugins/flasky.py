@@ -61,8 +61,12 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 	def getRequestData(self):
 		return request.data.decode('utf-8')
 
-	def getRequestDataObject(self):
-		return json.loads(self.getRequestData())
+	def getRequestDataDict(self):
+		data = self.getRequestData()
+		if data == None or data == '':
+			return {}
+		
+		return json.loads(data)
 
 	def getRequestArgs(self):
 		return request.args

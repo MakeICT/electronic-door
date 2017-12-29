@@ -25,7 +25,9 @@ class AbstractPlugin(QtCore.QObject):
 		self.db = backend.Backend(self.getName())
 		self.enabled = False
 		self.options = []
+		self.actions = []
 		self.defineOptions()
+		self.defineActions()
 
 		self.pluginID = self.db.getPluginIDByName(self.getName())
 		if self.pluginID is None:
@@ -50,6 +52,14 @@ class AbstractPlugin(QtCore.QObject):
 	def defineOptions(self):
 		pass
 
+	def defineActions(self):
+		pass
+
+	def doAction(self, actionName, parameters):
+		for action in self.actions:
+			if action.name == actionName:
+				action.callback(parameters)
+
 	def handleSystemEvent(self, event):
 		pass
 
@@ -65,6 +75,7 @@ class AbstractPlugin(QtCore.QObject):
 class ClientPlugin(AbstractPlugin):
 	def __init__(self):
 		self.clientOptions = []
+		self.clientActions = []
 
 		super().__init__()
 
@@ -86,6 +97,14 @@ class ClientPlugin(AbstractPlugin):
 			o.value = self.getOption(o.name, clientID)
 
 		return options
+
+	def doAction(self, actionName, parameters, client=None):
+		if client is None:
+			return super().doAction(actionName, parameters)
+		else:
+			for action in self.clientActions:
+				if action.name == actionName:
+					action.callback(parameters, client)
 
 class ThreadedPlugin(AbstractPlugin):
 	def __init__(self):

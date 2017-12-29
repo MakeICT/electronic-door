@@ -28,6 +28,31 @@ def unauthorizedJSON(auth=''):
 	return json.dumps(response)
 
 '''
+	Converts objects to dicts
+	useful for serialization
+	https://stackoverflow.com/questions/1036409/recursively-convert-python-object-graph-to-dictionary
+'''
+def toDict(obj, classkey=None):
+	if isinstance(obj, dict):
+		data = {}
+		for (k, v) in obj.items():
+			data[k] = toDict(v, classkey)
+		return data
+	elif hasattr(obj, "_ast"):
+		return toDict(obj._ast())
+	elif hasattr(obj, "__iter__") and not isinstance(obj, str):
+		return [toDict(v, classkey) for v in obj]
+	elif hasattr(obj, "__dict__"):
+		data = dict([(key, toDict(value, classkey)) 
+			for key, value in obj.__dict__.items() 
+			if not callable(value) and not key.startswith('_')])
+		if classkey is not None and hasattr(obj, "__class__"):
+			data[classkey] = obj.__class__.__name__
+		return data
+	else:
+		return obj
+
+'''
 	@requires flask, flask_socketio, eventlet, bcrypt
 '''
 class Plugin(flasky.FlaskPlugin):
@@ -61,7 +86,7 @@ class Plugin(flasky.FlaskPlugin):
 		if flask.request.method == 'POST':
 			# login
 			try:
-				inputData = self.getRequestDataObject()
+				inputData = self.getRequestDataDict()
 				if inputData is None or inputData == '':
 					raise Exception('No credentials provided')
 				else:
@@ -189,7 +214,7 @@ class Plugin(flasky.FlaskPlugin):
 
 		elif flask.request.method == 'POST':
 			try:
-				data = self.getRequestDataObject()
+				data = self.getRequestDataDict()
 				groupID = self.db.addGroup(data['name'], data['description'])
 				return groupID
 
@@ -229,17 +254,20 @@ class Plugin(flasky.FlaskPlugin):
 
 		data = []
 		for plugin in plugins.loadedPlugins:
-			options = []
-			for s in plugin.options:
-				option = s.__dict__.copy()
-				option['value'] = plugin.getOption(option['name'])
-				options.append(option)
-
 			record = {
 				'name': plugin.getName(),
 				'enabled': plugin.isEnabled(),
-				'options': options,
+				'options': [],
+				'actions': []
 			}
+
+			for s in plugin.options:
+				option = toDict(s)
+				option['value'] = plugin.getOption(option['name'])
+				record['options'].append(option)
+
+			for a in plugin.actions:
+				record['actions'].append(toDict(a))
 
 			if isinstance(plugin, plugins.ClientPlugin):
 				record['clientDetails'] = {
@@ -278,16 +306,23 @@ class Plugin(flasky.FlaskPlugin):
 			print(exc)
 			return errorToJSON('Could not save plugin option', exc)
 		
-	@flasky.route('/api/plugins/<pluginName>/actions/<action>/', methods=['POST'])
-	def api_executePluginAction(self, pluginName):
+	@flasky.route('/api/plugins/<pluginName>/actions/<actionName>/', methods=['POST'])
+	def api_executePluginAction(self, pluginName, actionName):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		#@TODO: Implement this function
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
+		for p in plugins.loadedPlugins:
+			if p.getName() == pluginName:
+				print(self.getRequestDataDict())
+				p.doAction(actionName, self.getRequestDataDict())
+				break
+		else:
+			return errorToJSON(
+				'Unknown plugin',
+				'I don\'t know what "%s" is :(' % pluginName
+			)
+
+		return ''
 
 	@flasky.route('/api/plugins/<pluginName>/handler/', methods=['GET'])
 	def api_routeRequestToPlugin(self, pluginName):
@@ -322,7 +357,7 @@ class Plugin(flasky.FlaskPlugin):
 						cp['options'] = []
 						for option in loadedPlugin.getClientOptions(c['clientID']):
 							# convert to dict so it can be json-serialized
-							cp['options'].append(option.__dict__.copy())
+							cp['options'].append(toDict(option))
 
 		return json.dumps(clients)
 		
@@ -340,7 +375,7 @@ class Plugin(flasky.FlaskPlugin):
 			)
 
 		elif flask.request.method == 'PUT':
-			data = self.getRequestDataObject()
+			data = self.getRequestDataDict()
 			self.db.updateClient(data['oldID'], data)
 			return ''
 
@@ -357,7 +392,7 @@ class Plugin(flasky.FlaskPlugin):
 			self.db.disassociateClientPlugin(clientID, pluginName)
 
 		elif flask.request.method == 'PUT':
-			data = self.getRequestDataObject()
+			data = self.getRequestDataDict()
 			self.db.setPluginOption(pluginName, data['option'], data['value'], clientID)
 
 		return ''

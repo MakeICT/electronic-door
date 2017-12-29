@@ -22,6 +22,29 @@ class Plugin(plugins.ClientPlugin):
 			backend.Option(name='authorizationTag', dataType='text', defaultValue=''),
 		]
 
+	def defineActions(self):
+		super().defineActions()
+
+		self.actions += [
+			backend.Action(
+				'unlockAll',
+				self.sendUnlock,
+				backend.Option('duration', 'number', 3)
+			)
+		]
+
+		self.clientActions += [
+			backend.Action(
+				'unlockNow',
+				self.sendUnlock,
+				backend.Option('duration', 'number', 3)
+			)
+		]
+	
+	def sendUnlock(self, parameters, client=None):
+		print(parameters)
+		self.systemEvent.emit(events.AuthorizationGrant(None, client))
+
 	def handleSystemEvent(self, event):
 		super().handleSystemEvent(event)
 		

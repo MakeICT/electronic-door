@@ -47,5 +47,7 @@ if __name__ == '__main__':
 		print(exc)
 		exit(2)
 
+	logging.basicConfig()
+	logging.getLogger().setLevel(logging.DEBUG)
 	app = MCP(sys.argv)
 	app.start()

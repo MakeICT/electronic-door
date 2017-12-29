@@ -44,15 +44,6 @@ def setCredentials(**kwargs):
 			query.bind(username='tester', realName='Testy McTestFace')
 			query.exec()
 '''
-class Option():
-	def __init__(self, name, dataType, defaultValue, allowedValues=None, minimum=None, maximum=None):
-		self.name = name
-		self.type = dataType
-		self.defaultValue = defaultValue
-		self.allowedValues = allowedValues
-		self.minimum = minimum
-		self.maximum = maximum
-
 class Query(QtSql.QSqlQuery):
 	def __init__(self, sql, db=None):
 		self.sql = sql
@@ -521,7 +512,31 @@ class Backend(QtCore.QObject):
 		return query.getAllRecords()
 
 
+class Option():
+	def __init__(self, name, dataType, defaultValue, allowedValues=None, minimum=None, maximum=None):
+		self.name = name
+		self.type = dataType
+		self.defaultValue = defaultValue
+		self.allowedValues = allowedValues
+		self.minimum = minimum
+		self.maximum = maximum
+
+class Action():	
+	def __init__(self, name, callback, *parameters):
+		if len(parameters) > 0 and isinstance(parameters[0], (list, tuple)):
+			parameters = list(parameters[0])
+
+		self.name = name
+		self.callback = callback
+		self.parameters = parameters
+
+
+
 if __name__ == '__main__':
+	z = Action('a', 'b', 'c', 'd', 'e')
+	z = Action('a', 'b', ['c', 'd', 'e'])
+	exit(0)
+	
 	import sys
 	with open(sys.argv[1], 'r') as dbCredsFile:
 		dbCreds = dbCredsFile.readline().split('\t')
