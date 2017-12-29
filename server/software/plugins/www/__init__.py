@@ -230,15 +230,24 @@ class Plugin(flasky.FlaskPlugin):
 		data = []
 		for plugin in plugins.loadedPlugins:
 			options = []
-			for s in plugin.getOptions():
+			for s in plugin.options:
 				option = s.__dict__.copy()
+				option['value'] = plugin.getOption(option['name'])
 				options.append(option)
 
-			data.append({
+			record = {
 				'name': plugin.getName(),
 				'enabled': plugin.isEnabled(),
 				'options': options,
-			})
+			}
+
+			if isinstance(plugin, plugins.ClientPlugin):
+				record['clientDetails'] = {
+					'actions': [],
+					'options': [],
+				}
+
+			data.append(record)
 
 		return json.dumps(data)
 
@@ -303,7 +312,19 @@ class Plugin(flasky.FlaskPlugin):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		return json.dumps(self.db.getClients())
+		clients = self.db.getClients()
+		for c in clients:
+			c['plugins'] = self.db.getClientPlugins(c['clientID'])
+
+			for cp in c['plugins']:
+				for loadedPlugin in plugins.loadedPlugins:
+					if cp['pluginID'] == loadedPlugin.pluginID:
+						cp['options'] = []
+						for option in loadedPlugin.getClientOptions(c['clientID']):
+							# convert to dict so it can be json-serialized
+							cp['options'].append(option.__dict__.copy())
+
+		return json.dumps(clients)
 		
 	@flasky.route('/api/clients/<clientID>/', methods=['GET', 'PUT'])
 	def api_clientDetails(self, clientID):
@@ -317,26 +338,30 @@ class Plugin(flasky.FlaskPlugin):
 				'API endpoint not implemented',
 				'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 			)
+
 		elif flask.request.method == 'PUT':
 			data = self.getRequestDataObject()
 			self.db.updateClient(data['oldID'], data)
-			# update client details
 			return ''
-			pass
 
-		
-	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['POST', 'DEL'])
+	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['PUT', 'POST', 'DELETE'])
 	def api_clientPluginAssociation(self, clientID, pluginName):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		#@TODO: Implement this function
+		#@TODO: Implement this functionp
 		if flask.request.method == 'POST':
 			self.db.associateClientPlugin(clientID, pluginName)
 
 		elif flask.request.method == 'DELETE':
 			self.db.disassociateClientPlugin(clientID, pluginName)
-		
+
+		elif flask.request.method == 'PUT':
+			data = self.getRequestDataObject()
+			self.db.setPluginOption(pluginName, data['option'], data['value'], clientID)
+
+		return ''
+
 	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/actions/<actionName>/', methods=['POST'])
 	def api_executePluginActionOnClient(self, clientID, pluginName, actionName):
 		if not self.checkUserAuth():
@@ -347,18 +372,6 @@ class Plugin(flasky.FlaskPlugin):
 			'API endpoint not implemented',
 			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 		)
-		
-	@flasky.route('/api/clients/<clientID>/plugins/<pluginName>/', methods=['PUT'])
-	def api_updatePluginSettingsOnClient(self, clientID, pluginName):
-		if not self.checkUserAuth():
-			return unauthorizedJSON()
-
-		#@TODO: Implement this function
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
-
 
 
 
@@ -431,9 +444,9 @@ class Plugin(flasky.FlaskPlugin):
 		API: Catch-all
 		@TODO: this should be deleted, let unrecognized requests 404, and let the client handle it appropriately
 	'''
-	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
-	def apiRequest(self, path):
-		return errorToJSON(
-			'Unknown endpoint',
-			'%s: %s' % (flask.request.method, flask.request.path)
-		)
+#	@flasky.route('/api/<path:path>', methods=['GET', 'POST', 'PUT'])
+#	def apiRequest(self, path):
+#		return errorToJSON(
+#			'Unknown endpoint',
+#			'%s: %s' % (flask.request.method, flask.request.path)
+#		)

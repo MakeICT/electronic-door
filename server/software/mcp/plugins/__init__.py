@@ -29,30 +29,23 @@ class AbstractPlugin(QtCore.QObject):
 
 		self.pluginID = self.db.getPluginIDByName(self.getName())
 		if self.pluginID is None:
-			self.pluginID = self.db.addPlugin(self.getName(), self.getOptions())
+			if isinstance(self, ClientPlugin):
+				clientOptions = self.clientOptions
+			else:
+				clientOptions = None
+
+			self.pluginID = self.db.addPlugin(self.getName(), self.options, clientOptions)
 			
-		self.loadOptions()
-
-	def loadOptions(self):
-		for option in self.options:
-			option.value = self.db.getPluginOption(self.getName(), option.name)
-
 	def getName(self):
 		# strip top-level module name
 		name = re.sub('^[^\\.]*\\.', '', type(self).__module__)
 		return name
 
-	def getOptions(self):
-		return self.options
-
 	def getOption(self, name):
-		for option in self.options:
-			if option.name == name:
-				return option
+		return self.db.getPluginOption(self.getName(), name)
 
 	def setOption(self, name, value):
 		self.db.setPluginOption(self.getName(), name, value)
-		self.getOption(name).value = value
 
 	def defineOptions(self):
 		pass
@@ -68,6 +61,31 @@ class AbstractPlugin(QtCore.QObject):
 
 	def __str__(self):
 		return '<%s>' % self.getName()
+
+class ClientPlugin(AbstractPlugin):
+	def __init__(self):
+		self.clientOptions = []
+
+		super().__init__()
+
+	def getOption(self, optionName, clientID=None):
+		if clientID == None:
+			return super().getOption(optionName)
+		else:
+			return self.db.getPluginOption(self.getName(), optionName, clientID)
+
+	def setOption(self, optionName, value, clientID=None):
+		if clientID == None:
+			return super().setOption(optionName, value)
+		else:
+			return self.db.setPluginOption(self.getName(), optionName, value, clientID)
+
+	def getClientOptions(self, clientID):
+		options = self.clientOptions.copy()
+		for o in options:
+			o.value = self.getOption(o.name, clientID)
+
+		return options
 
 class ThreadedPlugin(AbstractPlugin):
 	def __init__(self):

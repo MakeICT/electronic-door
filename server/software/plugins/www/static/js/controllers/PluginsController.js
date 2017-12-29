@@ -15,18 +15,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 						var plugin = plugins[i];
 
 						pluginService.plugins[plugin.name] = plugin;
-/*
-// Removing this and sending plugin options on GET /api/plugins
-						var attachOptions = function(response){
-							pluginService.plugins[response.data.plugin].options = [];
-							for(var i in response.data.options){
-								if(response.data.options[i].type != 'hidden'){
-									pluginService.plugins[response.data.plugin].options[i] = response.data.options[i];
-								}
-							}
-						};
-						$http.get('/api/plugins/' + plugin.name + '/options').then(attachOptions);
-*/
+
 						if(plugin.clientDetails){
 							pluginService.clientPlugins.push(plugin);
 						}

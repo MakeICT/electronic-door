@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -- coding: utf-8 --
 
-import sys, signal
+import sys, signal, logging
 from PySide import QtCore
 
 import plugins, events, utils, backend
@@ -24,8 +24,8 @@ class MCP(QtCore.QCoreApplication):
 		return super().exec_()
 
 	def handleEvent(self, event):
+		logging.debug('EVENT: %s' % event)
 		if isinstance(event, events.Exit):
-			print('Exit requested by %s' % event.originator)
 			utils.TrackedThread.waitForAll()
 			self.quit()
 

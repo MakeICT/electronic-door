@@ -226,6 +226,36 @@ class Backend(QtCore.QObject):
 		query.exec_()
 		return query.getNextRecord['authorized'] > 0
 
+	def checkNFCAuth(self, nfcID, authTag):
+		sql = '''
+			SELECT COUNT(0) > 0 AS authorized
+			FROM "groupAuthorizationTags" 
+				JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID"
+				JOIN users ON "userGroups"."userID" = "users"."userID"
+			WHERE users."nfcID" = ?
+				AND users.status = \'active\'
+				AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = ?)
+		'''
+
+		query = self.Query(sql, nfcID, authTag)
+		query.exec_()
+		return query.getNextRecord['authorized'] > 0
+
+	def checkNFCAuthAtClient(self, nfcID, clientID):
+		sql = '''
+			SELECT COUNT(0) > 0 AS authorized
+			FROM "groupAuthorizationTags" 
+				JOIN "userGroups" ON "groupAuthorizationTags"."groupID" = "userGroups"."groupID"
+				JOIN users ON "userGroups"."userID" = "users"."userID"
+			WHERE users."nfcID" = ?
+				AND users.status = \'active\'
+				AND "tagID" = (SELECT "tagID" FROM "authorizationTags" WHERE name = ?)
+		'''
+
+		query = self.Query(sql, nfcID, authTag)
+		query.exec_()
+		return query.getNextRecord['authorized'] > 0
+
 	def getAuthTags(self):
 		query = self.Query('SELECT * FROM "authorizationTags" ORDER BY name')
 		query.exec_()
@@ -242,42 +272,89 @@ class Backend(QtCore.QObject):
 	'''
 		Plugins
 	'''
-	def getPluginOption(self, pluginName, optionName):
-		query = self.Query('''
-			SELECT value
-			FROM plugins
-				JOIN "pluginOptions" ON plugins."pluginID" = "pluginOptions"."pluginID"
-				LEFT JOIN "pluginOptionValues" ON "pluginOptions"."pluginOptionID" = "pluginOptionValues"."pluginOptionID"
-			WHERE plugins.name = ?
-				AND "pluginOptions".name = ?
-			ORDER BY ordinal
-		''')
-		query.bind(pluginName, optionName)
-		query.exec_()
-		return query.getNextRecord()['value']
+	def getPluginOption(self, pluginName, optionName, clientID=None):
+		if clientID is None:
+			sql = '''
+				SELECT value
+				FROM plugins
+					JOIN "pluginOptions" ON plugins."pluginID" = "pluginOptions"."pluginID"
+					LEFT JOIN "pluginOptionValues" ON "pluginOptions"."pluginOptionID" = "pluginOptionValues"."pluginOptionID"
+				WHERE plugins.name = ?
+					AND "pluginOptions".name = ?
+				ORDER BY ordinal'''
+			params = (pluginName, optionName)
 
-	def setPluginOption(self, pluginName, optionName, optionValue):
-		sql = '''
-			INSERT INTO "pluginOptionValues" (value, "pluginOptionID")
-			VALUES (
-				:optionValue,
-				(
-					SELECT "pluginOptionID" FROM "pluginOptions"
-					WHERE name = :optionName
-						AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = :pluginName)
-				)
-			) ON CONFLICT ("pluginOptionID") DO UPDATE SET value = EXCLUDED.value'''
+		else:
+			sql = '''
+				SELECT
+					"clientPluginOptionValues"."optionValue" as value
+				FROM clients
+					LEFT JOIN "clientPluginAssociations" ON clients."clientID" = "clientPluginAssociations"."clientID"
+					LEFT JOIN "plugins" ON "clientPluginAssociations"."pluginID" = "plugins"."pluginID"
+					LEFT JOIN "clientPluginOptions" ON "clientPluginAssociations"."pluginID" = "clientPluginOptions"."pluginID"
+					LEFT JOIN "clientPluginOptionValues" ON "clientPluginOptions"."clientPluginOptionID" = "clientPluginOptionValues"."clientPluginOptionID"
+						AND clients."clientID" = "clientPluginOptionValues"."clientID"
+				WHERE plugins.name = ?
+					AND "clientPluginOptions".name = ?
+					AND clients."clientID" = ?'''
 
-		params = {'pluginName': pluginName, 'optionName': optionName, 'optionValue': optionValue}
+			params = (pluginName, optionName, clientID)
 
 		query = self.Query(sql)
 		query.bind(params)
 		query.exec_()
 
+		return query.getNextRecord()['value']
+
+	def setPluginOption(self, pluginName, optionName, optionValue, clientID=None):
+		if clientID == None:
+			params = {'pluginName': pluginName, 'optionName': optionName, 'optionValue': optionValue}
+			sql = '''
+				INSERT INTO "pluginOptionValues" (value, "pluginOptionID")
+				VALUES (
+					:optionValue,
+					(
+						SELECT "pluginOptionID" FROM "pluginOptions"
+						WHERE name = :optionName
+							AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = :pluginName)
+					)
+				) ON CONFLICT ("pluginOptionID") DO UPDATE SET value = EXCLUDED.value'''
+
+			query = self.Query(sql)
+			query.bind(params)
+			query.exec_()
+
+		else:
+			#@TODO: start session
+			params = {'pluginName': pluginName, 'optionName': optionName, 'clientID': clientID}
+
+			subquery = '''
+				SELECT "clientPluginOptionID" FROM "clientPluginOptions"
+					WHERE "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = :pluginName)
+						AND "name" = :optionName'''
+
+			deleteSQL = '''
+				DELETE FROM "clientPluginOptionValues"
+				WHERE "clientID" = :clientID
+					AND "clientPluginOptionID" IN (''' + subquery + ')'
+				
+			query = self.Query(deleteSQL)
+			query.bind(params)
+			query.exec_()
+
+			params['optionValue'] = optionValue
+			insertSQL = '''
+				INSERT INTO "clientPluginOptionValues" ("clientID", "clientPluginOptionID", "optionValue")
+				VALUES (:clientID, (''' + subquery + '), :optionValue)'
+
+			query = self.Query(insertSQL)
+			query.bind(params)
+			query.exec_()
+
 		if query.numRowsAffected() == 0:
 			raise Exception('Could not set "%s" option of plugin "%s"' % (optionName, pluginName))
 
-	def addPlugin(self, pluginName, options=[]):
+	def addPlugin(self, pluginName, options=[], clientOptions=[]):
 		self.db.transaction()
 		query = None
 		try:
@@ -292,6 +369,12 @@ class Backend(QtCore.QObject):
 					query.bind(params)
 					query.exec_()
 			
+				if clientOptions is not None:
+					query = self.Query('INSERT INTO "clientPluginOptions" (name, type, ordinal, "pluginID") VALUES (:name, :type, :ordinal, :pluginID)', pluginID=pluginID)
+					for ordinal, option in enumerate(clientOptions):
+						query.bind(name=option.name, type=option.type, ordinal=10+ordinal)
+						query.exec_()
+
 			self.db.commit()
 			return self.getPluginIDByName(pluginName)
 		except Exception as exc:
@@ -410,17 +493,32 @@ class Backend(QtCore.QObject):
 		query.exec_()
 
 	def associateClientPlugin(self, clientID, pluginName):
-		sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES (?, (SELECT * FROM plugins WHERE name = ?))'
+		sql = 'INSERT INTO "clientPluginAssociations" ("clientID", "pluginID") VALUES (?, (SELECT "pluginID" FROM plugins WHERE name = ?))'
 		query = self.Query(sql)
 		query.bind(clientID, pluginName)
 		query.exec_()
 		
 	def disassociateClientPlugin(self, clientID, pluginName):
-		sql = 'DELETE FROM "clientPluginAssociations" WHERE "clientID" = ? AND "pluginID" = (SELECT * FROM plugins WHERE name = ?)'
+		sql = 'DELETE FROM "clientPluginAssociations" WHERE "clientID" = ? AND "pluginID" = (SELECT "pluginID" FROM plugins WHERE name = ?)'
 		query = self.Query(sql)
 		query.bind(clientID, pluginName)
 		query.exec_()
 
+	def getClientPlugins(self, clientID):
+		sql = '''
+			SELECT 
+				plugins."name",
+				"clientPluginAssociations".*
+			FROM "clientPluginAssociations"
+				JOIN plugins ON "clientPluginAssociations"."pluginID" = plugins."pluginID"
+			WHERE "clientPluginAssociations"."clientID" = ?
+			ORDER BY plugins.name'''
+
+		query = self.Query(sql)
+		query.bind(clientID)
+		query.exec_()
+
+		return query.getAllRecords()
 
 
 if __name__ == '__main__':
@@ -430,31 +528,17 @@ if __name__ == '__main__':
 
 	print('Setting credentials...')
 	setCredentials(username=dbCreds[0].strip(), password=dbCreds[1].strip())
+	
 	print('Connecting...')
 	database = Backend()
-	print('Adding user...')
-	try:
-		database.addUser({
-			'email': 'test@makeict.org',
-			'firstName': 'Testy',
-			'lastName': 'McTestface',
-			'joinDate': None
-		})
-	except:
-		print('User exists?')
 
+	clients = database.getClients()
 
-	print('Updating password...')
-	database.updateUserPassword('test@makeict.org', 'boogers')
-
-	print('Checking password...')
-
-	print(database.checkPassword('test@makeict.org', 'boogers'))
+	for c in clients:
+		print(c)
+		cps = database.getClientPlugins(c['clientID'])
+		print(cps)
+		print('\n')
 
 	print('Done!')
 	app = QtCore.QCoreApplication([])
-
-
-
-
-
