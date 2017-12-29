@@ -16,7 +16,7 @@ app.factory('pluginService', function($http, ajaxChecker) {
 
 						pluginService.plugins[plugin.name] = plugin;
 
-						if(plugin.clientDetails){
+						if(plugin.canBeAssociatedToClients){
 							pluginService.clientPlugins.push(plugin);
 						}
 					}

@@ -258,7 +258,8 @@ class Plugin(flasky.FlaskPlugin):
 				'name': plugin.getName(),
 				'enabled': plugin.isEnabled(),
 				'options': [],
-				'actions': []
+				'actions': [],
+				'canBeAssociatedToClients': isinstance(plugin, plugins.ClientPlugin)
 			}
 
 			for s in plugin.options:
@@ -268,12 +269,6 @@ class Plugin(flasky.FlaskPlugin):
 
 			for a in plugin.actions:
 				record['actions'].append(toDict(a))
-
-			if isinstance(plugin, plugins.ClientPlugin):
-				record['clientDetails'] = {
-					'actions': [],
-					'options': [],
-				}
 
 			data.append(record)
 
@@ -313,7 +308,6 @@ class Plugin(flasky.FlaskPlugin):
 
 		for p in plugins.loadedPlugins:
 			if p.getName() == pluginName:
-				print(self.getRequestDataDict())
 				p.doAction(actionName, self.getRequestDataDict())
 				break
 		else:
@@ -359,6 +353,11 @@ class Plugin(flasky.FlaskPlugin):
 							# convert to dict so it can be json-serialized
 							cp['options'].append(toDict(option))
 
+						cp['actions'] = []
+						for a in loadedPlugin.clientActions:
+							cp['actions'].append(toDict(a))
+
+
 		return json.dumps(clients)
 		
 	@flasky.route('/api/clients/<clientID>/', methods=['GET', 'PUT'])
@@ -402,11 +401,17 @@ class Plugin(flasky.FlaskPlugin):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		#@TODO: Implement this function
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
+		for p in plugins.loadedPlugins:
+			if p.getName() == pluginName:
+				p.doAction(actionName, self.getRequestDataDict(), clientID)
+				break
+		else:
+			return errorToJSON(
+				'Unknown plugin',
+				'I don\'t know what "%s" is :(' % pluginName
+			)
+
+		return ''
 
 
 

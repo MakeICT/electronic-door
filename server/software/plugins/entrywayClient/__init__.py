@@ -42,7 +42,6 @@ class Plugin(plugins.ClientPlugin):
 		]
 	
 	def sendUnlock(self, parameters, client=None):
-		print(parameters)
 		self.systemEvent.emit(events.AuthorizationGrant(None, client))
 
 	def handleSystemEvent(self, event):
