@@ -149,18 +149,41 @@ module.exports = {
 												if(!userInDB || !userInDB.userID){
 													backend.error('User creation must have failed? ' + user.email);
 												}else{
+													var waGroups = [];
+													// backend.log(contact["Group participation"].length)
+													// backend.log(contact["Group participation"])
+													for(var k=0; k<contact["Group participation"].length; k++){
+														// backend.log("WA-Group: " + contact["Group participation"][k].Label)
+														waGroups.push("WA-Group: " + contact["Group participation"][k].Label)
+													}
+													// backend.log(waGroups)
 													var newGroupName = "WA-Level: " + level;
 													backend.getUserGroups(userInDB.userID, function(groups){
 														for(var i=0; i<groups.length; i++){
 															if(!groups[i].enrolled) continue;
 															var groupName = groups[i].name;
-
-															// remove user from all of the WA groups they are in if they are not the current group
+															// remove user from all of the WA level groups they are in if they are not the current group
 															if(groupName.indexOf("WA-Level: ") == 0){
 																if(groupName != newGroupName){
 																	backend.setGroupEnrollment(userInDB.userID, groupName, false);
 																}else{
 																	alreadyEnrolledInCorrectGroup = true;
+																}
+															}
+														}
+														//add user to groups based on WA Member Groups they are currently a part of
+														for(var i=0; i<waGroups.length; i++){
+															var groupName = waGroups[i];
+			
+															backend.addGroup(groupName, 'WildApricot Member Group');
+															backend.setGroupEnrollment(userInDB.userID, groupName, true)
+														}
+														//remove user from WA Member groups that they are not currently a part of 
+														for(var i=0; i<groups.length; i++){
+															if(groups[i].name.indexOf("WA-Group:") == 0){
+																if(!groups[i].enrolled) continue;
+																if(waGroups.indexOf(groups[i].name) == -1){
+																	backend.setGroupEnrollment(userInDB.userID, groups[i].name, false)
 																}
 															}
 														}
