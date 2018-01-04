@@ -118,39 +118,67 @@ module.exports = {
 									backend.error(stderr);
 									return;
 								}else{
+									var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+									var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0,-1);
+									var filename = localISOTime.replace(/T/, '_').replace(/:/g, '-').substring(0,19);
+
 									backend.debug('Zipping...');
 									var zipProc = child_process.spawn('gzip', [tmpFilePath]);
 									zipProc.stdin.write(stdout);
 									zipProc.stdin.end();
+
+									backend.debug('SCP file: ' + tmpFilePath);
+
+									var scpCMD = 'scp "' + tmpFilePath + '.gz" "security-backup@192.168.9.13:~/' + filename + '.sql.gz"';
+									try{
+										backend.debug('SCP Command: ' + scpCMD);
+										child_process.exec(scpCMD, [], function(error, stdout, stderr){
+											if(error !== null){
+												backend.error('SCP failed: ' + error);
+												backend.error(stderr);
+												return;
+											}else{
+												backend.debug('SCP success');
+												backend.log('Local backup finished');
+											}
+										});
+									}catch(exc){
+										backend.debug('SCP Error: ' + exc);
+									}
+
 									
-									var drive = google.drive({ version: 'v2'});
-									var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
-									var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0,-1);
-									var filename = localISOTime.replace(/T/, '_').replace(/:/g, '-').substring(0,19);
+									try{
+										var drive = google.drive({ version: 'v2'});
 									
-									backend.debug('Uploading...');
-									drive.files.insert({
-										auth: oauth2Client,
-										resource: {
-											title: filename + '.sql.gz',
-											mimeType: 'application/x-gzip',
-											parents: [{
-												'kind': 'drive#fileLink',
-												'id': settings['Folder ID'],
-											}],
-										}, media: {
-											body: fs.createReadStream(tmpFilePath + '.gz'),
-											mimeType: 'application/x-gzip',
-										}
-									}, function(error, response){
-										if(error){
-											backend.error(error);
-										}else{
-											backend.log('Backup generated and uploaded! ' + filename + '.sql.gz');
-											fs.unlink(tmpFilePath + '.gz');
-											cleanupCallback();
-										}
-									});
+										backend.debug('Uploading...');
+										drive.files.insert({
+											auth: oauth2Client,
+											resource: {
+												title: filename + '.sql.gz',
+												mimeType: 'application/x-gzip',
+													parents: [{
+													'kind': 'drive#fileLink',
+													'id': settings['Folder ID'],
+												}],
+											}, media: {
+												body: fs.createReadStream(tmpFilePath + '.gz'),
+												mimeType: 'application/x-gzip',
+											}
+										}, function(error, response){
+											if(error){
+												backend.debug('Google drive error: ' + error);
+												backend.error(error);
+											}else{
+												backend.log('Backup generated and uploaded! ' + filename + '.sql.gz');
+												try{
+													fs.unlink(tmpFilePath + '.gz');
+												}catch(exc){}
+												cleanupCallback();
+											}
+										});
+									}catch(exc){
+										backend.debug('Google drive error: ' + exc);
+									}
 								}
 							});
 						
