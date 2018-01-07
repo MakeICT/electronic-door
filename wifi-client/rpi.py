@@ -8,19 +8,17 @@ Authors:
 	Rye Kennedy <ryekennedy@gmail.com>
 	Christian Kindel <iceman81292@gmail.com>
 '''
-import MFRC522 as NFC
-print("imported mfrc522")
+from MFRC522 import MFRC522
 import time, subprocess
-print("imported time, subprocess")
 import wiringpi
-print("imported wiringpi")
-import RPi.GPIO as GPIO  
-print("imported rpi.gpio")
-GPIO.setmode(GPIO.BCM) 
+# import RPi.GPIO as GPIO  
+# GPIO.setmode(GPIO.BCM)
+
 
 class InterfaceControl(object):
 	def __init__(self):
 		Pi_rev = wiringpi.piBoardRev()	#@TODO: use this?
+
 		self.GPIOS = {
 			'internal_buzzer': 11,
 			'latch': 7,
@@ -36,24 +34,31 @@ class InterfaceControl(object):
 		wiringpi.pinMode(self.GPIOS['unlock_LED'], 1)
 		wiringpi.pinMode(self.GPIOS['deny_LED'], 1)
 		wiringpi.pinMode(self.GPIOS['latch'], 1)
+
 		wiringpi.pinMode(self.GPIOS['internal_buzzer'], 1)
 		wiringpi.pinMode(self.GPIOS['doorStatus1'], 0)
 		wiringpi.pinMode(self.GPIOS['doorStatus2'], 0)
 		
-		GPIO.setup(9, GPIO.IN)  
-		GPIO.setup(10, GPIO.IN)  
+		# GPIO.setup(9, GPIO.IN)  
+		# GPIO.setup(10, GPIO.IN)  
 		#GPIO.add_event_detect(9, GPIO.FALLING, callback=self.arm_security, bouncetime=300)
 		#Set up Hardware PWM - Only works on GPIO 18 (Phys 12)
 		wiringpi.pwmSetMode(0)				# set PWM to markspace mode
-		wiringpi.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
+		# wiringpi.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
 		wiringpi.pwmSetClock(750)   			# set HW PWM clock division (frequency)
 		wiringpi.pwmWrite(self.GPIOS['buzzer'], 0)
 		
-		proc = subprocess.Popen(['nfc-list'], stderr=subprocess.PIPE)
-		result = proc.stderr.read()
-		self.PN532 = False if 'Timeout' in result else True
-		if not self.PN532:
-			self.nfc = NFC.MFRC522()
+		# proc = subprocess.Popen(['nfc-list'], stderr=subprocess.PIPE)
+		# result = proc.stderr.read()
+		# self.PN532 = False if 'Timeout' in result else True
+		# if not self.PN532:
+		# 	self.nfc = NFC.MFRC522()
+		self.nfc = MFRC522.Reader(0,0,22)
+		self.PN532 = False
+
+		# print("breakpoint reached")
+		# time.sleep(20000)
+
 #		self.setInterrupts()
 				
 #	def arm_security():
@@ -83,7 +88,7 @@ class InterfaceControl(object):
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
 				# If a card is found
-				print(status)
+				# print(status)
 				if status == self.nfc.MI_OK:
 					# Get the UID of the card
 					(status,uid) = self.nfc.MFRC522_Anticoll()
@@ -189,4 +194,5 @@ class InterfaceControl(object):
 		for pin in self.GPIOS:
 			wiringpi.pinMode(self.GPIOS[pin], 0)
 
+print("reached stuff")
 interfaceControl = InterfaceControl()

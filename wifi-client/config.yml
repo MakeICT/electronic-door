@@ -20,13 +20,13 @@ logging:
             class: logging.FileHandler
             level: DEBUG
             formatter: simpleFormatter
-            filename: /home/pi/code/makeictelectronicdoor/logs/door-lock.log
+            filename: /home/pi/code/electronic-door/wifi-client/logs/door-lock.log
 
         enrollFileHandler: 
             class: logging.FileHandler
             level: DEBUG
             formatter: simpleFormatter
-            filename: /home/pi/code/makeictelectronicdoor/logs/enroll.log
+            filename: /home/pi/code/electronic-door/wifi-client/logs/enroll.log
 
     loggers: 
         door-lock:

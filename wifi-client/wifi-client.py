@@ -12,18 +12,13 @@ Authors:
 '''
 
 import os, time, sys, signal, subprocess, logging, logging.config, yaml
-print("standard imports finished")
-
 # from backend import backend
 from rpi import interfaceControl
-print("rpi import finished")
 from MCP_API import McpApiClient
-print("mcp api import finished")
 
-print("imports finished")
 Dir = os.path.realpath(os.path.dirname(__file__))
 config = os.path.join(Dir, 'config.yml')
-global_config = yaml.load(file(config, 'r'))
+global_config = yaml.load(open(config, 'r'))
 
 lastDoorStatus = [0,0]
 logging.config.dictConfig(global_config['logging'])
@@ -104,7 +99,6 @@ def checkCards():
 	# 		backend.log('deny', nfcID)
 	# 		interfaceControl.showBadCardRead()
 
-print("starting loop")
 log.debug("Entering monitor loop")
 interfaceControl.setPowerStatus(True)
 while True:
