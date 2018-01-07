@@ -57,7 +57,7 @@ class InterfaceControl(object):
 #		self.setInterrupts()
 				
 #	def arm_security():
-#                print "big button pressed!"
+#                print("big button pressed!")
 #		#subprocess.Popen(['/home/pi/code/makeictelectronicdoor/vista/arm-away.sh'])
 #		return True
 
@@ -83,13 +83,13 @@ class InterfaceControl(object):
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
 				# If a card is found
-				print status
+				print(status)
 				if status == self.nfc.MI_OK:
 					# Get the UID of the card
 					(status,uid) = self.nfc.MFRC522_Anticoll()
 				# If we have the UID, continue
 				if status == self.nfc.MI_OK:
-					# Print UID
+					# printUID)
 					return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
 			loops += 1
 			time.sleep(0)

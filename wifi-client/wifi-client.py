@@ -15,8 +15,8 @@ import os, time, sys, signal, subprocess, logging, logging.config, yaml
 print("standard imports finished")
 
 # from backend import backend
-# from rpi import interfaceControl
-# print("rpi import finished")
+from rpi import interfaceControl
+print("rpi import finished")
 from MCP_API import McpApiClient
 print("mcp api import finished")
 
