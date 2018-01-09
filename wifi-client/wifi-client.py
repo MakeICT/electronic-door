@@ -16,6 +16,9 @@ import os, time, sys, signal, subprocess, logging, logging.config, yaml
 from rpi import interfaceControl
 from MCP_API import McpApiClient
 
+import RPi.GPIO as GPIO
+import MFRC522
+
 Dir = os.path.realpath(os.path.dirname(__file__))
 config = os.path.join(Dir, 'config.yml')
 global_config = yaml.load(open(config, 'r'))
@@ -23,6 +26,10 @@ global_config = yaml.load(open(config, 'r'))
 lastDoorStatus = [0,0]
 logging.config.dictConfig(global_config['logging'])
 log=logging.getLogger('door-lock')
+
+API = McpApiClient()
+API.authenticate_with_contact_credentials('mcpapiuser@makeict.org', 'AC66WfVYUyw4')
+
 
 log.info("==========[door-lock.py started]==========")
 def signal_term_handler(sig, frame):
@@ -65,15 +72,16 @@ def checkCards():
 	#interfaceControl.setPowerStatus(False)
 
 	if nfcID != None:
-		authorized = API.CheckAuthorization(nfcID, 5)
+		print(str(nfcID))
+		authorized = API.CheckAuthorization('7cc09089', 5)
 		if not authorized:
-	 		log.warning("DENIED card  ID: %s" % nfcID)
+	 		log.warning("DENIED card  ID: %s" % str(nfcID))
 	 		interfaceControl.unlockMachine()
-	 		print('not authorized')
+	 		# print('not authorized')
 		else:
-			log.info("ACCEPTED card ID: %s" % nfcID)
+			log.info("ACCEPTED card ID: %s" % str(nfcID))
 			interfaceControl.showBadCardRead()
-			print('authorized')
+			# print('authorized')
 
 	# if nfcID != None:
 	# 	log.info("Scanned card ID: %s" % nfcID)

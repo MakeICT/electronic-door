@@ -21,5 +21,5 @@ API.authenticate_with_contact_credentials('mcpapiuser@makeict.org', 'AC66WfVYUyw
 
 # print(API.IsUserInGroup(100, 21))
 
-print(API.CheckAuthorization('aa853ac4000000', 5))
-print(API.CheckAuthorization('aa853ac4000000', 21))
+print(API.CheckAuthorization('7cc09089', 5))
+print(API.CheckAuthorization('7cc09089', 21))

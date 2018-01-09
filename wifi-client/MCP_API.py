@@ -133,7 +133,8 @@ class McpApiClient(object):
 
 	def CheckAuthorization(self, nfcID, groupID):
 		user = self.GetUserByNFC(nfcID)
-		if self.IsUserInGroup(user['userID'], groupID):
-			return True
+		if user:
+			if self.IsUserInGroup(user['userID'], groupID):
+				return True
 
 		return False

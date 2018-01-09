@@ -10,14 +10,14 @@ Authors:
 '''
 from MFRC522 import MFRC522
 import time, subprocess
-import wiringpi
-# import RPi.GPIO as GPIO  
+#import wiringpi
+import RPi.GPIO as GPIO  
 # GPIO.setmode(GPIO.BCM)
 
 
 class InterfaceControl(object):
 	def __init__(self):
-		Pi_rev = wiringpi.piBoardRev()	#@TODO: use this?
+		# Pi_rev = ##wiringpi.piBoardRev()	#@TODO: use this?
 
 		self.GPIOS = {
 			'internal_buzzer': 11,
@@ -30,30 +30,30 @@ class InterfaceControl(object):
 		}
 		
 		#set up I/O pins
-		wiringpi.wiringPiSetupPhys()
-		wiringpi.pinMode(self.GPIOS['unlock_LED'], 1)
-		wiringpi.pinMode(self.GPIOS['deny_LED'], 1)
-		wiringpi.pinMode(self.GPIOS['latch'], 1)
+		#wiringpi.#wiringpiSetupPhys()
+		#wiringpi.pinMode(self.GPIOS['unlock_LED'], 1)
+		#wiringpi.pinMode(self.GPIOS['deny_LED'], 1)
+		#wiringpi.pinMode(self.GPIOS['latch'], 1)
 
-		wiringpi.pinMode(self.GPIOS['internal_buzzer'], 1)
-		wiringpi.pinMode(self.GPIOS['doorStatus1'], 0)
-		wiringpi.pinMode(self.GPIOS['doorStatus2'], 0)
+		#wiringpi.pinMode(self.GPIOS['internal_buzzer'], 1)
+		#wiringpi.pinMode(self.GPIOS['doorStatus1'], 0)
+		#wiringpi.pinMode(self.GPIOS['doorStatus2'], 0)
 		
 		# GPIO.setup(9, GPIO.IN)  
 		# GPIO.setup(10, GPIO.IN)  
 		#GPIO.add_event_detect(9, GPIO.FALLING, callback=self.arm_security, bouncetime=300)
 		#Set up Hardware PWM - Only works on GPIO 18 (Phys 12)
-		wiringpi.pwmSetMode(0)				# set PWM to markspace mode
-		# wiringpi.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
-		wiringpi.pwmSetClock(750)   			# set HW PWM clock division (frequency)
-		wiringpi.pwmWrite(self.GPIOS['buzzer'], 0)
+		#wiringpi.pwmSetMode(0)				# set PWM to markspace mode
+		# #wiringpi.pinMode(self.GPIOS['buzzer'], 2)      # set pin to PWM mode
+		#wiringpi.pwmSetClock(750)   			# set HW PWM clock division (frequency)
+		#wiringpi.pwmWrite(self.GPIOS['buzzer'], 0)
 		
 		# proc = subprocess.Popen(['nfc-list'], stderr=subprocess.PIPE)
 		# result = proc.stderr.read()
 		# self.PN532 = False if 'Timeout' in result else True
 		# if not self.PN532:
 		# 	self.nfc = NFC.MFRC522()
-		self.nfc = MFRC522.Reader(0,0,22)
+		self.nfc = MFRC522()
 		self.PN532 = False
 
 		# print("breakpoint reached")
@@ -67,7 +67,7 @@ class InterfaceControl(object):
 #		return True
 
 #	def setInterrupts(self):					
-#		wiringpi.wiringPiISR(self.GPIOS['doorStatus1'], 2,self.arm_security)
+#		#wiringpi.#wiringpiISR(self.GPIOS['doorStatus1'], 2,self.arm_security)
 	def nfcGetUID(self):
 		'''
 		Read an NFC card if one is in range and return its UID
@@ -109,7 +109,7 @@ class InterfaceControl(object):
 		'''
 		if 'LED' in componentID:
 			status = not status
-		wiringpi.digitalWrite(self.GPIOS[componentID], status)
+		#wiringpi.digitalWrite(self.GPIOS[componentID], status)
 
 	def input(self, componentID):
 		'''
@@ -121,7 +121,7 @@ class InterfaceControl(object):
 		  True if pin is high
 		  False if pin is low
 		'''
-		return wiringpi.digitalRead(self.GPIOS[componentID])
+		return #wiringpi.digitalRead(self.GPIOS[componentID])
 
 	def setPowerStatus(self, powerIsOn):
 		'''
@@ -141,11 +141,13 @@ class InterfaceControl(object):
 		  buzzerOn (bool): True to turn on buzzer, False to turn off
 		'''
 		if buzzerOn:
-			wiringpi.pwmWrite(self.GPIOS['buzzer'], 100)
+			pass
+			#wiringpi.pwmWrite(self.GPIOS['buzzer'], 100)
 		else:
-			wiringpi.pwmWrite(self.GPIOS['buzzer'], 0)
+			pass
+			#wiringpi.pwmWrite(self.GPIOS['buzzer'], 0)
 
-	def unlockDoor(self, timeout=5):
+	def unlockMachine(self, timeout=5):
 		'''
 		Unlock door, activate unlock_LED and buzzer, and relock door after timeout
 		Args:
@@ -192,7 +194,8 @@ class InterfaceControl(object):
 		Reset status of GPIO pins before terminating
 		'''
 		for pin in self.GPIOS:
-			wiringpi.pinMode(self.GPIOS[pin], 0)
+			pass
+			#wiringpi.pinMode(self.GPIOS[pin], 0)
 
 print("reached stuff")
 interfaceControl = InterfaceControl()
