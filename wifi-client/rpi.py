@@ -87,15 +87,43 @@ class InterfaceControl(object):
 			else:
 				# Scan for cards    
 				(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
+				# print("tag type:", TagType)
 				# If a card is found
 				# print(status)
+				# Get the UID of the card
+				(status,uid) = self.nfc.MFRC522_Anticoll()
+				real_uid = None
 				if status == self.nfc.MI_OK:
-					# Get the UID of the card
-					(status,uid) = self.nfc.MFRC522_Anticoll()
+					# Select the scanned tag
+					# self.nfc.MFRC522_SelectTag(uid)
+					try:
+						# print("trying 7-byte")
+						real_uid = self.nfc.MFRC522_GetUID(uid)
+					except:
+						# print("7-byte failed")
+						try:
+							# print("trying 4-byte")
+							# This is the default key for authentication
+
+							(status,TagType) = self.nfc.MFRC522_Request(self.nfc.PICC_REQIDL)
+							(status,uid) = self.nfc.MFRC522_Anticoll()
+
+							real_uid = uid[0:4]
+						except:
+							# print("4-byte failed")
+							real_uid = None
+							raise
 				# If we have the UID, continue
-				if status == self.nfc.MI_OK:
-					# printUID)
-					return format(uid[0],'02x')+format(uid[1], '02x')+format(uid[2], '02x')+format(uid[3],'02x')
+
+				# print('uid:', uid)
+				# print('real_uid:',real_uid)
+				if real_uid:
+					if len(real_uid) == 7:
+						return format(real_uid[0],'02x') + format(real_uid[1],'02x')+format(real_uid[2], '02x')+format(real_uid[3], '02x')+format(real_uid[4],'02x') + format(real_uid[5],'02x') + format(real_uid[6],'02x')
+					elif len(real_uid) == 4:
+						return format(real_uid[0],'02x') + format(real_uid[1],'02x')+format(real_uid[2], '02x')+format(real_uid[3], '02x')
+					else:
+						print("invalid uid length!")
 			loops += 1
 			time.sleep(0)
 		return None

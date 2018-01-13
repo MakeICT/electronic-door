@@ -28,7 +28,7 @@ logging.config.dictConfig(global_config['logging'])
 log=logging.getLogger('door-lock')
 
 API = McpApiClient()
-API.authenticate_with_contact_credentials('mcpapiuser@makeict.org', 'AC66WfVYUyw4')
+API.authenticate_with_contact_credentials(global_config['client']['username'], global_config['client']['password'])
 
 
 log.info("==========[door-lock.py started]==========")
@@ -72,8 +72,9 @@ def checkCards():
 	#interfaceControl.setPowerStatus(False)
 
 	if nfcID != None:
+		nfcID = str(nfcID).ljust(14, '0')
 		print(str(nfcID))
-		authorized = API.CheckAuthorization('7cc09089', 5)
+		authorized = API.CheckAuthorization(nfcID, 1348)
 		if not authorized:
 	 		log.warning("DENIED card  ID: %s" % str(nfcID))
 	 		interfaceControl.unlockMachine()

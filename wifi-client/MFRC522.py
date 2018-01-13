@@ -341,6 +341,7 @@ class MFRC522:
     i = 0
     if len(backData) == 16:
       print ("Sector "+str(blockAddr)+" "+str(backData))
+    return backData
   
   def MFRC522_Write(self, blockAddr, writeData):
     buff = []
@@ -379,6 +380,16 @@ class MFRC522:
         else:
             print ("Authentication error")
         i = i+1
+
+  def MFRC522_GetUID(self, uid):
+    d = self.MFRC522_Read(0)
+    # d2 = self.MFRC522_Read(1)
+    # print(d)
+    # print(d2)
+    uid = [d[0],d[1],d[2], d[4], d[5], d[6], d[7]]
+    # print(uid)
+    return uid
+
 
   def MFRC522_Init(self):
     GPIO.output(self.NRSTPD, 1)

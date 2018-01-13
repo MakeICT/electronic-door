@@ -1,3 +1,7 @@
+client:
+    username: 
+    password: 
+    
 logging:
     version: 1
 

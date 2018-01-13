@@ -2,7 +2,7 @@ from MCP_API import McpApiClient
 
 API = McpApiClient()
 
-API.authenticate_with_contact_credentials('mcpapiuser@makeict.org', 'AC66WfVYUyw4')
+API.authenticate_with_contact_credentials('mcpapiuser@makeict.org', 'dS78Mxq8Qj5s')
 
 # result = API.execute_request("https://security.makeict.org/api/groups/888", method="DELETE")
 
