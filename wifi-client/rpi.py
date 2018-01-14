@@ -21,7 +21,10 @@ class InterfaceControl(object):
 
 		self.GPIOS = {
 			'internal_buzzer': 11,
-			'latch': 7,
+			'latch': 37,
+			'red_LED':35,
+			'yellow_LED':33,
+			'green_LED':31,
 			'unlock_LED': 15,
 			'deny_LED': 13,
 			'buzzer': 12, 
@@ -39,6 +42,7 @@ class InterfaceControl(object):
 		#wiringpi.pinMode(self.GPIOS['doorStatus1'], 0)
 		#wiringpi.pinMode(self.GPIOS['doorStatus2'], 0)
 		
+
 		# GPIO.setup(9, GPIO.IN)  
 		# GPIO.setup(10, GPIO.IN)  
 		#GPIO.add_event_detect(9, GPIO.FALLING, callback=self.arm_security, bouncetime=300)
@@ -55,6 +59,11 @@ class InterfaceControl(object):
 		# 	self.nfc = NFC.MFRC522()
 		self.nfc = MFRC522()
 		self.PN532 = False
+
+		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)	
+		GPIO.setup(self.GPIOS['red_LED'], GPIO.OUT)	
+		GPIO.setup(self.GPIOS['yellow_LED'], GPIO.OUT)	
+		GPIO.setup(self.GPIOS['green_LED'], GPIO.OUT)	
 
 		# print("breakpoint reached")
 		# time.sleep(20000)
@@ -128,6 +137,9 @@ class InterfaceControl(object):
 			time.sleep(0)
 		return None
 
+	def setPinMode(self, componentID, mode):
+		GPIO.setup(self.GPIOS[componentID], GPIO.OUT)	
+
 	def output(self, componentID, status):
 		'''
 		Write to a GPIO pin set as an output
@@ -135,9 +147,10 @@ class InterfaceControl(object):
 		  componentID (int): pin number of output pin
 		  status (bool): True to turn on, False to turn off
 		'''
-		if 'LED' in componentID:
-			status = not status
+		# if 'LED' in componentID:
+		# 	status = not status
 		#wiringpi.digitalWrite(self.GPIOS[componentID], status)
+		GPIO.output(self.GPIOS[componentID], status)
 
 	def input(self, componentID):
 		'''
@@ -151,16 +164,32 @@ class InterfaceControl(object):
 		'''
 		return #wiringpi.digitalRead(self.GPIOS[componentID])
 
+	def showActive(self):
+		self.output('green_LED', True)	
+		self.output('yellow_LED', False)	
+		self.output('red_LED', False)
+
+	def showBusy(self):
+		self.output('green_LED', False)
+		self.output('yellow_LED', True)	
+		self.output('red_LED', False)	
+
+	def showInactive(self):
+		self.output('green_LED', False)
+		self.output('yellow_LED', False)	
+		self.output('red_LED', True)
+
 	def setPowerStatus(self, powerIsOn):
 		'''
 		Set power LED state
 		Args:
 		  powerIsOn (bool): True to turn on LED, False to turn off
 		'''
-		self.output('deny_LED', powerIsOn)
-		if powerIsOn:
-			self.output('unlock_LED', False)
-			self.output('latch', False)
+		# self.output('deny_LED', powerIsOn)
+		# if powerIsOn:
+		# 	self.output('unlock_LED', False)
+		# 	self.output('latch', False)
+		pass
 
 	def setBuzzerOn(self, buzzerOn):
 		'''
@@ -182,14 +211,15 @@ class InterfaceControl(object):
 		  timeout (int): length of time to keep the door unlocked (default 2)
 		'''
 		self.output('latch', True)
-		self.output('unlock_LED', True)
-		self.output('internal_buzzer', True)
-		self.setBuzzerOn(True)
+		self.showActive()
+		# self.output('internal_buzzer', True)
+		# self.setBuzzerOn(True)
 		time.sleep(timeout)
 		self.output('latch', False)
-		self.output('internal_buzzer', False)
-		self.output('unlock_LED', False)
-		self.setBuzzerOn(False)
+		self.showInactive()
+		# self.output('internal_buzzer', False)
+		# self.output('unlock_LED', False)
+		# self.setBuzzerOn(False)
 
 	def checkDoors(self):
 		'''
@@ -210,11 +240,11 @@ class InterfaceControl(object):
 		  blinkPeriod (float): on/off duration in seconds (default 0.25)
 		'''
 		for i in range(blinkCount):
-			self.output('deny_LED', True)
-			self.setBuzzerOn(True)
+			self.output('red_LED', True)
+			# self.setBuzzerOn(True)
 			time.sleep(blinkPeriod)
-			self.output('deny_LED', False)
-			self.setBuzzerOn(False)
+			self.output('red_LED', False)
+			# self.setBuzzerOn(False)
 			time.sleep(blinkPeriod)
 
 	def cleanup(self):

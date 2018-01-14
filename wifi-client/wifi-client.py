@@ -74,14 +74,18 @@ def checkCards():
 	if nfcID != None:
 		nfcID = str(nfcID).ljust(14, '0')
 		print(str(nfcID))
+		interfaceControl.showBusy()
 		authorized = API.CheckAuthorization(nfcID, 1348)
 		if not authorized:
-	 		log.warning("DENIED card  ID: %s" % str(nfcID))
-	 		interfaceControl.unlockMachine()
+			interfaceControl.showInactive()
+			log.warning("DENIED card  ID: %s" % str(nfcID))
+			interfaceControl.showBadCardRead()
+
 	 		# print('not authorized')
 		else:
 			log.info("ACCEPTED card ID: %s" % str(nfcID))
-			interfaceControl.showBadCardRead()
+			interfaceControl.unlockMachine()
+
 			# print('authorized')
 
 	# if nfcID != None:
