@@ -247,6 +247,8 @@ class InterfaceControl(object):
 			# self.setBuzzerOn(False)
 			time.sleep(blinkPeriod)
 
+		self.showInactive()
+
 	def cleanup(self):
 		'''
 		Reset status of GPIO pins before terminating
