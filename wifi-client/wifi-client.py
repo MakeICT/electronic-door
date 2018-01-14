@@ -88,6 +88,10 @@ def checkCards():
 
 			# print('authorized')
 
+def checkButtons():
+	if interfaceControl.checkOffButton():
+		interfaceControl.lockMachine()
+
 	# if nfcID != None:
 	# 	log.info("Scanned card ID: %s" % nfcID)
 	# 	user = backend.getUserByKeyID(nfcID)	
@@ -117,6 +121,7 @@ interfaceControl.setPowerStatus(True)
 while True:
 	try:
 		# checkDoors()
+		checkButtons()
 		checkCards()
 		time.sleep(0)
 

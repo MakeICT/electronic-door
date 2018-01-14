@@ -30,6 +30,7 @@ class InterfaceControl(object):
 			'buzzer': 12, 
 			'doorStatus1': 19,
 			'doorStatus2': 21,
+			'offButton': 29,
 		}
 		
 		#set up I/O pins
@@ -63,7 +64,9 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['latch'], GPIO.OUT)	
 		GPIO.setup(self.GPIOS['red_LED'], GPIO.OUT)	
 		GPIO.setup(self.GPIOS['yellow_LED'], GPIO.OUT)	
-		GPIO.setup(self.GPIOS['green_LED'], GPIO.OUT)	
+		GPIO.setup(self.GPIOS['green_LED'], GPIO.OUT)
+
+		GPIO.setup(self.GPIOS['offButton'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 		# print("breakpoint reached")
 		# time.sleep(20000)
@@ -162,7 +165,8 @@ class InterfaceControl(object):
 		  True if pin is high
 		  False if pin is low
 		'''
-		return #wiringpi.digitalRead(self.GPIOS[componentID])
+		#return wiringpi.digitalRead(self.GPIOS[componentID])
+		return GPIO.input(self.GPIOS[componentID])
 
 	def showActive(self):
 		self.output('green_LED', True)	
@@ -214,12 +218,20 @@ class InterfaceControl(object):
 		self.showActive()
 		# self.output('internal_buzzer', True)
 		# self.setBuzzerOn(True)
-		time.sleep(timeout)
-		self.output('latch', False)
-		self.showInactive()
+		# time.sleep(timeout)
+		# self.output('latch', False)
+		# self.showInactive()
 		# self.output('internal_buzzer', False)
 		# self.output('unlock_LED', False)
 		# self.setBuzzerOn(False)
+
+	def lockMachine(self):
+		print("locking machine")
+		self.output('latch', False)
+		self.showInactive()
+
+	def checkOffButton(self):
+		return not self.input('offButton')
 
 	def checkDoors(self):
 		'''
