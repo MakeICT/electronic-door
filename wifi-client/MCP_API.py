@@ -39,7 +39,7 @@ class McpApiClient(object):
 
 		# print(request.__dict__)
 		response = urllib.request.urlopen(request)
-		print(response)
+		# print(response)
 		self.session_cookie = response.headers.get('Set-Cookie')
 		# print(response.headers)
 		# print(self.session_cookie)

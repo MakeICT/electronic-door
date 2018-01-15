@@ -273,8 +273,10 @@ class InterfaceControl(object):
 		'''
 		Reset status of GPIO pins before terminating
 		'''
-		for pin in self.GPIOS:
-			pass
-			#wiringpi.pinMode(self.GPIOS[pin], 0)
+		GPIO.cleanup()
+		# for pin in self.GPIOS:
+
+		# 	pass
+		# 	#wiringpi.pinMode(self.GPIOS[pin], 0)
 
 interfaceControl = InterfaceControl()
