@@ -68,6 +68,8 @@ class InterfaceControl(object):
 
 		GPIO.setup(self.GPIOS['offButton'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+		self.showInactive()
+
 		# print("breakpoint reached")
 		# time.sleep(20000)
 
@@ -168,17 +170,23 @@ class InterfaceControl(object):
 		#return wiringpi.digitalRead(self.GPIOS[componentID])
 		return GPIO.input(self.GPIOS[componentID])
 
+	def getState(self):
+		return self.state
+
 	def showActive(self):
+		self.state = 'active'
 		self.output('green_LED', True)	
 		self.output('yellow_LED', False)	
 		self.output('red_LED', False)
 
 	def showBusy(self):
+		self.state = 'busy'
 		self.output('green_LED', False)
 		self.output('yellow_LED', True)	
 		self.output('red_LED', False)	
 
 	def showInactive(self):
+		self.state = 'inactive'
 		self.output('green_LED', False)
 		self.output('yellow_LED', False)	
 		self.output('red_LED', True)
@@ -226,7 +234,7 @@ class InterfaceControl(object):
 		# self.setBuzzerOn(False)
 
 	def lockMachine(self):
-		print("locking machine")
+		# print("locking machine")
 		self.output('latch', False)
 		self.showInactive()
 
@@ -269,5 +277,4 @@ class InterfaceControl(object):
 			pass
 			#wiringpi.pinMode(self.GPIOS[pin], 0)
 
-print("reached stuff")
 interfaceControl = InterfaceControl()
