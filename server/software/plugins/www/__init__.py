@@ -141,16 +141,14 @@ class Plugin(flasky.FlaskPlugin):
 			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
 		)
 
-	@flasky.route('/api/users/<userID>/', methods=['POST'])
+	@flasky.route('/api/users/<userID>/', methods=['PUT'])
 	def api_updateUser(self, userID):
 		if not self.checkUserAuth():
 			return unauthorizedJSON()
 
-		#@TODO: Implement this function
-		return errorToJSON(
-			'API endpoint not implemented',
-			'"%s %s" not yet implemented :(' % (flask.request.method, flask.request.path)
-		)
+		self.db.updateUser(userID, self.getRequestDataDict())
+
+		return ''
 
 	@flasky.route('/api/users/<userID>/password/', methods=['PUT'])
 	def api_updateUserPassword(self, userID):

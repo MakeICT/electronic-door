@@ -180,6 +180,28 @@ class Backend(QtCore.QObject):
 
 		return query.getAllRecords()
 
+	def updateUser(self, userID, userDict):
+		okFields = ['firstName', 'lastName', 'email', 'joinDate', 'birthdate', 'nfcID', 'status']
+		params = []
+
+		sql = 'UPDATE "users" SET '
+
+		for key in okFields:
+			if key in userDict:
+				sql += '"%s" = ?,' % key
+				params.append(userDict[key])
+
+		sql = sql[0:-1] # drop the last comma
+		sql += ' WHERE "userID" = ?'
+		params.append(userID)
+
+		query = self.Query(sql)
+		query.bind(params)
+		query.exec_()
+
+		return query.numRowsAffected() > 0
+
+
 	def addUser(self, userDict):
 		query = self.Query('INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES (:email, :firstName, :lastName, :joinDate)')
 		query.bind(userDict)
@@ -384,9 +406,6 @@ class Backend(QtCore.QObject):
 		q = self.Query('SELECT * FROM users WHERE email = ?', email)
 		q.exec_()
 		return q.getNextRecord()
-
-
-
 
 	'''
 		Groups
