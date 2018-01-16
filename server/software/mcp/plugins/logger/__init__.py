@@ -41,7 +41,7 @@ class Plugin(plugins.Plugin):
 
 	def setOption(self, name, value):
 		if name == 'format':
-			if '%%(message)s' not in value:
+			if '%(message)s' not in value:
 				raise Exception('Invalid log format')
 			else:
 				super().setOption(name, value)
