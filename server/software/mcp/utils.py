@@ -1,6 +1,6 @@
 # -- coding: utf-8 --
 
-from PySide import QtCore
+from PyQt5 import QtCore
 
 class TrackedThread(QtCore.QThread):
 	threads = []

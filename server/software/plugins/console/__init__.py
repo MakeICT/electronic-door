@@ -4,7 +4,7 @@ import sys
 import select
 import time
 
-from PySide import QtCore
+from PyQt5 import QtCore
 
 import utils, events, plugins
 

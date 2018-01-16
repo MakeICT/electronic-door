@@ -4,7 +4,7 @@ import os, logging
 import re
 from importlib.machinery import SourceFileLoader
 
-from PySide import QtCore
+from PyQt5 import QtCore
 
 import plugins, utils, events, backend
 
@@ -18,7 +18,7 @@ def getPluginByName(name):
 			return plugin
 
 class AbstractPlugin(QtCore.QObject):
-	systemEvent = QtCore.Signal(object)
+	systemEvent = QtCore.pyqtSignal(object)
 
 	def __init__(self):
 		super().__init__()
@@ -148,7 +148,6 @@ def loadAllFromPath(base='plugins'):
 			except Exception as exc:
 				print('Failed to load plugin module %s' % path)
 				print(exc)
-				raise exc
 		
 		for name, mod in modules.items():
 			logging.debug('Initializing plugin: %s...' % name)

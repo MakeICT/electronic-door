@@ -2,12 +2,12 @@
 # -- coding: utf-8 --
 
 import sys, signal, logging
-from PySide import QtCore
+from PyQt5 import QtCore
 
 import plugins, events, utils, backend
 
 class MCP(QtCore.QCoreApplication):
-	systemEvent = QtCore.Signal(object)
+	systemEvent = QtCore.pyqtSignal(object)
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -33,6 +33,9 @@ class MCP(QtCore.QCoreApplication):
 		return '<MCP>'
 
 if __name__ == '__main__':
+	logging.basicConfig()
+	logging.getLogger().setLevel(logging.DEBUG)
+
 	if len(sys.argv) < 2:
 		print('Please specify a credentials file.')
 		exit(1)
@@ -47,7 +50,5 @@ if __name__ == '__main__':
 		print(exc)
 		exit(2)
 
-	logging.basicConfig()
-	logging.getLogger().setLevel(logging.DEBUG)
 	app = MCP(sys.argv)
 	app.start()
