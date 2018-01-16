@@ -60,9 +60,11 @@ class Plugin(flasky.FlaskPlugin):
 		root_dir = os.path.dirname(os.path.abspath(__file__))
 		super().__init__(os.path.join(root_dir, 'static'))
 
-		self.db = Backend()
-
-
+	def _loggedInUserToString(self):
+		if 'user' in flask.session and flask.session['user'] is not None:
+			return '"%(firstName)s %(lastName)s" <%(email)s>' % flask.session['user']
+		else:
+			return '<not logged in>'
 
 	'''
 		Static files for WWW browsers
@@ -80,24 +82,28 @@ class Plugin(flasky.FlaskPlugin):
 	'''
 	@flasky.route('/api/login/', methods=['POST', 'DEL'])
 	def api_login(self):
-		flask.session['user'] = self.db.getUserByEmail('admin@makeict.org')
-		return ''
-
+		TEST_DEBUG = True
 		if flask.request.method == 'POST':
 			# login
-			try:
-				inputData = self.getRequestDataDict()
-				if inputData is None or inputData == '':
-					raise Exception('No credentials provided')
-				else:
-					if self.db.checkPassword(inputData['email'], inputData['password']):
-						flask.session['user'] = self.db.getUserByEmail(inputData['email'])
-						return ''
-					else:
-						raise Exception('Bad username or password')
+			if TEST_DEBUG:
+				flask.session['user'] = self.db.getUserByEmail('admin@makeict.org')
 
-			except Exception as exc:
-				return errorToJSON('Login failed', exc)
+			else:
+				try:
+					inputData = self.getRequestDataDict()
+					if inputData is None or inputData == '':
+						raise Exception('No credentials provided')
+					else:
+						if self.db.checkPassword(inputData['email'], inputData['password']):
+							flask.session['user'] = self.db.getUserByEmail(inputData['email'])
+						else:
+							raise Exception('Bad username or password')
+
+				except Exception as exc:
+					return errorToJSON('Login failed', exc)
+
+			self.logger.info('LOGIN: %s from %s' % (self._loggedInUserToString(), flask.request.remote_addr))
+			return ''
 
 		else:
 			# logout
@@ -147,6 +153,7 @@ class Plugin(flasky.FlaskPlugin):
 			return unauthorizedJSON()
 
 		self.db.updateUser(userID, self.getRequestDataDict())
+		self.logger.info('Updated user %s by %s' % (userID, self._loggedInUserToString()))
 
 		return ''
 
@@ -296,7 +303,7 @@ class Plugin(flasky.FlaskPlugin):
 			return ''
 
 		except Exception as exc:
-			print(exc)
+			self.logger.error('Could not save plugin option (%s)' % exc)
 			return errorToJSON('Could not save plugin option', exc)
 		
 	@flasky.route('/api/plugins/<pluginName>/actions/<actionName>/', methods=['POST'])

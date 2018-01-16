@@ -19,12 +19,12 @@ class MCP(QtCore.QCoreApplication):
 			
 		self.systemEvent.connect(self.handleEvent)
 		self.systemEvent.emit(events.Ready(self))
+		logging.info('MCP started!')
 
 	def start(self):
 		return super().exec_()
 
 	def handleEvent(self, event):
-		logging.debug('EVENT: %s' % event)
 		if isinstance(event, events.Exit):
 			utils.TrackedThread.waitForAll()
 			self.quit()
@@ -33,9 +33,6 @@ class MCP(QtCore.QCoreApplication):
 		return '<MCP>'
 
 if __name__ == '__main__':
-	logging.basicConfig()
-	logging.getLogger().setLevel(logging.DEBUG)
-
 	if len(sys.argv) < 2:
 		print('Please specify a credentials file.')
 		exit(1)

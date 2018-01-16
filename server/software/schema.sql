@@ -3,7 +3,7 @@
 -- @author Dominic Canare <dom@makeict.org>
 
 CREATE TYPE USER_STATUS AS ENUM('active', 'probation', 'inactive');
-CREATE TYPE LOG_TYPE AS ENUM('assign', 'activate', 'de-activate', 'unlock', 'deny', 'message', 'error');
+CREATE TYPE LOG_LEVEL AS ENUM('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL');
 
 CREATE TYPE DATA_TYPE AS ENUM('number', 'text', 'boolean', 'hidden', 'password', 'tune');
 
@@ -76,11 +76,8 @@ CREATE TABLE IF NOT EXISTS "pluginOptionValues" (
 CREATE TABLE IF NOT EXISTS logs (
 	"logID" SERIAL PRIMARY KEY,
 	"timestamp" INT NOT NULL,
-	"logType" LOG_TYPE,
-	"code" VARCHAR(256),
-	"userID" INT NULL,
-	"message" VARCHAR(1024) NULL,
-	FOREIGN KEY("userID") REFERENCES users("userID")
+	"logLevel" LOG_LEVEL,
+	"message" TEXT NULL
 );
 
 CREATE TABLE IF NOT EXISTS clients (
@@ -163,6 +160,6 @@ INSERT INTO users ("firstName", "lastName", "email", "status", "joinDate") VALUE
 	('User 1', 'Test', 'test1@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp)),
 	('User 2', 'Test', 'test2@makeict.org', 'active', EXTRACT('epoch' FROM current_timestamp));
 
-INSERT INTO logs ("timestamp", "logType", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'message', 'Database created');
+INSERT INTO logs ("timestamp", "logLevel", "message") VALUES (EXTRACT('epoch' FROM current_timestamp), 'INFO', 'Database created');
 INSERT INTO clients ("clientID", "name") VALUES (1, 'Test client 1');
 INSERT INTO clients ("clientID", "name") VALUES (2, 'Test client 2');

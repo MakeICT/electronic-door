@@ -17,7 +17,7 @@ def getPluginByName(name):
 		if plugin.getName() == name:
 			return plugin
 
-class AbstractPlugin(QtCore.QObject):
+class Plugin(QtCore.QObject):
 	systemEvent = QtCore.pyqtSignal(object)
 
 	def __init__(self):
@@ -28,6 +28,8 @@ class AbstractPlugin(QtCore.QObject):
 		self.actions = []
 		self.defineOptions()
 		self.defineActions()
+
+		self.logger = logging.getLogger(self.getName())
 
 		self.pluginID = self.db.getPluginIDByName(self.getName())
 		if self.pluginID is None:
@@ -43,10 +45,33 @@ class AbstractPlugin(QtCore.QObject):
 		name = re.sub('^[^\\.]*\\.', '', type(self).__module__)
 		return name
 
+	def getOptionObject(self, name):
+		for option in self.options:
+			if option.name == name:
+				return option
+
 	def getOption(self, name):
-		return self.db.getPluginOption(self.getName(), name)
+		val = self.db.getPluginOption(self.getName(), name)
+		if val is None:
+			optionObj = self.getOptionObject(name)
+			if optionObj is not None:
+				return optionObj.defaultValue
+		else:
+			return val
 
 	def setOption(self, name, value):
+		optionObj = self.getOptionObject(name)
+		if optionObj is None:
+			raise Exception('Unknown option: %s' % name)
+
+		if optionObj.allowedValues is not None:
+			if value not in optionObj.allowedValues:
+				raise Exception('Invalid value for option %s = %s' % (name, value))
+		elif optionObj.minimum is not None and value < optionObj.minimum:
+			raise Exception('Invalid value for option %s = %s' % (name, value))
+		elif optionObj.maximum is not None and value > optionObj.maximum:
+			return optionObj.defaultValue
+
 		self.db.setPluginOption(self.getName(), name, value)
 
 	def defineOptions(self):
@@ -72,7 +97,7 @@ class AbstractPlugin(QtCore.QObject):
 	def __str__(self):
 		return '<%s>' % self.getName()
 
-class ClientPlugin(AbstractPlugin):
+class ClientPlugin(Plugin):
 	def __init__(self):
 		self.clientOptions = []
 		self.clientActions = []
@@ -106,7 +131,7 @@ class ClientPlugin(AbstractPlugin):
 				if action.name == actionName:
 					action.callback(parameters, client)
 
-class ThreadedPlugin(AbstractPlugin):
+class ThreadedPlugin(Plugin):
 	def __init__(self):
 		super().__init__()
 		self.thread = utils.SimpleThread(self.run)
@@ -119,6 +144,9 @@ class ThreadedPlugin(AbstractPlugin):
 
 def loadAllFromPath(base='plugins'):
 	global loadedPlugins
+
+	# Load system plugins
+	loadedPlugins.append(logger.Plugin())
 
 	# make a list of directories to check
 	pluginDirs = []
@@ -138,7 +166,6 @@ def loadAllFromPath(base='plugins'):
 
 			# load the module
 			try:
-				print('Loading %s' % p)
 				mod = SourceFileLoader('plugins.%s' % p, os.path.join(path, "__init__.py")).load_module()
 				modules[p] = mod
 
@@ -146,8 +173,7 @@ def loadAllFromPath(base='plugins'):
 				plugins.__dict__[p] = mod
 				pluginDirs.remove(p)
 			except Exception as exc:
-				print('Failed to load plugin module %s' % path)
-				print(exc)
+				logging.error('Failed to load plugin module %s (%s)' % (path, exc))
 		
 		for name, mod in modules.items():
 			logging.debug('Initializing plugin: %s...' % name)
@@ -157,13 +183,14 @@ def loadAllFromPath(base='plugins'):
 				plugin = mod.Plugin()
 				loadedPlugins.append(plugin)
 				logging.debug('Initialized %s' % plugin.getName())
-				print('Initialized %s' % plugin.getName())
+				logging.debug('Initialized %s' % plugin.getName())
 			except Exception as exc:
-				print('Failed to create plugin %s' % name)
-				print(exc)
-				raise exc
+				logging.error('Failed to create plugin %s (%s)' % (name, exc))
 
 	if len(pluginDirs) > 0:
 		logging.error('Failed to load plugin modules: %s' % pluginDirs)
 	
 	return loadedPlugins
+
+# late import (logger requires Plugin class be defined)
+from . import logger

@@ -14,7 +14,6 @@ _routes = {}
 def route(rule, **options):
 	@wraps(rule)
 	def decorator(viewFunc):
-#		print('Wrapping %s => %s' % (rule, viewFunc))
 		@wraps(viewFunc)		
 		def wrapper(*args, **kwargs):
 			return viewFunc(*args, **kwargs)
@@ -83,4 +82,4 @@ class FlaskPlugin(plugins.ThreadedPlugin):
 				shutdown()
 			return ''
 		else:
-			print('hack attempt?')
+			self.logger.warning('hack attempt?')

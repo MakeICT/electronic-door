@@ -32,7 +32,8 @@ class Plugin(plugins.ThreadedPlugin):
 					self.systemEvent.emit(events.Exit(self))
 				else:
 					print('Unknown command: %s' % cmd)
-					self._prompt()
+					
+				self._prompt()
 			else:
 				time.sleep(1)
 
