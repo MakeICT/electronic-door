@@ -4,14 +4,13 @@ import sys
 import select
 import time
 
-from PySide import QtCore
+from PyQt5 import QtCore
 
 import utils, events, plugins, backend
 
 class Plugin(plugins.ClientPlugin):
 	def __init__(self):
 		super().__init__()
-		self.db = backend.Backend()
 		self.systemEvent.emit(events.Ready(self))
 
 	def defineOptions(self):

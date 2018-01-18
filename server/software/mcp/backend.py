@@ -1,4 +1,6 @@
-from PySide import QtCore, QtSql
+from PyQt5 import QtCore, QtSql
+
+import logging
 import bcrypt
 import re
 
@@ -47,32 +49,44 @@ def setCredentials(**kwargs):
 class Query(QtSql.QSqlQuery):
 	def __init__(self, sql, db=None):
 		self.sql = sql
+		self.binds = None # only keeping track for troubleshooting
+
 		if db is not None:
 			super().__init__(db)
 		else:
 			super().__init__()
+
 		self.prepare(sql)
 
 	def bind(self, *values, **kwargs):
 		if len(values) > 0:
 			if isinstance(values[0], dict):
+				self.binds = {}
 				for k,v in values[0].items():
 					if k[0] != ':':
 						k = ':%s' % k
 					self.bindValue(k, v)
+					self.binds[k] = v
 			else:
+				self.binds = []
 				for v in values:
 					if isinstance(v, (list, tuple)):
 						self.bind(*v)
 					else:
 						self.addBindValue(v)
 
+					self.binds.append(v)
+
 		if len(kwargs) > 0:
 			self.bind(kwargs)
 
 	def exec_(self):
 		if not super().exec_():
-			raise Exception(self.lastError())
+			err = self.lastError()
+			logging.error('SQL Error %s\nSQL=%s\ndata=%s' % (err.databaseText(), self.sql, self.binds))
+			return False
+
+			raise Exception(err)
 		return True
 
 	def getAllRecords(self):
@@ -93,11 +107,18 @@ class Query(QtSql.QSqlQuery):
 			record[sqlRecord.fieldName(f)] = sqlRecord.value(f)
 
 		return record
-		
+
 
 class Backend(QtCore.QObject):
-	def __init__(self, connectionName=None):
+	# Database connections are not thread-safe
+	# Right now, this is handled by forcing each plugin to create its own connection
+	# @TODO: automatically create db connections based on thread id
+	def __init__(self, connectionName):
 		super().__init__()
+
+		# It is not recommended to maintain a database connection as a member of a class
+		# See warning: http://doc.qt.io/qt-5/qsqldatabase.html
+		# @TODO: remove db class member
 		if connectionName is None:
 			self.db = QtSql.QSqlDatabase.addDatabase('QPSQL')
 		else:
@@ -172,13 +193,34 @@ class Backend(QtCore.QObject):
 					)'''
 
 			else:
-				print('Unknown search verb: %s' % tag)
+				logging.debug('Unknown search verb: %s' % tag)
 
 		query = self.Query(sql)
 		query.bind(params)
 		query.exec_()
 
 		return query.getAllRecords()
+
+	def updateUser(self, userID, userDict):
+		okFields = ['firstName', 'lastName', 'email', 'joinDate', 'birthdate', 'nfcID', 'status']
+		params = []
+
+		sql = 'UPDATE "users" SET '
+
+		for key in okFields:
+			if key in userDict:
+				sql += '"%s" = ?,' % key
+				params.append(userDict[key])
+
+		sql = sql[0:-1] # drop the last comma
+		sql += ' WHERE "userID" = ?'
+		params.append(userID)
+
+		query = self.Query(sql)
+		query.bind(params)
+		query.exec_()
+
+		return query.numRowsAffected() > 0
 
 	def addUser(self, userDict):
 		query = self.Query('INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES (:email, :firstName, :lastName, :joinDate)')
@@ -269,7 +311,7 @@ class Backend(QtCore.QObject):
 				SELECT value
 				FROM plugins
 					JOIN "pluginOptions" ON plugins."pluginID" = "pluginOptions"."pluginID"
-					LEFT JOIN "pluginOptionValues" ON "pluginOptions"."pluginOptionID" = "pluginOptionValues"."pluginOptionID"
+					JOIN "pluginOptionValues" ON "pluginOptions"."pluginOptionID" = "pluginOptionValues"."pluginOptionID"
 				WHERE plugins.name = ?
 					AND "pluginOptions".name = ?
 				ORDER BY ordinal'''
@@ -295,7 +337,11 @@ class Backend(QtCore.QObject):
 		query.bind(params)
 		query.exec_()
 
-		return query.getNextRecord()['value']
+		results = query.getAllRecords()
+		if len(results) == 0:
+			return None
+		else:
+			return results[0]['value']
 
 	def setPluginOption(self, pluginName, optionName, optionValue, clientID=None):
 		if clientID == None:
@@ -346,7 +392,8 @@ class Backend(QtCore.QObject):
 			raise Exception('Could not set "%s" option of plugin "%s"' % (optionName, pluginName))
 
 	def addPlugin(self, pluginName, options=[], clientOptions=[]):
-		self.db.transaction()
+		db = self.db
+		db.transaction()
 		query = None
 		try:
 			query = self.Query('INSERT INTO plugins (name) VALUES (?)', pluginName)
@@ -366,10 +413,10 @@ class Backend(QtCore.QObject):
 						query.bind(name=option.name, type=option.type, ordinal=10+ordinal)
 						query.exec_()
 
-			self.db.commit()
+			db.commit()
 			return self.getPluginIDByName(pluginName)
 		except Exception as exc:
-			self.db.rollback()
+			db.rollback()
 			raise(exc)
 
 	def getPluginIDByName(self, name):
@@ -384,9 +431,6 @@ class Backend(QtCore.QObject):
 		q = self.Query('SELECT * FROM users WHERE email = ?', email)
 		q.exec_()
 		return q.getNextRecord()
-
-
-
 
 	'''
 		Groups
@@ -511,6 +555,16 @@ class Backend(QtCore.QObject):
 
 		return query.getAllRecords()
 
+	def log(self, level, message):
+		sql = '''
+			INSERT INTO logs
+				("timestamp", "logLevel", "message")
+			VALUES
+				(EXTRACT('epoch' FROM current_timestamp), ?, ?)'''
+
+		query = self.Query(sql)
+		query.bind(level, message)
+		query.exec_()
 
 class Option():
 	def __init__(self, name, dataType, defaultValue, allowedValues=None, minimum=None, maximum=None):
@@ -529,31 +583,3 @@ class Action():
 		self.name = name
 		self.callback = callback
 		self.parameters = parameters
-
-
-
-if __name__ == '__main__':
-	z = Action('a', 'b', 'c', 'd', 'e')
-	z = Action('a', 'b', ['c', 'd', 'e'])
-	exit(0)
-	
-	import sys
-	with open(sys.argv[1], 'r') as dbCredsFile:
-		dbCreds = dbCredsFile.readline().split('\t')
-
-	print('Setting credentials...')
-	setCredentials(username=dbCreds[0].strip(), password=dbCreds[1].strip())
-	
-	print('Connecting...')
-	database = Backend()
-
-	clients = database.getClients()
-
-	for c in clients:
-		print(c)
-		cps = database.getClientPlugins(c['clientID'])
-		print(cps)
-		print('\n')
-
-	print('Done!')
-	app = QtCore.QCoreApplication([])

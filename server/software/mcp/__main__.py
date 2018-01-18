@@ -2,12 +2,12 @@
 # -- coding: utf-8 --
 
 import sys, signal, logging
-from PySide import QtCore
+from PyQt5 import QtCore
 
 import plugins, events, utils, backend
 
 class MCP(QtCore.QCoreApplication):
-	systemEvent = QtCore.Signal(object)
+	systemEvent = QtCore.pyqtSignal(object)
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -19,12 +19,12 @@ class MCP(QtCore.QCoreApplication):
 			
 		self.systemEvent.connect(self.handleEvent)
 		self.systemEvent.emit(events.Ready(self))
+		logging.info('MCP started!')
 
 	def start(self):
 		return super().exec_()
 
 	def handleEvent(self, event):
-		logging.debug('EVENT: %s' % event)
 		if isinstance(event, events.Exit):
 			utils.TrackedThread.waitForAll()
 			self.quit()
@@ -47,7 +47,5 @@ if __name__ == '__main__':
 		print(exc)
 		exit(2)
 
-	logging.basicConfig()
-	logging.getLogger().setLevel(logging.DEBUG)
 	app = MCP(sys.argv)
 	app.start()

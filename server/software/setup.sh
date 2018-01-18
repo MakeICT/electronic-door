@@ -31,8 +31,7 @@ fi
 #############################
 read -p "Install Python dependencies [Y/n]: " response
 if [ "" = "$response" ] || [ "Y" = "$response" ] || [ "y" = "$response" ]; then
-	pip3 install flask flask_socketio eventlet bcrypt
-	sudo apt-get install libqt4-sql-psql
+	pip3 install flask flask_socketio eventlet bcrypt pyqt5
 fi
 
 #############################
