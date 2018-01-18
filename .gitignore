@@ -19,3 +19,9 @@ lcd/.build
 .cli_history
 *.gitignore
 
+vscode.code-workspace/*
+vscode.code-workspace
+server/software/npm-debug.log
+server/software/plugins/mcp-plugin-google-drive-backup/
+server/software/plugins/mcp-plugin-super-serial/
+
