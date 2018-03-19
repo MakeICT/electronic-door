@@ -126,7 +126,7 @@ module.exports = {
 									user.firstName = contact.FirstName;
 									user.lastName = contact.LastName;
 									user.email = contact.Email;
-									user.status = (contact.Status == 'Active') ? 'active' : 'inactive';
+									user.status = (contact.Status == 'Active' && contact['MembershipLevel']['Name'] != 'Non-Member') ? 'active' : 'inactive';
 									
 									for(var j=0; j<contact.FieldValues.length; j++){
 										contact[contact.FieldValues[j].FieldName] = contact.FieldValues[j].Value;
