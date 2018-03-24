@@ -197,7 +197,7 @@ class InterfaceControl(object):
 		Args:
 		  powerIsOn (bool): True to turn on LED, False to turn off
 		'''
-		# self.output('deny_LED', powerIsOn)
+		self.output('red_LED', powerIsOn)
 		# if powerIsOn:
 		# 	self.output('unlock_LED', False)
 		# 	self.output('latch', False)

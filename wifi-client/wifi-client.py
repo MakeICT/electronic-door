@@ -121,9 +121,12 @@ log.debug("Entering monitor loop")
 interfaceControl.setPowerStatus(True)
 while True:
 	try:
-		# checkDoors()
 		checkButtons()
-		checkCards()
+		if interfaceControl.checkPowerSwitch() and interfaceControl.getState() == 'inactive':
+			interfaceControl.setPowerStatus(True)
+			checkCards()
+		else:
+			interfaceControl.setPowerStatus(False)
 		time.sleep(0)
 
 	except KeyboardInterrupt:
