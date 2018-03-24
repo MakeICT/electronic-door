@@ -22,15 +22,15 @@ class InterfaceControl(object):
 		self.GPIOS = {
 			'internal_buzzer': 11,
 			'latch': 37,
-			'red_LED':35,
+			'green_LED':35,
 			'yellow_LED':33,
-			'green_LED':31,
+			'red_LED':31,
 			'unlock_LED': 15,
 			'deny_LED': 13,
 			'buzzer': 12, 
 			'doorStatus1': 19,
 			'doorStatus2': 21,
-			'offButton': 29,
+			'powerSwitch': 29,
 		}
 		
 		#set up I/O pins
@@ -66,7 +66,7 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['yellow_LED'], GPIO.OUT)	
 		GPIO.setup(self.GPIOS['green_LED'], GPIO.OUT)
 
-		GPIO.setup(self.GPIOS['offButton'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		GPIO.setup(self.GPIOS['powerSwitch'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 		self.showInactive()
 
@@ -238,8 +238,8 @@ class InterfaceControl(object):
 		self.output('latch', False)
 		self.showInactive()
 
-	def checkOffButton(self):
-		return not self.input('offButton')
+	def checkPowerSwitch(self):
+		return not self.input('powerSwitch')
 
 	def checkDoors(self):
 		'''

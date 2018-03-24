@@ -71,7 +71,7 @@ def checkCards():
 #	log.debug("Finished NFC read")
 	#interfaceControl.setPowerStatus(False)
 
-	if nfcID != None and interfaceControl.getState() == 'inactive':
+	if nfcID != None and interfaceControl.getState() == 'inactive' and interfaceControl.checkPowerSwitch():
 		nfcID = str(nfcID).ljust(14, '0')
 		interfaceControl.showBusy()
 		authorized = API.CheckAuthorization(nfcID, 1348)
@@ -89,7 +89,7 @@ def checkCards():
 			# print('authorized')
 
 def checkButtons():
-	if interfaceControl.checkOffButton() and interfaceControl.getState() == 'active':
+	if not interfaceControl.checkPowerSwitch() and interfaceControl.getState() == 'active':
 		interfaceControl.lockMachine()
 		log.info("Machine Locked")
 
