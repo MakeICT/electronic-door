@@ -17,6 +17,9 @@ class McpApiClient(object):
 	auth_endpoint = "https://security.makeict.org/api/login"
 	api_endpoint = "https://security.makeict.org/api"
 
+	auth_endpoint = "https://192.168.9.10/api/login"
+	api_endpoint = "https://192.168.9.10/api"
+
 	session_cookie = None
 
 	def __init__(self):
@@ -99,15 +102,15 @@ class McpApiClient(object):
 		return False
 
 	def GetUsers(self):
-		users = self.execute_request("https://security.makeict.org/api/users?q")
+		users = self.execute_request(api_endpoint + "/users?q")
 		return users
 
 	def GetGroups(self):
-		groups = self.execute_request("https://security.makeict.org/api/groups")
+		groups = self.execute_request(api_endpoint + "/groups")
 		return groups
 
 	def GetUserGroups(self, userID):
-		userGroups = self.execute_request("https://security.makeict.org/api/users/%s/groups" % userID)
+		userGroups = self.execute_request(api_endpoint + "/users/%s/groups" % userID)
 		return userGroups
 
 	def GetUserByNFC(self, nfcID):

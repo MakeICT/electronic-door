@@ -73,6 +73,7 @@ def checkCards():
 
 	if nfcID != None and interfaceControl.getState() == 'inactive' and interfaceControl.checkPowerSwitch():
 		nfcID = str(nfcID).ljust(14, '0')
+		print(nfcID)
 		interfaceControl.showBusy()
 		authorized = API.CheckAuthorization(nfcID, 1348)
 		if not authorized:
