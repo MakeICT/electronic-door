@@ -67,27 +67,38 @@ def cleanup():
 
 def checkCards():
 #	log.debug("Starting NFC read")
-	nfcID = interfaceControl.nfcGetUID()
 #	log.debug("Finished NFC read")
 	#interfaceControl.setPowerStatus(False)
 
-	if nfcID != None and interfaceControl.getState() == 'inactive' and interfaceControl.checkPowerSwitch():
-		nfcID = str(nfcID).ljust(14, '0')
-		print(nfcID)
-		interfaceControl.showBusy()
-		authorized = API.CheckAuthorization(nfcID, 1348)
-		if not authorized:
-			interfaceControl.showInactive()
-			log.warning("DENIED card  ID: %s" % str(nfcID))
-			interfaceControl.showBadCardRead()
+	if interfaceControl.checkPowerSwitch():
+		nfcID = interfaceControl.nfcGetUID()
+		if (nfcID != None and interfaceControl.getState() == 'inactive'):
+			nfcID = str(nfcID).ljust(14, '0')
+			#print(nfcID)
+			log.info("---------------------------------------------")
+			log.info("Read card ID: %s" % (str(nfcID)))
+			interfaceControl.showBusy()
+			user = API.GetUserByNFC(nfcID)
+			if user:
+				#print(user)
+				authorized = API.CheckAuthorization(nfcID, 1348)
+				log.info("Card belongs to %s %s" % (user['firstName'], user['lastName']))
+				if not authorized:
+					interfaceControl.showInactive()
+					log.warning("DENIED card ID: %s" % (str(nfcID)))
+					interfaceControl.showBadCardRead()
 
-	 		# print('not authorized')
-		else:
-			log.info("ACCEPTED card ID: %s" % str(nfcID))
-			interfaceControl.unlockMachine()
-			log.info("Machine Unlocked")
+					# print('not authorized')
+				else:
+					log.info("ACCEPTED card ID: %s" % str(nfcID))
+					interfaceControl.unlockMachine()
+					log.info("Machine Unlocked")
 
-			# print('authorized')
+					# print('authorized')
+			else:
+				log.error("Card is not assigned to a user")
+				interfaceControl.showInactive()
+				interfaceControl.showBadCardRead()
 
 def checkButtons():
 	if not interfaceControl.checkPowerSwitch() and interfaceControl.getState() == 'active':

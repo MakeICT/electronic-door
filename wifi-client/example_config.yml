@@ -1,7 +1,7 @@
 client:
-    username: 
+    username:  
     password: 
-    
+
 logging:
     version: 1
 
@@ -24,7 +24,7 @@ logging:
             class: logging.FileHandler
             level: DEBUG
             formatter: simpleFormatter
-            filename: /home/pi/code/electronic-door/wifi-client/logs/door-lock.log
+            filename: /home/pi/code/electronic-door/wifi-client/logs/machine-access.log
 
         enrollFileHandler: 
             class: logging.FileHandler

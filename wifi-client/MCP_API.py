@@ -102,15 +102,15 @@ class McpApiClient(object):
 		return False
 
 	def GetUsers(self):
-		users = self.execute_request(api_endpoint + "/users?q")
+		users = self.execute_request(self.api_endpoint + "/users?q")
 		return users
 
 	def GetGroups(self):
-		groups = self.execute_request(api_endpoint + "/groups")
+		groups = self.execute_request(self.api_endpoint + "/groups")
 		return groups
 
 	def GetUserGroups(self, userID):
-		userGroups = self.execute_request(api_endpoint + "/users/%s/groups" % userID)
+		userGroups = self.execute_request(self.api_endpoint + "/users/%s/groups" % userID)
 		return userGroups
 
 	def GetUserByNFC(self, nfcID):
