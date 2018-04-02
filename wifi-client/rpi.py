@@ -69,6 +69,7 @@ class InterfaceControl(object):
 		GPIO.setup(self.GPIOS['powerSwitch'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 		self.showInactive()
+		self.lockMachine()
 
 		# print("breakpoint reached")
 		# time.sleep(20000)
