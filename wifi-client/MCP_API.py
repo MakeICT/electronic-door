@@ -83,6 +83,11 @@ class McpApiClient(object):
 
 		try:
 			response = urllib.request.urlopen(request)
+			if type(response) == str:
+				print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+				print("execute_request got string response, probably an error")
+				print(response)
+				print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 			return McpApiClient._parse_response(response)
 		except urllib.error.HTTPError as httpErr:
 			if httpErr.code == 400:
