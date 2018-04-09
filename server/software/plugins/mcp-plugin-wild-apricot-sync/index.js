@@ -46,13 +46,17 @@ var api = {
 		var options = {
 			'method': method,
 			'hostname': 'api.wildapricot.org',
-			'path': '/v2/accounts/' + this.accountID + '/' + url,
+			'path': '/v2/Accounts/' + this.accountID + '/' + url,
 			'headers': { 
 				'Authorization': 'Bearer ' + this.token,
 				'Accept': 'application/json',
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json'
 			},
 		};
+		if(data){
+			data = JSON.stringify(data);
+			options['headers']['Content-Length'] = data.length;
+		}
 
 		var responseBody = '';
 		var req = https.request(options, function(response){			
@@ -65,7 +69,9 @@ var api = {
 			});
 		});
 
-		if(data) req.write(JSON.stringify(data));
+		if(data){
+			req.write(data);
+		}
 		req.end();
 	},
 
@@ -236,7 +242,108 @@ module.exports = {
 
 				if(callback) callback();
 			},
-		},
+		},{
+			'name': 'UpSync',
+			'parameters': [{
+				'name': 'Email',
+				'type': 'email',
+				'value': null,
+			}],
+			'execute': function(parameters, callback){
+				var errorHandler = function(exc){
+					backend.log('Failed to UpSync user ' + parameters['Email']);
+					if(exc){
+						backend.log(exc);
+					}
+				};
+
+				try{
+					backend.log('UpSyncing user ' + parameters['Email'] + '...');
+					backend.getUserByEmail(
+						parameters['Email'],
+						function(user){
+							backend.getUserGroups(
+								user.userID,
+								function(groups){
+									var localWAgroups = [];
+									for(var i=0; i<groups.length; i++){
+										var group = groups[i];
+										if(group['enrolled']){
+											var groupName = group['name'];
+											if(groupName.indexOf('WA-Group: ') === 0){
+												localWAgroups.push({'Label': groupName.substring(10)});
+											}
+										}
+									}
+
+									backend.getUserProxyID(
+										user.userID, 'WildApricot',
+										function(contactID){
+											backend.getPluginOptions(this.name, function(settings){
+												backend.debug('Connecting to WildApricot...');
+												api.connect(function(token){
+													backend.debug('API Connected!');
+													var updateData = {
+														"Id": contactID,
+														"FieldValues": [{
+															"FieldName": "Group participation",
+															"Value": localWAgroups
+														}]
+													};
+
+													api.put(
+														'Contacts/' + contactID,
+														updateData,
+														function(response){
+															if(response != ''){
+																backend.log('UpSync complete for ' + user.email);
+															}else{
+																errorHandler();
+															}
+														},
+														errorHandler
+													);
+													/*
+													// if we start using groups for things that don't sync with MCP,
+													// then we'll need to pull the list from WA. We don't need to yet,
+													// but if we do in the future, here's a head start
+													api.get(
+														'Contacts/' + contactID + '?$async=false', null,
+														function(contactInfo){
+															var remoteWAgroups = null;
+															for(var i=0; i<contactInfo['FieldValues'].length; i++){
+																var fieldValue = contactInfo['FieldValues'][i];
+																if(fieldValue['FieldName'] == 'Group participation'){
+																	remoteWAgroups = [];
+																	var groups = fieldValue['Value'];
+																	for(var j=0; j<groups.length; j++){
+																		remoteWAgroups.push(groups)
+																	}
+																	break;
+																}
+															}
+														},
+														errorHandler
+													);
+													*/
+												});
+											});
+										},
+										errorHandler
+									);
+								},
+								errorHandler
+							);
+						},
+						errorHandler
+					);
+				}catch(exc){
+					errorHandler(exc);
+				}
+
+				if(callback) callback();
+			}
+		}
 	],
 	
 	onInstall: function(){

@@ -377,6 +377,20 @@ module.exports = {
 		return query(sql, [email], getOneOrNone(onSuccess), onFailure);
 	},
 	
+	getUserProxyID: function(userID, proxySystemName, onSuccess, onFailure) {
+		var sql =
+			'SELECT ' +
+			'	"proxyUsers"."proxyUserID" ' +
+			'FROM "proxyUsers" ' +
+			'	JOIN "proxySystems" ON "proxyUsers"."systemID" = "proxySystems"."systemID" ' +
+			'WHERE "proxyUsers"."userID" = $1 ' +
+			'	AND "proxySystems".name = $2';
+
+		var passAlong = function(record){ onSuccess(record['proxyUserID']); };
+
+		return query(sql, [userID, proxySystemName], getOneOrNone(passAlong), onFailure);
+	},
+	
 	getUserByNFC: function(nfcID, onSuccess, onFailure) {
 		var sql = 'SELECT * FROM users WHERE "nfcID" = $1';
 		return query(sql, [nfcID], getOneOrNone(onSuccess), onFailure);
@@ -845,7 +859,7 @@ module.exports = {
 							}
 						}
 					}
-						
+					
 					if(++loadedPluginCount >= pluginFolders.length){
 						// all plugins are loaded
 						module.exports.reloadClients(function(){

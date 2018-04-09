@@ -196,6 +196,15 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 		});
 	};
 
+	$scope.upSync = function(user){
+		params = { 'Email': user.email };
+		$http.post('/api/plugins/Wild%20Apricot%20Sync/actions/UpSync', params).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+				// @TODO: give feedback
+			}
+		});
+	};
+
 	if($location.search().q && $location.search().q.length > 0){
 		$scope.search.query = $location.search().q;
 		$scope.searchForUser();
