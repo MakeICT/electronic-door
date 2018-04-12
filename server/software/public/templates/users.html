@@ -48,7 +48,10 @@
 	<h3>Search results</h3>
 	<div ng-repeat="user in userSearchResults" class="col-lg-4 col-md-6 col-sm-6 well">
 		<button class="btn btn-default btn-block" ng-click="toggleUserDisplay(user)">{{user.firstName}} {{user.lastName}}</button>
-		<div uib-collapse="!user.isExpanded" class="container-fluid user-details">
+		<div ng-if="user.stale" class="container-fluid user-details">
+			This user's information is stale. You should <a href="#" ng-click="searchForUser()">reload</a> the page.
+		</div>
+		<div uib-collapse="!user.isExpanded || user.stale" class="container-fluid user-details">
 			<div class="row">
 				<div class="col-md-4 col-sm-4"><strong>Name</strong></div>
 				<div class="col-md-4 col-sm-4 nopad">
@@ -171,7 +174,9 @@
 				</div>
 			</div>
 			<div class="row">
-				<button class="btn btn-default btn-block" ng-click="upSync(user)">&#x1f34a; UpSync™</button>
+				<div class="col-md-4 col-sm-4"><strong>&#x1f34a;Sync™</strong></div>
+				<button class="col-md-4 col-sm-4 nopad btn btn-default" ng-click="downSync(user)" title="Download this user's groups from WildApricot">Download</button>
+				<button class="col-md-4 col-sm-4 nopad btn btn-default" ng-click="upSync(user)" title="Upload this user's groups to WildApricot">Upload</button>
 			</div>
 		</div>
 	</div>

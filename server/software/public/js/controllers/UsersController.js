@@ -205,6 +205,15 @@ app.controller('usersCtrl', function($scope, $http, $location, authenticationSer
 		});
 	};
 
+	$scope.downSync = function(user){
+		params = { 'Email': user.email };
+		$http.post('/api/plugins/Wild%20Apricot%20Sync/actions/DownSync', params).success(function(response){
+			if(ajaxChecker.checkAjax(response)){
+				user.stale = true;
+			}
+		});
+	};
+
 	if($location.search().q && $location.search().q.length > 0){
 		$scope.search.query = $location.search().q;
 		$scope.searchForUser();

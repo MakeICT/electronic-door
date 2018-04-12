@@ -329,13 +329,26 @@ module.exports = {
 	// sends the groupID to the success callback
 	addGroup: function(groupName, description, onSuccess, onFailure){
 		try{
-			var sql = 'INSERT INTO GROUPS (name, description) VALUES ($1, $2)';
 			var findGroupID = function(){
-				backend.log('Group added (' + groupName + ')');
 				sql = 'SELECT "groupID" FROM groups WHERE name = $1';
 				return query(sql, [groupName], getOneOrNone(onSuccess), onFailure);
 			};
-			return query(sql, [groupName, description], findGroupID, onFailure);
+
+			var logAndContinue = function(){
+				backend.log('Group added (' + groupName + ')');
+				findGroupID();
+			}
+
+			var testFailure = function(err){
+				if(err.code == '23505'){	// group already exists, no need to log it
+					findGroupID();
+				}else{
+					if(onFailure) onFailure(err);
+				}
+			};
+
+			var sql = 'INSERT INTO GROUPS (name, description) VALUES ($1, $2)';
+			return query(sql, [groupName, description], logAndContinue, testFailure);
 		}catch(exc){
 			onFailure(exc);
 		}
@@ -447,7 +460,7 @@ module.exports = {
 		var counter = 0;
 		var params = [];
 		for(var key in user){
-			if(key != 'userID' && key != 'keyActive'){
+			if(key != 'userID' && key != 'keyActive' && key != 'email'){
 				counter++;
 				sql += '"' + key + '"=$' + counter + ',';
 				params.push(user[key]);
@@ -1036,7 +1049,14 @@ module.exports = {
 			module.exports.log((enrolled ? 'Add user to' : 'Remove user from') + ' group: ' + group, who);
 			if(onSuccess) onSuccess();
 		};
-		return query(sql, [who, group], log, onFailure);
+
+		var testFailure = function(err){
+			if(enrolled && err.code == '23505'){ // user is already in group. No worries! :)
+			}else{
+				if(onFailure) onFailure(err);
+			}
+		};
+		return query(sql, [who, group], log, testFailure);
 	},
 
 	log: function(message, userID, code, logType, skipBroadcast){
