@@ -460,12 +460,13 @@ module.exports = {
 		var counter = 0;
 		var params = [];
 		for(var key in user){
-			if(key != 'userID' && key != 'keyActive' && key != 'email'){
+			if(key != 'userID' && key != 'keyActive'){
 				counter++;
 				sql += '"' + key + '"=$' + counter + ',';
 				params.push(user[key]);
 			}
 		}
+
 		if(counter > 0){
 			sql = sql.substring(0, sql.length-1);
 			sql += ' WHERE "userID" = $' + (counter+1);
