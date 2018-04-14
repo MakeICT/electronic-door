@@ -431,26 +431,21 @@ module.exports = {
 	},
 		
 	addProxyUser: function(proxySystem, proxyUserID, user, onSuccess, onFailure){
-		var attachProxyUser = function(){
-			backend.debug('attaching proxy user!');
+		var attachProxyUser = function(userID){
 			var systemSQL = 'SELECT "systemID" FROM "proxySystems" WHERE name = $1 LIMIT 1';
-			var userSQL = 'SELECT "userID" FROM "users" WHERE "email" = $2 LIMIT 1';
 			var sql = 'INSERT INTO "proxyUsers" ("systemID", "userID", "proxyUserID") ' +
-				'VALUES ((' + systemSQL + '), (' + userSQL + '), $3)';
+				'VALUES ((' + systemSQL + '), $2, $3)';
 				
-			var params = [proxySystem, user.email, proxyUserID];
+			var params = [proxySystem, userID, proxyUserID];
 			
 			return query(sql, params, onSuccess, onFailure);
 		};
 
 		this.getUserByEmail(user.email, function(existingUser){
 			if(existingUser){
-				attachProxyUser();
+				attachProxyUser(existingUser.userID);
 			}else{
-				backend.log('Creating user ' + user.email);
-				var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
-				var params = [user.email, user.firstName, user.lastName, user.joinDate];
-				return query(sql, params, attachProxyUser, onFailure);
+				backend.addUser(user, attachProxyUser, onFailure);
 			}
 		});
 	},
