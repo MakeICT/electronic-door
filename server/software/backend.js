@@ -329,13 +329,26 @@ module.exports = {
 	// sends the groupID to the success callback
 	addGroup: function(groupName, description, onSuccess, onFailure){
 		try{
-			var sql = 'INSERT INTO GROUPS (name, description) VALUES ($1, $2)';
 			var findGroupID = function(){
-				backend.log('Group added (' + groupName + ')');
 				sql = 'SELECT "groupID" FROM groups WHERE name = $1';
 				return query(sql, [groupName], getOneOrNone(onSuccess), onFailure);
 			};
-			return query(sql, [groupName, description], findGroupID, onFailure);
+
+			var logAndContinue = function(){
+				backend.log('Group added (' + groupName + ')');
+				findGroupID();
+			}
+
+			var testFailure = function(err){
+				if(err.code == '23505'){	// group already exists, no need to log it
+					findGroupID();
+				}else{
+					if(onFailure) onFailure(err);
+				}
+			};
+
+			var sql = 'INSERT INTO GROUPS (name, description) VALUES ($1, $2)';
+			return query(sql, [groupName, description], logAndContinue, testFailure);
 		}catch(exc){
 			onFailure(exc);
 		}
@@ -377,6 +390,20 @@ module.exports = {
 		return query(sql, [email], getOneOrNone(onSuccess), onFailure);
 	},
 	
+	getUserProxyID: function(userID, proxySystemName, onSuccess, onFailure) {
+		var sql =
+			'SELECT ' +
+			'	"proxyUsers"."proxyUserID" ' +
+			'FROM "proxyUsers" ' +
+			'	JOIN "proxySystems" ON "proxyUsers"."systemID" = "proxySystems"."systemID" ' +
+			'WHERE "proxyUsers"."userID" = $1 ' +
+			'	AND "proxySystems".name = $2';
+
+		var passAlong = function(record){ onSuccess(record['proxyUserID']); };
+
+		return query(sql, [userID, proxySystemName], getOneOrNone(passAlong), onFailure);
+	},
+	
 	getUserByNFC: function(nfcID, onSuccess, onFailure) {
 		var sql = 'SELECT * FROM users WHERE "nfcID" = $1';
 		return query(sql, [nfcID], getOneOrNone(onSuccess), onFailure);
@@ -404,26 +431,21 @@ module.exports = {
 	},
 		
 	addProxyUser: function(proxySystem, proxyUserID, user, onSuccess, onFailure){
-		var attachProxyUser = function(){
-			backend.debug('attaching proxy user!');
+		var attachProxyUser = function(userID){
 			var systemSQL = 'SELECT "systemID" FROM "proxySystems" WHERE name = $1 LIMIT 1';
-			var userSQL = 'SELECT "userID" FROM "users" WHERE "email" = $2 LIMIT 1';
 			var sql = 'INSERT INTO "proxyUsers" ("systemID", "userID", "proxyUserID") ' +
-				'VALUES ((' + systemSQL + '), (' + userSQL + '), $3)';
+				'VALUES ((' + systemSQL + '), $2, $3)';
 				
-			var params = [proxySystem, user.email, proxyUserID];
+			var params = [proxySystem, userID, proxyUserID];
 			
 			return query(sql, params, onSuccess, onFailure);
 		};
 
 		this.getUserByEmail(user.email, function(existingUser){
 			if(existingUser){
-				attachProxyUser();
+				attachProxyUser(existingUser.userID);
 			}else{
-				backend.log('Creating user ' + user.email);
-				var sql = 'INSERT INTO users ("email", "firstName", "lastName", "joinDate") VALUES ($1, $2, $3, $4)';
-				var params = [user.email, user.firstName, user.lastName, user.joinDate];
-				return query(sql, params, attachProxyUser, onFailure);
+				backend.addUser(user, attachProxyUser, onFailure);
 			}
 		});
 	},
@@ -439,6 +461,7 @@ module.exports = {
 				params.push(user[key]);
 			}
 		}
+
 		if(counter > 0){
 			sql = sql.substring(0, sql.length-1);
 			sql += ' WHERE "userID" = $' + (counter+1);
@@ -845,7 +868,7 @@ module.exports = {
 							}
 						}
 					}
-						
+					
 					if(++loadedPluginCount >= pluginFolders.length){
 						// all plugins are loaded
 						module.exports.reloadClients(function(){
@@ -1022,7 +1045,14 @@ module.exports = {
 			module.exports.log((enrolled ? 'Add user to' : 'Remove user from') + ' group: ' + group, who);
 			if(onSuccess) onSuccess();
 		};
-		return query(sql, [who, group], log, onFailure);
+
+		var testFailure = function(err){
+			if(enrolled && err.code == '23505'){ // user is already in group. No worries! :)
+			}else{
+				if(onFailure) onFailure(err);
+			}
+		};
+		return query(sql, [who, group], log, testFailure);
 	},
 
 	log: function(message, userID, code, logType, skipBroadcast){
