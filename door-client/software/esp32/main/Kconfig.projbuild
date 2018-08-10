@@ -1,0 +1,43 @@
+menu "Example Configuration"
+
+config WIFI_SSID
+    string "WiFi SSID"
+	default "myssid"
+	help
+		SSID (network name) for the example to connect to.
+
+config WIFI_PASSWORD
+    string "WiFi Password"
+	default "mypassword"
+	help
+		WiFi password (WPA or WPA2) for the example to use.
+
+		Can be left blank if the network has no security set.
+
+config SERVER
+    string "Server Address"
+	default "securitytest.makeict.org"
+	help
+		Address of Master Control Program instance to connect to.
+
+config PORT
+    string "Server Port"
+	default "4443"
+	help
+		Port of Master Control Program instance to connect to.
+
+config USERNAME
+    string "MCP Username"
+	default "username"
+	help
+		Username (email) of MCP user.
+
+config PASSWORD
+    string "MCP Password"
+	default "password"
+	help
+		Password of MCP user.
+
+
+
+endmenu
