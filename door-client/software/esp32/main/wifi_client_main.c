@@ -139,96 +139,6 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_start() );
 }
     
-// static void https_get_task(void *pvParameters)
-// {
-//     char buf[512];
-//     int ret, len;
-
-//     while(1) {
-//         /* Wait for the callback to set the CONNECTED_BIT in the
-//            event group.
-//         */
-//         xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
-//                             false, true, portMAX_DELAY);
-//         ESP_LOGI(TAG, "Connected to AP");
-//         esp_tls_cfg_t cfg = {
-//             .cacert_pem_buf  = server_root_cert_pem_start,
-//             .cacert_pem_bytes = server_root_cert_pem_end - server_root_cert_pem_start,
-//         };
-        
-//         struct esp_tls *tls = esp_tls_conn_http_new(WEB_URL, &cfg);
-        
-//         if(tls != NULL) {
-//             ESP_LOGI(TAG, "Connection established...");
-//         } else {
-//             ESP_LOGE(TAG, "Connection failed...");
-//             goto exit;
-//         }
-        
-//         size_t written_bytes = 0;
-//         do {
-//             ret = esp_tls_conn_write(tls, 
-//                                      REQUEST + written_bytes, 
-//                                      strlen(REQUEST) - written_bytes);
-//             ESP_LOGI(TAG, "REQUEST");
-//             for(int i = 0; i < strlen(REQUEST); i++) {
-//                 putchar(REQUEST[i]);
-//             }
-//             if (ret >= 0) {
-//                 ESP_LOGI(TAG, "%d bytes written", ret);
-//                 written_bytes += ret;
-//             } else if (ret != MBEDTLS_ERR_SSL_WANT_READ  && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-//                 ESP_LOGE(TAG, "esp_tls_conn_write  returned 0x%x", ret);
-//                 goto exit;
-//             }
-//         } while(written_bytes < strlen(REQUEST));
-
-//         ESP_LOGI(TAG, "Reading HTTP response...");
-
-//         do
-//         {
-//             len = sizeof(buf) - 1;
-//             bzero(buf, sizeof(buf));
-//             ret = esp_tls_conn_read(tls, (char *)buf, len);
-
-//             if(ret == MBEDTLS_ERR_SSL_WANT_WRITE  || ret == MBEDTLS_ERR_SSL_WANT_READ)
-//                 continue;
-            
-//             if(ret < 0)
-//            {
-//                 ESP_LOGE(TAG, "esp_tls_conn_read  returned -0x%x", -ret);
-//                 break;
-//             }
-
-//             if(ret == 0)
-//             {
-//                 ESP_LOGI(TAG, "connection closed");
-//                 break;
-//             }
-
-//             len = ret;
-//             ESP_LOGD(TAG, "%d bytes read", len);
-//             /* Print response directly to stdout as it is read */
-//             for(int i = 0; i < len; i++) {
-//                 putchar(buf[i]);
-//             }
-//         } while(1);
-
-//     exit:
-//         esp_tls_conn_delete(tls);    
-//         putchar('\n'); // JSON output doesn't have a newline at end
-
-//         static int request_count;
-//         ESP_LOGI(TAG, "Completed %d requests", ++request_count);
-
-//         for(int countdown = 10; countdown >= 0; countdown--) {
-//             ESP_LOGI(TAG, "%d...", countdown);
-//             vTaskDelay(1000 / portTICK_PERIOD_MS);
-//         }
-//         ESP_LOGI(TAG, "Starting again!");
-//     }
-// }
-
 void app_main()
 {
     init();
@@ -237,9 +147,13 @@ void app_main()
     
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
                     false, true, portMAX_DELAY);
-    ESP_LOGI(MCP_API_TAG, "Connected to AP");
+    ESP_LOGI(TAG, "Connected to AP");
     
     authenticate_with_contact_credentials();
+    get_users();
+    // execute_request("test", "test", "test");
+
+    while(1);
 
     // xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 5, NULL);
 }
