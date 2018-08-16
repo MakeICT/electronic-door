@@ -17,19 +17,8 @@ static const char *MCP_API_TAG = "mcp_api";
 
 extern const char server_root_cert_pem[] asm("_binary_server_root_cert_pem_start");
 
-static const char *REQUEST = "POST " AUTH_ENDPOINT "?email=" CONFIG_USERNAME "&password=" CONFIG_PASSWORD "\r\n"
-    "Host: " WEB_SERVER "\r\n"
-    "Content-Type: application/x-www-form-urlencoded\r\n"
-    "\r\n";
-
 char auth_cookie[77];
 
-void execute_request(char* api_url, char* api_request_object, int method)
-{
-    char url[strlen(api_url) + strlen(WEB_URL)];
-    strcat(url, WEB_URL);
-    strcat(url, api_url);
-    ESP_LOGI(MCP_API_TAG, "Request URL: %s",url);
 
     esp_err_t _http_event_handle(esp_http_client_event_t *evt)
     {
@@ -66,12 +55,25 @@ void execute_request(char* api_url, char* api_request_object, int method)
         return ESP_OK;
     }
 
-    esp_http_client_config_t config = {
-        .url = url,
-        .event_handler = _http_event_handle,
-        // .query = ""
-        .cert_pem = server_root_cert_pem,
-    };
+void execute_request(char* api_url, char* api_request_object, esp_http_client_method_t method)
+{
+    char url[strlen(api_url) + strlen(WEB_URL)];
+    strcat(url, WEB_URL);
+    strcat(url, api_url);
+    ESP_LOGI(MCP_API_TAG, "Request URL: %s",url);
+
+    // esp_http_client_config_t config = {
+    //     url : url,
+    //     event_handler : _http_event_handle,
+    //     // .query = ""
+    //     cert_pem : server_root_cert_pem,
+    // };
+
+    esp_http_client_config_t config = {};
+    config.url = url;
+    config.event_handler = _http_event_handle;
+    config.cert_pem = server_root_cert_pem;
+
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_set_method(client, method);
     esp_http_client_set_header(client, "Content-Type", "application/x-www-form-urlencoded");

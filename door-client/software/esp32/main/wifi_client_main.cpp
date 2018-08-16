@@ -38,10 +38,9 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
-#include "esp_tls.h"
-
 // #include "utils.h"
 #include "mcp_api.h"
+#include <reader.h>
 
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
@@ -75,6 +74,12 @@ const int CONNECTED_BIT = BIT0;
 
 static const char *TAG = "wifi_client_main";
 
+extern "C" {
+  void app_main();
+}
+
+Reader card_reader;
+
 // static const char *REQUEST = "POST " AUTH_ENDPOINT "?email=" CONFIG_USERNAME    "&password=" CONFIG_PASSWORD "\r\n"
 //     "Host: " WEB_SERVER "\r\n"
 //     "Content-Type: application/x-www-form-urlencoded\r\n"
@@ -96,6 +101,7 @@ static const char *TAG = "wifi_client_main";
 
 void init(void)
 {
+  card_reader.init();
 }
     
 static esp_err_t event_handler(void *ctx, system_event_t *event)
@@ -127,12 +133,11 @@ static void initialise_wifi(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = EXAMPLE_WIFI_SSID,
-            .password = EXAMPLE_WIFI_PASS,
-        },
-    };
+
+    wifi_config_t wifi_config = {};
+    strcpy((char*) wifi_config.sta.ssid, (char*) CONFIG_WIFI_SSID);
+    strcpy((char*) wifi_config.sta.password, (char*) CONFIG_WIFI_PASSWORD);
+
     ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
@@ -148,12 +153,14 @@ void app_main()
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
                     false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "Connected to AP");
-    
     authenticate_with_contact_credentials();
-    get_users();
-    // execute_request("test", "test", "test");
+      // get_users();
+      // execute_request("test", "test", "test");
+    
+    while(1) {
+      card_reader.poll();
 
-    while(1);
+    }
 
     // xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 5, NULL);
 }
