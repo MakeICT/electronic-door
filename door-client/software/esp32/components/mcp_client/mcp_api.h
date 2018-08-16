@@ -24,32 +24,32 @@ char auth_cookie[77];
     {
         switch(evt->event_id) {
             case HTTP_EVENT_ERROR:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_ERROR");
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_ERROR");
                 break;
             case HTTP_EVENT_ON_CONNECTED:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_ON_CONNECTED");
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_ON_CONNECTED");
                 break;
             case HTTP_EVENT_HEADER_SENT:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_HEADER_SENT");
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_HEADER_SENT");
                 break;
             case HTTP_EVENT_ON_HEADER:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
                 if (strcmp(evt->header_key,"Set-Cookie")==0) {
                     strcpy(auth_cookie, evt->header_value);
                 }
                 break;
             case HTTP_EVENT_ON_DATA:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
                 if (!esp_http_client_is_chunked_response(evt->client)) {
                     printf("%.*s", evt->data_len, (char*)evt->data);
                 }
 
                 break;
             case HTTP_EVENT_ON_FINISH:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_ON_FINISH");
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_ON_FINISH");
                 break;
             case HTTP_EVENT_DISCONNECTED:
-                ESP_LOGI(MCP_API_TAG, "HTTP_EVENT_DISCONNECTED");
+                ESP_LOGD(MCP_API_TAG, "HTTP_EVENT_DISCONNECTED");
                 break;
         }
         return ESP_OK;
@@ -57,7 +57,7 @@ char auth_cookie[77];
 
 void execute_request(char* api_url, char* api_request_object, esp_http_client_method_t method)
 {
-    char url[strlen(api_url) + strlen(WEB_URL)];
+    char url[strlen(api_url) + strlen(WEB_URL) + 1] = {'\0'};
     strcat(url, WEB_URL);
     strcat(url, api_url);
     ESP_LOGI(MCP_API_TAG, "Request URL: %s",url);
@@ -89,8 +89,8 @@ void execute_request(char* api_url, char* api_request_object, esp_http_client_me
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
         char response[response_length];
+        ESP_LOGI(MCP_API_TAG, "read returned: %d",response_length);
         int read_status = esp_http_client_read(client, response, response_length);
-        ESP_LOGI(MCP_API_TAG, "read returned: %d",read_status);
         if (response_length > 0) {
             ESP_LOGI(MCP_API_TAG, "%s",response);
         }
@@ -107,6 +107,44 @@ static void authenticate_with_contact_credentials()
 static void get_users()
 {
     execute_request("/api/users?q","", HTTP_METHOD_GET);
+}
+
+static void get_user_by_NFC(char* nfcID)
+{
+    char* base_url = "/api/users?q=";
+    char url[strlen(base_url) + strlen(nfcID) + 1] = {'\0'};
+    url[0] = '\0';
+    strcpy(url, base_url);
+    // ESP_LOGI(MCP_API_TAG, "%s",url);
+    strcat(url, nfcID);
+    // ESP_LOGI(MCP_API_TAG, "%s",url);
+    execute_request(url,"", HTTP_METHOD_GET);
+}
+
+static void post_log(char* message, char* userID, char* nfcID, char* type) {
+    // char* base_url = "/api/log?message=test&userID=14&nfcID=04D76B1A8F4980&type=deny";
+    char* base_url = "/api/log?";
+    char url[strlen(base_url) + strlen(message) + strlen(userID) + strlen(nfcID) + strlen(type) + 30] = {'\0'};
+    strcpy(url, base_url);
+    // // ESP_LOGI(MCP_API_TAG, "%s",url);
+    if(strlen(message) > 0) {
+        strcat(url,"message=");
+        strcat(url, message); 
+    }
+    if(strlen(userID) > 0) {
+        strcat(url, "&userID=");
+        strcat(url, userID);    
+    }
+    if(strlen(nfcID) > 0) {
+        strcat(url, "&nfcID=");
+        strcat(url, nfcID);       
+    }
+    if(strlen(type) > 0) {
+        strcat(url, "&type=");
+        strcat(url, type);
+    }
+    // // ESP_LOGI(MCP_API_TAG, "%s",url);
+    execute_request(url,"", HTTP_METHOD_POST);
 }
 
 #endif

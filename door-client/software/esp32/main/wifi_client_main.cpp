@@ -154,12 +154,24 @@ void app_main()
                     false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "Connected to AP");
     authenticate_with_contact_credentials();
-      // get_users();
+    post_log("this+is+a+test","143","04D76B1A8F4980","message");
+    // get_user_by_NFC("04dbe822993c80");
       // execute_request("test", "test", "test");
-    
     while(1) {
-      card_reader.poll();
+      uint8_t uid[7] = {0};
+      uint8_t uid_size = card_reader.poll(uid);
+      if (uid_size > 0) {
+        char uid_string[15] = {'\0'};
+        sprintf(uid_string, "%02X%02X%02X%02X%02X%02X%02X", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6]);
+        ESP_LOGI(TAG, "Read card UID: %s", uid_string);
+        get_user_by_NFC(uid_string);
+        post_log("04+Security+Desk+-+Could+Not+Find+User","", uid_string,"deny");
 
+      //   for(int i=0; i< uid_size; i++) {
+      //   printf("%d,", uid[i]);
+      //   }
+      //   printf("\n");
+      }
     }
 
     // xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 5, NULL);

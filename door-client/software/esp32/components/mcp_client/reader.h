@@ -24,6 +24,9 @@
 #ifndef READER_H
 #define READER_H
 
+#include <string.h>
+#include <stdlib.h>
+
 #include <MFRC522.h>
 #include <esp_log.h>
 static const char LOG_TAG[] = "DumpInfo";
@@ -33,7 +36,7 @@ class Reader {
     public:
         MFRC522 mfrc522;  // Create MFRC522 instance
         bool init();
-		uint8_t poll();
+		uint8_t poll(uint8_t*);
 };
 
 
