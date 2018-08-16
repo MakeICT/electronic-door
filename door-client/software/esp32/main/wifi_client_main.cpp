@@ -38,9 +38,12 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+#include <jsmn.h>
+
 // #include "utils.h"
 #include "mcp_api.h"
 #include <reader.h>
+#include <light.h>
 
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
@@ -79,6 +82,9 @@ extern "C" {
 }
 
 Reader card_reader;
+Light red_light((gpio_num_t)19);
+Light yellow_light((gpio_num_t)18);
+Light green_light((gpio_num_t)17);
 
 // static const char *REQUEST = "POST " AUTH_ENDPOINT "?email=" CONFIG_USERNAME    "&password=" CONFIG_PASSWORD "\r\n"
 //     "Host: " WEB_SERVER "\r\n"
@@ -143,10 +149,94 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
 }
+
+bool check_card(char* nfc_id) {
+  int resp_len = get_user_by_NFC(nfc_id);
+  if (resp_len < 4) {
+    post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
+    return false;
+  }
+  char response[resp_len] = {'\0'};
+  get_response(response, resp_len);
+
+  // char* response = "{\"userID\":582,\"firstName\":\"David\",\"lastName\":\"Vogt\",\"email\":\"david_vogt@cox.net\",\"passwordHash\":null,\"joinDate\":1487182438,\"nfcID\":\"0478c37a294980\",\"status\":\"active\",\"birthdate\":null,\"keyActive\":true}";
+
+  jsmn_parser parser;
+  jsmn_init(&parser);
+
+  // char value[500];
+  // char key[500];
+  int r;
+
+  int num_t = jsmn_parse(&parser, response, strlen(response), NULL, 0);
+  printf("num tokens: %d\n", num_t);
+
+  if (num_t < 2) {
+    post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
+    return false;
+  }
+
+    jsmn_init(&parser);
+  jsmntok_t t[num_t];
+  r = jsmn_parse(&parser, response, strlen(response), t, num_t);
+
+  if (r < 0) {
+      printf("Failed to parse JSON: %d\n", r);
+      return false;
+  }
+
+  /* Assume the top-level element is an object */
+  if (r < 1) {
+      printf("Object expected\n");
+      return false;
+  }
+
+  // char firstName[30] = {'\0'};
+  // char lastName[30] = {'\0'};
+  char userID[5] = {'\0'};
+
+ for (int i = 2; i < r; i++){
+
+   jsmntok_t json_value = t[i+1];
+   jsmntok_t json_key = t[i];
+
+
+   int string_length = json_value.end - json_value.start;
+   int key_length = json_key.end - json_key.start;
+
+   char value[string_length];
+   char key[key_length];
+
+
+   int idx;
+
+   for (idx = 0; idx < string_length; idx++){
+       value[idx] = response[json_value.start + idx ];
+   }
+
+   for (idx = 0; idx < key_length; idx++){
+       key[idx] = response[json_key.start + idx];
+   }
+
+   value[string_length] = '\0';
+   key[key_length] = '\0';
+
+   if(strcmp(key, "userID")==0) {
+    strcpy(userID, value);
+   }
+  
+  printf("%s : %s\n", key, value);
+   i++;
+ }
+
+  post_log("04+Security+Desk",userID, nfc_id,"unlock");
+  return true;
+}
     
 void app_main()
 {
     init();
+    client_init();
     ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_wifi();
     
@@ -154,9 +244,9 @@ void app_main()
                     false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "Connected to AP");
     authenticate_with_contact_credentials();
-    post_log("this+is+a+test","143","04D76B1A8F4980","message");
     // get_user_by_NFC("04dbe822993c80");
       // execute_request("test", "test", "test");
+    red_light.on();
     while(1) {
       uint8_t uid[7] = {0};
       uint8_t uid_size = card_reader.poll(uid);
@@ -164,8 +254,19 @@ void app_main()
         char uid_string[15] = {'\0'};
         sprintf(uid_string, "%02X%02X%02X%02X%02X%02X%02X", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6]);
         ESP_LOGI(TAG, "Read card UID: %s", uid_string);
-        get_user_by_NFC(uid_string);
-        post_log("04+Security+Desk+-+Could+Not+Find+User","", uid_string,"deny");
+        red_light.off();
+        green_light.off();
+        yellow_light.on();
+        if (check_card(uid_string)) {
+          yellow_light.off();
+          green_light.on();
+        }
+        else {
+          red_light.on();
+        }
+
+        // post_log("04+Security+Desk+-+Could+Not+Find+User","", uid_string,"deny");
+        yellow_light.off();        
 
       //   for(int i=0; i< uid_size; i++) {
       //   printf("%d,", uid[i]);
@@ -176,3 +277,4 @@ void app_main()
 
     // xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 5, NULL);
 }
+
