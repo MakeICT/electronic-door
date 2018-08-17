@@ -168,7 +168,7 @@ static void post_log(char* message, char* userID, char* nfcID, char* type) {
         strcat(url, type);
     }
     // // ESP_LOGI(MCP_API_TAG, "%s",url);
-    // int len = execute_request(url,"", HTTP_METHOD_POST);
+    int len = execute_request(url,"", HTTP_METHOD_POST);
     // esp_http_client_close(client);
     // cleanup();
 }
