@@ -48,6 +48,7 @@ server.get('/api/users', function (request, response, next) {
 	if(session){
 		var termSeparator = /[\w-]+:("[^"]+"|[\w-]+)|"[^"]+"|[\w-]+/g;
 		var terms = request.params.q.match(termSeparator);
+		console.log(terms);
 		backend.getUsers(terms, request.params.isAdmin, request.params.keyActive, request.params.joinDate, function(users){
 			response.send(users);
 		});
