@@ -244,6 +244,7 @@ void app_main()
                     false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "Connected to AP");
     authenticate_with_contact_credentials();
+    xTaskCreate(&keepalive_task, "keepalive_task", 8192, NULL, 5, NULL);
     // get_user_by_NFC("04dbe822993c80");
       // execute_request("test", "test", "test");
     red_light.on();
@@ -260,9 +261,24 @@ void app_main()
         if (check_card(uid_string)) {
           yellow_light.off();
           green_light.on();
+          vTaskDelay(2000 / portTICK_PERIOD_MS);
+
         }
         else {
+          yellow_light.off();
           red_light.on();
+          vTaskDelay(300 / portTICK_PERIOD_MS);
+          red_light.off();
+          vTaskDelay(200 / portTICK_PERIOD_MS);
+          red_light.on();
+          vTaskDelay(300 / portTICK_PERIOD_MS);
+          red_light.off();
+          vTaskDelay(200 / portTICK_PERIOD_MS);
+          red_light.on();
+          vTaskDelay(300 / portTICK_PERIOD_MS);
+          red_light.off();
+          vTaskDelay(200 / portTICK_PERIOD_MS);
+
         }
 
         // post_log("04+Security+Desk+-+Could+Not+Find+User","", uid_string,"deny");
@@ -273,6 +289,9 @@ void app_main()
       //   }
       //   printf("\n");
       }
+      yellow_light.off();
+      green_light.off();
+      red_light.on();
     }
 
     // xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 5, NULL);

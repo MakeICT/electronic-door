@@ -68,7 +68,6 @@ void client_init() {
 
 }
 
-
 int execute_request(char* api_url, char* api_request_object, esp_http_client_method_t method)
 {
     char url[strlen(api_url) + strlen(WEB_URL) + 1] = {'\0'};
@@ -110,6 +109,15 @@ int execute_request(char* api_url, char* api_request_object, esp_http_client_met
     }
     return -1;
 }
+
+static void keepalive_task(void *pvParameters)
+{
+    while(1){
+        execute_request("/api/","", HTTP_METHOD_GET);
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
+    }
+}
+
 
 void get_response(char* buffer, int len) {
     int read_status = esp_http_client_read(client, buffer, len);
