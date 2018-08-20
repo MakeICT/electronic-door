@@ -1,3 +1,4 @@
 sdkconfig
 sdkconfig.old
 build/*
+components/*

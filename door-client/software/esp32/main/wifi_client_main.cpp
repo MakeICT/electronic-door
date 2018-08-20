@@ -152,14 +152,12 @@ static void initialise_wifi(void)
 
 bool check_card(char* nfc_id) {
   int resp_len = get_user_by_NFC(nfc_id);
-  if (resp_len < 4) {
+  if (resp_len < 2) {
     post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
     return false;
   }
-  char response[resp_len] = {'\0'};
+  char response[resp_len+1] = {'\0'};
   get_response(response, resp_len);
-
-  // char* response = "{\"userID\":582,\"firstName\":\"David\",\"lastName\":\"Vogt\",\"email\":\"david_vogt@cox.net\",\"passwordHash\":null,\"joinDate\":1487182438,\"nfcID\":\"0478c37a294980\",\"status\":\"active\",\"birthdate\":null,\"keyActive\":true}";
 
   jsmn_parser parser;
   jsmn_init(&parser);
@@ -171,7 +169,7 @@ bool check_card(char* nfc_id) {
   int num_t = jsmn_parse(&parser, response, strlen(response), NULL, 0);
   printf("num tokens: %d\n", num_t);
 
-  if (num_t < 2) {
+  if (num_t < 0) {
     post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
     return false;
   }
@@ -229,14 +227,22 @@ bool check_card(char* nfc_id) {
    i++;
  }
 
-  post_log("04+Security+Desk",userID, nfc_id,"unlock");
-  return true;
+  if(atoi(userID) > 0) {
+    post_log("04+Security+Desk",userID, nfc_id,"unlock");
+    return true;
+  }
+  else {
+    post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
+    return false;
+  }
+  return false;
+
 }
     
 void app_main()
 {
     init();
-    client_init();
+    client_init();  
     ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_wifi();
     

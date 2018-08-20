@@ -101,7 +101,7 @@ int execute_request(char* api_url, char* api_request_object, esp_http_client_met
         ESP_LOGI(MCP_API_TAG, "Status = %d, content_length = %d",
                 esp_http_client_get_status_code(client),
                 content_length);
-        return content_length+2;
+        return content_length;
         }
         else {
             return 0;
