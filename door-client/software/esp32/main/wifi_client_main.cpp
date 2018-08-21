@@ -150,93 +150,86 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_start() );
 }
 
+int parse_json(char* json_string, jsmntok_t* token_array) {
+  jsmn_parser parser;
+  jsmn_init(&parser);
+
+  int num_t = jsmn_parse(&parser, json_string, strlen(json_string), NULL, 0);
+  printf("num tokens: %d\n", num_t);
+
+  if (num_t < 0) {
+    printf("No tokens found\n");
+    return NULL;
+  }
+
+  if (token_array != NULL) {
+    jsmn_init(&parser);
+    // jsmntok_t t[num_t];
+    num_t = jsmn_parse(&parser, json_string, strlen(json_string), token_array, num_t);
+  }
+  else if (num_t < 1) {
+        printf("Object expected\n");
+        return NULL;
+  }
+
+  return num_t;
+} 
+
+int get_json_token(char* json_string, jsmntok_t* token_array, int num_t, char* token_name, char* buffer) {
+  for (int i = 2; i < num_t; i++){
+    jsmntok_t json_value = token_array[i+1];
+    jsmntok_t json_key = token_array[i];
+
+    int string_length = json_value.end - json_value.start;
+    int key_length = json_key.end - json_key.start;
+
+    char value[string_length+1] = {'\0'};
+    char key[key_length+1] = {'\0'};
+
+    int idx;
+
+    for (idx = 0; idx < string_length; idx++){
+       value[idx] = json_string[json_value.start + idx ];
+    }
+
+    for (idx = 0; idx < key_length; idx++){
+       key[idx] = json_string[json_key.start + idx];
+    }
+
+    if(strcmp(key, token_name)==0) {
+      if (buffer != NULL) {
+        strcpy(buffer, value);
+        return string_length;
+      }
+    }
+
+    printf("%s : %s\n", key, value);
+    i++;
+  }
+  return -1;
+}
+
 bool check_card(char* nfc_id) {
   int resp_len = get_user_by_NFC(nfc_id);
   if (resp_len < 2) {
     post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
     return false;
   }
-  char response[resp_len+1] = {'\0'};
-  get_response(response, resp_len);
+  char data[resp_len+1] = {'\0'};
+  get_response(data, resp_len);
 
-  jsmn_parser parser;
-  jsmn_init(&parser);
-
-  // char value[500];
-  // char key[500];
-  int r;
-
-  int num_t = jsmn_parse(&parser, response, strlen(response), NULL, 0);
-  printf("num tokens: %d\n", num_t);
-
-  if (num_t < 0) {
-    post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
-    return false;
-  }
-
-    jsmn_init(&parser);
-  jsmntok_t t[num_t];
-  r = jsmn_parse(&parser, response, strlen(response), t, num_t);
-
-  if (r < 0) {
-      printf("Failed to parse JSON: %d\n", r);
-      return false;
-  }
-
-  /* Assume the top-level element is an object */
-  if (r < 1) {
-      printf("Object expected\n");
-      return false;
-  }
-
-  // char firstName[30] = {'\0'};
-  // char lastName[30] = {'\0'};
-  char userID[5] = {'\0'};
-
- for (int i = 2; i < r; i++){
-
-   jsmntok_t json_value = t[i+1];
-   jsmntok_t json_key = t[i];
-
-
-   int string_length = json_value.end - json_value.start;
-   int key_length = json_key.end - json_key.start;
-
-   char value[string_length];
-   char key[key_length];
-
-
-   int idx;
-
-   for (idx = 0; idx < string_length; idx++){
-       value[idx] = response[json_value.start + idx ];
-   }
-
-   for (idx = 0; idx < key_length; idx++){
-       key[idx] = response[json_key.start + idx];
-   }
-
-   value[string_length] = '\0';
-   key[key_length] = '\0';
-
-   if(strcmp(key, "userID")==0) {
-    strcpy(userID, value);
-   }
-  
-  printf("%s : %s\n", key, value);
-   i++;
- }
+  jsmntok_t tokens[parse_json(data, NULL)];
+  int num_t = parse_json(data, tokens);
+  int token_len = get_json_token(data, tokens, num_t, "nfcID", NULL);
+  char userID[token_len]; 
+  get_json_token(data, tokens, num_t, "nfcID", userID);
 
   if(atoi(userID) > 0) {
-    post_log("04+Security+Desk",userID, nfc_id,"unlock");
+    post_log("04+Security+Desk", userID, nfc_id, "Unlock");
     return true;
   }
-  else {
-    post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
-    return false;
-  }
+  post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
   return false;
-
 }
     
 void app_main()
@@ -251,8 +244,7 @@ void app_main()
     ESP_LOGI(TAG, "Connected to AP");
     authenticate_with_contact_credentials();
     xTaskCreate(&keepalive_task, "keepalive_task", 8192, NULL, 5, NULL);
-    // get_user_by_NFC("04dbe822993c80");
-      // execute_request("test", "test", "test");
+
     red_light.on();
     while(1) {
       uint8_t uid[7] = {0};
@@ -286,19 +278,18 @@ void app_main()
           vTaskDelay(200 / portTICK_PERIOD_MS);
 
         }
-
-        // post_log("04+Security+Desk+-+Could+Not+Find+User","", uid_string,"deny");
-        yellow_light.off();        
+        yellow_light.off();
+        green_light.off();
+        red_light.on();
 
       //   for(int i=0; i< uid_size; i++) {
       //   printf("%d,", uid[i]);
       //   }
       //   printf("\n");
       }
-      yellow_light.off();
-      green_light.off();
-      red_light.on();
+      // printf("%d\n",uxTaskGetStackHighWaterMark(NULL));
     }
+
 
     // xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 5, NULL);
 }
