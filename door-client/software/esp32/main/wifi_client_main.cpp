@@ -220,12 +220,12 @@ bool check_card(char* nfc_id) {
 
   jsmntok_t tokens[parse_json(data, NULL)];
   int num_t = parse_json(data, tokens);
-  int token_len = get_json_token(data, tokens, num_t, "nfcID", NULL);
+  int token_len = get_json_token(data, tokens, num_t, "userID", NULL);
   char userID[token_len]; 
-  get_json_token(data, tokens, num_t, "nfcID", userID);
+  get_json_token(data, tokens, num_t, "userID", userID);
 
   if(atoi(userID) > 0) {
-    post_log("04+Security+Desk", userID, nfc_id, "Unlock");
+    post_log("04+Security+Desk", userID, nfc_id, "unlock");
     return true;
   }
   post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
@@ -251,7 +251,7 @@ void app_main()
       uint8_t uid_size = card_reader.poll(uid);
       if (uid_size > 0) {
         char uid_string[15] = {'\0'};
-        sprintf(uid_string, "%02X%02X%02X%02X%02X%02X%02X", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6]);
+        sprintf(uid_string, "%02x%02x%02x%02x%02x%02x%02x", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6]);
         ESP_LOGI(TAG, "Read card UID: %s", uid_string);
         red_light.off();
         green_light.off();
