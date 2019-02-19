@@ -1,4 +1,4 @@
 sdkconfig
 sdkconfig.old
 build/*
-components/*
+components/cpp_tools/*
