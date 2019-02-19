@@ -31,6 +31,9 @@
 #include "esp_log.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
+#include "esp_task_wdt.h"
+
+#include "esp_log.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -44,6 +47,7 @@
 #include "mcp_api.h"
 #include <reader.h>
 #include <light.h>
+#include <switch.h>
 
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
@@ -56,6 +60,8 @@
 
 #define SERVER CONFIG_SERVER
 #define PORT CONFIG_PORT
+
+#define CLIENT_TAG "06+Luigi+Laser+-+"
 
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
@@ -77,14 +83,20 @@ const int CONNECTED_BIT = BIT0;
 
 static const char *TAG = "wifi_client_main";
 
+
 extern "C" {
   void app_main();
 }
+
+// esp_log_level_set("HTTP_CLIENT", ESP_LOG_DEBUG); 
+int state;
 
 Reader card_reader;
 Light red_light((gpio_num_t)19);
 Light yellow_light((gpio_num_t)18);
 Light green_light((gpio_num_t)17);
+Light machine_power((gpio_num_t)23);
+Switch power_switch((gpio_num_t)32);
 
 // static const char *REQUEST = "POST " AUTH_ENDPOINT "?email=" CONFIG_USERNAME    "&password=" CONFIG_PASSWORD "\r\n"
 //     "Host: " WEB_SERVER "\r\n"
@@ -108,6 +120,7 @@ Light green_light((gpio_num_t)17);
 void init(void)
 {
   card_reader.init();
+  state = 0;
 }
     
 static esp_err_t event_handler(void *ctx, system_event_t *event)
@@ -212,11 +225,13 @@ int get_json_token(char* json_string, jsmntok_t* token_array, int num_t, char* t
 bool check_card(char* nfc_id) {
   int resp_len = get_user_by_NFC(nfc_id);
   if (resp_len < 2) {
-    post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
+    post_log(CLIENT_TAG "Could+Not+Find+User","", nfc_id,"deny");
     return false;
   }
   char data[resp_len+1] = {'\0'};
   get_response(data, resp_len);
+
+  // printf(data);
 
   jsmntok_t tokens[parse_json(data, NULL)];
   int num_t = parse_json(data, tokens);
@@ -225,16 +240,33 @@ bool check_card(char* nfc_id) {
   get_json_token(data, tokens, num_t, "userID", userID);
 
   if(atoi(userID) > 0) {
-    post_log("04+Security+Desk", userID, nfc_id, "unlock");
+    int resp_len = get_user_groups(userID);
+
+    if (resp_len < 2) {
+      post_log(CLIENT_TAG "Could+Not+Find+User+Groups",userID, nfc_id,"deny");
+      return false;
+    }
+
+    char data[resp_len+1] = {'\0'};
+    get_response(data, resp_len);
+
+    printf("\n");
+    printf(data);
+    printf("\n");
+
+    post_log(CLIENT_TAG, userID, nfc_id, "unlock");
     return true;
   }
-  post_log("04+Security+Desk+-+Could+Not+Find+User","", nfc_id,"deny");
+  post_log(CLIENT_TAG "Could+Not+Find+User","", nfc_id,"deny");
   return false;
 }
     
 void app_main()
 {
     init();
+    red_light.on();
+    yellow_light.on();
+    green_light.on();
     client_init();  
     ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_wifi();
@@ -245,42 +277,59 @@ void app_main()
     authenticate_with_contact_credentials();
     xTaskCreate(&keepalive_task, "keepalive_task", 8192, NULL, 5, NULL);
 
-    red_light.on();
+    yellow_light.off();
+    green_light.off();
     while(1) {
-      uint8_t uid[7] = {0};
-      uint8_t uid_size = card_reader.poll(uid);
-      if (uid_size > 0) {
-        char uid_string[15] = {'\0'};
-        sprintf(uid_string, "%02x%02x%02x%02x%02x%02x%02x", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6]);
-        ESP_LOGI(TAG, "Read card UID: %s", uid_string);
-        red_light.off();
-        green_light.off();
-        yellow_light.on();
-        if (check_card(uid_string)) {
-          yellow_light.off();
-          green_light.on();
-          vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-        }
-        else {
-          yellow_light.off();
-          red_light.on();
-          vTaskDelay(300 / portTICK_PERIOD_MS);
-          red_light.off();
-          vTaskDelay(200 / portTICK_PERIOD_MS);
-          red_light.on();
-          vTaskDelay(300 / portTICK_PERIOD_MS);
-          red_light.off();
-          vTaskDelay(200 / portTICK_PERIOD_MS);
-          red_light.on();
-          vTaskDelay(300 / portTICK_PERIOD_MS);
-          red_light.off();
-          vTaskDelay(200 / portTICK_PERIOD_MS);
-
-        }
+      if (!power_switch.state() && !state){
         yellow_light.off();
         green_light.off();
+        red_light.off();
+      }
+      if (!power_switch.state() && state) {
+        machine_power.off();
+        post_log(CLIENT_TAG "Power+Off","", "","");
+        state = 0;
+        yellow_light.off();
+        green_light.off();
+        red_light.off();
+      }
+      else if(power_switch.state() && !state) {
         red_light.on();
+        uint8_t uid[7] = {0};
+        uint8_t uid_size = card_reader.poll(uid);
+        if (uid_size > 0) {
+          char uid_string[15] = {'\0'};
+          sprintf(uid_string, "%02x%02x%02x%02x%02x%02x%02x", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6]);
+          ESP_LOGI(TAG, "Read card UID: %s", uid_string);
+          red_light.off();
+          green_light.off();
+          yellow_light.on();
+          if (check_card(uid_string)) {
+            state = 1;
+            yellow_light.off();
+            green_light.on();
+            machine_power.on();
+            // post_log(CLIENT_TAG, userID, nfc_id, "unlock");
+
+            //vTaskDelay(2000 / portTICK_PERIOD_MS);
+          }
+          else { // show deny
+            yellow_light.off();
+            red_light.on();
+            vTaskDelay(300 / portTICK_PERIOD_MS);
+            red_light.off();
+            vTaskDelay(200 / portTICK_PERIOD_MS);
+            red_light.on();
+            vTaskDelay(300 / portTICK_PERIOD_MS);
+            red_light.off();
+            vTaskDelay(200 / portTICK_PERIOD_MS);
+            red_light.on();
+            vTaskDelay(300 / portTICK_PERIOD_MS);
+            red_light.off();
+            vTaskDelay(200 / portTICK_PERIOD_MS);
+          }
+          esp_task_wdt_reset(); //reset task watchdog
+        }
 
       //   for(int i=0; i< uid_size; i++) {
       //   printf("%d,", uid[i]);

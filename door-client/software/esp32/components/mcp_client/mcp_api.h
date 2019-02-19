@@ -20,7 +20,6 @@ extern const char server_root_cert_pem[] asm("_binary_server_root_cert_pem_start
 
 char auth_cookie[77];
 esp_http_client_handle_t client;
-esp_http_client_config_t config = {};
 
 
     esp_err_t _http_event_handle(esp_http_client_event_t *evt)
@@ -59,9 +58,14 @@ esp_http_client_config_t config = {};
     }
 
 void client_init() {
+    esp_http_client_config_t config = {
+    };
+
     config.event_handler = _http_event_handle;
     config.cert_pem = server_root_cert_pem;
     config.url = WEB_URL;
+    config.buffer_size = 2048;
+
 
     client = esp_http_client_init(&config);
     esp_http_client_set_header(client, "Connection", "keep-alive");
@@ -121,6 +125,7 @@ static void keepalive_task(void *pvParameters)
 
 void get_response(char* buffer, int len) {
     int read_status = esp_http_client_read(client, buffer, len);
+    ESP_LOGI(MCP_API_TAG, "bytes read: %d",read_status);
     ESP_LOGI(MCP_API_TAG, "%s",buffer);
     // esp_http_client_cleanup(client);
 }
@@ -152,6 +157,19 @@ int get_user_by_NFC(char* nfcID)
     // ESP_LOGI(MCP_API_TAG, "%s",url);
     return execute_request(url,"", HTTP_METHOD_GET);
 }
+
+int get_user_groups(char* userID)
+{
+    char url[strlen("/api/users/") + strlen(userID) + strlen ("/groups") + 1] = {'\0'};
+    strcpy(url, "/api/users/");
+    // ESP_LOGI(MCP_API_TAG, "%s",url);
+    strcat(url, userID);
+    strcat(url, "/groups");
+    ESP_LOGI(MCP_API_TAG, "%s",url);
+    return execute_request(url,"", HTTP_METHOD_GET);
+}
+
+
 
 static void post_log(char* message, char* userID, char* nfcID, char* type) {
     // char* base_url = "/api/log?message=test&userID=14&nfcID=04D76B1A8F4980&type=deny";
