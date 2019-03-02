@@ -435,6 +435,7 @@ server.get('/api/log', function(request, response, next) {
 		}
 		else if(request.query)
 		{
+			console.log("filtering logs...");
 			console.log(JSON.stringify(request.params));
 			for(p in request.query)
 			{
@@ -446,6 +447,7 @@ server.get('/api/log', function(request, response, next) {
 					return next();
 				}
 			}
+			backend.getFilteredLog(100, filterParams, function(data){ response.send(data); });
 		}
 		else{
 			backend.getFilteredLog(100, filterParams, function(data){ response.send(data); });
