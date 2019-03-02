@@ -1078,40 +1078,62 @@ module.exports = {
 		//broadcaster.broadcast(module.exports, 'debug', message);
 	},
 	
-	getFilteredLog: function(limit, filters, onSuccess, onFailure){
+	getFilteredLog: function(pageNumber, limit, filters, onSuccess, onFailure){
 		if(!limit) limit = 100;
 		filterString = '      ';
 		console.log(filters);
 		if(filters) {
 			console.log("filters");
-			filterString = "WHERE ";
+			filterString = "";
+
+			var addFilterParamater = function(paramater){
+
+			};
+
 			if(Array.isArray(filters)) {
-				console.log(filters.length);
+				console.log("parsing filter array of length " + filters.length);
 			 	for (f in filters) {
-					console.log(filters[f]);
-					list = filters[f].split(" ");
-					//if(list.length != 3)
-						
-					if(list[1] == 'eq') operator = '=';
-					if(list[1] == 'ge') operator = '>=';
-					if(list[1] == 'le') operator = '<=';
-					
-					filterString += 'logs."' + list[0] + '"' + operator +'\'' + list[2] + '\' ';
-					if(f+1 < filters.length)
+			 		addFilterParamater(filsters[f]);
+			 		if(f+1 < filters.length)
 						filterString += 'AND ';
-					console.log(filterString);
 				}
 			}
-			else {
-					list=filters.split(" ");
-					if(list[1] == 'eq') operator = '=';
-					if(list[1] == 'ge') operator = '>=';
-					if(list[1] == 'le') operator = '<=';
+			else {				
+				filterList = filters.split("and");
+				//if(list.length != 3)
+				console.log("filter list: " + filterList);
+				for(var i = 0; i < filterList.length; i++) {
+					console.log(i);
+					var filter = filterList[i].trim().split(' ');
+					console.log(filter);
+					if(filter[1] == 'eq') operator = '=';
+					if(filter[1] == 'ge') operator = '>=';
+					if(filter[1] == 'le') operator = '<=';	
+				
+					if (filter[0] == 'firstName' || filter[0] == 'lastName')
+						table = 'users';
+					else
+						table = 'logs';
+
+					if(filterString)
+						filterString += " AND "
+					filterString +=  table + '."' + filter[0] + '"' + operator +'\'' + filter[2] + '\' ';
+					console.log("SQL filter string: " + filterString);
+				}
+				if (filterString)
+					filterString = "WHERE " + filterString;
+
+					// list=filters.split(" ");
+					// if(list[1] == 'eq') operator = '=';
+					// if(list[1] == 'ge') operator = '>=';
+					// if(list[1] == 'le') operator = '<=';
 					
-					filterString += 'logs."' + list[0] + '"' + operator +'\'' + list[2] + '\' ';
-					console.log(filterString);
+					// // filterString += 'users."' + list[0] + '"' + operator +'\'' + list[2] + '\' ';
+					// filterString += list[0] + '"' + operator +'\'' + list[2] + '\' ';
+					// console.log(filterString);
 			}
 		}
+		console.log("Final filter string: "+filterString);
 		console.log("end filters");
 		var sql = 
 			'SELECT ' +
@@ -1120,7 +1142,7 @@ module.exports = {
 			'FROM logs ' +
 			'	LEFT JOIN users ON logs."userID" = users."userID" ' +
 			filterString +
-			'ORDER BY timestamp DESC LIMIT ' + parseInt(limit);
+			'ORDER BY timestamp DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(limit) + ' * ' + parseInt(pageNumber - 1);
 		console.log(sql);
 		return query(sql, [], onSuccess, onFailure);
 	},

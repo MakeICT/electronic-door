@@ -1,17 +1,28 @@
 <h2>
 Activity Log 
 <button ng-click="loadLog('')" class="btn btn-sm btn-primary">↺</button>
+	<button class="btn btn-primary pull-right" ng-click="toggleFilters()">Filters</button>
 </h2>
 <span>
 <div align='right'>
-<h3>
-Filter:
-<button ng-click="loadLog('')" class="btn btn-sm btn-primary">all</button>
-<button ng-click="loadLog('$filter=logType%20eq%20message')" class="btn btn-sm btn-primary">message</button>
-<button ng-click="loadLog('$filter=logType%20eq%20unlock')" class="btn btn-sm btn-primary">unlock</button>
-<button ng-click="loadLog('$filter=logType%20eq%20error')" class="btn btn-sm btn-primary">error</button>
-<button ng-click="loadLog('$filter=logType%20eq%20deny')" class="btn btn-sm btn-primary">deny</button>
-</h3>
+	<div uib-collapse="!filterExpanded">
+		<form class="form">
+			<div class="d-flex flex-column">
+				<label for="firstNameFilter" class="pull-left">First Name</label>
+				<input id="firstNameFilter" ng-model="firstNameFilter" class="form-control">
+			</div>
+			<div class="d-flex flex-column">
+				<label for="lastNameFilter" class="pull-left">Last Name</label>
+				<input id="lastNameFilter" ng-model="lastNameFilter" class="form-control">
+			</div>
+			<div class="d-flex flex-column">
+				<label for="logTypeFilter" class="pull-left">Log Type</label>
+				<input id="logTypeFilter" ng-model="logTypeFilter" class="form-control">
+			</div>
+
+			<button ng-click="loadLog('')" class="btn btn-primary">search</button>
+		</form>
+	</div>
 </div>
 </span>
 <div ng-if="!log">

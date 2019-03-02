@@ -447,10 +447,10 @@ server.get('/api/log', function(request, response, next) {
 					return next();
 				}
 			}
-			backend.getFilteredLog(100, filterParams, function(data){ response.send(data); });
+			backend.getFilteredLog(1, 100, filterParams, function(data){ response.send(data); });
 		}
 		else{
-			backend.getFilteredLog(100, filterParams, function(data){ response.send(data); });
+			backend.getFilteredLog(1, 100, filterParams, function(data){ response.send(data); });
 		}
 	}
 	
