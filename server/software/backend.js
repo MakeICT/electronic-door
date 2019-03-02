@@ -1079,7 +1079,7 @@ module.exports = {
 	},
 	
 	getFilteredLog: function(pageNumber, limit, filters, onSuccess, onFailure){
-		if(!limit) limit = 100;
+		if(!limit) limit = 50;
 		filterString = '      ';
 		console.log(filters);
 		if(filters) {

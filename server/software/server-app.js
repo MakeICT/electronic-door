@@ -437,20 +437,24 @@ server.get('/api/log', function(request, response, next) {
 		{
 			console.log("filtering logs...");
 			console.log(JSON.stringify(request.params));
+
+			var page = 1;
 			for(p in request.query)
 			{
 				if(p == '$filter')
 					filterParams = request.query.$filter;
+				else if(p== '$page')
+					page=request.query.$page;
 				else {
 					console.log("unknown parameter");
 					response.send("Invalid Filter");
 					return next();
 				}
 			}
-			backend.getFilteredLog(1, 100, filterParams, function(data){ response.send(data); });
+			backend.getFilteredLog(page, 50, filterParams, function(data){ response.send(data); });
 		}
 		else{
-			backend.getFilteredLog(1, 100, filterParams, function(data){ response.send(data); });
+			backend.getFilteredLog(page, 50, filterParams, function(data){ response.send(data); });
 		}
 	}
 	
