@@ -1103,6 +1103,7 @@ module.exports = {
 				//if(list.length != 3)
 				console.log("filter list: " + filterList);
 				for(var i = 0; i < filterList.length; i++) {
+					var newstring = "";
 					console.log(i);
 					var filter = filterList[i].trim().split(' ');
 					console.log(filter);
@@ -1110,14 +1111,18 @@ module.exports = {
 					if(filter[1] == 'ge') operator = '>=';
 					if(filter[1] == 'le') operator = '<=';	
 				
-					if (filter[0] == 'firstName' || filter[0] == 'lastName')
+					if (filter[0] == 'firstName' || filter[0] == 'lastName') {
 						table = 'users';
-					else
+						newString = 'LOWER(' + table + '."' + filter[0] + '")' + operator +'LOWER(\'' + filter[2] + '\') ';				
+					}
+					else {
 						table = 'logs';
+						newString = table + '."' + filter[0] + '"' + operator +'\'' + filter[2].toLowerCase() + '\' ';
+					}
 
 					if(filterString)
 						filterString += " AND "
-					filterString +=  table + '."' + filter[0] + '"' + operator +'\'' + filter[2] + '\' ';
+					filterString += newString;
 					console.log("SQL filter string: " + filterString);
 				}
 				if (filterString)
