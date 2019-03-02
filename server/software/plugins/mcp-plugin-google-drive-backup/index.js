@@ -10,8 +10,12 @@ var google = require('googleapis');
 
 function buildAuthClient(callback){
 	backend.getPluginOptions(module.exports.name, function(settings){
-		var redirectURI = 'https://' + settings['Hostname'] + '/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
-		var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
+		//var redirectURI = 'https://' + settings['Hostname'] + '/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
+		var redirectURI = 'https://security.makeict.org/api/plugins/' + encodeURIComponent(module.exports.name) + '/handler';
+		//var oauth2Client = new google.auth.OAuth2(settings['Client ID'], settings['Client secret'], redirectURI);
+		var clientID = '545192077100-hqt86p6t8hl1aedchgvb134h8kmlcc84.apps.googleusercontent.com';
+		var clientSecret = 'ai5vuMf8IAXCf54btyiwepoj';
+		var oauth2Client = new google.auth.OAuth2(clientID, clientSecret, redirectURI);
 		if(settings['token']){
 			oauth2Client.setCredentials(JSON.parse(settings['token']));
 		}
@@ -118,39 +122,86 @@ module.exports = {
 									backend.error(stderr);
 									return;
 								}else{
-									backend.debug('Zipping...');
-									var zipProc = child_process.spawn('gzip', [tmpFilePath]);
-									zipProc.stdin.write(stdout);
-									zipProc.stdin.end();
-									
-									var drive = google.drive({ version: 'v2'});
 									var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+									backend.debug('BACKUP: ' + tzoffset);
 									var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0,-1);
+									backend.debug('BACKUP: ' + localISOTime);
 									var filename = localISOTime.replace(/T/, '_').replace(/:/g, '-').substring(0,19);
-									
-									backend.debug('Uploading...');
-									drive.files.insert({
-										auth: oauth2Client,
-										resource: {
-											title: filename + '.sql.gz',
-											mimeType: 'application/x-gzip',
-											parents: [{
-												'kind': 'drive#fileLink',
-												'id': settings['Folder ID'],
-											}],
-										}, media: {
-											body: fs.createReadStream(tmpFilePath + '.gz'),
-											mimeType: 'application/x-gzip',
+									backend.debug('BACKUP: ' + filename);
+
+									backend.debug('Zipping...');
+									//var zipProc = child_process.spawn('gzip', [tmpFilePath]);
+									//zipProc.stdin.write(stdout);
+									//zipProc.stdin.end();
+									zipCMD = 'gzip ' + tmpFilePath
+									var zipProc = child_process.execSync(zipCMD, [], function(error, stdout, stderr){
+										if(error != null) {
+											backend.error('Zip failed: ' + error);
+											backend.error(stderr);
+											return;
+										} else {
+											backend.debug('Zip succes');
+											backend.log('Zip created');
 										}
-									}, function(error, response){
-										if(error){
-											backend.error(error);
-										}else{
-											backend.log('Backup generated and uploaded! ' + filename + '.sql.gz');
-											fs.unlink(tmpFilePath + '.gz');
-											cleanupCallback();
-										}
+
 									});
+
+									backend.debug('Zip process finished');
+										
+									backend.debug('SCP file: ' + tmpFilePath);
+
+									var scpCMD = 'scp "' + tmpFilePath + '.gz" "security-backup@192.168.9.13:~/' + filename + '.sql.gz"';
+									try{
+										backend.debug('SCP Command: ' + scpCMD);
+										child_process.exec(scpCMD, [], function(error, stdout, stderr){
+											if(error !== null){
+												backend.error('SCP failed: ' + error);
+												backend.error(stderr);
+												return;
+											}else{
+												backend.debug('SCP success');
+												backend.log('Local (SCP) backup finished');
+											}
+										});
+									}catch(exc){
+										backend.log('SCP Backup Failed');
+										backend.debug('SCP Error: ' + exc);
+									}
+
+									
+									try{
+										var drive = google.drive({ version: 'v2'});
+									
+										backend.debug('Uploading...');
+										drive.files.insert({
+											auth: oauth2Client,
+											resource: {
+												title: filename + '.sql.gz',
+												mimeType: 'application/x-gzip',
+													parents: [{
+													'kind': 'drive#fileLink',
+													'id': settings['Folder ID'],
+													//'id': '0BzlftvWCkom_fjJyNzhDNjJjS1IxdmVfcW45RjU3ZWxhdEQzTmdtT1g3LVVkWEIta2hFWkU',
+												}],
+											}, media: {
+												body: fs.createReadStream(tmpFilePath + '.gz'),
+												mimeType: 'application/x-gzip',
+											}
+										}, function(error, response){
+											if(error){
+												backend.debug('Google drive error: ' + error);
+												backend.error(error);
+											}else{
+												backend.log('Backup generated and uploaded! ' + filename + '.sql.gz');
+												try{
+													fs.unlink(tmpFilePath + '.gz');
+												}catch(exc){}
+												cleanupCallback();
+											}
+										});
+									}catch(exc){
+										backend.debug('Google drive error: ' + exc);
+									}
 								}
 							});
 						

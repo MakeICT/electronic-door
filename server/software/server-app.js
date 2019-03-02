@@ -68,6 +68,17 @@ server.get('/api/users/:userID/groups', function (request, response, next) {
 	return next();
 });
 
+server.get('/api/users/:userID/checkgroup/:groupID', function (request, response, next) {
+	var session = checkIfLoggedIn(request, response);
+	if(session){
+		backend.checkGroupEnrollment(request.params.userID, request.params.groupID, function(groups){
+			response.send(groups);
+		});
+	}
+	
+	return next();
+});
+
 server.get('/api/users/:userID/nfcHistory', function (request, response, next) {
 	var session = checkIfLoggedIn(request, response);
 	if(session){
@@ -440,6 +451,16 @@ server.get('/api/log', function(request, response, next) {
 	}
 	
 	return next();
+});
+
+server.post('/api/log', function(request, response, next) {
+	       var session = checkIfLoggedIn(request, response);
+	       if(session){
+		                      backend.log(request.params.message, request.params.userID, request.params.nfcID, request.params.type);
+		                      response.send();
+		              }
+	       
+	       return next();
 });
 
 server.get('/api/scheduledJobs', function(request, response, next) {

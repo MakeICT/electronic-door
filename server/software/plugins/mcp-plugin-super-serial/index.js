@@ -41,7 +41,7 @@ var watchdog = {
 		watchdog.timer = setTimeout(watchdog.onTrigger, 60000);
 	},
 	'onTrigger': function(){
-		backend.error('Super serial watchdog activated');
+		backend.debug('Super serial watchdog activated');
 		connectionResetter.trigger = true;
 	},
 };
@@ -547,7 +547,7 @@ module.exports = {
 		});
 		
 		serialPort.on('open', function(error){
-			backend.log('Super Serial connected!');
+			backend.debug('Super Serial connected!');
 			if(settings['RW Toggle Pin']){
 				try{
 					readWriteToggle = new GPIO(settings['RW Toggle Pin'], 'out');
@@ -569,7 +569,7 @@ module.exports = {
 		});
 		
 		serialPort.on('disconnect', function(error){
-			backend.error('Serial Port disconnected: ' + error);
+			backend.debug('Serial Port disconnected: ' + error);
 			connectionResetter.trigger = true;
 		});
 		
@@ -596,7 +596,7 @@ module.exports = {
 			}catch(exc){}
 			
 			serialPort = null;
-			backend.log('Super Serial disconnected');
+			backend.debug('Super Serial disconnected');
 		}
 	},
 	

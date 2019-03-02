@@ -1002,6 +1002,13 @@ module.exports = {
 			'GROUP BY name, "userID" ' +
 			'ORDER BY name';
 		return query(sql, [who], onSuccess, onFailure);
+	},	
+
+	checkGroupEnrollment: function(user_ID, group_ID, onSuccess, onFailure){
+		var sql = 'select * from "userGroups" where "userID"=$1 and "groupID"=$2;'
+		var group_list = query(sql, [user_ID, group_ID], onSuccess, onFailure);
+		console.log(group_list);
+		return group_list;
 	},
 	
 	setGroupEnrollment: function(who, group, enrolled, onSuccess, onFailure){
