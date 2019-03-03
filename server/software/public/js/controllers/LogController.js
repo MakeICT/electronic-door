@@ -32,8 +32,8 @@ app.controller('logCtrl', function($scope, $http, authenticationService, ajaxChe
 	}
 
 	$scope.setPage = function(num){
-		$scope.pageNumber = num;
-		$scope.pageNumberBox = num;
+		$scope.pageNumber = parseInt(num);
+		$scope.pageNumberBox = parseInt(num);
 		$scope.loadLog();
 	}
 	
