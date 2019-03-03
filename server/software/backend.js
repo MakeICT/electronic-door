@@ -1080,73 +1080,48 @@ module.exports = {
 	
 	getFilteredLog: function(pageNumber, limit, filters, onSuccess, onFailure){
 		if(!limit) limit = 50;
-		filterString = '      ';
-		console.log(filters);
+
+		var filterString = "";
 		if(filters) {
-			console.log("filters");
-			filterString = "";
+			console.log("Parsing filters: " + filters);
+		
+			var filterList = filters.split("and");
+			console.log("filter list: " + filterList);
+			for(var i = 0; i < filterList.length; i++) {
+				var newstring = "";
+				var filter = filterList[i].trim().split(' ');
+				console.log(filter);
 
-			var addFilterParamater = function(paramater){
+				if(filter[1] == 'eq') operator = '=';
+				if(filter[1] == 'ge') operator = '>=';
+				if(filter[1] == 'le') operator = '<=';
 
-			};
-
-			if(Array.isArray(filters)) {
-				console.log("parsing filter array of length " + filters.length);
-			 	for (f in filters) {
-			 		addFilterParamater(filsters[f]);
-			 		if(f+1 < filters.length)
-						filterString += 'AND ';
+				var table = 'logs';	
+				var term = "";
+			
+				if (filter[0] == 'firstName' || filter[0] == 'lastName') {
+					table = 'users';
 				}
-			}
-			else {				
-				filterList = filters.split("and");
-				//if(list.length != 3)
-				console.log("filter list: " + filterList);
-				for(var i = 0; i < filterList.length; i++) {
-					var newstring = "";
-					console.log(i);
-					var filter = filterList[i].trim().split(' ');
-					console.log(filter);
-					if(filter[1] == 'eq') operator = '=';
-					if(filter[1] == 'ge') operator = '>=';
-					if(filter[1] == 'le') operator = '<=';
 
-					var table = 'logs';	
-					var term = "";
-				
-					if (filter[0] == 'firstName' || filter[0] == 'lastName') {
-						table = 'users';
-					}
-
-					for (var i =2; i<filter.length; i++){
-						term += filter[i] + ' ';
-					}
-					term = term.trim();
-
-					if (filter[0] == 'logType') {
-						newString = table + '."' + filter[0] + '"' + operator +'\'' + term.toLowerCase() + '\' ';
-					}
-					else {
-						newString = 'LOWER(' + table + '."' + filter[0] + '")' + operator +'LOWER(\'' + term + '\') ';				
-					}
-
-					if(filterString)
-						filterString += " AND "
-					filterString += newString;
-					console.log("SQL filter string: " + filterString);
+				for (var i =2; i<filter.length; i++){
+					term += filter[i] + ' ';
 				}
-				if (filterString)
-					filterString = "WHERE " + filterString;
+				term = term.trim();
 
-					// list=filters.split(" ");
-					// if(list[1] == 'eq') operator = '=';
-					// if(list[1] == 'ge') operator = '>=';
-					// if(list[1] == 'le') operator = '<=';
-					
-					// // filterString += 'users."' + list[0] + '"' + operator +'\'' + list[2] + '\' ';
-					// filterString += list[0] + '"' + operator +'\'' + list[2] + '\' ';
-					// console.log(filterString);
+				if (filter[0] == 'logType') {
+					newString = table + '."' + filter[0] + '"' + operator +'\'' + term.toLowerCase() + '\' ';
+				}
+				else {
+					newString = 'LOWER(' + table + '."' + filter[0] + '")' + operator +'LOWER(\'' + term + '\') ';				
+				}
+
+				if(filterString)
+					filterString += " AND "
+				filterString += newString;
+				console.log("SQL filter string: " + filterString);
 			}
+			if (filterString)
+				filterString = "WHERE " + filterString;
 		}
 		console.log("Final filter string: "+filterString);
 		console.log("end filters");
