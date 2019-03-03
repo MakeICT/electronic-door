@@ -33,7 +33,7 @@
 
 	<body ng-app="masterControlApp">
 		<div ng-controller="controller">
-			<div class="header"></div>
+			<div class="header" ng-if="!authenticated"></div>
 			
 			<button ng-if="error" class="btn btn-sm btn-danger" ng-click="clearError()" title="{{error.detail}}">
 				{{error.message}} &nbsp;|&nbsp; X
