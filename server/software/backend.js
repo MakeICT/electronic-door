@@ -1087,6 +1087,7 @@ module.exports = {
 		
 			var filterList = filters.split("and");
 			console.log("filter list: " + filterList);
+			console.log(filterList.length);
 			for(var i = 0; i < filterList.length; i++) {
 				var newstring = "";
 				var filter = filterList[i].trim().split(' ');
@@ -1103,8 +1104,8 @@ module.exports = {
 					table = 'users';
 				}
 
-				for (var i =2; i<filter.length; i++){
-					term += filter[i] + ' ';
+				for (var j =2; j<filter.length; j++){
+					term += filter[j] + ' ';
 				}
 				term = term.trim();
 
