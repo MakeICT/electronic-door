@@ -1109,15 +1109,25 @@ module.exports = {
 					console.log(filter);
 					if(filter[1] == 'eq') operator = '=';
 					if(filter[1] == 'ge') operator = '>=';
-					if(filter[1] == 'le') operator = '<=';	
+					if(filter[1] == 'le') operator = '<=';
+
+					var table = 'logs';	
+					var term = "";
 				
 					if (filter[0] == 'firstName' || filter[0] == 'lastName') {
 						table = 'users';
-						newString = 'LOWER(' + table + '."' + filter[0] + '")' + operator +'LOWER(\'' + filter[2] + '\') ';				
+					}
+
+					for (var i =2; i<filter.length; i++){
+						term += filter[i] + ' ';
+					}
+					term = term.trim();
+
+					if (filter[0] == 'logType') {
+						newString = table + '."' + filter[0] + '"' + operator +'\'' + term.toLowerCase() + '\' ';
 					}
 					else {
-						table = 'logs';
-						newString = table + '."' + filter[0] + '"' + operator +'\'' + filter[2].toLowerCase() + '\' ';
+						newString = 'LOWER(' + table + '."' + filter[0] + '")' + operator +'LOWER(\'' + term + '\') ';				
 					}
 
 					if(filterString)

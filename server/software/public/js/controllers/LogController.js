@@ -17,9 +17,15 @@ app.controller('logCtrl', function($scope, $http, authenticationService, ajaxChe
 			if(params)
 				params = params + "+and+";
 			params = params + "logType+eq+" + $scope.logTypeFilter;
+		}		
+		if($scope.messageFilter){
+			if(params)
+				params = params + "+and+";
+			params = params + "message+eq+" + $scope.messageFilter;
 		}
 		params = '$filter=' + params;
 		params += "&$page=" + $scope.pageNumberBox;
+		console.log("log filter params: " + params);
 		$http.get('/api/log?'+params).success(function(response){
 			if(ajaxChecker.checkAjax(response)){
 				$scope.log = response;
