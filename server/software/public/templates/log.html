@@ -1,20 +1,21 @@
+<h2>
+	Activity Log 
+	<button ng-click="loadLog('')" class="btn btn-sm btn-primary">↺</button>
+</h2>
+
 <div class="row">	
-	<div class="col-md-1">
+	<div class="col-md-4">
 	<!-- <input type="number" class="form-control" ng-change="setPage(1)"> -->
-	<input type="number" min="1" ng-model="pageNumberBox" class="form-control" ng-change="setPage()">
+	<button class="btn btn-primary pull-left"  ng-model="pageDown" ng-click="setPage(pageNumber-1)" ng-disabled="pageNumber < 2"><</button>
+	<input type="text" min="1" ng-model="pageNumberBox" ng-value="{{ pageNumber }}" class="btn btn-primary pull-left" style="width:60px" ng-keydown="$event.keyCode === 13 && setPage(pageNumberBox)">
+	<button class="btn btn-primary pull-left" ng-model="pageUp" ng-click="setPage(pageNumber+1)">></button>
 	</div>
-	<div class="col-md-10">
-		<h2>
-			Activity Log 
-			<button ng-click="loadLog('')" class="btn btn-sm btn-primary">↺</button>
-		</h2>
+	<div class="col-md-4">
 	</div>
-	<div class="col-md-1">
+	<div class="col-md-4">
 	<button class="btn btn-primary pull-right" ng-click="toggleFilters()">Filters</button>
 	</div>
 </div>
-
-<span>
 <div align='right'>
 	<div uib-collapse="!filterExpanded">
 		<form class="form">
@@ -35,7 +36,7 @@
 		</form>
 	</div>
 </div>
-</span>
+
 <div ng-if="!log">
 	Loading...
 </div>
@@ -59,3 +60,4 @@
 		</tr>
 	</tbody>
 </table>
+

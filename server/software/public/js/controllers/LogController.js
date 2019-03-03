@@ -1,5 +1,6 @@
 app.controller('logCtrl', function($scope, $http, authenticationService, ajaxChecker){
 	$scope.filterExpanded=false;
+	$scope.pageNumber=1;
 	$scope.pageNumberBox=1;
 
 	$scope.loadLog = function(params){
@@ -30,8 +31,9 @@ app.controller('logCtrl', function($scope, $http, authenticationService, ajaxChe
 		$scope.filterExpanded = !$scope.filterExpanded;
 	}
 
-	$scope.setPage = function(){
-		// $scope.page = $scope.pageNumberBox;
+	$scope.setPage = function(num){
+		$scope.pageNumber = num;
+		$scope.pageNumberBox = num;
 		$scope.loadLog();
 	}
 	
