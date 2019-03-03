@@ -1147,7 +1147,7 @@ module.exports = {
 			'FROM logs ' +
 			'	LEFT JOIN users ON logs."userID" = users."userID" ' +
 			filterString +
-			'ORDER BY timestamp DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(limit) + ' * ' + parseInt(pageNumber - 1);
+			'ORDER BY "logID" DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(limit) + ' * ' + parseInt(pageNumber - 1);
 		console.log(sql);
 		return query(sql, [], onSuccess, onFailure);
 	},
