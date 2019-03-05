@@ -95,7 +95,7 @@ Reader card_reader;
 Light red_light((gpio_num_t)19);
 Light yellow_light((gpio_num_t)18);
 Light green_light((gpio_num_t)17);
-Light machine_power((gpio_num_t)23);
+Light machine_power((gpio_num_t)33);
 Switch power_switch((gpio_num_t)32);
 
 // static const char *REQUEST = "POST " AUTH_ENDPOINT "?email=" CONFIG_USERNAME    "&password=" CONFIG_PASSWORD "\r\n"
