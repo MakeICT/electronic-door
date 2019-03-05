@@ -240,10 +240,10 @@ bool check_card(char* nfc_id) {
   get_json_token(data, tokens, num_t, "userID", userID);
 
   if(atoi(userID) > 0) {
-    int resp_len = get_user_groups(userID);
+    int resp_len = check_group_enrollment(userID, "1348");
 
-    if (resp_len < 2) {
-      post_log(CLIENT_TAG "Could+Not+Find+User+Groups",userID, nfc_id,"deny");
+    if (resp_len < 3) {
+      post_log(CLIENT_TAG "User+Not+Authorized",userID, nfc_id,"deny");
       return false;
     }
 
