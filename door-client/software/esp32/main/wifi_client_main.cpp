@@ -95,7 +95,7 @@ Reader card_reader;
 Light red_light((gpio_num_t)19);
 Light yellow_light((gpio_num_t)18);
 Light green_light((gpio_num_t)17);
-Light machine_power((gpio_num_t)23);
+Light machine_power((gpio_num_t)33);
 Switch power_switch((gpio_num_t)32);
 
 // static const char *REQUEST = "POST " AUTH_ENDPOINT "?email=" CONFIG_USERNAME    "&password=" CONFIG_PASSWORD "\r\n"
@@ -240,10 +240,10 @@ bool check_card(char* nfc_id) {
   get_json_token(data, tokens, num_t, "userID", userID);
 
   if(atoi(userID) > 0) {
-    int resp_len = get_user_groups(userID);
+    int resp_len = check_group_enrollment(userID, "1348");
 
-    if (resp_len < 2) {
-      post_log(CLIENT_TAG "Could+Not+Find+User+Groups",userID, nfc_id,"deny");
+    if (resp_len < 3) {
+      post_log(CLIENT_TAG "User+Not+Authorized",userID, nfc_id,"deny");
       return false;
     }
 
@@ -287,11 +287,11 @@ void app_main()
       }
       if (!power_switch.state() && state) {
         machine_power.off();
-        post_log(CLIENT_TAG "Power+Off","", "","");
         state = 0;
         yellow_light.off();
         green_light.off();
         red_light.off();
+        post_log(CLIENT_TAG "Power+Off","", "","");
       }
       else if(power_switch.state() && !state) {
         red_light.on();

@@ -169,6 +169,19 @@ int get_user_groups(char* userID)
     return execute_request(url,"", HTTP_METHOD_GET);
 }
 
+int check_group_enrollment(char* userID, char* groupID)
+{
+    char url[strlen("/api/users/") + strlen(userID) + strlen ("/checkgroup/") + strlen(groupID)+ 1] = {'\0'};
+    strcpy(url, "/api/users/");
+    // ESP_LOGI(MCP_API_TAG, "%s",url);
+    strcat(url, userID);
+    strcat(url, "/checkgroup/");
+    strcat(url, groupID);
+    ESP_LOGI(MCP_API_TAG, "%s",url);
+    return execute_request(url,"", HTTP_METHOD_GET);
+}
+
+
 
 
 static void post_log(char* message, char* userID, char* nfcID, char* type) {
