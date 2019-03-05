@@ -287,11 +287,11 @@ void app_main()
       }
       if (!power_switch.state() && state) {
         machine_power.off();
-        post_log(CLIENT_TAG "Power+Off","", "","");
         state = 0;
         yellow_light.off();
         green_light.off();
         red_light.off();
+        post_log(CLIENT_TAG "Power+Off","", "","");
       }
       else if(power_switch.state() && !state) {
         red_light.on();
