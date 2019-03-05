@@ -3437,6 +3437,7 @@ Source: &lt;a href="https://www.mouser.ch/datasheet/2/18/c-bmj-0051-1365214.pdf"
 <segment>
 <pinref part="U1" gate="G$1" pin="IO33"/>
 <wire x1="43.18" y1="48.26" x2="33.02" y2="48.26" width="0.1524" layer="91"/>
+<label x="30.48" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IO2" class="0">
@@ -3468,12 +3469,6 @@ Source: &lt;a href="https://www.mouser.ch/datasheet/2/18/c-bmj-0051-1365214.pdf"
 <wire x1="182.88" y1="35.56" x2="190.5" y2="35.56" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$8" class="0">
-<segment>
-<pinref part="J1" gate="G$1" pin="7"/>
-<wire x1="162.56" y1="27.94" x2="154.94" y2="27.94" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="+5V" class="0">
 <segment>
 <pinref part="J1" gate="G$1" pin="1"/>
@@ -3488,6 +3483,18 @@ Source: &lt;a href="https://www.mouser.ch/datasheet/2/18/c-bmj-0051-1365214.pdf"
 <segment>
 <pinref part="U1" gate="G$1" pin="EXT_5V"/>
 <pinref part="P+3" gate="1" pin="+5V"/>
+</segment>
+</net>
+<net name="CURRENT_IN" class="0">
+<segment>
+<pinref part="U1" gate="G$1" pin="IO25"/>
+<wire x1="43.18" y1="45.72" x2="33.02" y2="45.72" width="0.1524" layer="91"/>
+<label x="30.48" y="45.72" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="J1" gate="G$1" pin="7"/>
+<wire x1="162.56" y1="27.94" x2="154.94" y2="27.94" width="0.1524" layer="91"/>
+<label x="149.86" y="27.94" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
