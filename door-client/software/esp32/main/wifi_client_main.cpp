@@ -48,6 +48,7 @@
 #include <reader.h>
 #include <light.h>
 #include <switch.h>
+//#include <ws2812_control.h>
 
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
@@ -92,9 +93,9 @@ extern "C" {
 int state;
 
 Reader card_reader;
-Light red_light((gpio_num_t)19);
+Light red_light((gpio_num_t)17);
 Light yellow_light((gpio_num_t)18);
-Light green_light((gpio_num_t)17);
+Light green_light((gpio_num_t)19);
 Light machine_power((gpio_num_t)33);
 Switch power_switch((gpio_num_t)32);
 

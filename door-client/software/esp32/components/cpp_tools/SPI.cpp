@@ -54,6 +54,7 @@ void SPI::init(int mosiPin, int misoPin, int clkPin, int csPin) {
 	bus_config.quadwp_io_num   = -1;      // Not used
 	bus_config.quadhd_io_num   = -1;      // Not used
 	bus_config.max_transfer_sz = 0;       // 0 means use default.
+	bus_config.intr_flags = 0;
     bus_config.flags           = (SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MOSI | SPICOMMON_BUSFLAG_MISO);
 
 	ESP_LOGI(LOG_TAG, "... Initializing bus; host=%d", m_host);
