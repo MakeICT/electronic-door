@@ -445,6 +445,7 @@ module.exports = {
 			params.push(user.userID);
 			var log = function(){
 				module.exports.log('Update user', user.userID);
+				// backend.log('Update user: ' + user.firstName + ' ' + user.lastName);
 				if(onSuccess) onSuccess();
 			}
 			return query(sql, params, log, onFailure);

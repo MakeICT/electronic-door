@@ -128,7 +128,7 @@ module.exports = {
 									user.email = contact.Email;
 									user.status = ((contact.Status == 'Active' || contact.Status == 'PendingRenewal') && contact['MembershipLevel']['Name'] != 'Non-Member') ? 'active' : 'inactive';
 									
-									backend.log(JSON.stringify(contact));
+									// backend.log(JSON.stringify(contact));
 									for(var j=0; j<contact.FieldValues.length; j++){
 										contact[contact.FieldValues[j].FieldName] = contact.FieldValues[j].Value;
 									}
