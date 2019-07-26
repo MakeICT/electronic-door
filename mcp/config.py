@@ -16,3 +16,9 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get('EMAIL_USER')
     MAIL_PASSWORD = os.environ.get('EMAIL_PASS')
+
+    USER_APP_NAME = "Makerspace Control Program"      # Shown in and email templates and page footers
+    USER_ENABLE_EMAIL = False      # Disable email authentication
+    USER_ENABLE_USERNAME = True    # Enable username authentication
+    USER_REQUIRE_RETYPE_PASSWORD = False    # Simplify register form
+    USER_EMAIL_SENDER_EMAIL = ""
