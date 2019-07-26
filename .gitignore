@@ -1,3 +1,5 @@
+mcp/site.db
+
 server/software/credentials/
 server/software/mcp/env
 node_modules/
