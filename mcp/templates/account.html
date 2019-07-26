@@ -21,7 +21,13 @@
                                 {{ field(class="form-control form-control-sm is-invalid") }}
                                 <div class="invalid-feedback">
                                     {% for error in field.errors %}
-                                        <span>{{ error }}</span>
+                                        <span class="float-right col-md-10 pl-1">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ field(class="form-control form-control-sm col-md-10") }}
+                            {% endif %}
+                        </div>                    
                                     {% endfor %}
                                 </div>
                             {% else %}
