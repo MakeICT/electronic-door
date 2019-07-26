@@ -8,50 +8,46 @@
           <p class="text-secondary">{{ current_user.email }}</p>
         </div>
       </div>
-        <form method="POST" action="" enctype="multipart/form-data">
+        <form class="form form-horizontal" method="POST" action="" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Account Info</legend>
-                <div class="form-group">
-                    {{ form.username.label(class="form-control-label") }}
+                {% for field in form %}
+                    <!-- {{ field.type }} -->
+                    {% if field.type=='StringField' %}
+                        <div class="form-row">
+                            {{ field.label(class="form-control-label-sm col-md-2") }}
+                            {% if field.errors %}
+                                {{ field(class="form-control form-control-sm is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in field.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ field(class="form-control form-control-sm col-md-10") }}
+                            {% endif %}
+                        </div>
 
-                    {% if form.username.errors %}
-                        {{ form.username(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.username.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
+                    {% elif field.type=='FileField' %}
+                        <div class="form-row">
+                            {{ field.label(class="form-control-label-sm col-md-2") }}
+                            {{ field(class="") }}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                    <span class="text-danger">{{ error }}</span></br>
+                                {% endfor %}
+                            {% endif %}
                         </div>
-                    {% else %}
-                        {{ form.username(class="form-control form-control-lg") }}
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    {{ form.email.label(class="form-control-label") }}
-                    {% if form.email.errors %}
-                        {{ form.email(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.email.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
+
+                    {% elif field.type=='SubmitField' %}
+                        <div class="form-row my-4">
+                            {{ form.submit(class="btn btn-outline-info") }}
                         </div>
-                    {% else %}
-                        {{ form.email(class="form-control form-control-lg") }}
+                    {% elif field.type=='CSRFTokenField' %}
                     {% endif %}
-                </div>
-                <div class="form-group">
-                    {{ form.picture.label() }}
-                    {{ form.picture(class="form-control-file") }}
-                    {% if form.picture.errors %}
-                        {% for error in form.picture.errors %}
-                            <span class="text-danger">{{ error }}</span></br>
-                        {% endfor %}
-                    {% endif %}
-                </div>
+                {% endfor %}
             </fieldset>
-            <div class="form-group">
-                {{ form.submit(class="btn btn-outline-info") }}
-            </div>
         </form>
     </div>
 {% endblock content %}
