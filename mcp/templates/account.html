@@ -18,8 +18,8 @@
                         <div class="form-row">
                             {{ field.label(class="form-control-label-sm col-md-2") }}
                             {% if field.errors %}
-                                {{ field(class="form-control form-control-sm is-invalid") }}
-                                <div class="invalid-feedback">
+                                {{ field(class="form-control form-control-sm col-md-10 is-invalid") }}
+                                <div class="invalid-feedback mt-0 pt-0">
                                     {% for error in field.errors %}
                                         <span class="float-right col-md-10 pl-1">{{ error }}</span>
                                     {% endfor %}
@@ -28,6 +28,15 @@
                                 {{ field(class="form-control form-control-sm col-md-10") }}
                             {% endif %}
                         </div>                    
+
+                    {% elif field.type=='DateField' %}
+                        <div class="form-row">
+                            {{ field.label(class="form-control-label-sm col-md-2") }}
+                            {% if field.errors %}
+                                {{ field(class="form-control form-control-sm col-md-10 is-invalid") }}
+                                <div class="invalid-feedback mt-0 pt-0">
+                                    {% for error in field.errors %}
+                                        <span class="float-right col-md-10 pl-1">{{ error }}</span>
                                     {% endfor %}
                                 </div>
                             {% else %}

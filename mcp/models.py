@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     first_name = db.Column(db.String(30))
     last_name = db.Column(db.String(30))
+    birthdate = db.Column(db.Date, nullable=True, default=None)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     join_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)

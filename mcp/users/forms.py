@@ -1,9 +1,14 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 from mcp.models import User
+from datetime import datetime
+
+useHtml5Fields = True
+if useHtml5Fields:
+    from wtforms.fields.html5 import DateField, TimeField, IntegerField
 
 
 class RegistrationForm(FlaskForm):
@@ -44,7 +49,9 @@ class UpdateAccountForm(FlaskForm):
                         validators=[DataRequired()])
     last_name = StringField('Last Name',
                         validators=[DataRequired()])
-    picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
+    birthdate = DateField('Birthdate',
+                        validators=[DataRequired()])
+    picture = FileField('Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
     def validate_username(self, username):
@@ -58,6 +65,10 @@ class UpdateAccountForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
+
+    def validate_birthdate(self, birthdate):
+        if birthdate.data > datetime.today().date():
+            raise ValidationError('Unless you are a time traveler, your birthdate is incorrect.')
 
 
 class RequestResetForm(FlaskForm):
