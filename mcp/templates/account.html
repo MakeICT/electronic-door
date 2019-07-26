@@ -11,7 +11,7 @@
         <form class="form form-horizontal" method="POST" action="" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <fieldset class="form-group">
-                <legend class="border-bottom mb-4">Account Info</legend>
+                <legend class="border-bottom mb-4">User Info</legend>
                 {% for field in form %}
                     <!-- {{ field.type }} -->
                     {% if field.type=='StringField' %}
