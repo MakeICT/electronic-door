@@ -7,7 +7,7 @@ from wtforms import (StringField, PasswordField, SubmitField, BooleanField,
 from wtforms.validators import (DataRequired, Length, Email, EqualTo,
                                 ValidationError)
 
-from mcp.models import User
+from mcp.users.models import User
 
 useHtml5Fields = True
 if useHtml5Fields:

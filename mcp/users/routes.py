@@ -2,7 +2,7 @@ from flask import render_template, url_for, flash, redirect, request, Blueprint
 from flask_login import login_user, current_user, logout_user, login_required
 
 from mcp import db, bcrypt
-from mcp.models import User
+from mcp.users.models import User
 from mcp.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                              RequestResetForm, ResetPasswordForm)
 from mcp.users.utils import save_picture, send_reset_email
