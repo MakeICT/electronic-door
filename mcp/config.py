@@ -7,9 +7,9 @@ class Config:
     # SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     print('sqlite:///' + os.path.join(basedir, 'site.db'))
     SECRET_KEY = 'you-will-never-guess'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                              'sqlite:///' + os.path.join(basedir, 'site.db')
-                              # 'sqlite:///site.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') \
+        or 'sqlite:///' + os.path.join(basedir, 'site.db')
+        # 'sqlite:///site.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAIL_SERVER = 'smtp.googlemail.com'
     MAIL_PORT = 587

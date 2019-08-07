@@ -11,4 +11,4 @@ if __name__ == '__main__':
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'db': db, 'User':User}
+    return {'db': db, 'User': User}

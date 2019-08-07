@@ -17,10 +17,10 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(30))
     last_name = db.Column(db.String(30))
     birthdate = db.Column(db.Date, nullable=True, default=None)
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+    image_file = db.Column(db.String(20), nullable=False,
+                           default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     join_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
-
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
@@ -31,9 +31,10 @@ class User(db.Model, UserMixin):
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             user_id = s.loads(token)['user_id']
-        except:
+        except Exception:
             return None
         return User.query.get(user_id)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.image_file}', '{self.join_date}')"
+        return f"User('{self.username}', '{self.email}', \
+                '{self.image_file}', '{self.join_date}')"
